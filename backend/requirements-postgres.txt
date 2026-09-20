@@ -1,0 +1,11 @@
+# Only needed when DATABASE_URL actually points at Postgres (Docker Compose
+# / production), not for local dev — which defaults to SQLite (see ADR 0001
+# and .env.example). Kept out of requirements.txt because psycopg2-binary
+# has no prebuilt wheel for every platform/Python combo (e.g. Python 3.13
+# on Windows) and then tries to compile from source, requiring a C
+# toolchain — an install failure nobody running the SQLite-only demo path
+# should ever hit.
+#
+#   pip install -r requirements.txt -r requirements-postgres.txt
+
+psycopg2-binary==2.9.9

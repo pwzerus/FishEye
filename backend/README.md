@@ -2,6 +2,7 @@
 
 ## Local dev (without Docker)
 
+macOS/Linux:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
@@ -11,6 +12,27 @@ pip install -r requirements.txt
 DATABASE_URL=sqlite:///./fishpilot_dev.db python -m app.data_import.seed_tx_lakes
 
 DATABASE_URL=sqlite:///./fishpilot_dev.db uvicorn app.main:app --reload
+```
+
+Windows (PowerShell):
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+
+$env:DATABASE_URL="sqlite:///./fishpilot_dev.db"
+python -m app.data_import.seed_tx_lakes
+uvicorn app.main:app --reload
+```
+
+`requirements.txt` intentionally does **not** include `psycopg2-binary` —
+local dev defaults to SQLite (see ADR 0001), and `psycopg2-binary` has no
+prebuilt wheel for every Python/OS combination (notably Python 3.13 on
+Windows), where pip falls back to compiling from source and fails without a
+C++ toolchain installed. Only install it if you're actually pointing
+`DATABASE_URL` at a real Postgres instance:
+```
+pip install -r requirements-postgres.txt
 ```
 
 API docs: http://localhost:8000/docs
