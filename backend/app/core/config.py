@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     llm_api_key: str | None = None
     llm_model: str = "gpt-4o-mini"
 
+    # Admin-only endpoints (e.g. manual data-refresh triggers). None means
+    # "not configured" — routes gated on this must refuse all requests
+    # rather than fall back to an open/unauthenticated endpoint. Set via
+    # .env (gitignored), never hardcode a real token here.
+    admin_api_token: str | None = None
+
     # Feature flags
     use_seed_data_only: bool = True
 

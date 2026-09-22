@@ -229,19 +229,40 @@ def upsert_species(db, canonical_name: str) -> Species:
     return species
 
 
-def ingest_one_lake(db, target: TargetWaterbody, tx_state: State, user_agent: str) -> int:
-    """Returns the number of species links written for this lake."""
+@dataclass(frozen=True)
+class LakeResult:
+    """Outcome for one lake, in a form an API layer can report without
+    scraping stdout — this is what makes the manual-refresh endpoint
+    possible without duplicating the ingest logic."""
+
+    name: str
+    status: str  # "written" | "skipped_no_url" | "no_mentions" | "failed" | "refused"
+    species_written: int = 0
+    detail: str = ""
+
+
+@dataclass(frozen=True)
+class IngestSummary:
+    lake_results: list[LakeResult]
+    total_written: int
+    dry_run: bool
+
+
+def ingest_one_lake(db, target: TargetWaterbody, tx_state: State, user_agent: str) -> LakeResult:
     if not target.survey_index_url:
         print(f"  skip {target.name}: no survey_index_url resolved yet")
-        return 0
+        return LakeResult(target.name, "skipped_no_url", detail="no survey_index_url resolved yet")
 
     html = fetch_report_html(target.survey_index_url, user_agent)
     text = page_text(html)
     mentions = extract_species_mentions(text)
     if not mentions:
-        print(f"  {target.name}: fetched OK but found 0 known-species mentions — "
-              f"check KNOWN_SPECIES coverage or page structure before trusting this as 'no fish'")
-        return 0
+        detail = (
+            "fetched OK but found 0 known-species mentions — check KNOWN_SPECIES "
+            "coverage or page structure before trusting this as 'no fish'"
+        )
+        print(f"  {target.name}: {detail}")
+        return LakeResult(target.name, "no_mentions", detail=detail)
 
     waterbody = upsert_waterbody(db, target, tx_state)
     now = datetime.now(timezone.utc)
@@ -274,10 +295,15 @@ def ingest_one_lake(db, target: TargetWaterbody, tx_state: State, user_agent: st
         written += 1
 
     print(f"  {target.name}: {written} species mention(s) recorded")
-    return written
+    return LakeResult(target.name, "written", species_written=written)
 
 
-def run(dry_run: bool = False) -> None:
+def run(dry_run: bool = False, delay_seconds: float = REQUEST_DELAY_SECONDS) -> IngestSummary:
+    """Run the full ingest. Returns an IngestSummary rather than just
+    printing, so callers other than the CLI (e.g. the admin refresh API
+    endpoint) can report structured results without re-implementing this
+    loop. `delay_seconds` is overridable (tests pass 0) — production
+    callers should leave it at the default polite delay."""
     settings = get_settings()
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
@@ -292,18 +318,23 @@ def run(dry_run: bool = False) -> None:
             db.add(tx_state)
             db.flush()
 
-        total_written = 0
+        lake_results: list[LakeResult] = []
         for i, target in enumerate(TARGET_WATERBODIES):
             print(f"[{i + 1}/{len(TARGET_WATERBODIES)}] {target.name}")
             try:
-                total_written += ingest_one_lake(db, target, tx_state, settings.tpwd_user_agent)
+                lake_results.append(ingest_one_lake(db, target, tx_state, settings.tpwd_user_agent))
             except httpx.HTTPError as exc:
-                print(f"  FAILED ({exc.__class__.__name__}): {exc} — continuing with next lake")
+                detail = f"{exc.__class__.__name__}: {exc}"
+                print(f"  FAILED ({detail}) — continuing with next lake")
+                lake_results.append(LakeResult(target.name, "failed", detail=detail))
             except ValueError as exc:
                 print(f"  REFUSED: {exc}")
+                lake_results.append(LakeResult(target.name, "refused", detail=str(exc)))
 
             if i < len(TARGET_WATERBODIES) - 1:
-                time.sleep(REQUEST_DELAY_SECONDS)
+                time.sleep(delay_seconds)
+
+        total_written = sum(r.species_written for r in lake_results)
 
         if dry_run:
             print(f"Dry run — rolling back {total_written} species link(s), nothing persisted.")
@@ -311,6 +342,8 @@ def run(dry_run: bool = False) -> None:
         else:
             db.commit()
             print(f"Done — {total_written} species link(s) committed.")
+
+        return IngestSummary(lake_results=lake_results, total_written=total_written, dry_run=dry_run)
     finally:
         db.close()
 
