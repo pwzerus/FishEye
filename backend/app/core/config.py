@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     # mock fallback used when a key isn't configured, so the demo still runs
     # without any paid API access).
     nws_user_agent: str = "fishpilot-ai (yifeiwang@tamu.edu)"
+    tpwd_user_agent: str = "fishpilot-ai (yifeiwang@tamu.edu) student portfolio project"
     google_places_api_key: str | None = None
     llm_provider: str = "mock"  # "openai" | "anthropic" | "mock"
     llm_api_key: str | None = None

@@ -25,3 +25,6 @@ npm-debug.log*
 # Editors
 .vscode/
 .idea/
+
+# local git worktrees (per-branch checkouts for running features side by side)
+.worktrees/
