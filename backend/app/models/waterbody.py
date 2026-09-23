@@ -43,6 +43,15 @@ class Waterbody(Base):
     # field-testing per PRD §12.1 — shown in the UI so a reviewer can tell
     # curated/verified data apart from thinner seed entries.
     field_tested: Mapped[bool] = mapped_column(default=False)
+    # "open" | "closed" — whether the *waterbody itself* is currently open
+    # to public access at all, independent of any single AccessPoint's own
+    # public_status. Added after TPWD's own access page for Gibbons Creek
+    # Reservoir stated it has been closed to the public since 12/25/21;
+    # PRD §12 says never present unconfirmed/closed access as public, so a
+    # closed lake must be distinguishable in the API, not just implied by
+    # an empty access_points list (which also happens to mean "no data
+    # yet" for a lake nobody has surveyed, a very different situation).
+    public_access_status: Mapped[str] = mapped_column(String(16), default="open")
 
     state: Mapped["State"] = relationship(back_populates="waterbodies")
     access_points: Mapped[list["AccessPoint"]] = relationship(

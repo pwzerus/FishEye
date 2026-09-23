@@ -29,6 +29,30 @@ a false positive, which is exactly why every row is tagged
 `confidence="confirmed"` + a source_url + an evidence sentence rather than
 silently trusted as ground truth.
 
+WHAT ABOUT ACCESS POINTS
+------------------------
+The species-mentions pass above is the only thing done as a live,
+automated scrape. Public access points are NOT scraped-and-parsed at run
+time, even though TPWD publishes a per-lake `access.phtml` page for
+exactly this purpose. Those pages give only driving directions ("From the
+Lake Conroe bridge on FM 1375 travel west approximately 4 miles, turn
+right on Stubblefield Lake Road...") with no coordinates, and turning
+open-ended directions prose into structured facilities + lat/lng is a
+fundamentally less reliable kind of extraction than the curated
+substring-match above — a wrong guess here doesn't just miss a fact, it
+plots a pin in the wrong place and tells an angler it's confirmed public
+access (exactly what PRD §12 exists to prevent).
+
+Instead, each lake's `access_points` below were identified from its own
+TPWD access page and then geocoded against an independent source (a
+park's own address, a government GIS boat-ramp dataset, or a facility
+listing service) by hand, once, during development — the same character
+of work as `seed_tx_lakes.py`'s three Day-1 lakes, just done later. If
+TPWD changes access for a lake (as it did for Gibbons Creek Reservoir,
+closed to the public since 12/25/21 per its own access page), this list
+needs a human to revisit it — that's `public_access_status` below, not
+something the scraper infers on its own.
+
 Run:
     python -m app.data_import.tpwd_lake_survey_scraper
     python -m app.data_import.tpwd_lake_survey_scraper --dry-run   # fetch + parse only, no DB writes
@@ -47,7 +71,7 @@ from bs4 import BeautifulSoup
 
 from app.core.config import get_settings
 from app.db.session import Base, SessionLocal, engine
-from app.models.waterbody import Species, SourceRecord, State, Waterbody, WaterbodySpecies
+from app.models.waterbody import AccessPoint, Species, SourceRecord, State, Waterbody, WaterbodySpecies
 
 # Be a polite, identifiable, rate-limited client. TPWD didn't ask for this,
 # but "the scraper introduces itself and doesn't hammer a state agency's
@@ -57,12 +81,31 @@ REQUEST_TIMEOUT_SECONDS = 15.0
 
 
 @dataclass(frozen=True)
+class NamedAccessPoint:
+    """One hand-verified, geocoded public access point — see the module
+    docstring section "WHAT ABOUT ACCESS POINTS" for why this is curated
+    data, not a live scrape+geocode result."""
+
+    name: str
+    latitude: float
+    longitude: float
+    access_type: str  # bank, pier, boat_ramp, park
+    parking: bool = True
+
+
+@dataclass(frozen=True)
 class TargetWaterbody:
     name: str
     county: str
     latitude: float
     longitude: float
     survey_index_url: str  # static path, no query string — see module docstring
+    # TPWD's own per-lake access page — kept as a citation even when it's
+    # not machine-parsed (see module docstring).
+    access_page_url: str | None = None
+    access_points: tuple[NamedAccessPoint, ...] = ()
+    # "open" | "closed" — see Waterbody.public_access_status.
+    public_access_status: str = "open"
 
 
 # College Station - Houston corridor only (deliberately narrowed scope —
@@ -76,6 +119,15 @@ TARGET_WATERBODIES: list[TargetWaterbody] = [
         latitude=30.3399,
         longitude=-96.5397,
         survey_index_url="https://tpwd.texas.gov/publications/pwdpubs/lake_survey/pwd_rp_t3200_1374/",
+        access_page_url="https://tpwd.texas.gov/fishboat/fish/recreational/lakes/somerville/access.phtml",
+        access_points=(
+            # TPWD names this "State Park Nails Creek Unit" — coordinates
+            # from the unit's own boat-ramp facility (Natural Atlas).
+            NamedAccessPoint("Nails Creek Unit Boat Ramp", 30.295163, -96.664021, "boat_ramp"),
+            # TPWD names this "Welch Park" — coordinates from the park's
+            # own boat-ramp facility (Natural Atlas).
+            NamedAccessPoint("Welch Park Boat Ramp", 30.338507, -96.551357, "boat_ramp"),
+        ),
     ),
     TargetWaterbody(
         name="Lake Bryan",
@@ -83,6 +135,15 @@ TARGET_WATERBODIES: list[TargetWaterbody] = [
         latitude=30.7188,
         longitude=-96.4275,
         survey_index_url="https://tpwd.texas.gov/publications/pwdpubs/lake_survey/pwd_rp_t3200_1257/",
+        access_page_url="https://tpwd.texas.gov/fishboat/fish/recreational/lakes/bryan/access.phtml",
+        access_points=(
+            # TPWD's access page names only "City Park & Ramp" with no
+            # address. Destination Bryan's own visitor listing identifies
+            # it as the 8200 Sandy Point Rd park entrance — "the only
+            # public boat ramp in Brazos County" — geocoded via Campendium's
+            # campground listing at that address.
+            NamedAccessPoint("Lake Bryan Park & Boat Ramp", 30.708623, -96.464741, "boat_ramp"),
+        ),
     ),
     TargetWaterbody(
         name="Lake Conroe",
@@ -90,6 +151,16 @@ TARGET_WATERBODIES: list[TargetWaterbody] = [
         latitude=30.3949,
         longitude=-95.6300,
         survey_index_url="https://tpwd.texas.gov/publications/pwdpubs/lake_survey/pwd_rp_t3200_1278/",
+        access_page_url="https://tpwd.texas.gov/fishboat/fish/recreational/lakes/conroe/access.phtml",
+        access_points=(
+            # National Forest Service ramp named directly on TPWD's page;
+            # coordinates cross-checked between Natural Atlas and Boat
+            # Ramp Finder (they agree to ~30m).
+            NamedAccessPoint("Cagle Recreation Area", 30.518858, -95.591545, "boat_ramp"),
+            # Named on TPWD's page; address (13988 Calvary Rd, Willis, TX)
+            # geocoded via Campendium's RV-park listing at that address.
+            NamedAccessPoint("Stow-A-Way Marina", 30.473411, -95.567240, "boat_ramp"),
+        ),
     ),
     TargetWaterbody(
         name="Lake Houston",
@@ -97,6 +168,12 @@ TARGET_WATERBODIES: list[TargetWaterbody] = [
         latitude=29.9394,
         longitude=-95.1672,
         survey_index_url="https://tpwd.texas.gov/publications/pwdpubs/lake_survey/pwd_rp_t3200_1309/",
+        access_page_url="https://tpwd.texas.gov/fishboat/fish/recreational/lakes/houston/access.phtml",
+        access_points=(
+            # TPWD names this "Deussen Park" — coordinates from the park's
+            # own boat-ramp facility (Natural Atlas).
+            NamedAccessPoint("Alexander Deussen Park", 29.916873, -95.146803, "boat_ramp"),
+        ),
     ),
     TargetWaterbody(
         name="Lake Livingston",
@@ -104,6 +181,15 @@ TARGET_WATERBODIES: list[TargetWaterbody] = [
         latitude=30.7160,
         longitude=-95.0100,
         survey_index_url="https://tpwd.texas.gov/publications/pwdpubs/lake_survey/pwd_rp_t3200_1326/",
+        access_page_url="https://tpwd.texas.gov/fishboat/fish/recreational/lakes/livingston/access.phtml",
+        access_points=(
+            # TPWD's page lists several free ramps plus this fee marina;
+            # the marina is chosen here because it's the one with an
+            # independently verifiable coordinate (fishing.org).
+            NamedAccessPoint(
+                "Lake Livingston State Park Marina", 30.664731, -95.002948, "boat_ramp"
+            ),
+        ),
     ),
     TargetWaterbody(
         name="Fayette County Reservoir",
@@ -111,6 +197,12 @@ TARGET_WATERBODIES: list[TargetWaterbody] = [
         latitude=29.9127,
         longitude=-96.7280,
         survey_index_url="https://tpwd.texas.gov/publications/pwdpubs/lake_survey/pwd_rp_t3200_1292/",
+        access_page_url="https://tpwd.texas.gov/fishboat/fish/recreational/lakes/fayette/access.phtml",
+        access_points=(
+            # TPWD names this park directly; coordinates from Boat Ramp
+            # Finder's own listing for this facility.
+            NamedAccessPoint("Oak Thicket Park", 29.947383, -96.727050, "boat_ramp"),
+        ),
     ),
     TargetWaterbody(
         name="Gibbons Creek Reservoir",
@@ -118,6 +210,14 @@ TARGET_WATERBODIES: list[TargetWaterbody] = [
         latitude=30.6270,
         longitude=-96.0400,
         survey_index_url="https://tpwd.texas.gov/publications/pwdpubs/lake_survey/pwd_rp_t3200_1296/",
+        access_page_url="https://tpwd.texas.gov/fishboat/fish/recreational/lakes/gibbonscreek/access.phtml",
+        # TPWD's own access page states: "Gibbons Creek Reservoir is
+        # closed to the public as of 12/25/21." No AccessPoint rows are
+        # created for a closed lake, however plausible-looking a named
+        # facility (its page still names "TMPA Park") might seem — PRD
+        # §12 says never present unconfirmed/closed access as public.
+        access_points=(),
+        public_access_status="closed",
     ),
 ]
 
@@ -193,25 +293,93 @@ def extract_species_mentions(text: str) -> list[SpeciesMention]:
 
 
 def upsert_waterbody(db, target: TargetWaterbody, tx_state: State) -> Waterbody:
-    existing = db.query(Waterbody).filter_by(name=target.name, state_id=tx_state.id).first()
-    if existing:
-        return existing
-    wb = Waterbody(
-        state_id=tx_state.id,
-        name=target.name,
-        latitude=target.latitude,
-        longitude=target.longitude,
-        access_summary=(
+    """Create-or-update, not create-only: a re-run must be able to pick up
+    a corrected access_summary/public_access_status (e.g. TPWD closing a
+    lake) without requiring the DB to be wiped first. field_tested is
+    intentionally left untouched on an update — it's a manual QA flag, not
+    something this scraper should ever flip back to False."""
+    wb = db.query(Waterbody).filter_by(name=target.name, state_id=tx_state.id).first()
+    if wb is None:
+        wb = Waterbody(state_id=tx_state.id, name=target.name, field_tested=False)
+        db.add(wb)
+
+    if target.public_access_status == "closed":
+        access_summary = (
+            f"{target.name} is currently closed to public access, per TPWD's own "
+            f"access page ({target.access_page_url}). The species information above "
+            "is still from TPWD's lake survey report and may predate the closure."
+        )
+    else:
+        access_summary = (
             f"See TPWD survey report for {target.name} ({target.county} County) "
             "for angler access details."
-        ),
-        source_url=target.survey_index_url,
-        source_updated_at=datetime.now(timezone.utc),
-        field_tested=False,
-    )
-    db.add(wb)
+        )
+
+    wb.latitude = target.latitude
+    wb.longitude = target.longitude
+    wb.access_summary = access_summary
+    wb.source_url = target.survey_index_url
+    wb.source_updated_at = datetime.now(timezone.utc)
+    wb.public_access_status = target.public_access_status
     db.flush()
     return wb
+
+
+def upsert_access_points(db, waterbody: Waterbody, target: TargetWaterbody, now: datetime) -> int:
+    """Create-or-update the hand-verified AccessPoint rows for this lake
+    (see the module docstring's "WHAT ABOUT ACCESS POINTS" section for why
+    these are curated data, not scraped-and-geocoded at run time). Returns
+    the number of access points written."""
+    if target.public_access_status == "closed":
+        if target.access_points:
+            print(
+                f"  WARNING: {target.name} is marked closed but has "
+                f"{len(target.access_points)} access_points configured — skipping "
+                "them (PRD §12: never present closed access as public)."
+            )
+        return 0
+
+    written = 0
+    for point in target.access_points:
+        existing = (
+            db.query(AccessPoint)
+            .filter_by(waterbody_id=waterbody.id, name=point.name)
+            .first()
+        )
+        if existing is None:
+            existing = AccessPoint(waterbody_id=waterbody.id, name=point.name)
+            db.add(existing)
+        existing.latitude = point.latitude
+        existing.longitude = point.longitude
+        existing.access_type = point.access_type
+        existing.public_status = "confirmed_public"
+        existing.parking = point.parking
+        # Flush immediately (autoflush is off — see app/db/session.py) so a
+        # second point's lookup, or a second call to this function within
+        # the same session, sees rows this loop already wrote instead of
+        # creating a duplicate.
+        db.flush()
+        written += 1
+
+    if target.access_page_url:
+        already_cited = (
+            db.query(SourceRecord)
+            .filter_by(source_type="tpwd_access_page", url=target.access_page_url)
+            .first()
+        )
+        if already_cited is None:
+            db.add(
+                SourceRecord(
+                    source_type="tpwd_access_page",
+                    url=target.access_page_url,
+                    publisher="Texas Parks and Wildlife Department",
+                    retrieved_at=now,
+                    valid_until=None,
+                    checksum=None,
+                )
+            )
+
+    return written
 
 
 def upsert_species(db, canonical_name: str) -> Species:
@@ -238,6 +406,7 @@ class LakeResult:
     name: str
     status: str  # "written" | "skipped_no_url" | "no_mentions" | "failed" | "refused"
     species_written: int = 0
+    access_points_written: int = 0
     detail: str = ""
 
 
@@ -245,6 +414,7 @@ class LakeResult:
 class IngestSummary:
     lake_results: list[LakeResult]
     total_written: int
+    total_access_points_written: int
     dry_run: bool
 
 
@@ -256,16 +426,25 @@ def ingest_one_lake(db, target: TargetWaterbody, tx_state: State, user_agent: st
     html = fetch_report_html(target.survey_index_url, user_agent)
     text = page_text(html)
     mentions = extract_species_mentions(text)
+
+    # Waterbody + access-point upserts happen regardless of whether the
+    # species-mentions pass finds anything — they're independent facts
+    # about the lake (this is also what fixed the real bug where all 7
+    # TPWD lakes had zero AccessPoint rows: they used to only get created
+    # as a side effect of a non-empty mentions list).
+    waterbody = upsert_waterbody(db, target, tx_state)
+    now = datetime.now(timezone.utc)
+    access_written = upsert_access_points(db, waterbody, target, now)
+
     if not mentions:
         detail = (
             "fetched OK but found 0 known-species mentions — check KNOWN_SPECIES "
             "coverage or page structure before trusting this as 'no fish'"
         )
         print(f"  {target.name}: {detail}")
-        return LakeResult(target.name, "no_mentions", detail=detail)
-
-    waterbody = upsert_waterbody(db, target, tx_state)
-    now = datetime.now(timezone.utc)
+        return LakeResult(
+            target.name, "no_mentions", access_points_written=access_written, detail=detail
+        )
 
     source = SourceRecord(
         source_type="tpwd_survey",
@@ -294,8 +473,13 @@ def ingest_one_lake(db, target: TargetWaterbody, tx_state: State, user_agent: st
         link.observed_at = now
         written += 1
 
-    print(f"  {target.name}: {written} species mention(s) recorded")
-    return LakeResult(target.name, "written", species_written=written)
+    print(
+        f"  {target.name}: {written} species mention(s), "
+        f"{access_written} access point(s) recorded"
+    )
+    return LakeResult(
+        target.name, "written", species_written=written, access_points_written=access_written
+    )
 
 
 def run(dry_run: bool = False, delay_seconds: float = REQUEST_DELAY_SECONDS) -> IngestSummary:
@@ -335,15 +519,27 @@ def run(dry_run: bool = False, delay_seconds: float = REQUEST_DELAY_SECONDS) -> 
                 time.sleep(delay_seconds)
 
         total_written = sum(r.species_written for r in lake_results)
+        total_access_points_written = sum(r.access_points_written for r in lake_results)
 
         if dry_run:
-            print(f"Dry run — rolling back {total_written} species link(s), nothing persisted.")
+            print(
+                f"Dry run — rolling back {total_written} species link(s) and "
+                f"{total_access_points_written} access point(s), nothing persisted."
+            )
             db.rollback()
         else:
             db.commit()
-            print(f"Done — {total_written} species link(s) committed.")
+            print(
+                f"Done — {total_written} species link(s) and "
+                f"{total_access_points_written} access point(s) committed."
+            )
 
-        return IngestSummary(lake_results=lake_results, total_written=total_written, dry_run=dry_run)
+        return IngestSummary(
+            lake_results=lake_results,
+            total_written=total_written,
+            total_access_points_written=total_access_points_written,
+            dry_run=dry_run,
+        )
     finally:
         db.close()
 

@@ -74,6 +74,7 @@ def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> Waterbody
         source_url=wb.source_url,
         source_updated_at=wb.source_updated_at,
         field_tested=wb.field_tested,
+        public_access_status=wb.public_access_status,
         access_points=list(wb.access_points),
         species=species_out,
     )

@@ -43,6 +43,7 @@ class WaterbodyListItem(BaseModel):
     latitude: float
     longitude: float
     field_tested: bool
+    public_access_status: str
 
 
 class WaterbodyDetail(BaseModel):
@@ -55,6 +56,7 @@ class WaterbodyDetail(BaseModel):
     source_url: str
     source_updated_at: datetime
     field_tested: bool
+    public_access_status: str
     access_points: list[AccessPointOut]
     species: list[SpeciesSummaryOut]
 

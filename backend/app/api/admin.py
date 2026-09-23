@@ -57,11 +57,18 @@ def get_tpwd_refresh_status(x_admin_token: str | None = Header(default=None)) ->
         started_at=state.started_at,
         finished_at=state.finished_at,
         total_written=state.summary.total_written if state.summary else None,
+        total_access_points_written=(
+            state.summary.total_access_points_written if state.summary else None
+        ),
         dry_run=state.summary.dry_run if state.summary else None,
         lake_results=(
             [
                 LakeResultOut(
-                    name=r.name, status=r.status, species_written=r.species_written, detail=r.detail
+                    name=r.name,
+                    status=r.status,
+                    species_written=r.species_written,
+                    access_points_written=r.access_points_written,
+                    detail=r.detail,
                 )
                 for r in state.summary.lake_results
             ]

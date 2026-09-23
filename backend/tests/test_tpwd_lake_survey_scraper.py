@@ -4,12 +4,20 @@ a test suite that runs on every commit. Uses a real (saved) excerpt of the
 Lake Somerville survey report page as a fixture so the parsing logic is
 tested against actual TPWD prose, not an idealized sentence.
 """
+from datetime import datetime, timezone
+
 from app.data_import.tpwd_lake_survey_scraper import (
     KNOWN_SPECIES,
+    NamedAccessPoint,
+    TargetWaterbody,
     extract_species_mentions,
     fetch_report_html,
+    ingest_one_lake,
     page_text,
+    upsert_access_points,
+    upsert_waterbody,
 )
+from app.models.waterbody import AccessPoint, State, Waterbody
 
 # Verbatim excerpt from the "Management History" section of the Lake
 # Somerville 2020 Fisheries Management Survey Report (retrieved 2026-09,
@@ -104,3 +112,136 @@ def test_fetch_report_html_refuses_query_string_urls():
             "https://tpwd.texas.gov/fishboat/fish/action/stock_bywater.php?WB_code=0680",
             user_agent="test-agent",
         )
+
+
+# ---------------------------------------------------------------------------
+# Waterbody / access-point upserts — this is the fix for the real bug where
+# all 7 TPWD-scraped lakes had zero AccessPoint rows at all (recommendations
+# silently returned empty for every one of them), plus the Gibbons Creek
+# public-closure handling per PRD §12.
+# ---------------------------------------------------------------------------
+
+
+def _tx_state(db_session) -> State:
+    tx = State(name="Texas", code="TX", official_source_url="https://tpwd.texas.gov")
+    db_session.add(tx)
+    db_session.flush()
+    return tx
+
+
+def _target(**overrides) -> TargetWaterbody:
+    defaults = dict(
+        name="Test Lake",
+        county="Test County",
+        latitude=30.0,
+        longitude=-96.0,
+        survey_index_url="https://tpwd.texas.gov/publications/pwdpubs/lake_survey/pwd_rp_t3200_0000/",
+        access_page_url="https://tpwd.texas.gov/fishboat/fish/recreational/lakes/testlake/access.phtml",
+    )
+    defaults.update(overrides)
+    return TargetWaterbody(**defaults)
+
+
+def test_upsert_waterbody_creates_open_lake_by_default(db_session):
+    tx = _tx_state(db_session)
+    wb = upsert_waterbody(db_session, _target(), tx)
+    assert wb.public_access_status == "open"
+    assert "See TPWD survey report" in wb.access_summary
+
+
+def test_upsert_waterbody_marks_closed_lake_and_explains_why(db_session):
+    tx = _tx_state(db_session)
+    wb = upsert_waterbody(db_session, _target(public_access_status="closed"), tx)
+    assert wb.public_access_status == "closed"
+    assert "closed to public access" in wb.access_summary
+    assert wb.access_summary.count("access.phtml") == 1  # cites the source page
+
+
+def test_upsert_waterbody_is_idempotent_and_updates_existing_row(db_session):
+    tx = _tx_state(db_session)
+    target = _target()
+    wb1 = upsert_waterbody(db_session, target, tx)
+    db_session.flush()
+    wb2 = upsert_waterbody(db_session, _target(latitude=31.0), tx)
+    assert wb1.id == wb2.id  # same row, not a duplicate
+    assert wb2.latitude == 31.0  # picked up the corrected value on re-run
+
+
+def test_upsert_waterbody_never_resets_field_tested_to_false(db_session):
+    tx = _tx_state(db_session)
+    wb = upsert_waterbody(db_session, _target(), tx)
+    wb.field_tested = True  # simulate a manual QA pass
+    db_session.flush()
+    upsert_waterbody(db_session, _target(), tx)  # re-run
+    assert wb.field_tested is True
+
+
+def test_upsert_access_points_writes_confirmed_public_points(db_session):
+    tx = _tx_state(db_session)
+    target = _target(
+        access_points=(
+            NamedAccessPoint("Test Park Boat Ramp", 30.01, -96.01, "boat_ramp"),
+        )
+    )
+    wb = upsert_waterbody(db_session, target, tx)
+    written = upsert_access_points(db_session, wb, target, datetime.now(timezone.utc))
+    db_session.flush()
+
+    assert written == 1
+    points = db_session.query(AccessPoint).filter_by(waterbody_id=wb.id).all()
+    assert len(points) == 1
+    assert points[0].name == "Test Park Boat Ramp"
+    assert points[0].public_status == "confirmed_public"
+    assert points[0].latitude == 30.01
+
+
+def test_upsert_access_points_is_idempotent(db_session):
+    tx = _tx_state(db_session)
+    target = _target(
+        access_points=(NamedAccessPoint("Test Park Boat Ramp", 30.01, -96.01, "boat_ramp"),)
+    )
+    wb = upsert_waterbody(db_session, target, tx)
+    upsert_access_points(db_session, wb, target, datetime.now(timezone.utc))
+    upsert_access_points(db_session, wb, target, datetime.now(timezone.utc))  # re-run
+    db_session.flush()
+
+    points = db_session.query(AccessPoint).filter_by(waterbody_id=wb.id).all()
+    assert len(points) == 1  # not duplicated
+
+
+def test_upsert_access_points_never_writes_confirmed_public_for_a_closed_lake(db_session):
+    # Defensive test: even if access_points were accidentally non-empty on
+    # a closed lake, PRD §12 says never present that as public access.
+    tx = _tx_state(db_session)
+    target = _target(
+        public_access_status="closed",
+        access_points=(NamedAccessPoint("TMPA Park", 30.6, -96.0, "boat_ramp"),),
+    )
+    wb = upsert_waterbody(db_session, target, tx)
+    written = upsert_access_points(db_session, wb, target, datetime.now(timezone.utc))
+    db_session.flush()
+
+    assert written == 0
+    assert db_session.query(AccessPoint).filter_by(waterbody_id=wb.id).count() == 0
+
+
+def test_ingest_one_lake_writes_access_points_even_when_no_species_mentions_found(
+    db_session, monkeypatch
+):
+    import app.data_import.tpwd_lake_survey_scraper as scraper_module
+
+    monkeypatch.setattr(
+        scraper_module, "fetch_report_html", lambda url, user_agent: "<html><body>no fish here</body></html>"
+    )
+    tx = _tx_state(db_session)
+    target = _target(
+        access_points=(NamedAccessPoint("Test Park Boat Ramp", 30.01, -96.01, "boat_ramp"),)
+    )
+
+    result = ingest_one_lake(db_session, target, tx, "test-agent")
+
+    assert result.status == "no_mentions"
+    assert result.access_points_written == 1
+    wb = db_session.query(Waterbody).filter_by(name="Test Lake").first()
+    assert wb is not None  # waterbody still created despite 0 species mentions
+    assert db_session.query(AccessPoint).filter_by(waterbody_id=wb.id).count() == 1

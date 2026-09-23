@@ -66,6 +66,7 @@ def test_refresh_triggers_job_and_status_reflects_result(client, admin_token_con
             LakeResult("Lake Livingston", "skipped_no_url", detail="no survey_index_url resolved yet"),
         ],
         total_written=3,
+        total_access_points_written=2,
         dry_run=True,
     )
     monkeypatch.setattr(job_module, "run_scraper", lambda dry_run=False: fake_summary)
@@ -108,7 +109,9 @@ def test_refresh_status_reports_error_without_leaving_job_stuck_running(
     monkeypatch.setattr(
         job_module,
         "run_scraper",
-        lambda dry_run=False: IngestSummary(lake_results=[], total_written=0, dry_run=dry_run),
+        lambda dry_run=False: IngestSummary(
+            lake_results=[], total_written=0, total_access_points_written=0, dry_run=dry_run
+        ),
     )
     retry_resp = client.post("/api/admin/tpwd-refresh", headers={"X-Admin-Token": ADMIN_TOKEN})
     assert retry_resp.status_code == 202
