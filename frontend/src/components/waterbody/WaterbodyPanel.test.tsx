@@ -27,6 +27,7 @@ const mockDetail: WaterbodyDetail = {
   source_url: "https://tpwd.texas.gov/fork",
   source_updated_at: "2026-09-01T00:00:00Z",
   field_tested: true,
+  public_access_status: "open",
   access_points: [
     {
       id: 1,
@@ -235,5 +236,23 @@ describe("WaterbodyPanel", () => {
         target_species: "Largemouth Bass",
       }),
     );
+  });
+
+  it("shows a closed-to-the-public banner instead of recommendations for a closed lake", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue({
+      ...mockDetail,
+      id: 4,
+      public_access_status: "closed",
+      access_points: [],
+    });
+    render(<WaterbodyPanel waterbodyId={4} />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/currently closed to public access/i)).toBeInTheDocument(),
+    );
+    expect(screen.getByText("closed to the public")).toBeInTheDocument();
+    // No point scoring recommendations for a lake nobody can legally fish.
+    expect(postRecommendations).not.toHaveBeenCalled();
+    expect(getWeather).not.toHaveBeenCalled();
   });
 });

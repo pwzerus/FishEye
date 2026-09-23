@@ -66,12 +66,30 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
   if (error) return <div className="panel-empty panel-error">{error}</div>;
   if (!detail) return null;
 
+  const isClosed = detail.public_access_status === "closed";
+
   return (
     <div className="panel">
       <h2>
         {detail.name}
         {detail.field_tested && <span className="field-tested-tag">field-tested</span>}
+        {isClosed && <span className="closed-tag">closed to the public</span>}
       </h2>
+
+      {isClosed && (
+        // Deliberately shown above everything else and never suppressed:
+        // PRD §12 says never present unconfirmed/closed access as public,
+        // so a lake TPWD's own source says is closed must say so loudly,
+        // not just quietly have an empty access-points list (which also
+        // happens to be what "no data yet" looks like — a very different
+        // situation this banner exists to avoid conflating).
+        <div className="closed-banner">
+          This lake is currently closed to public access, per its official
+          source. No public access points are shown, and weather-based
+          recommendations are not scored for it below.
+        </div>
+      )}
+
       <p className="access-summary">{detail.access_summary}</p>
       <p className="source-line">
         Source:{" "}
@@ -109,12 +127,14 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
         )}
       </ul>
 
-      <WeatherRecommendations
-        waterbodyId={detail.id}
-        latitude={detail.latitude}
-        longitude={detail.longitude}
-        species={detail.species}
-      />
+      {!isClosed && (
+        <WeatherRecommendations
+          waterbodyId={detail.id}
+          latitude={detail.latitude}
+          longitude={detail.longitude}
+          species={detail.species}
+        />
+      )}
     </div>
   );
 }

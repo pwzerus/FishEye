@@ -9,6 +9,12 @@ export interface WaterbodyListItem {
   latitude: number;
   longitude: number;
   field_tested: boolean;
+  // "open" | "closed" — whether the lake itself is open to public access
+  // at all, independent of any one AccessPoint's own public_status. See
+  // backend/app/models/waterbody.py — added after TPWD's own access page
+  // for Gibbons Creek Reservoir showed it closed to the public since
+  // 12/25/21.
+  public_access_status: "open" | "closed";
 }
 
 export interface AccessPoint {
@@ -39,6 +45,7 @@ export interface WaterbodyDetail {
   source_url: string;
   source_updated_at: string;
   field_tested: boolean;
+  public_access_status: "open" | "closed";
   access_points: AccessPoint[];
   species: SpeciesSummary[];
 }
@@ -55,6 +62,7 @@ export interface LakeResultOut {
   name: string;
   status: string;
   species_written: number;
+  access_points_written: number;
   detail: string;
 }
 
@@ -63,6 +71,7 @@ export interface RefreshStatus {
   started_at: string | null;
   finished_at: string | null;
   total_written: number | null;
+  total_access_points_written: number | null;
   dry_run: boolean | null;
   lake_results: LakeResultOut[] | null;
   error: string | null;
