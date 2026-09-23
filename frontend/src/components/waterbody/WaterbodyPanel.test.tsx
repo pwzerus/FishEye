@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api/client";
-import type { WaterbodyDetail } from "@/lib/api/types";
+import type { RecommendationResponse, WaterbodyDetail, Weather } from "@/lib/api/types";
 import { WaterbodyPanel } from "./WaterbodyPanel";
 
 vi.mock("@/lib/api/client", async () => {
@@ -10,11 +10,13 @@ vi.mock("@/lib/api/client", async () => {
   return {
     ...actual,
     getWaterbody: vi.fn(),
+    getWeather: vi.fn(),
+    postRecommendations: vi.fn(),
   };
 });
 
-// Imported after the mock so we get the mocked reference.
-const { getWaterbody } = await import("@/lib/api/client");
+// Imported after the mock so we get the mocked references.
+const { getWaterbody, getWeather, postRecommendations } = await import("@/lib/api/client");
 
 const mockDetail: WaterbodyDetail = {
   id: 1,
@@ -48,9 +50,62 @@ const mockDetail: WaterbodyDetail = {
   ],
 };
 
+const mockWeather: Weather = {
+  latitude: 32.8,
+  longitude: -95.6,
+  current: {
+    temperature: 78,
+    temperature_unit: "F",
+    wind_speed: "10 mph",
+    wind_direction: "SE",
+    short_forecast: "Partly Sunny",
+    is_daytime: true,
+  },
+  hourly: [],
+  alerts: [],
+  source: "nws",
+  stale: false,
+  fetched_at: "2026-09-22T12:00:00Z",
+};
+
+const mockRecommendations: RecommendationResponse = {
+  waterbody_id: 1,
+  waterbody_name: "Lake Fork",
+  target_species: null,
+  candidates: [
+    {
+      access_point_id: 1,
+      name: "Lake Fork Dam Bank Access",
+      latitude: 32.83,
+      longitude: -95.57,
+      access_type: "bank",
+      public_access_status: "confirmed_public",
+      score: 0.9,
+      confidence: 0.67,
+      factors: [
+        { name: "access", weight: 0.3, value: 1.0, reason: "confirmed public bank access" },
+        { name: "habitat", weight: 0.25, value: null, reason: "no bathymetry data" },
+      ],
+      missing_signals: ["habitat"],
+    },
+  ],
+  best_time_window: null,
+  safety_warnings: [],
+  weather_source: "nws",
+  generated_at: "2026-09-22T12:00:00Z",
+};
+
 describe("WaterbodyPanel", () => {
   beforeEach(() => {
     vi.mocked(getWaterbody).mockReset();
+    vi.mocked(getWeather).mockReset();
+    vi.mocked(postRecommendations).mockReset();
+    // Default to resolved values for every test that doesn't override
+    // them — this keeps the weather/recommendations calls from becoming
+    // real network requests (and hanging) in tests that only care about
+    // the lake-detail rendering above them.
+    vi.mocked(getWeather).mockResolvedValue(mockWeather);
+    vi.mocked(postRecommendations).mockResolvedValue(mockRecommendations);
   });
 
   it("shows the empty-state prompt when nothing is selected", () => {
@@ -93,6 +148,92 @@ describe("WaterbodyPanel", () => {
 
     await waitFor(() =>
       expect(screen.getByText(/never assumed from a statewide list/i)).toBeInTheDocument(),
+    );
+  });
+
+  it("requests weather and recommendations for the selected lake's own coordinates", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    render(<WaterbodyPanel waterbodyId={1} />);
+
+    await waitFor(() => expect(getWeather).toHaveBeenCalledWith(32.8, -95.6));
+    expect(postRecommendations).toHaveBeenCalledWith({
+      waterbody_id: 1,
+      target_species: undefined,
+    });
+  });
+
+  it("shows current conditions once weather resolves", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    render(<WaterbodyPanel waterbodyId={1} />);
+
+    await waitFor(() => expect(screen.getByText("Partly Sunny")).toBeInTheDocument());
+    expect(screen.getByText(/78°F/)).toBeInTheDocument();
+  });
+
+  it("shows a plain notice instead of fake readings when weather falls back", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    vi.mocked(getWeather).mockResolvedValue({
+      ...mockWeather,
+      current: {
+        temperature: null,
+        temperature_unit: "F",
+        wind_speed: null,
+        wind_direction: null,
+        short_forecast: "Weather data temporarily unavailable",
+        is_daytime: true,
+      },
+      source: "fallback",
+      stale: true,
+    });
+    render(<WaterbodyPanel waterbodyId={1} />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/weather data is temporarily unavailable/i)).toBeInTheDocument(),
+    );
+    // The fallback forecast text must not be presented as if it were real.
+    expect(screen.queryByText("Weather data temporarily unavailable")).not.toBeInTheDocument();
+  });
+
+  it("renders ranked candidates with their score and confidence", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    render(<WaterbodyPanel waterbodyId={1} />);
+
+    await waitFor(() =>
+      expect(screen.getAllByText(/Lake Fork Dam Bank Access/).length).toBeGreaterThan(0),
+    );
+    expect(screen.getByText("90")).toBeInTheDocument(); // score
+    expect(screen.getByText("67% confidence")).toBeInTheDocument();
+  });
+
+  it("surfaces severe weather warnings above the candidate list", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    vi.mocked(postRecommendations).mockResolvedValue({
+      ...mockRecommendations,
+      safety_warnings: [
+        { event: "Severe Thunderstorm Warning", severity: "Severe", headline: "Until 8 PM" },
+      ],
+    });
+    render(<WaterbodyPanel waterbodyId={1} />);
+
+    await waitFor(() =>
+      expect(screen.getByText("Severe Thunderstorm Warning")).toBeInTheDocument(),
+    );
+  });
+
+  it("re-requests recommendations when the target species changes", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    render(<WaterbodyPanel waterbodyId={1} />);
+
+    await waitFor(() => expect(postRecommendations).toHaveBeenCalledTimes(1));
+
+    const select = await screen.findByLabelText(/target species/i);
+    fireEvent.change(select, { target: { value: "Largemouth Bass" } });
+
+    await waitFor(() =>
+      expect(postRecommendations).toHaveBeenLastCalledWith({
+        waterbody_id: 1,
+        target_species: "Largemouth Bass",
+      }),
     );
   });
 });

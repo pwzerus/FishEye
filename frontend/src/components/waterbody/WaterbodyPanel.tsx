@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { ApiError, getWaterbody } from "@/lib/api/client";
 import type { WaterbodyDetail } from "@/lib/api/types";
+import { WeatherRecommendations } from "./WeatherRecommendations";
 
 function ConfidenceBadge({ confidence }: { confidence: string }) {
   const color =
@@ -107,6 +108,13 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
           <li className="muted">No confirmed species on file yet — never assumed from a statewide list.</li>
         )}
       </ul>
+
+      <WeatherRecommendations
+        waterbodyId={detail.id}
+        latitude={detail.latitude}
+        longitude={detail.longitude}
+        species={detail.species}
+      />
     </div>
   );
 }

@@ -42,3 +42,128 @@ export interface WaterbodyDetail {
   access_points: AccessPoint[];
   species: SpeciesSummary[];
 }
+
+// Mirrors backend/app/schemas/admin.py.
+export type JobStatus = "idle" | "running" | "done" | "error";
+
+export interface RefreshTrigger {
+  status: JobStatus;
+  message: string;
+}
+
+export interface LakeResultOut {
+  name: string;
+  status: string;
+  species_written: number;
+  detail: string;
+}
+
+export interface RefreshStatus {
+  status: JobStatus;
+  started_at: string | null;
+  finished_at: string | null;
+  total_written: number | null;
+  dry_run: boolean | null;
+  lake_results: LakeResultOut[] | null;
+  error: string | null;
+}
+
+// Mirrors backend/app/schemas/weather.py.
+export interface CurrentConditions {
+  temperature: number | null;
+  temperature_unit: string;
+  wind_speed: string | null;
+  wind_direction: string | null;
+  short_forecast: string;
+  is_daytime: boolean;
+}
+
+export interface HourlyPeriod {
+  start_time: string;
+  temperature: number | null;
+  temperature_unit: string;
+  wind_speed: string | null;
+  wind_direction: string | null;
+  short_forecast: string;
+  probability_of_precipitation: number | null;
+}
+
+export interface WeatherAlert {
+  event: string;
+  severity: string;
+  headline: string | null;
+  effective: string | null;
+  expires: string | null;
+}
+
+// `source` distinguishes live NWS data from the fixed-template fallback
+// used when NWS is unreachable (backend/app/services/weather_adapter.py).
+// A UI must not present fallback values (all null/empty) as real readings.
+export type WeatherSource = "nws" | "fallback";
+
+export interface Weather {
+  latitude: number;
+  longitude: number;
+  current: CurrentConditions;
+  hourly: HourlyPeriod[];
+  alerts: WeatherAlert[];
+  source: WeatherSource;
+  stale: boolean;
+  fetched_at: string;
+}
+
+// Mirrors backend/app/schemas/recommendation.py.
+export interface RecommendationRequest {
+  waterbody_id: number;
+  target_species?: string;
+  limit?: number;
+}
+
+export interface Factor {
+  name: string;
+  weight: number;
+  // null means "no data for this factor" — excluded from the score and
+  // deducted from confidence, never silently scored as zero. See
+  // backend/app/services/scoring.py.
+  value: number | null;
+  reason: string;
+}
+
+export interface SpotCandidate {
+  access_point_id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  access_type: string;
+  public_access_status: string;
+  score: number;
+  confidence: number;
+  factors: Factor[];
+  missing_signals: string[];
+}
+
+export interface TimeWindow {
+  start_time: string;
+  end_time: string;
+  reason: string;
+}
+
+export interface WeatherWarning {
+  event: string;
+  severity: string;
+  headline: string | null;
+}
+
+export interface RecommendationResponse {
+  waterbody_id: number;
+  waterbody_name: string;
+  target_species: string | null;
+  candidates: SpotCandidate[];
+  best_time_window: TimeWindow | null;
+  // Top-level, not per-candidate: severe-weather warnings must take
+  // priority over the ranking itself (PRD §17), so a caller can't render
+  // the candidate list without also having these in hand.
+  safety_warnings: WeatherWarning[];
+  weather_source: WeatherSource;
+  generated_at: string;
+}
