@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import admin, states, waterbodies
+from app.api import admin, recommendations, states, waterbodies, weather
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -28,6 +28,8 @@ app.add_middleware(
 app.include_router(states.router, prefix=settings.api_prefix)
 app.include_router(waterbodies.router, prefix=settings.api_prefix)
 app.include_router(admin.router, prefix=settings.api_prefix)
+app.include_router(weather.router, prefix=settings.api_prefix)
+app.include_router(recommendations.router, prefix=settings.api_prefix)
 
 
 @app.get("/health")
