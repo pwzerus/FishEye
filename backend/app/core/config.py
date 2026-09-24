@@ -23,8 +23,18 @@ class Settings(BaseSettings):
     # External services (all optional — see app/services/*_adapter.py for the
     # mock fallback used when a key isn't configured, so the demo still runs
     # without any paid API access).
+    # No personal email hardcoded here — this repo is public, and a
+    # User-Agent string is purely a courtesy identifier for the target
+    # server's admin, not something that needs a real contact baked into
+    # git history forever. Override via .env (gitignored) with a real
+    # address if you actually want one used for live requests.
     nws_user_agent: str = "fishpilot-ai (github.com/pwzerus/FishEye)"
     tpwd_user_agent: str = "fishpilot-ai (github.com/pwzerus/FishEye) student portfolio project"
+    # Nominatim's usage policy requires an identifying User-Agent (same
+    # courtesy-not-secret shape as the other two above) — see
+    # docs/adr/0009-geocoding.md for why this app never calls Nominatim
+    # from the browser.
+    nominatim_user_agent: str = "fishpilot-ai (github.com/pwzerus/FishEye)"
     google_places_api_key: str | None = None
     llm_provider: str = "mock"  # "openai" | "anthropic" | "mock"
     llm_api_key: str | None = None
