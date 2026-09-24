@@ -1,10 +1,13 @@
-# FishPilot AI
+# FishMate
+
+<img src="docs/brand/fishmate-lockup.svg" alt="FishMate" width="280">
+
 
 Map-based decision assistant for freshwater fishing beginners. Pick a lake and
 a target species; the app turns scattered map, government, and weather data
 into an explainable, executable fishing plan.
 
-Full spec: see `docs/PRD.md`.
+Full spec: see `docs/PRD.md` (written under the working name "FishPilot AI").
 
 Status: in active development (portfolio project). See `docs/architecture/`
 for system design and `docs/adr/` for engineering decisions.

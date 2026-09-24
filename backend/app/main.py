@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import admin, advisor, geocode, recommendations, states, waterbodies, weather
+from app.api import admin, advisor, geocode, recommendations, species, states, waterbodies, weather
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -32,6 +32,7 @@ app.include_router(weather.router, prefix=settings.api_prefix)
 app.include_router(recommendations.router, prefix=settings.api_prefix)
 app.include_router(advisor.router, prefix=settings.api_prefix)
 app.include_router(geocode.router, prefix=settings.api_prefix)
+app.include_router(species.router, prefix=settings.api_prefix)
 
 
 @app.get("/health")

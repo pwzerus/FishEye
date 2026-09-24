@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     # App
-    app_name: str = "FishPilot AI"
+    app_name: str = "FishMate"
     environment: str = "development"
     api_prefix: str = "/api"
 
@@ -28,13 +28,13 @@ class Settings(BaseSettings):
     # server's admin, not something that needs a real contact baked into
     # git history forever. Override via .env (gitignored) with a real
     # address if you actually want one used for live requests.
-    nws_user_agent: str = "fishpilot-ai (github.com/pwzerus/FishEye)"
-    tpwd_user_agent: str = "fishpilot-ai (github.com/pwzerus/FishEye) student portfolio project"
+    nws_user_agent: str = "fishmate (github.com/pwzerus/FishEye)"
+    tpwd_user_agent: str = "fishmate (github.com/pwzerus/FishEye) student portfolio project"
     # Nominatim's usage policy requires an identifying User-Agent (same
     # courtesy-not-secret shape as the other two above) — see
     # docs/adr/0009-geocoding.md for why this app never calls Nominatim
     # from the browser.
-    nominatim_user_agent: str = "fishpilot-ai (github.com/pwzerus/FishEye)"
+    nominatim_user_agent: str = "fishmate (github.com/pwzerus/FishEye)"
     google_places_api_key: str | None = None
     llm_provider: str = "mock"  # "openai" | "anthropic" | "mock"
     llm_api_key: str | None = None

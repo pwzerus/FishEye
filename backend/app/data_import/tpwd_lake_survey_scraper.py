@@ -71,6 +71,7 @@ from bs4 import BeautifulSoup
 
 from app.core.config import get_settings
 from app.db.session import Base, SessionLocal, engine
+from app.knowledge.species_guides import get_guide
 from app.models.waterbody import AccessPoint, Species, SourceRecord, State, Waterbody, WaterbodySpecies
 
 # Be a polite, identifiable, rate-limited client. TPWD didn't ask for this,
@@ -302,6 +303,17 @@ def upsert_waterbody(db, target: TargetWaterbody, tx_state: State) -> Waterbody:
     if wb is None:
         wb = Waterbody(state_id=tx_state.id, name=target.name, field_tested=False)
         db.add(wb)
+    elif wb.data_tier != "verified":
+        # A same-named row from the statewide OpenStreetMap layer
+        # (osm_waterbody_import.py). TPWD is the better source, so the row
+        # is promoted in place — keeping its osm_ref, so the next OSM
+        # import recognises it as verified and leaves it alone — and its
+        # OSM-reported entrances are dropped: verified lakes show only
+        # officially sourced access.
+        wb.data_tier = "verified"
+        wb.access_points = [
+            ap for ap in wb.access_points if ap.public_status != "osm_reported"
+        ]
 
     if target.public_access_status == "closed":
         access_summary = (
@@ -382,17 +394,32 @@ def upsert_access_points(db, waterbody: Waterbody, target: TargetWaterbody, now:
     return written
 
 
+PLACEHOLDER_PROFILE = "Documented in a TPWD lake survey report. Profile pending manual review."
+
+
 def upsert_species(db, canonical_name: str) -> Species:
-    existing = db.query(Species).filter_by(common_name=canonical_name).first()
-    if existing:
-        return existing
-    species = Species(
-        common_name=canonical_name,
-        scientific_name="",  # not extracted from this source; fill in separately if needed
-        difficulty="intermediate",
-        profile="Documented in a TPWD lake survey report. Profile pending manual review.",
-    )
-    db.add(species)
+    """Scientific name, difficulty and profile come from the reviewed species
+    guides (app/knowledge/species_guides.py), not from the survey page.
+    Rows created before the guides existed still carry placeholders; those are
+    filled in here, but a value someone set by hand is never overwritten."""
+    guide = get_guide(canonical_name)
+    species = db.query(Species).filter_by(common_name=canonical_name).first()
+    if species is None:
+        species = Species(
+            common_name=canonical_name,
+            scientific_name="",
+            difficulty="intermediate",
+            profile=PLACEHOLDER_PROFILE,
+        )
+        db.add(species)
+    if guide is not None:
+        if not species.scientific_name:
+            species.scientific_name = guide.scientific_name
+        if species.profile == PLACEHOLDER_PROFILE:
+            species.profile = guide.summary
+            # The "intermediate" placeholder was never a judgement; replace it
+            # alongside the placeholder profile. Forage fish have no rating.
+            species.difficulty = guide.difficulty or "n/a"
     db.flush()
     return species
 
