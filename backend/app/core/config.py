@@ -48,6 +48,11 @@ class Settings(BaseSettings):
 
     # Feature flags
     use_seed_data_only: bool = True
+    # GBIF species records carry their own licences; about 12% of Texas's are
+    # CC BY-NC (non-commercial), mostly iNaturalist. Fine for a portfolio
+    # project; set true before any commercial use and only CC0 / CC BY
+    # records are shown. See docs/commercialization.md.
+    gbif_exclude_noncommercial: bool = False
 
 
 @lru_cache

@@ -1,10 +1,26 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import admin, advisor, geocode, recommendations, species, states, waterbodies, weather
 from app.core.config import get_settings
+from app.db.session import Base, engine
 
 settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    # Creates tables added since the database was built (e.g.
+    # species_occurrences) so an existing dev database keeps working without
+    # a rebuild. create_all never alters or drops an existing table; there
+    # are no migrations yet (see backend/README.md).
+    import app.models  # noqa: F401  (register every model)
+
+    Base.metadata.create_all(bind=engine)
+    yield
 
 app = FastAPI(
     title=settings.app_name,
@@ -15,6 +31,7 @@ app = FastAPI(
         "app/services/ai_advisor.py once Day 3 lands."
     ),
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

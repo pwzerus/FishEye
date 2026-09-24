@@ -147,8 +147,13 @@ def gather_facts(
 
     # Citations the model may use. Anything outside this set is a
     # fabrication by definition.
+    # An OSM-tier lake's source is a community map, not an official one, and
+    # the citation label is shown to users verbatim.
+    source_kind = (
+        "OpenStreetMap (community-mapped)" if waterbody.data_tier == "osm" else "official source"
+    )
     sources: list[dict[str, str]] = [
-        {"url": waterbody.source_url, "label": f"{waterbody.name} — official source"}
+        {"url": waterbody.source_url, "label": f"{waterbody.name} — {source_kind}"}
     ]
     for fact in species_facts:
         if fact["source_url"] and all(s["url"] != fact["source_url"] for s in sources):

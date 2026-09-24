@@ -35,6 +35,33 @@ C++ toolchain installed. Only install it if you're actually pointing
 pip install -r requirements-postgres.txt
 ```
 
+### Loading the data
+
+Run these in order (Windows PowerShell shown; set `DATABASE_URL` as above):
+
+```powershell
+python -m app.data_import.seed_tx_lakes                    # 3 demo lakes
+python -m app.data_import.tpwd_lake_survey_scraper         # TPWD-verified lakes (needs network)
+python -m app.data_import.osm_waterbody_import --state TX --save-raw tx_osm.json
+python -m app.data_import.gbif_occurrence_import --osm tx_osm.json --save-raw gbif_tx_raw.json
+```
+
+The OSM import pulls every named lake and reservoir in Texas, plus public boat
+ramps and fishing piers, from OpenStreetMap's Overpass API. It can take a few
+minutes. `--save-raw` keeps the response so you can re-run offline with
+`--from-file tx_osm.json`. These lakes are shown as unverified: see
+`docs/adr/0010-statewide-osm-layer.md`.
+
+The GBIF import attaches species records (museum specimens, surveys,
+iNaturalist) to those lakes, shown as "reported", never as confirmed:
+see `docs/adr/0012-gbif-reported-species.md`. It downloads about 130,000
+records (a few minutes); `--from-file gbif_tx_raw.json` re-runs offline.
+Run it again after every OSM import.
+
+There are no schema migrations yet. New *tables* are created automatically
+when the API starts. After pulling model changes that add *columns*, delete
+`fishpilot_dev.db` and run the commands again.
+
 API docs: http://localhost:8000/docs
 
 ## Tests

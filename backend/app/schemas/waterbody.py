@@ -36,6 +36,28 @@ class SpeciesSummaryOut(BaseModel):
     observed_at: datetime
 
 
+class ReportedSourceOut(BaseModel):
+    name: str  # e.g. "Fishes of Texas (UT Austin)", "iNaturalist"
+    records: int
+
+
+class ReportedSpeciesOut(BaseModel):
+    """A species someone has recorded at this lake (GBIF), summarised.
+    Evidence that it has been found here, not an official confirmation:
+    see docs/adr/0012-gbif-reported-species.md."""
+
+    common_name: str
+    records: int
+    last_year: int | None
+    sources: list[ReportedSourceOut]
+    # A public page for the most recent record, so anyone can check it.
+    latest_record_url: str | None
+    # A single record from before 2000, or undated.
+    weak: bool
+    # Also on this lake's official (confirmed) species list.
+    also_confirmed: bool
+
+
 class WaterbodyListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -44,6 +66,10 @@ class WaterbodyListItem(BaseModel):
     longitude: float
     field_tested: bool
     public_access_status: str
+    data_tier: str  # "verified" | "osm" — see models/waterbody.py
+    water_type: str | None = None  # "lake" | "reservoir" | "pond"
+    # Distinct species with outside records (GBIF) here; see ReportedSpeciesOut.
+    reported_species_count: int = 0
 
 
 class WaterbodyDetail(BaseModel):
@@ -57,8 +83,11 @@ class WaterbodyDetail(BaseModel):
     source_updated_at: datetime
     field_tested: bool
     public_access_status: str
+    data_tier: str
+    water_type: str | None = None
     access_points: list[AccessPointOut]
     species: list[SpeciesSummaryOut]
+    reported_species: list[ReportedSpeciesOut] = []
 
 
 class SpeciesConditionOut(BaseModel):

@@ -245,3 +245,42 @@ def test_ingest_one_lake_writes_access_points_even_when_no_species_mentions_foun
     wb = db_session.query(Waterbody).filter_by(name="Test Lake").first()
     assert wb is not None  # waterbody still created despite 0 species mentions
     assert db_session.query(AccessPoint).filter_by(waterbody_id=wb.id).count() == 1
+
+
+def test_upsert_waterbody_promotes_a_same_named_osm_lake_and_drops_its_osm_entrances(db_session):
+    """If the statewide OpenStreetMap layer already imported a lake under
+    the exact name TPWD uses, the scraper must not write verified data into
+    a row still labelled 'osm' (see osm_waterbody_import.py)."""
+    tx = _tx_state(db_session)
+    osm_row = Waterbody(
+        state_id=tx.id,
+        name="Test Lake",
+        latitude=30.0,
+        longitude=-96.0,
+        access_summary="osm",
+        source_url="https://www.openstreetmap.org/way/9",
+        source_updated_at=datetime(2026, 9, 1, tzinfo=timezone.utc),
+        data_tier="osm",
+        public_access_status="unknown",
+        osm_ref="way/9",
+    )
+    osm_row.access_points = [
+        AccessPoint(
+            name="Boat ramp (OpenStreetMap)",
+            latitude=30.0,
+            longitude=-96.0,
+            access_type="boat_ramp",
+            public_status="osm_reported",
+            osm_ref="node/9",
+        )
+    ]
+    db_session.add(osm_row)
+    db_session.flush()
+
+    wb = upsert_waterbody(db_session, _target(), tx)
+
+    assert wb.id == osm_row.id
+    assert wb.data_tier == "verified"
+    assert wb.osm_ref == "way/9"  # kept, so the next OSM import leaves it alone
+    assert wb.public_access_status == "open"
+    assert [ap.public_status for ap in wb.access_points] == []

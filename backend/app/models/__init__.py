@@ -3,6 +3,7 @@ from app.models.waterbody import (  # noqa: F401
     SourceRecord,
     Species,
     SpeciesCondition,
+    SpeciesOccurrence,
     State,
     Waterbody,
     WaterbodySpecies,
@@ -15,5 +16,6 @@ __all__ = [
     "Species",
     "WaterbodySpecies",
     "SpeciesCondition",
+    "SpeciesOccurrence",
     "SourceRecord",
 ]

@@ -11,7 +11,7 @@ migration, not a rewrite.
 """
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, Text
+from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -52,6 +52,26 @@ class Waterbody(Base):
     # an empty access_points list (which also happens to mean "no data
     # yet" for a lake nobody has surveyed, a very different situation).
     public_access_status: Mapped[str] = mapped_column(String(16), default="open")
+    # "verified" | "osm". How much this app actually knows about the lake,
+    # which decides what the UI and every downstream service may do with it:
+    #   verified — hand-curated or scraped from an official source (TPWD):
+    #              species evidence, confirmed-public access, scoring, AI
+    #              explanations all apply.
+    #   osm      — imported from OpenStreetMap to show that a lake exists at
+    #              all (docs/adr/0010-statewide-osm-layer.md). Community-
+    #              mapped, not official: no species are ever attached, its
+    #              access points are "osm_reported" (never confirmed_public,
+    #              so scoring never ranks them), and the UI says so.
+    data_tier: Mapped[str] = mapped_column(String(16), default="verified")
+    # OSM element reference ("way/123", "relation/456") — what makes the
+    # importer idempotent, and what links a verified lake to its OSM twin so
+    # a re-import never creates a duplicate "Lake Somerville" next to ours.
+    osm_ref: Mapped[str | None] = mapped_column(String(32), unique=True, nullable=True)
+    # "lake" | "reservoir" | "pond", from OSM's water=* tag; None for
+    # hand-curated rows. Ponds get their own warning in the UI: in Texas
+    # many are on private land, and unlike a reservoir there's rarely an
+    # official public-access page to check.
+    water_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
     state: Mapped["State"] = relationship(back_populates="waterbodies")
     access_points: Mapped[list["AccessPoint"]] = relationship(
@@ -60,12 +80,26 @@ class Waterbody(Base):
     species_links: Mapped[list["WaterbodySpecies"]] = relationship(
         back_populates="waterbody", cascade="all, delete-orphan"
     )
+    occurrences: Mapped[list["SpeciesOccurrence"]] = relationship(
+        back_populates="waterbody", cascade="all, delete-orphan"
+    )
+
+    # The map's viewport query filters on lat/lng ranges; with a statewide
+    # import this table goes from 7 rows to thousands.
+    __table_args__ = (Index("ix_waterbodies_lat_lng", "latitude", "longitude"),)
 
 
 class AccessPoint(Base):
-    """A confirmed-public entry point. Never inferred — only what a source
-    explicitly documents as public. See PRD §12: "地图不会把未经确认的私人
-    区域标为公共入口" (acceptance criterion, not a suggestion)."""
+    """An entry point to a waterbody. Never inferred from geography — only
+    what a source explicitly documents. See PRD §12: "地图不会把未经确认的
+    私人区域标为公共入口" (acceptance criterion, not a suggestion).
+
+    public_status is what keeps sources from blurring together:
+      confirmed_public — an official source says so; the only status the
+                         scoring engine ranks (services/recommendations.py).
+      osm_reported     — OpenStreetMap tags it as a public slipway/pier.
+                         Shown to users with a "verify before you go" label,
+                         never scored, never described as confirmed."""
 
     __tablename__ = "access_points"
 
@@ -77,6 +111,7 @@ class AccessPoint(Base):
     access_type: Mapped[str] = mapped_column(String(32))  # bank, pier, boat_ramp, park
     public_status: Mapped[str] = mapped_column(String(16), default="confirmed_public")
     parking: Mapped[bool] = mapped_column(default=False)
+    osm_ref: Mapped[str | None] = mapped_column(String(32), unique=True, nullable=True)
 
     waterbody: Mapped["Waterbody"] = relationship(back_populates="access_points")
 
@@ -111,6 +146,52 @@ class WaterbodySpecies(Base):
 
     waterbody: Mapped["Waterbody"] = relationship(back_populates="species_links")
     species: Mapped["Species"] = relationship(back_populates="waterbody_links")
+
+
+class SpeciesOccurrence(Base):
+    """One outside record of a species at a lake: a GBIF occurrence (museum
+    specimen, agency survey record or iNaturalist observation) whose
+    coordinates fall inside the lake's extent.
+
+    This is the "reported" evidence tier (docs/adr/0012-gbif-reported-species.md)
+    and is deliberately a separate table from WaterbodySpecies:
+      - WaterbodySpecies is what an official survey confirms. Scoring and the
+        AI advisor read only that.
+      - SpeciesOccurrence says a fish *has been recorded* here, at some point,
+        by someone. It's shown with its count, latest year and source, and
+        never described as confirmed (PRD constraints 1 and 10).
+
+    One row per record, not per species, so the licence stays attached to
+    each record: non-commercial records can be excluded later with a setting,
+    without re-importing (docs/commercialization.md). `source` leaves room for
+    other kinds of report, e.g. future FishMate community photos."""
+
+    __tablename__ = "species_occurrences"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    waterbody_id: Mapped[int] = mapped_column(ForeignKey("waterbodies.id"), index=True)
+    # A species guide's common_name (app/knowledge/species_guides.py). Not a
+    # foreign key to Species: that table only holds fish some official
+    # source has confirmed somewhere.
+    species_name: Mapped[str] = mapped_column(String(64))
+    source: Mapped[str] = mapped_column(String(16), default="gbif")
+    source_record_id: Mapped[str] = mapped_column(String(64))  # GBIF occurrence key
+    year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    basis_of_record: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # Who collected it, grouped for display: "Fishes of Texas", "iNaturalist",
+    # "TPWD" or "Other collections". The raw fields are kept as well.
+    source_group: Mapped[str] = mapped_column(String(32))
+    dataset_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    institution_code: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    # "CC0" | "CC BY" | "CC BY-NC" | "other/unknown"
+    license: Mapped[str] = mapped_column(String(16))
+    latitude: Mapped[float] = mapped_column(Float)
+    longitude: Mapped[float] = mapped_column(Float)
+    imported_at: Mapped[datetime] = mapped_column(DateTime)
+
+    waterbody: Mapped["Waterbody"] = relationship(back_populates="occurrences")
+
+    __table_args__ = (UniqueConstraint("source", "source_record_id", name="uq_occurrence_source_record"),)
 
 
 class SpeciesCondition(Base):

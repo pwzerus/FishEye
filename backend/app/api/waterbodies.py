@@ -11,8 +11,26 @@ from app.schemas.waterbody import (
     WaterbodyListItem,
 )
 from app.services.geo import haversine_km
+from app.services.reported_species import reported_species, reported_species_counts
 
 router = APIRouter(prefix="/waterbodies", tags=["waterbodies"])
+
+
+MAX_LIST_RESULTS = 5000
+
+
+def _parse_bbox(bbox: str) -> tuple[float, float, float, float]:
+    """"west,south,east,north" — the order Leaflet's LatLngBounds
+    .toBBoxString() produces, so the frontend can pass it through as-is."""
+    try:
+        west, south, east, north = (float(part) for part in bbox.split(","))
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=422, detail="bbox must be 'west,south,east,north' as four numbers"
+        ) from exc
+    if not (south <= north and west <= east):
+        raise HTTPException(status_code=422, detail="bbox has south > north or west > east")
+    return west, south, east, north
 
 
 @router.get("", response_model=list[WaterbodyListItem])
@@ -23,7 +41,12 @@ def list_waterbodies(
     lat: float | None = Query(None),
     lng: float | None = Query(None),
     radius_km: float = Query(160.0, description="only used when lat/lng given"),
-) -> list[Waterbody]:
+    bbox: str | None = Query(
+        None, description="map viewport as 'west,south,east,north' (Leaflet toBBoxString order)"
+    ),
+    tier: str | None = Query(None, description="'verified' or 'osm'; omit for both"),
+    limit: int = Query(2000, ge=1, le=MAX_LIST_RESULTS),
+) -> list[WaterbodyListItem]:
     stmt = select(Waterbody).join(Waterbody.state)
     if state_code:
         from app.models.waterbody import State
@@ -33,6 +56,25 @@ def list_waterbodies(
         stmt = stmt.join(Waterbody.species_links).join(WaterbodySpecies.species).where(
             Species.common_name.ilike(species)
         )
+    if tier:
+        stmt = stmt.where(Waterbody.data_tier == tier)
+    if bbox:
+        west, south, east, north = _parse_bbox(bbox)
+        stmt = stmt.where(
+            Waterbody.latitude.between(south, north),
+            Waterbody.longitude.between(west, east),
+        )
+    if lat is not None and lng is not None:
+        # Coarse bounding-box prefilter in SQL (1 degree of latitude is
+        # ~111 km) so the exact haversine check below runs on a handful of
+        # rows, not the whole statewide table.
+        pad = radius_km / 111.0
+        stmt = stmt.where(Waterbody.latitude.between(lat - pad, lat + pad))
+
+    # Verified lakes first, so a capped result can never drop one of the
+    # lakes this app actually knows something about in favour of an
+    # OSM-only pond.
+    stmt = stmt.order_by((Waterbody.data_tier != "verified"), Waterbody.name)
 
     waterbodies = list(db.scalars(stmt).unique().all())
 
@@ -41,7 +83,22 @@ def list_waterbodies(
             w for w in waterbodies if haversine_km(lat, lng, w.latitude, w.longitude) <= radius_km
         ]
 
-    return waterbodies
+    waterbodies = waterbodies[:limit]
+    counts = reported_species_counts(db, (w.id for w in waterbodies))
+    return [
+        WaterbodyListItem(
+            id=w.id,
+            name=w.name,
+            latitude=w.latitude,
+            longitude=w.longitude,
+            field_tested=w.field_tested,
+            public_access_status=w.public_access_status,
+            data_tier=w.data_tier,
+            water_type=w.water_type,
+            reported_species_count=counts.get(w.id, 0),
+        )
+        for w in waterbodies
+    ]
 
 
 @router.get("/{waterbody_id}", response_model=WaterbodyDetail)
@@ -75,8 +132,11 @@ def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> Waterbody
         source_updated_at=wb.source_updated_at,
         field_tested=wb.field_tested,
         public_access_status=wb.public_access_status,
+        data_tier=wb.data_tier,
+        water_type=wb.water_type,
         access_points=list(wb.access_points),
         species=species_out,
+        reported_species=reported_species(db, wb.id, confirmed=(s.common_name for s in species_out)),
     )
 
 

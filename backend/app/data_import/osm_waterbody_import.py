@@ -58,12 +58,12 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.session import Base, SessionLocal, engine
-from app.models.waterbody import AccessPoint, State, Waterbody
+from app.models.waterbody import AccessPoint, SpeciesOccurrence, State, Waterbody
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 REQUEST_TIMEOUT_SECONDS = 400.0
@@ -420,6 +420,14 @@ def upsert(
                 for ref, ap in list(access_by_ref.items()):
                     if ap.waterbody_id == existing.id:
                         del access_by_ref[ref]
+                # Species records (GBIF) found in the duplicate's extent
+                # belong to the verified lake now.
+                db.execute(
+                    update(SpeciesOccurrence)
+                    .where(SpeciesOccurrence.waterbody_id == existing.id)
+                    .values(waterbody_id=twin.id)
+                )
+                db.expire(existing, ["occurrences"])
                 db.delete(existing)
                 db.flush()
                 summary.lakes_replaced_by_verified += 1
