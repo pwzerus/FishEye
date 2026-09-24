@@ -17,9 +17,10 @@ def post_recommendations(
     contribution and reason exposed (PRD §5.2 / §9).
 
     A candidate's `score` is only meaningful alongside its `confidence`:
-    habitat data doesn't exist yet, so every candidate scores on at most
-    75% of the intended signal, and the response says so per-candidate
-    rather than hiding it behind a single number.
+    a factor can still be individually unavailable (no target species
+    requested, no observation date, no usable weather sub-signal), and the
+    response says so per-candidate rather than hiding it behind a single
+    number.
     """
     try:
         result = build_recommendations(

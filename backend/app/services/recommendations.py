@@ -115,7 +115,6 @@ def build_recommendations(
     for point in access_points:
         factors = [
             scoring.score_access(point.public_status, point.access_type, point.parking),
-            scoring.score_habitat(),
             weather_factor,
             species_factor,
             freshness_factor,

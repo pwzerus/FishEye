@@ -1,7 +1,15 @@
 """Rule-based spot scoring (PRD §5.2, build-plan item D).
 
-    Spot Score = Access 30% + Habitat 25% + Weather 20%
-               + Species Match 15% + Freshness 10%
+    Spot Score = Access 40% + Weather 25% + Species Match 20% + Freshness 15%
+
+(Originally Access 30 + Habitat 25 + Weather 20 + Species Match 15 +
+Freshness 10. Habitat — bathymetry/vegetation — was removed on 2026-09-24:
+this app has no path to that data source, so it was a factor that could
+only ever return None, permanently costing every candidate 25% confidence
+for a signal it will never have. Its weight was redistributed across the
+other four rather than left as dead weight. See WEIGHT_ACCESS et al. below
+for the exact redistribution, and git history for the removed
+score_habitat().)
 
 Two properties matter more than the exact numbers, and both come straight
 from the PRD:
@@ -10,21 +18,18 @@ from the PRD:
    把缺失项当作零分，而应降低置信度并重新归一化已有信号." A factor with no
    data returns `None`, is dropped from the weighted sum, and the remaining
    weights are renormalized. `confidence` is then the fraction of the
-   intended signal we actually had — so a spot scored without habitat data
-   reports 0.75 confidence rather than silently pretending it scored 1.00.
-   Scoring a missing signal as 0 would systematically punish exactly the
-   lakes we know least about, which is backwards.
+   intended signal we actually had. Scoring a missing signal as 0 would
+   systematically punish exactly the lakes or conditions we know least
+   about, which is backwards. This still applies to every factor below
+   (weather's front sub-signal can be unavailable, species match and
+   freshness drop out when there's nothing to report) — habitat is simply
+   no longer one of the factors, since "always None" isn't a case this
+   mechanism needs to handle forever.
 
 2. **Every factor carries its own reason.** The PRD's whole premise (§5.2,
    and §18's "候选钓点由可解释规则评分产生，LLM 只负责解释") is that the
    ranking is explainable without the LLM. The LLM's job on Day 3 is to
    phrase these reasons, not to invent them.
-
-Habitat is unavailable for every candidate at MVP — we have no bathymetry
-or vegetation data (PRD §5.2 names exactly this gap). It is modeled as a
-real factor returning `None` rather than quietly dropped, so the
-confidence penalty is visible and so wiring in real habitat data later is
-a data change, not a scoring-engine rewrite.
 
 **Where the weather numbers come from:** every threshold in the weather
 factor traces to `docs/weather-scoring-rationale.md`, which cites the
@@ -45,11 +50,23 @@ from app.services.weather_adapter import WeatherSnapshot
 # PRD §5.2 default weights. They must sum to 1.0 — `confidence` is defined
 # as the share of total weight that had data, which only means anything if
 # the full set sums to one.
-WEIGHT_ACCESS = 0.30
-WEIGHT_HABITAT = 0.25
-WEIGHT_WEATHER = 0.20
-WEIGHT_SPECIES_MATCH = 0.15
-WEIGHT_FRESHNESS = 0.10
+#
+# Habitat (bathymetry/vegetation) was dropped entirely on 2026-09-24 rather
+# than kept as a factor that's permanently None: this app has no path to a
+# bathymetry or vegetation data source, so carrying it forever as "0.25 of
+# every candidate's weight, always missing" cost every score 25% confidence
+# for a signal it will never actually have. If a real habitat data source is
+# ever wired in, re-add it as its own weighted factor then — see git history
+# for the removed score_habitat() implementation. The other four weights
+# absorbed its share, rounded to keep the numbers readable:
+#   Access   0.30 -> 0.40
+#   Weather  0.20 -> 0.25
+#   Species  0.15 -> 0.20
+#   Freshness 0.10 -> 0.15
+WEIGHT_ACCESS = 0.40
+WEIGHT_WEATHER = 0.25
+WEIGHT_SPECIES_MATCH = 0.20
+WEIGHT_FRESHNESS = 0.15
 
 
 @dataclass(frozen=True)
@@ -162,23 +179,6 @@ def score_access(
     )
 
 
-def score_habitat() -> FactorScore:
-    """Always unavailable at MVP — no bathymetry or aquatic-vegetation data
-    source is wired up yet (PRD §5.2 names this exact gap). Returning None
-    costs 25% of confidence on every candidate, which is the honest
-    representation: we are ranking on three quarters of the intended
-    signal."""
-    return FactorScore(
-        name="habitat",
-        weight=WEIGHT_HABITAT,
-        value=None,
-        reason=(
-            "no bathymetry or vegetation data available — excluded from the "
-            "score and deducted from confidence rather than scored as zero"
-        ),
-    )
-
-
 def _parse_wind_mph(wind_speed: str | None) -> float | None:
     """NWS reports wind as a human string like '10 mph' or '5 to 10 mph'.
     Takes the upper bound of a range — the gustier end is what decides
@@ -212,16 +212,27 @@ def downwind_shore(wind_direction: str | None) -> str | None:
     return _OPPOSITE_COMPASS.get(wind_direction.strip().upper())
 
 
-# Weather sub-signal weights, applied *within* the 20% weather factor and
+# Weather sub-signal weights, applied *within* the weather factor and
 # renormalized the same way the top-level factors are — so an unavailable
-# sub-signal (water temperature, always, today) doesn't silently become a
-# zero either. Ordered by how well the sources actually support them; see
-# docs/weather-scoring-rationale.md for the citations behind every number
-# in this section.
-SUB_WEIGHT_WIND = 0.45
-SUB_WEIGHT_WATER_TEMP = 0.30
-SUB_WEIGHT_PRECIPITATION = 0.15
-SUB_WEIGHT_FRONT = 0.10
+# sub-signal doesn't silently become a zero either. Ordered by how well the
+# sources actually support them; see docs/weather-scoring-rationale.md for
+# the citations behind every number in this section.
+#
+# Water temperature was dropped entirely on 2026-09-24, for the same reason
+# habitat was: NWS gives air temperature, not water temperature, and this
+# app has no other source for it, so it was an always-None sub-signal
+# permanently docking every weather score's confidence for a signal it will
+# never have. If a real water-temperature source (USGS gauges, TPWD survey
+# data) is ever wired in, re-add it as its own weighted sub-signal — see git
+# history for the removed _score_water_temperature() implementation and
+# docs/weather-scoring-rationale.md for the 65-75F peak-feeding band it was
+# ready to use. The other three absorbed its 0.30 share, rounded:
+#   Wind          0.45 -> 0.60
+#   Precipitation 0.15 -> 0.25
+#   Front         0.10 -> 0.15
+SUB_WEIGHT_WIND = 0.60
+SUB_WEIGHT_PRECIPITATION = 0.25
+SUB_WEIGHT_FRONT = 0.15
 
 #: Wind bands in mph. The *shape* here is sourced — a light chop outscores
 #: dead calm, because wind-driven current concentrates plankton on the
@@ -261,20 +272,6 @@ def _score_wind(snapshot: WeatherSnapshot) -> tuple[float | None, str]:
         return 0.6, f"breezy ({speed}) — fishable but harder to control a boat"
     return 0.2, (
         f"strong wind ({speed}) — unsafe on open water, not just poor fishing"
-    )
-
-
-def _score_water_temperature() -> tuple[float | None, str]:
-    """Always unavailable. NWS gives *air* temperature, and water temperature
-    is the actually-predictive number — it lags air by days to weeks and
-    stratifies with depth. Substituting air temp would be the most misleading
-    thing this engine could do: authoritative-looking, and wrong in exactly
-    the spring/fall conditions where it matters most. The 65-75F peak-feeding
-    band and the rest of the table are in the rationale doc, ready for the day
-    a real water-temp source (USGS gauges, TPWD survey data) is wired in."""
-    return None, (
-        "no water-temperature source — NWS reports air temperature, which is "
-        "not a safe substitute, so this is excluded rather than approximated"
     )
 
 
@@ -344,7 +341,6 @@ def score_weather(snapshot: WeatherSnapshot) -> FactorScore:
 
     sub_signals = [
         (SUB_WEIGHT_WIND, *_score_wind(snapshot)),
-        (SUB_WEIGHT_WATER_TEMP, *_score_water_temperature()),
         (SUB_WEIGHT_PRECIPITATION, *_score_precipitation(snapshot)),
         (SUB_WEIGHT_FRONT, *_score_front(snapshot)),
     ]

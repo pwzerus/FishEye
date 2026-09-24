@@ -158,11 +158,12 @@ class MockProvider(LLMProvider):
 
         Only the leading clause is used. A factor reason is written for the
         `factors` list in the recommendations panel, where the full
-        "...; little chance of rain (excluded: no water-temperature
-        source...)" detail belongs; pasted whole into a one-line summary it
-        reads as noise. A real model would condense it — the mock takes the
-        first clause, which is the closest honest approximation of that
-        without inventing wording that isn't in the source reason.
+        "...; little chance of rain (excluded: not enough forecast data to
+        detect a front)" detail belongs; pasted whole into a one-line
+        summary it reads as noise. A real model would condense it — the
+        mock takes the first clause, which is the closest honest
+        approximation of that without inventing wording that isn't in the
+        source reason.
         """
         scored = [f for f in candidate.get("factors", []) if f.get("value") is not None]
         if not scored:

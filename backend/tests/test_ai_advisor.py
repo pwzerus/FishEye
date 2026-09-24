@@ -372,7 +372,7 @@ def test_confidence_comes_from_the_scoring_engine_not_the_model(db_session, seed
     # There is no `confidence` field on the explanation at all to carry it.
     assert not hasattr(result.explanation, "confidence")
     assert server_fields["confidence"] == result.facts["candidates"][0]["confidence"]
-    assert server_fields["confidence"] < 1.0  # habitat/water-temp are missing
+    assert server_fields["confidence"] < 1.0  # only one forecast hour: no front signal
 
 
 def test_safety_warnings_survive_a_model_that_ignores_them(db_session, seeded_lake):

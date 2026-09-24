@@ -125,8 +125,9 @@ def test_no_available_signal_returns_zero_score_at_zero_confidence():
 
 def test_partially_informed_factor_costs_confidence_but_not_score():
     """A factor built from sub-signals that only got some of them (weather
-    without a water-temperature source) should still contribute its measured
-    value at full weight, while the uncertainty lands in confidence."""
+    with too little forecast data to detect a front) should still
+    contribute its measured value at full weight, while the uncertainty
+    lands in confidence."""
     partial = scoring.combine_factors(
         [
             FactorScore("a", 0.5, 1.0, ""),
@@ -144,7 +145,6 @@ def test_weather_sub_weights_sum_to_one():
     which only reads as 'share informed' if the sub-weights sum to 1."""
     total = (
         scoring.SUB_WEIGHT_WIND
-        + scoring.SUB_WEIGHT_WATER_TEMP
         + scoring.SUB_WEIGHT_PRECIPITATION
         + scoring.SUB_WEIGHT_FRONT
     )
@@ -156,7 +156,6 @@ def test_prd_weights_sum_to_one():
     which only holds if the full weight set sums to 1."""
     total = (
         scoring.WEIGHT_ACCESS
-        + scoring.WEIGHT_HABITAT
         + scoring.WEIGHT_WEATHER
         + scoring.WEIGHT_SPECIES_MATCH
         + scoring.WEIGHT_FRESHNESS
@@ -182,13 +181,6 @@ def test_unconfirmed_access_scores_zero_rather_than_missing():
     factor = scoring.score_access("unconfirmed", "bank", parking=True)
     assert factor.value == 0.0
     assert factor.available is True
-
-
-def test_habitat_is_always_unavailable_at_mvp():
-    factor = scoring.score_habitat()
-    assert factor.value is None
-    assert factor.weight == 0.25
-    assert "bathymetry" in factor.reason
 
 
 def test_weather_is_unavailable_when_adapter_fell_back():
@@ -228,16 +220,36 @@ def test_wind_range_uses_upper_bound():
     assert scoring._parse_wind_mph("calm") is None
 
 
-def test_weather_never_claims_full_availability_without_water_temperature():
-    """Water temperature is the best-supported signal in the angling
-    literature and NWS doesn't provide it. The weather factor must report
-    that gap as reduced availability rather than scoring as if it had it."""
+def test_weather_never_claims_full_availability_with_too_little_forecast_data():
+    """A single forecast hour isn't enough to detect an approaching front.
+    The weather factor must report that gap as reduced availability rather
+    than scoring as if it had every sub-signal."""
     factor = scoring.score_weather(_snapshot())
     assert factor.availability < 1.0
-    assert "water-temperature" in factor.reason
-    # It still contributes — wind data is real data.
+    assert "not enough forecast data" in factor.reason
+    # It still contributes — wind and precipitation data are real data.
     assert factor.value is not None
     assert factor.confidence_weight < factor.weight
+
+
+def test_weather_is_fully_available_with_a_normal_forecast_window():
+    """With enough hourly periods to score wind, precipitation and a front,
+    nothing is missing — there's no sub-signal left that can only ever be
+    None (water temperature was removed for exactly that reason)."""
+    hourly = [
+        HourlyPeriod(
+            start_time=NOW + timedelta(hours=i),
+            temperature=78,
+            temperature_unit="F",
+            wind_speed="10 mph",
+            wind_direction="SE",
+            short_forecast="Partly Sunny",
+            probability_of_precipitation=10,
+        )
+        for i in range(12)
+    ]
+    factor = scoring.score_weather(_snapshot(hourly=hourly))
+    assert factor.availability == 1.0
 
 
 def test_barometric_pressure_is_not_a_scoring_input():

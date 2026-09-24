@@ -79,19 +79,18 @@ def test_recommendations_rank_access_points(client, seeded_lake, stub_weather):
     assert candidate["name"] == "Lake Fork Dam Bank Access"
     assert candidate["public_access_status"] == "confirmed_public"
     assert 0 < candidate["score"] <= 1
-    assert candidate["missing_signals"] == ["habitat"]
+    assert candidate["missing_signals"] == []
 
     # Confidence is the share of intended signal that was actually informed:
-    #   access 0.30 + species 0.15 + freshness 0.10  = 0.55 fully informed
-    #   habitat                                        0.00 (no data at all)
-    #   weather 0.20 x 0.60 availability              = 0.12
-    # Weather is only 60% informed here because it has no water-temperature
-    # source (0.30 of its sub-weight) and this fixture's single forecast hour
-    # is too short to detect a front (0.10).
-    assert candidate["confidence"] == 0.67
+    #   access 0.40 + species 0.20 + freshness 0.15  = 0.75 fully informed
+    #   weather 0.25 x 0.85 availability              = 0.2125
+    # Weather is only 85% informed here (wind 0.60 + precipitation 0.25 of
+    # its 1.0 sub-weight) because this fixture's single forecast hour is too
+    # short to detect a front (0.15 of the sub-weight).
+    assert candidate["confidence"] == 0.9625
 
     weather = next(f for f in candidate["factors"] if f["name"] == "weather")
-    assert "water-temperature" in weather["reason"]
+    assert "not enough forecast data" in weather["reason"]
 
 
 def test_every_factor_reports_its_own_reason(client, seeded_lake, stub_weather):
@@ -105,7 +104,6 @@ def test_every_factor_reports_its_own_reason(client, seeded_lake, stub_weather):
 
     assert {f["name"] for f in factors} == {
         "access",
-        "habitat",
         "weather",
         "species_match",
         "freshness",
@@ -153,8 +151,8 @@ def test_weather_outage_lowers_confidence_but_still_returns_candidates(
     assert body["weather_source"] == "fallback"
     assert body["best_time_window"] is None
     candidate = body["candidates"][0]
-    assert set(candidate["missing_signals"]) == {"habitat", "weather"}
-    assert candidate["confidence"] == 0.55  # 1.0 - 0.25 habitat - 0.20 weather
+    assert set(candidate["missing_signals"]) == {"weather"}
+    assert candidate["confidence"] == 0.75  # 1.0 - 0.25 weather
 
 
 def test_severe_weather_alerts_surface_at_top_level(client, seeded_lake, stub_weather):
@@ -202,7 +200,7 @@ def test_omitting_target_species_drops_the_factor(client, seeded_lake, stub_weat
     stub_weather(_snapshot())
     resp = client.post("/api/recommendations", json={"waterbody_id": seeded_lake["waterbody"].id})
     candidate = resp.json()["candidates"][0]
-    assert set(candidate["missing_signals"]) == {"habitat", "species_match"}
+    assert set(candidate["missing_signals"]) == {"species_match"}
 
 
 def test_unknown_waterbody_returns_404(client, stub_weather):

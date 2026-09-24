@@ -75,10 +75,16 @@ depth. Substituting air temp here would be the single most misleading thing
 this scoring engine could do, because it would look authoritative and be
 wrong in spring and fall precisely when it matters most.
 
-**Encoded as:** an explicitly unavailable sub-signal. It costs confidence
-and is named in the output, the same treatment habitat gets. The table above
-is kept here ready for the day a water-temperature source is wired in (USGS
-gauges cover some reservoirs; TPWD publishes some survey temps).
+**Encoded as: nothing, as of 2026-09-24.** It was originally an explicitly
+unavailable sub-signal (costing confidence, named in the output — the same
+treatment habitat got), but with no real path to a water-temperature source
+that permanently docked every weather score's confidence for a signal this
+project will never have, so it was removed rather than kept as dead weight
+(`docs/adr/0013-drop-habitat-and-water-temperature.md`). The table above is
+kept here, ready for the day a water-temperature source is wired in (USGS
+gauges cover some reservoirs; TPWD publishes some survey temps) — re-add it
+as its own weighted sub-signal in `app/services/scoring.py` then, using
+these numbers.
 
 ### Barometric pressure — deliberately NOT a scoring factor
 
