@@ -1,9 +1,12 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
+import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
+import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import L from "leaflet";
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap, useMapEvents } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
 
 import type { WaterbodyListItem } from "@/lib/api/types";
 
@@ -25,76 +28,156 @@ const fieldTestedIcon = L.icon({
   className: "field-tested-marker",
 });
 
+// Same pin, greyed out by CSS: a lake OpenStreetMap knows about but this
+// app has no verified information on. Deliberately less eye-catching than
+// a verified lake's pin.
+const osmIcon = L.icon({
+  ...defaultIcon.options,
+  className: "osm-marker",
+});
+
 const TEXAS_CENTER: [number, number] = [31.4, -99.3];
+const SEARCH_ZOOM = 11;
+const VIEWPORT_DEBOUNCE_MS = 300;
+
+export interface Viewport {
+  bbox: string; // "west,south,east,north"
+  zoom: number;
+  center: [number, number];
+}
 
 /**
- * Two different reasons the view might need to move, handled by one effect
- * so they can't fight each other over who owns the map's position:
- *
- * - Markers present -> fit bounds to them, same as always.
- * - No markers, but the user just searched/located a point that came back
- *   with nothing nearby -> fly there anyway rather than leaving the map
- *   sitting on the old view. An empty result is a real, honest answer
- *   ("nothing on file here yet" — see MapView's own empty-state message),
- *   not a reason to pretend the search didn't happen.
+ * Reports the visible area after the user stops moving the map — and once
+ * on mount, since Leaflet doesn't fire moveend for the initial view. The
+ * parent decides what to load for it (MapView.tsx); this component only
+ * says where the map is looking.
  */
-function FitToView({
-  waterbodies,
+function ViewportWatcher({ onChange }: { onChange: (viewport: Viewport) => void }) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const map = useMapEvents({
+    moveend: () => schedule(),
+  });
+
+  function schedule() {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => onChange(read()), VIEWPORT_DEBOUNCE_MS);
+  }
+
+  function read(): Viewport {
+    const c = map.getCenter();
+    return { bbox: map.getBounds().toBBoxString(), zoom: map.getZoom(), center: [c.lat, c.lng] };
+  }
+
+  useEffect(() => {
+    onChange(read());
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+    // Mount-only: later reports come from moveend.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return null;
+}
+
+/**
+ * Flies to the last searched / located point. The map no longer re-fits
+ * itself to whatever markers are loaded: markers are now *loaded from* the
+ * viewport, so fitting the viewport to the markers would loop.
+ */
+function FlyToFocus({
   focusPoint,
+  skipOnMount,
 }: {
-  waterbodies: WaterbodyListItem[];
   focusPoint: { latitude: number; longitude: number } | null;
+  skipOnMount: boolean;
 }) {
   const map = useMap();
+  // When the map is remounted to restore a previous view (coming back from
+  // a lake's detail map), the old search point must not yank it away again.
+  const skip = useRef(skipOnMount);
   useEffect(() => {
-    if (waterbodies.length > 0) {
-      const bounds = L.latLngBounds(waterbodies.map((w) => [w.latitude, w.longitude]));
-      map.fitBounds(bounds, { padding: [40, 40] });
-    } else if (focusPoint) {
-      map.flyTo([focusPoint.latitude, focusPoint.longitude], 10);
+    if (skip.current) {
+      skip.current = false;
+      return;
     }
-  }, [waterbodies, focusPoint, map]);
+    if (focusPoint) map.flyTo([focusPoint.latitude, focusPoint.longitude], SEARCH_ZOOM);
+  }, [focusPoint, map]);
   return null;
+}
+
+function LakeMarker({ lake, onSelect }: { lake: WaterbodyListItem; onSelect: (id: number) => void }) {
+  const isOsm = lake.data_tier === "osm";
+  return (
+    <Marker
+      position={[lake.latitude, lake.longitude]}
+      icon={isOsm ? osmIcon : lake.field_tested ? fieldTestedIcon : defaultIcon}
+      eventHandlers={{ click: () => onSelect(lake.id) }}
+    >
+      <Popup>
+        <strong>{lake.name}</strong>
+        {isOsm ? (
+          <div style={{ fontSize: 12, color: "#6b7280" }}>
+            {lake.water_type === "pond" ? "Pond · " : ""}Unverified · from OpenStreetMap
+          </div>
+        ) : (
+          lake.field_tested && (
+            <div style={{ fontSize: 12, color: "#2563eb" }}>Friend field-tested</div>
+          )
+        )}
+      </Popup>
+    </Marker>
+  );
 }
 
 export default function LakeMap({
   waterbodies,
   onSelect,
+  onViewportChange,
   focusPoint = null,
+  initialView = null,
 }: {
   waterbodies: WaterbodyListItem[];
   onSelect: (id: number) => void;
-  // The last point a search or "use my location" resolved to — used only
-  // when there are no markers to fit bounds to (see FitToView above).
+  onViewportChange: (viewport: Viewport) => void;
   focusPoint?: { latitude: number; longitude: number } | null;
+  // Where to open the map; defaults to the Texas overview.
+  initialView?: { center: [number, number]; zoom: number } | null;
 }) {
+  const verified = waterbodies.filter((w) => w.data_tier !== "osm");
+  const osm = waterbodies.filter((w) => w.data_tier === "osm");
+
   return (
     <MapContainer
-      center={TEXAS_CENTER}
-      zoom={6}
+      center={initialView?.center ?? TEXAS_CENTER}
+      zoom={initialView?.zoom ?? 6}
       scrollWheelZoom
+      // Moved to the bottom right: the search bar sits in the top left,
+      // where Leaflet puts the zoom buttons by default.
+      zoomControl={false}
       style={{ height: "100%", width: "100%" }}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <FitToView waterbodies={waterbodies} focusPoint={focusPoint} />
-      {waterbodies.map((w) => (
-        <Marker
-          key={w.id}
-          position={[w.latitude, w.longitude]}
-          icon={w.field_tested ? fieldTestedIcon : defaultIcon}
-          eventHandlers={{ click: () => onSelect(w.id) }}
-        >
-          <Popup>
-            <strong>{w.name}</strong>
-            {w.field_tested && (
-              <div style={{ fontSize: 12, color: "#2563eb" }}>Friend field-tested</div>
-            )}
-          </Popup>
-        </Marker>
+      <ZoomControl position="bottomright" />
+      <ViewportWatcher onChange={onViewportChange} />
+      <FlyToFocus focusPoint={focusPoint} skipOnMount={initialView !== null} />
+
+      {/* Verified lakes are never clustered: there are few of them and
+          they're the ones this app can actually say something about. */}
+      {verified.map((lake) => (
+        <LakeMarker key={lake.id} lake={lake} onSelect={onSelect} />
       ))}
+
+      {/* OSM lakes can number in the thousands in one view; clustering
+          keeps the map readable and the browser responsive. */}
+      <MarkerClusterGroup chunkedLoading showCoverageOnHover={false}>
+        {osm.map((lake) => (
+          <LakeMarker key={lake.id} lake={lake} onSelect={onSelect} />
+        ))}
+      </MarkerClusterGroup>
     </MapContainer>
   );
 }

@@ -1,11 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { ApiError, listWaterbodies } from "@/lib/api/client";
 import type { WaterbodyListItem } from "@/lib/api/types";
 import { WaterbodyPanel } from "@/components/waterbody/WaterbodyPanel";
+import type { Viewport } from "./LakeMap";
 import { LocationSearchBar, type LocatedPoint } from "./LocationSearchBar";
 
 // Leaflet touches `window` at import time, which breaks server-side
@@ -21,66 +22,105 @@ const LakeDetailMap = dynamic(() => import("./LakeDetailMap"), {
   loading: () => <div className="map-loading">Loading lake map…</div>,
 });
 
-// "Nearby" for someone deciding where to drive to fish — wide enough to
-// catch a metro area's lakes, narrow enough that a search doesn't return
-// something three states over.
-const NEARBY_RADIUS_KM = 80;
+// Below this zoom only verified lakes are loaded. A statewide view holds
+// thousands of OpenStreetMap lakes; loading a capped, arbitrary subset of
+// them would look like the full picture when it isn't, so the map asks the
+// user to zoom in instead.
+export const MIN_ZOOM_FOR_ALL_LAKES = 8;
+// Per-request cap. A dense metro view (with ponds included) can exceed it;
+// the backend returns verified lakes first, and the map says the view is
+// partial rather than silently dropping the rest.
+const VIEWPORT_LIMIT = 2000;
 
 export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: WaterbodyListItem[] }) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [waterbodies, setWaterbodies] = useState(initialWaterbodies);
   const [focusPoint, setFocusPoint] = useState<LocatedPoint | null>(null);
-  const [searchState, setSearchState] = useState<"idle" | "loading" | "empty">("idle");
+  const [zoom, setZoom] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [truncated, setTruncated] = useState(false);
+  // Where the overview map was last looking, so "← All lakes" returns there
+  // instead of resetting to the whole of Texas.
+  const [lastView, setLastView] = useState<{ center: [number, number]; zoom: number } | null>(
+    null,
+  );
+  // Pans can overlap: only the newest request's answer is shown.
+  const latestRequest = useRef(0);
 
-  function handleLocate(point: LocatedPoint) {
-    setSelectedId(null); // a fresh search returns to the statewide-style view
-    setFocusPoint(point);
-    setSearchState("loading");
-    listWaterbodies({ lat: point.latitude, lng: point.longitude, radiusKm: NEARBY_RADIUS_KM })
-      .then((nearby) => {
-        setWaterbodies(nearby);
-        setSearchState(nearby.length === 0 ? "empty" : "idle");
+  function handleViewportChange({ bbox, zoom: newZoom, center }: Viewport) {
+    const requestId = ++latestRequest.current;
+    setZoom(newZoom);
+    setLastView({ center, zoom: newZoom });
+    setLoading(true);
+    listWaterbodies({
+      bbox,
+      tier: newZoom < MIN_ZOOM_FOR_ALL_LAKES ? "verified" : undefined,
+      limit: VIEWPORT_LIMIT,
+    })
+      .then((lakes) => {
+        if (requestId !== latestRequest.current) return;
+        setWaterbodies(lakes);
+        setTruncated(lakes.length >= VIEWPORT_LIMIT);
       })
       .catch((e: unknown) => {
-        // Keep whatever was already on screen rather than blanking the map
-        // over a transient fetch error.
-        setSearchState("idle");
-        console.error("nearby-waterbody search failed:", e instanceof ApiError ? e.message : e);
+        // Keep what's on screen rather than blanking the map over a
+        // transient error.
+        console.error("viewport lake query failed:", e instanceof ApiError ? e.message : e);
+      })
+      .finally(() => {
+        if (requestId === latestRequest.current) setLoading(false);
       });
   }
+
+  function handleLocate(point: LocatedPoint) {
+    setSelectedId(null);
+    // Flying there fires moveend, which loads that area's lakes through
+    // handleViewportChange like any other pan.
+    setFocusPoint(point);
+  }
+
+  const zoomedOut = zoom !== null && zoom < MIN_ZOOM_FOR_ALL_LAKES;
+  const showEmpty = focusPoint !== null && !loading && !zoomedOut && waterbodies.length === 0;
 
   return (
     <div className="map-view">
       <div className="map-container">
         {selectedId === null ? (
           <>
-            {/* Only shown on the multi-lake view — searching a new location
-                already returns here (handleLocate resets selectedId), so
-                there's no case where this needs to coexist with the
-                "← All lakes" button below. */}
             <LocationSearchBar onLocate={handleLocate} />
-            {searchState === "loading" && (
-              <div className="nearby-search-status">Searching nearby lakes…</div>
-            )}
-            {searchState === "empty" && (
-              // Honest, not apologetic: this app only knows about a handful
-              // of hand-verified lakes today (see docs/adr/0009-geocoding.md)
-              // — saying so plainly beats a map that just looks broken.
-              <div className="no-nearby-lakes-banner">
-                No fishing spots on file near {focusPoint?.label ?? "this location"} yet. This
-                demo currently covers a handful of hand-verified Texas lakes — check back as
-                coverage grows.
-              </div>
-            )}
-            <LakeMap waterbodies={waterbodies} onSelect={setSelectedId} focusPoint={focusPoint} />
+            <div className="map-status-stack">
+              {loading && <div className="map-status-chip">Loading lakes…</div>}
+              {!loading && !zoomedOut && truncated && (
+                <div className="map-status-chip">
+                  Showing the first {VIEWPORT_LIMIT} lakes and ponds here. Zoom in to see the rest.
+                </div>
+              )}
+              {!loading && zoomedOut && (
+                <div className="map-status-chip">
+                  Showing verified lakes only. Zoom in to see every mapped lake.
+                </div>
+              )}
+              {showEmpty && (
+                // Honest, not apologetic: the statewide layer covers Texas
+                // only for now (docs/adr/0010-statewide-osm-layer.md).
+                <div className="no-nearby-lakes-banner">
+                  No lakes on file near {focusPoint.label} yet. FishMate covers Texas for now.
+                </div>
+              )}
+            </div>
+            <LakeMap
+              waterbodies={waterbodies}
+              onSelect={setSelectedId}
+              onViewportChange={handleViewportChange}
+              focusPoint={focusPoint}
+              initialView={lastView}
+            />
           </>
         ) : (
           <>
             {/* Drill-down, not an overlay: clicking a lake replaces the
-                statewide map with that lake's own zoomed-in view (per
-                the request that recommendations and, later, the AI
-                Advisor and community pins need a map scoped to one lake,
-                not the whole state) — this button is the only way back. */}
+                statewide map with that lake's own zoomed-in view — this
+                button is the only way back. */}
             <button
               type="button"
               className="back-to-map-button"

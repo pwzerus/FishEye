@@ -3,6 +3,7 @@ import type {
   AdvisorResponse,
   GeocodeResult,
   RecommendationRequest,
+  SpeciesGuide,
   RecommendationResponse,
   Weather,
   WaterbodyDetail,
@@ -45,19 +46,28 @@ export function listWaterbodies(params?: {
   lat?: number;
   lng?: number;
   radiusKm?: number;
+  // The map's visible area, "west,south,east,north" — Leaflet's
+  // LatLngBounds.toBBoxString() order, passed through unchanged.
+  bbox?: string;
+  tier?: "verified" | "osm";
+  limit?: number;
 }): Promise<WaterbodyListItem[]> {
   const qs = new URLSearchParams();
   if (params?.stateCode) qs.set("state_code", params.stateCode);
   if (params?.species) qs.set("species", params.species);
+  if (params?.bbox) qs.set("bbox", params.bbox);
+  if (params?.tier) qs.set("tier", params.tier);
+  if (params?.limit !== undefined) qs.set("limit", String(params.limit));
   if (params?.lat !== undefined && params?.lng !== undefined) {
     qs.set("lat", String(params.lat));
     qs.set("lng", String(params.lng));
     if (params.radiusKm !== undefined) qs.set("radius_km", String(params.radiusKm));
   }
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
-  // A location search is a one-off user action, not a page load — always
-  // hit the live path, same reasoning as getWeather below.
-  const cacheOpt = params?.lat !== undefined ? { cache: "no-store" as const } : undefined;
+  // A search or a map pan is a user action, not a page load — always hit
+  // the live path, same reasoning as getWeather below.
+  const interactive = params?.lat !== undefined || params?.bbox !== undefined;
+  const cacheOpt = interactive ? { cache: "no-store" as const } : undefined;
   return apiFetch<WaterbodyListItem[]>(`/api/waterbodies${suffix}`, cacheOpt);
 }
 
@@ -103,6 +113,24 @@ export function postAdvisorExplain(payload: AdvisorRequest): Promise<AdvisorResp
     body: JSON.stringify(payload),
     cache: "no-store",
   });
+}
+
+// Same rule as the backend's slugify (app/knowledge/species_guides.py).
+export function speciesSlug(commonName: string): string {
+  return commonName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function listSpeciesGuides(): Promise<SpeciesGuide[]> {
+  // Reviewed reference content that changes only with a deploy: the default
+  // short revalidation in apiFetch is plenty.
+  return apiFetch<SpeciesGuide[]>("/api/species/guides");
+}
+
+export function getSpeciesGuide(slug: string): Promise<SpeciesGuide> {
+  return apiFetch<SpeciesGuide>(`/api/species/guides/${encodeURIComponent(slug)}`);
 }
 
 export { ApiError };

@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import { useEffect, useState } from "react";
 
 import { ApiError, getWaterbody } from "@/lib/api/client";
@@ -95,12 +95,15 @@ export default function LakeDetailMap({ waterbodyId }: { waterbodyId: number }) 
       center={[detail.latitude, detail.longitude]}
       zoom={12}
       scrollWheelZoom
+      // Bottom right, clear of the "← All lakes" button (same fix as LakeMap).
+      zoomControl={false}
       style={{ height: "100%", width: "100%" }}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      <ZoomControl position="bottomright" />
       <FitToLakeExtent detail={detail} />
       <Marker position={[detail.latitude, detail.longitude]} icon={lakeCenterIcon}>
         <Popup>
@@ -125,6 +128,11 @@ export default function LakeDetailMap({ waterbodyId }: { waterbodyId: number }) 
                 {ap.access_type.replace("_", " ")}
                 {ap.parking ? ", parking available" : ""}
               </div>
+              {ap.public_status === "osm_reported" && (
+                <div style={{ fontSize: 12, color: "#92400e" }}>
+                  Reported on OpenStreetMap, not verified. Check it&apos;s public before you go.
+                </div>
+              )}
             </Popup>
           </Marker>
         ))}

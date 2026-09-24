@@ -14,8 +14,23 @@ export interface WaterbodyListItem {
   // backend/app/models/waterbody.py — added after TPWD's own access page
   // for Gibbons Creek Reservoir showed it closed to the public since
   // 12/25/21.
-  public_access_status: "open" | "closed";
+  // "unknown" for lakes from the statewide OpenStreetMap layer: the map
+  // knows the lake exists, not whether it's open.
+  public_access_status: PublicAccessStatus;
+  data_tier: DataTier;
+  // From OpenStreetMap's water=* tag; null for hand-curated lakes.
+  water_type: WaterType | null;
 }
+
+export type WaterType = "lake" | "reservoir" | "pond";
+
+// "verified": hand-curated or from an official source (TPWD) — species,
+//   confirmed-public access, scoring and AI explanations all apply.
+// "osm": imported from OpenStreetMap to show that a lake exists at all.
+//   Community-mapped, no species, entrances are "osm_reported" and never
+//   scored. See backend/app/models/waterbody.py and ADR 0010.
+export type DataTier = "verified" | "osm";
+export type PublicAccessStatus = "open" | "closed" | "unknown";
 
 // Mirrors backend/app/schemas/geocoding.py.
 export interface GeocodeResult {
@@ -53,7 +68,9 @@ export interface WaterbodyDetail {
   source_url: string;
   source_updated_at: string;
   field_tested: boolean;
-  public_access_status: "open" | "closed";
+  public_access_status: PublicAccessStatus;
+  data_tier: DataTier;
+  water_type: WaterType | null;
   access_points: AccessPoint[];
   species: SpeciesSummary[];
 }
@@ -246,4 +263,44 @@ export interface RecommendationResponse {
   safety_warnings: WeatherWarning[];
   weather_source: WeatherSource;
   generated_at: string;
+}
+
+// Mirrors backend/app/schemas/species_guide.py.
+export interface GuideSource {
+  label: string;
+  url: string;
+  // "guide" = a fishing guide's or tackle site, not an agency or established
+  // publication; the UI labels it so a reader can weigh it accordingly.
+  kind: "agency" | "publication" | "guide";
+}
+
+export interface TackleSetup {
+  name: string;
+  use_when: string;
+  rod: string;
+  reel: string;
+  line: string;
+  terminal: string;
+  sources: GuideSource[];
+}
+
+export interface SpeciesGuide {
+  slug: string;
+  common_name: string;
+  scientific_name: string;
+  role: "sport" | "forage";
+  difficulty: "beginner" | "intermediate" | "advanced" | null;
+  summary: string;
+  diet: string;
+  where_and_when: string[];
+  live_baits: string[];
+  lures: string[];
+  setups: TackleSetup[];
+  tips: string[];
+  identification: string[];
+  how_to_get: string[];
+  bait_for: string[];
+  legal_notes: string[];
+  limits_url: string;
+  sources: GuideSource[];
 }

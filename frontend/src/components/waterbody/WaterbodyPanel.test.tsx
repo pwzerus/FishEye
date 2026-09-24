@@ -36,6 +36,8 @@ const mockDetail: WaterbodyDetail = {
   source_updated_at: "2026-09-01T00:00:00Z",
   field_tested: true,
   public_access_status: "open",
+  data_tier: "verified",
+  water_type: null,
   access_points: [
     {
       id: 1,
@@ -303,6 +305,93 @@ describe("WaterbodyPanel", () => {
     expect(postRecommendations).not.toHaveBeenCalled();
     expect(getWeather).not.toHaveBeenCalled();
     expect(screen.queryByRole("button", { name: /explain these picks/i })).not.toBeInTheDocument();
+  });
+
+  // --- Unverified lakes (statewide OpenStreetMap layer) ---
+
+  const osmDetail: WaterbodyDetail = {
+    ...mockDetail,
+    id: 7,
+    name: "Lake Tawakoni",
+    field_tested: false,
+    public_access_status: "unknown",
+    data_tier: "osm",
+    water_type: "reservoir",
+    source_url: "https://www.openstreetmap.org/way/2",
+    access_points: [
+      {
+        id: 70,
+        name: "Wind Point Park Ramp",
+        latitude: 32.85,
+        longitude: -95.95,
+        access_type: "boat_ramp",
+        public_status: "osm_reported",
+        parking: false,
+      },
+    ],
+    species: [],
+  };
+
+  it("labels an OpenStreetMap lake as unverified and says why", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(osmDetail);
+    render(<WaterbodyPanel waterbodyId={7} />);
+
+    await waitFor(() => expect(screen.getByText("unverified")).toBeInTheDocument());
+    expect(screen.getByText(/comes from OpenStreetMap/i)).toBeInTheDocument();
+    expect(screen.getByText(/fish species not verified/i)).toBeInTheDocument();
+  });
+
+  it("never presents an OpenStreetMap entrance as confirmed public access", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(osmDetail);
+    render(<WaterbodyPanel waterbodyId={7} />);
+
+    await waitFor(() =>
+      expect(screen.getByText("Entrances reported on OpenStreetMap")).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Confirmed public access points")).not.toBeInTheDocument();
+    expect(screen.getByText("reported, not verified")).toBeInTheDocument();
+    expect(screen.queryByText(/confirmed public/i)).not.toBeInTheDocument();
+  });
+
+  it("offers no AI explanation for an unverified lake", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(osmDetail);
+    render(<WaterbodyPanel waterbodyId={7} />);
+
+    await waitFor(() => expect(screen.getByText("unverified")).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: /explain these picks/i })).not.toBeInTheDocument();
+    // Weather still shows: it's official NWS data about a location, not a
+    // claim about the lake.
+    await waitFor(() => expect(getWeather).toHaveBeenCalledWith(osmDetail.latitude, osmDetail.longitude));
+  });
+
+  it("warns that a pond may be on private land", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue({
+      ...osmDetail,
+      id: 8,
+      name: "Bee Creek Park Pond",
+      water_type: "pond",
+    });
+    render(<WaterbodyPanel waterbodyId={8} />);
+
+    await waitFor(() => expect(screen.getByText("unverified")).toBeInTheDocument());
+    expect(screen.getByText(/many ponds are on private land/i)).toBeInTheDocument();
+  });
+
+  it("does not show the pond warning for an unverified reservoir", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(osmDetail);
+    render(<WaterbodyPanel waterbodyId={7} />);
+
+    await waitFor(() => expect(screen.getByText("unverified")).toBeInTheDocument());
+    expect(screen.queryByText(/many ponds are on private land/i)).not.toBeInTheDocument();
+  });
+
+  it("does not show the unverified banner for a verified lake", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    render(<WaterbodyPanel waterbodyId={1} />);
+
+    await waitFor(() => expect(screen.getByText("Lake Fork")).toBeInTheDocument());
+    expect(screen.queryByText("unverified")).not.toBeInTheDocument();
+    expect(screen.queryByText(/comes from OpenStreetMap/i)).not.toBeInTheDocument();
   });
 
   // --- AI advisor panel ---
