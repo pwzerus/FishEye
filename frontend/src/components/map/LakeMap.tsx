@@ -27,22 +27,46 @@ const fieldTestedIcon = L.icon({
 
 const TEXAS_CENTER: [number, number] = [31.4, -99.3];
 
-function FitToMarkers({ waterbodies }: { waterbodies: WaterbodyListItem[] }) {
+/**
+ * Two different reasons the view might need to move, handled by one effect
+ * so they can't fight each other over who owns the map's position:
+ *
+ * - Markers present -> fit bounds to them, same as always.
+ * - No markers, but the user just searched/located a point that came back
+ *   with nothing nearby -> fly there anyway rather than leaving the map
+ *   sitting on the old view. An empty result is a real, honest answer
+ *   ("nothing on file here yet" — see MapView's own empty-state message),
+ *   not a reason to pretend the search didn't happen.
+ */
+function FitToView({
+  waterbodies,
+  focusPoint,
+}: {
+  waterbodies: WaterbodyListItem[];
+  focusPoint: { latitude: number; longitude: number } | null;
+}) {
   const map = useMap();
   useEffect(() => {
-    if (waterbodies.length === 0) return;
-    const bounds = L.latLngBounds(waterbodies.map((w) => [w.latitude, w.longitude]));
-    map.fitBounds(bounds, { padding: [40, 40] });
-  }, [waterbodies, map]);
+    if (waterbodies.length > 0) {
+      const bounds = L.latLngBounds(waterbodies.map((w) => [w.latitude, w.longitude]));
+      map.fitBounds(bounds, { padding: [40, 40] });
+    } else if (focusPoint) {
+      map.flyTo([focusPoint.latitude, focusPoint.longitude], 10);
+    }
+  }, [waterbodies, focusPoint, map]);
   return null;
 }
 
 export default function LakeMap({
   waterbodies,
   onSelect,
+  focusPoint = null,
 }: {
   waterbodies: WaterbodyListItem[];
   onSelect: (id: number) => void;
+  // The last point a search or "use my location" resolved to — used only
+  // when there are no markers to fit bounds to (see FitToView above).
+  focusPoint?: { latitude: number; longitude: number } | null;
 }) {
   return (
     <MapContainer
@@ -55,7 +79,7 @@ export default function LakeMap({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <FitToMarkers waterbodies={waterbodies} />
+      <FitToView waterbodies={waterbodies} focusPoint={focusPoint} />
       {waterbodies.map((w) => (
         <Marker
           key={w.id}

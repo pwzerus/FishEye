@@ -1,6 +1,7 @@
 import type {
   AdvisorRequest,
   AdvisorResponse,
+  GeocodeResult,
   RecommendationRequest,
   RecommendationResponse,
   Weather,
@@ -37,12 +38,32 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 export function listWaterbodies(params?: {
   stateCode?: string;
   species?: string;
+  // Lets the map ask "what's near this point" instead of "everything in
+  // this state" — the query the search box and geolocate button both
+  // drive (see LocationSearchBar.tsx). The backend already supported this
+  // filter (app/api/waterbodies.py); the map just never called it that way.
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
 }): Promise<WaterbodyListItem[]> {
   const qs = new URLSearchParams();
   if (params?.stateCode) qs.set("state_code", params.stateCode);
   if (params?.species) qs.set("species", params.species);
+  if (params?.lat !== undefined && params?.lng !== undefined) {
+    qs.set("lat", String(params.lat));
+    qs.set("lng", String(params.lng));
+    if (params.radiusKm !== undefined) qs.set("radius_km", String(params.radiusKm));
+  }
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
-  return apiFetch<WaterbodyListItem[]>(`/api/waterbodies${suffix}`);
+  // A location search is a one-off user action, not a page load — always
+  // hit the live path, same reasoning as getWeather below.
+  const cacheOpt = params?.lat !== undefined ? { cache: "no-store" as const } : undefined;
+  return apiFetch<WaterbodyListItem[]>(`/api/waterbodies${suffix}`, cacheOpt);
+}
+
+export function geocodePlace(query: string): Promise<GeocodeResult> {
+  const qs = new URLSearchParams({ q: query });
+  return apiFetch<GeocodeResult>(`/api/geocode?${qs.toString()}`, { cache: "no-store" });
 }
 
 export function getWaterbody(id: number): Promise<WaterbodyDetail> {

@@ -111,6 +111,120 @@ a {
   background: #f9fafb;
 }
 
+/* --- Location search bar --- */
+
+.location-search-bar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 480px;
+}
+
+.location-search-form {
+  display: flex;
+  gap: 6px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  flex: 1;
+  min-width: 220px;
+}
+
+.location-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: #171717;
+  background: transparent;
+}
+
+.location-search-button,
+.locate-me-button {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #171717;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.location-search-button {
+  border: none;
+  background: #2563eb;
+  color: white;
+}
+
+.location-search-button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.locate-me-button {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.locate-me-button:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.location-search-button:disabled,
+.locate-me-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.location-search-error {
+  flex-basis: 100%;
+  background: white;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.nearby-search-status {
+  position: absolute;
+  top: 56px;
+  left: 12px;
+  z-index: 999;
+  background: white;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #6b7280;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.no-nearby-lakes-banner {
+  position: absolute;
+  top: 56px;
+  left: 12px;
+  right: 12px;
+  z-index: 999;
+  max-width: 480px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
 /* Leaflet icons are filtered green via CSS rather than a second icon
    image set — same "no extra image assets for the MVP" reasoning as the
    default marker icons themselves (see LakeMap.tsx / LakeDetailMap.tsx). */

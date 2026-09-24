@@ -17,6 +17,14 @@ export interface WaterbodyListItem {
   public_access_status: "open" | "closed";
 }
 
+// Mirrors backend/app/schemas/geocoding.py.
+export interface GeocodeResult {
+  query: string;
+  display_name: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface AccessPoint {
   id: number;
   name: string;
