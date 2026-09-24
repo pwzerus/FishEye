@@ -1,4 +1,6 @@
 import type {
+  AdvisorRequest,
+  AdvisorResponse,
   RecommendationRequest,
   RecommendationResponse,
   Weather,
@@ -62,6 +64,19 @@ export function postRecommendations(
   payload: RecommendationRequest,
 ): Promise<RecommendationResponse> {
   return apiFetch<RecommendationResponse>("/api/recommendations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+}
+
+export function postAdvisorExplain(payload: AdvisorRequest): Promise<AdvisorResponse> {
+  // Never cached client-side: the backend already caches on a hash of the
+  // facts the answer was built from, which self-invalidates when the
+  // weather or the ranking moves. A second cache here, keyed on the request
+  // instead, would go stale in exactly the cases that matter.
+  return apiFetch<AdvisorResponse>("/api/advisor/explain", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

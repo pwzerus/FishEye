@@ -126,26 +126,32 @@ export function WeatherRecommendations({
   latitude,
   longitude,
   species,
+  targetSpecies,
+  onTargetSpeciesChange,
 }: {
   waterbodyId: number;
   latitude: number;
   longitude: number;
   species: SpeciesSummary[];
+  // Lifted to WaterbodyPanel so the advisor panel below asks about the same
+  // fish this ranking was computed for — two panels disagreeing about the
+  // target species would be a quiet, plausible-looking bug.
+  targetSpecies: string;
+  onTargetSpeciesChange: (value: string) => void;
 }) {
-  const [targetSpecies, setTargetSpecies] = useState<string>("");
   const [weather, setWeather] = useState<Weather | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // No separate loading flag, same reasoning as WaterbodyPanel: derive it
-  // from whether the data in hand matches the current request.
-  const loading = weather === null && error === null;
+  // The request a completed fetch answered. Deriving `loading` from this
+  // (rather than resetting state at the top of the effect) is what keeps
+  // react-hooks/set-state-in-effect quiet — only the async callbacks below
+  // ever call setState, same fix as WaterbodyPanel's own loading flag.
+  const requestKey = `${waterbodyId}:${latitude}:${longitude}:${targetSpecies}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const loading = loadedKey !== requestKey;
 
   useEffect(() => {
     let cancelled = false;
-    setError(null);
-    setWeather(null);
-    setRecommendations(null);
 
     Promise.all([
       getWeather(latitude, longitude),
@@ -158,16 +164,19 @@ export function WeatherRecommendations({
         if (cancelled) return;
         setWeather(w);
         setRecommendations(r);
+        setError(null);
+        setLoadedKey(requestKey);
       })
       .catch((e: unknown) => {
         if (cancelled) return;
         setError(e instanceof ApiError ? e.message : "Could not load weather or recommendations.");
+        setLoadedKey(requestKey);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [waterbodyId, latitude, longitude, targetSpecies]);
+  }, [waterbodyId, latitude, longitude, targetSpecies, requestKey]);
 
   return (
     <div className="weather-recommendations">
@@ -177,7 +186,7 @@ export function WeatherRecommendations({
         Target species
         <select
           value={targetSpecies}
-          onChange={(e) => setTargetSpecies(e.target.value)}
+          onChange={(e) => onTargetSpeciesChange(e.target.value)}
           className="species-select"
         >
           <option value="">Any species biting</option>
@@ -189,8 +198,8 @@ export function WeatherRecommendations({
         </select>
       </label>
 
-      {error && <div className="panel-error">{error}</div>}
-      {loading && !error && <div className="muted">Loading weather and recommendations…</div>}
+      {error && !loading && <div className="panel-error">{error}</div>}
+      {loading && <div className="muted">Loading weather and recommendations…</div>}
 
       {recommendations && <WeatherAlertBanner warnings={recommendations.safety_warnings} />}
       {weather && <CurrentWeather weather={weather} />}

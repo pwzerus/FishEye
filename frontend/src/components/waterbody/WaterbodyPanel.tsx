@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { ApiError, getWaterbody } from "@/lib/api/client";
 import type { WaterbodyDetail } from "@/lib/api/types";
+import { AdvisorPanel } from "./AdvisorPanel";
 import { WeatherRecommendations } from "./WeatherRecommendations";
 
 function ConfidenceBadge({ confidence }: { confidence: string }) {
@@ -29,6 +30,9 @@ function ConfidenceBadge({ confidence }: { confidence: string }) {
 export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) {
   const [detail, setDetail] = useState<WaterbodyDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Shared by the recommendations panel (which owns the <select>) and the
+  // advisor panel below it, so both are always talking about the same fish.
+  const [targetSpecies, setTargetSpecies] = useState<string>("");
 
   // Deliberately no separate `loading` state: react-hooks/set-state-in-effect
   // flags setState called synchronously in an effect body (only calls inside
@@ -128,12 +132,19 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
       </ul>
 
       {!isClosed && (
-        <WeatherRecommendations
-          waterbodyId={detail.id}
-          latitude={detail.latitude}
-          longitude={detail.longitude}
-          species={detail.species}
-        />
+        <>
+          <WeatherRecommendations
+            waterbodyId={detail.id}
+            latitude={detail.latitude}
+            longitude={detail.longitude}
+            species={detail.species}
+            targetSpecies={targetSpecies}
+            onTargetSpeciesChange={setTargetSpecies}
+          />
+          {/* Below the ranking, not above it: the scored candidates are the
+              product, and the written explanation is commentary on them. */}
+          <AdvisorPanel waterbodyId={detail.id} targetSpecies={targetSpecies} />
+        </>
       )}
     </div>
   );

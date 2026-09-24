@@ -434,3 +434,170 @@ a {
   margin-top: 2px;
   color: #6b7280;
 }
+
+/* --- AI advisor panel --- */
+
+.advisor-panel {
+  margin-top: 20px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+}
+
+.advisor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.advisor-header h3 {
+  margin: 0;
+}
+
+.advisor-button {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #171717;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.advisor-button:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.advisor-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.advisor-answer-meta {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+/* The badge is not decoration: it is how a reader tells a validated model
+   answer from the fixed template from a mock. See AdvisorPanel.tsx. */
+.advisor-badge {
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 2px 6px;
+  background: #f3f4f6;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.advisor-badge-llm {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.advisor-badge-mock {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.advisor-badge-fallback {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.advisor-outcome-note {
+  font-size: 12px;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+.advisor-summary {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.advisor-section {
+  margin-bottom: 10px;
+}
+
+.advisor-section h4 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.advisor-section ul {
+  list-style: disc;
+  padding-left: 18px;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.advisor-sources {
+  list-style: none;
+  padding-left: 0;
+}
+
+.advisor-sources a {
+  color: #1d4ed8;
+}
+
+.advisor-trace {
+  margin-top: 12px;
+  border-top: 1px dashed #e5e7eb;
+  padding-top: 8px;
+}
+
+.advisor-trace-toggle {
+  font-size: 11px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: #6b7280;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
+.advisor-trace-list {
+  margin-top: 8px;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.advisor-trace-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.advisor-trace-list dt {
+  color: #6b7280;
+}
+
+.advisor-trace-list dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.advisor-trace-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+}

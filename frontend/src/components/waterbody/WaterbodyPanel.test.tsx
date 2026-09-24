@@ -2,7 +2,12 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api/client";
-import type { RecommendationResponse, WaterbodyDetail, Weather } from "@/lib/api/types";
+import type {
+  AdvisorResponse,
+  RecommendationResponse,
+  WaterbodyDetail,
+  Weather,
+} from "@/lib/api/types";
 import { WaterbodyPanel } from "./WaterbodyPanel";
 
 vi.mock("@/lib/api/client", async () => {
@@ -12,11 +17,14 @@ vi.mock("@/lib/api/client", async () => {
     getWaterbody: vi.fn(),
     getWeather: vi.fn(),
     postRecommendations: vi.fn(),
+    postAdvisorExplain: vi.fn(),
   };
 });
 
 // Imported after the mock so we get the mocked references.
-const { getWaterbody, getWeather, postRecommendations } = await import("@/lib/api/client");
+const { getWaterbody, getWeather, postRecommendations, postAdvisorExplain } = await import(
+  "@/lib/api/client"
+);
 
 const mockDetail: WaterbodyDetail = {
   id: 1,
@@ -96,17 +104,53 @@ const mockRecommendations: RecommendationResponse = {
   generated_at: "2026-09-22T12:00:00Z",
 };
 
+const mockAdvisor: AdvisorResponse = {
+  waterbody_id: 1,
+  waterbody_name: "Lake Fork",
+  target_species: null,
+  explanation: {
+    summary: "Lake Fork Dam Bank Access is the strongest option right now.",
+    gear: ["A medium-power spinning rod."],
+    bait: [],
+    steps: ["Work the NW shore — the wind pushes bait toward it."],
+    risks: [],
+    sources: [{ url: "https://tpwd.texas.gov/fork", label: "Lake Fork — official source" }],
+  },
+  answer_source: "llm",
+  confidence: 0.67,
+  safety_warnings: [],
+  best_time_window: null,
+  candidates: [],
+  weather_source: "nws",
+  trace: {
+    trace_id: "trace-abc-123",
+    provider: "mock",
+    model: "mock-advisor-v1",
+    latency_ms: 4.2,
+    prompt_tokens: 1014,
+    completion_tokens: 227,
+    estimated_cost_usd: 0,
+    validation_attempts: 1,
+    outcome: "ok",
+    retrieved_source_count: 1,
+    cache_hit: false,
+  },
+  generated_at: "2026-09-23T12:00:00Z",
+};
+
 describe("WaterbodyPanel", () => {
   beforeEach(() => {
     vi.mocked(getWaterbody).mockReset();
     vi.mocked(getWeather).mockReset();
     vi.mocked(postRecommendations).mockReset();
+    vi.mocked(postAdvisorExplain).mockReset();
     // Default to resolved values for every test that doesn't override
     // them — this keeps the weather/recommendations calls from becoming
     // real network requests (and hanging) in tests that only care about
     // the lake-detail rendering above them.
     vi.mocked(getWeather).mockResolvedValue(mockWeather);
     vi.mocked(postRecommendations).mockResolvedValue(mockRecommendations);
+    vi.mocked(postAdvisorExplain).mockResolvedValue(mockAdvisor);
   });
 
   it("shows the empty-state prompt when nothing is selected", () => {
@@ -122,7 +166,10 @@ describe("WaterbodyPanel", () => {
 
     expect(screen.getByText("field-tested")).toBeInTheDocument();
     expect(screen.getByText(/Lake Fork Dam Bank Access/)).toBeInTheDocument();
-    expect(screen.getByText("Largemouth Bass")).toBeInTheDocument();
+    // Scoped to the species list's own entry: the same name also appears as
+    // an <option> in the target-species dropdown below, so an unscoped
+    // query matches two elements and fails.
+    expect(screen.getByText("Largemouth Bass", { selector: "strong" })).toBeInTheDocument();
     expect(screen.getByText("confirmed")).toBeInTheDocument();
   });
 
@@ -199,11 +246,12 @@ describe("WaterbodyPanel", () => {
     vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
     render(<WaterbodyPanel waterbodyId={1} />);
 
-    await waitFor(() =>
-      expect(screen.getAllByText(/Lake Fork Dam Bank Access/).length).toBeGreaterThan(0),
-    );
+    // Wait for something that only exists once the recommendations have
+    // actually resolved. The access-point name was a bad thing to wait on:
+    // it's in the lake-detail list from the very first render, so the
+    // waitFor returned before any of this had loaded.
+    await waitFor(() => expect(screen.getByText("67% confidence")).toBeInTheDocument());
     expect(screen.getByText("90")).toBeInTheDocument(); // score
-    expect(screen.getByText("67% confidence")).toBeInTheDocument();
   });
 
   it("surfaces severe weather warnings above the candidate list", async () => {
@@ -254,5 +302,110 @@ describe("WaterbodyPanel", () => {
     // No point scoring recommendations for a lake nobody can legally fish.
     expect(postRecommendations).not.toHaveBeenCalled();
     expect(getWeather).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: /explain these picks/i })).not.toBeInTheDocument();
+  });
+
+  // --- AI advisor panel ---
+
+  it("does not call the advisor until the user asks for an explanation", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    render(<WaterbodyPanel waterbodyId={1} />);
+
+    await waitFor(() => expect(postRecommendations).toHaveBeenCalled());
+    // The ranking loads on its own; the written explanation costs tokens,
+    // so it waits to be asked for.
+    expect(postAdvisorExplain).not.toHaveBeenCalled();
+  });
+
+  it("requests and renders an explanation when asked", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    render(<WaterbodyPanel waterbodyId={1} />);
+
+    const button = await screen.findByRole("button", { name: /explain these picks/i });
+    fireEvent.click(button);
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Lake Fork Dam Bank Access is the strongest option/),
+      ).toBeInTheDocument(),
+    );
+    expect(postAdvisorExplain).toHaveBeenCalledWith({
+      waterbody_id: 1,
+      target_species: undefined,
+    });
+    expect(screen.getByText(/Work the NW shore/)).toBeInTheDocument();
+  });
+
+  it("asks the advisor about the same species the ranking is using", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    render(<WaterbodyPanel waterbodyId={1} />);
+
+    const select = await screen.findByLabelText(/target species/i);
+    fireEvent.change(select, { target: { value: "Largemouth Bass" } });
+    fireEvent.click(await screen.findByRole("button", { name: /explain these picks/i }));
+
+    // The two panels must never disagree about which fish is being asked
+    // about — that would be a quiet, plausible-looking bug.
+    await waitFor(() =>
+      expect(postAdvisorExplain).toHaveBeenCalledWith({
+        waterbody_id: 1,
+        target_species: "Largemouth Bass",
+      }),
+    );
+  });
+
+  it("labels a mock-model answer as such", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    render(<WaterbodyPanel waterbodyId={1} />);
+    fireEvent.click(await screen.findByRole("button", { name: /explain these picks/i }));
+
+    // Mock output must never be presented as a real model's, the same way
+    // fallback weather is never presented as a real reading.
+    await waitFor(() => expect(screen.getByText("mock model")).toBeInTheDocument());
+  });
+
+  it("says plainly when the answer is the fixed template, and why", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    vi.mocked(postAdvisorExplain).mockResolvedValue({
+      ...mockAdvisor,
+      answer_source: "fallback",
+      explanation: {
+        ...mockAdvisor.explanation,
+        summary: "Top-ranked spot on Lake Fork: Lake Fork Dam Bank Access (score 90).",
+      },
+      trace: { ...mockAdvisor.trace, outcome: "ungrounded_source" },
+    });
+    render(<WaterbodyPanel waterbodyId={1} />);
+    fireEvent.click(await screen.findByRole("button", { name: /explain these picks/i }));
+
+    await waitFor(() => expect(screen.getByText("plain summary")).toBeInTheDocument());
+    // The reason is shown, not swallowed: a discarded answer is a fact
+    // about this response the reader is entitled to.
+    expect(
+      screen.getByText(/cited a source the backend never supplied/i),
+    ).toBeInTheDocument();
+  });
+
+  it("exposes the request trace on demand", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    render(<WaterbodyPanel waterbodyId={1} />);
+    fireEvent.click(await screen.findByRole("button", { name: /explain these picks/i }));
+
+    fireEvent.click(await screen.findByRole("button", { name: /show request trace/i }));
+
+    expect(screen.getByText("trace-abc-123")).toBeInTheDocument();
+    expect(screen.getByText("mock / mock-advisor-v1")).toBeInTheDocument();
+    expect(screen.getByText("1014 / 227")).toBeInTheDocument();
+  });
+
+  it("surfaces an advisor error without taking the rest of the panel down", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    vi.mocked(postAdvisorExplain).mockRejectedValue(new ApiError("advisor exploded", 500));
+    render(<WaterbodyPanel waterbodyId={1} />);
+    fireEvent.click(await screen.findByRole("button", { name: /explain these picks/i }));
+
+    await waitFor(() => expect(screen.getByText("advisor exploded")).toBeInTheDocument());
+    // The ranking above is unaffected — it never depended on the advisor.
+    expect(screen.getAllByText(/Lake Fork Dam Bank Access/).length).toBeGreaterThan(0);
   });
 });

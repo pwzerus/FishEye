@@ -163,6 +163,69 @@ export interface WeatherWarning {
   headline: string | null;
 }
 
+// Mirrors backend/app/schemas/advisor.py.
+export interface AdvisorRequest {
+  waterbody_id: number;
+  target_species?: string;
+  limit?: number;
+}
+
+export interface AdvisorSource {
+  url: string;
+  label: string;
+}
+
+/**
+ * The model-authored part of an advisor response — and the ONLY
+ * model-authored part. Note what's missing: no confidence, no coordinates,
+ * no species determination, no regulations. Those are the four things the
+ * backend never lets a model decide, so there's no field here to carry
+ * them (see docs/adr/0007-ai-advisor-grounding.md).
+ */
+export interface AdvisorExplanation {
+  summary: string;
+  gear: string[];
+  bait: string[];
+  steps: string[];
+  risks: string[];
+  sources: AdvisorSource[];
+}
+
+export interface AdvisorTrace {
+  trace_id: string;
+  provider: string;
+  model: string;
+  latency_ms: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  estimated_cost_usd: number;
+  validation_attempts: number;
+  // "ok" | "invalid_json" | "ungrounded_source" | "ungrounded_species"
+  //   | "provider_unavailable"
+  outcome: string;
+  retrieved_source_count: number;
+  cache_hit: boolean;
+}
+
+export interface AdvisorResponse {
+  waterbody_id: number;
+  waterbody_name: string;
+  target_species: string | null;
+  explanation: AdvisorExplanation;
+  // "llm" when the model's output passed the backend's grounding checks,
+  // "fallback" when the fixed template was used instead. A UI that ignores
+  // this will eventually present one as the other.
+  answer_source: "llm" | "fallback";
+  // Server-computed, never model output.
+  confidence: number;
+  safety_warnings: WeatherWarning[];
+  best_time_window: TimeWindow | null;
+  candidates: SpotCandidate[];
+  weather_source: WeatherSource;
+  trace: AdvisorTrace;
+  generated_at: string;
+}
+
 export interface RecommendationResponse {
   waterbody_id: number;
   waterbody_name: string;
