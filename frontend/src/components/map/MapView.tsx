@@ -8,6 +8,7 @@ import type { WaterbodyListItem } from "@/lib/api/types";
 import { WaterbodyPanel } from "@/components/waterbody/WaterbodyPanel";
 import type { Viewport } from "./LakeMap";
 import { LocationSearchBar, type LocatedPoint } from "./LocationSearchBar";
+import { MapLegend } from "./MapLegend";
 
 // Leaflet touches `window` at import time, which breaks server-side
 // rendering. next/dynamic with ssr:false has to be called from a client
@@ -115,6 +116,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
               focusPoint={focusPoint}
               initialView={lastView}
             />
+            <MapLegend />
           </>
         ) : (
           <>

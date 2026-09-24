@@ -36,6 +36,14 @@ const osmIcon = L.icon({
   className: "osm-marker",
 });
 
+// An unverified lake that has fish records (GBIF): tinted amber so people can
+// find the lakes FishMate knows *something* about, while staying distinct
+// from a verified lake's blue pin. See docs/adr/0012-gbif-reported-species.md.
+const reportedIcon = L.icon({
+  ...defaultIcon.options,
+  className: "osm-marker-reported",
+});
+
 const TEXAS_CENTER: [number, number] = [31.4, -99.3];
 const SEARCH_ZOOM = 11;
 const VIEWPORT_DEBOUNCE_MS = 300;
@@ -108,10 +116,18 @@ function FlyToFocus({
 
 function LakeMarker({ lake, onSelect }: { lake: WaterbodyListItem; onSelect: (id: number) => void }) {
   const isOsm = lake.data_tier === "osm";
+  const reported = lake.reported_species_count ?? 0;
+  const icon = isOsm
+    ? reported > 0
+      ? reportedIcon
+      : osmIcon
+    : lake.field_tested
+      ? fieldTestedIcon
+      : defaultIcon;
   return (
     <Marker
       position={[lake.latitude, lake.longitude]}
-      icon={isOsm ? osmIcon : lake.field_tested ? fieldTestedIcon : defaultIcon}
+      icon={icon}
       eventHandlers={{ click: () => onSelect(lake.id) }}
     >
       <Popup>
@@ -119,6 +135,11 @@ function LakeMarker({ lake, onSelect }: { lake: WaterbodyListItem; onSelect: (id
         {isOsm ? (
           <div style={{ fontSize: 12, color: "#6b7280" }}>
             {lake.water_type === "pond" ? "Pond · " : ""}Unverified · from OpenStreetMap
+            {reported > 0 && (
+              <div style={{ color: "#92400e" }}>
+                {reported} fish species on record
+              </div>
+            )}
           </div>
         ) : (
           lake.field_tested && (

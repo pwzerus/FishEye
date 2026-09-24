@@ -59,6 +59,7 @@ const mockDetail: WaterbodyDetail = {
       observed_at: "2026-09-01T00:00:00Z",
     },
   ],
+  reported_species: [],
 };
 
 const mockWeather: Weather = {
@@ -338,7 +339,7 @@ describe("WaterbodyPanel", () => {
 
     await waitFor(() => expect(screen.getByText("unverified")).toBeInTheDocument());
     expect(screen.getByText(/comes from OpenStreetMap/i)).toBeInTheDocument();
-    expect(screen.getByText(/fish species not verified/i)).toBeInTheDocument();
+    expect(screen.getByText(/no fish records for this lake yet/i)).toBeInTheDocument();
   });
 
   it("never presents an OpenStreetMap entrance as confirmed public access", async () => {
@@ -496,5 +497,71 @@ describe("WaterbodyPanel", () => {
     await waitFor(() => expect(screen.getByText("advisor exploded")).toBeInTheDocument());
     // The ranking above is unaffected — it never depended on the advisor.
     expect(screen.getAllByText(/Lake Fork Dam Bank Access/).length).toBeGreaterThan(0);
+  });
+  // --- Species on record (GBIF): never presented as confirmed ---
+
+  const bassOnRecord = {
+    common_name: "Largemouth Bass",
+    records: 37,
+    last_year: 2023,
+    sources: [
+      { name: "Fishes of Texas (UT Austin)", records: 30 },
+      { name: "iNaturalist", records: 7 },
+    ],
+    latest_record_url: "https://www.gbif.org/occurrence/1",
+    weak: false,
+    also_confirmed: false,
+  };
+  const oldCatfish = {
+    common_name: "Channel Catfish",
+    records: 1,
+    last_year: 1968,
+    sources: [{ name: "Fishes of Texas (UT Austin)", records: 1 }],
+    latest_record_url: "https://www.gbif.org/occurrence/2",
+    weak: true,
+    also_confirmed: false,
+  };
+
+  it("shows an unverified lake's fish records with their strength and sources", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue({ ...osmDetail, reported_species: [bassOnRecord, oldCatfish] });
+    render(<WaterbodyPanel waterbodyId={7} />);
+
+    await waitFor(() => expect(screen.getByText("Fish on record (not verified)")).toBeInTheDocument());
+    expect(screen.getByText("37 records · last recorded 2023")).toBeInTheDocument();
+    expect(screen.getByText("Fishes of Texas (UT Austin) 30 · iNaturalist 7")).toBeInTheDocument();
+    expect(screen.getByText("Weak evidence: a single record from 1968.")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /latest record on GBIF/i })[0]).toHaveAttribute(
+      "href",
+      "https://www.gbif.org/occurrence/1",
+    );
+    // Never the official confidence badge.
+    expect(screen.queryByText("confirmed")).not.toBeInTheDocument();
+    expect(screen.getAllByText("on record")).toHaveLength(2);
+  });
+
+  it("lists only the species a verified lake's official survey doesn't mention", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue({
+      ...mockDetail,
+      reported_species: [{ ...bassOnRecord, also_confirmed: true }, { ...oldCatfish, common_name: "Striped Bass" }],
+    });
+    render(<WaterbodyPanel waterbodyId={1} />);
+
+    await waitFor(() =>
+      expect(screen.getByText("Also on record (not in the official survey)")).toBeInTheDocument(),
+    );
+    const section = screen.getByRole("region", { name: "Fish on record" });
+    expect(section).toHaveTextContent("Striped Bass");
+    expect(section).not.toHaveTextContent("Largemouth Bass");
+  });
+
+  it("adds no records section to a verified lake when every record is already confirmed", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue({
+      ...mockDetail,
+      reported_species: [{ ...bassOnRecord, also_confirmed: true }],
+    });
+    render(<WaterbodyPanel waterbodyId={1} />);
+
+    await waitFor(() => expect(screen.getByText("Lake Fork")).toBeInTheDocument());
+    expect(screen.queryByRole("region", { name: "Fish on record" })).not.toBeInTheDocument();
   });
 });

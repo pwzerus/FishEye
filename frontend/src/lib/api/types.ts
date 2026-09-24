@@ -20,6 +20,8 @@ export interface WaterbodyListItem {
   data_tier: DataTier;
   // From OpenStreetMap's water=* tag; null for hand-curated lakes.
   water_type: WaterType | null;
+  // Distinct species with outside records (GBIF) here. See ReportedSpecies.
+  reported_species_count: number;
 }
 
 export type WaterType = "lake" | "reservoir" | "pond";
@@ -59,6 +61,28 @@ export interface SpeciesSummary {
   observed_at: string;
 }
 
+// Mirrors ReportedSpeciesOut in backend/app/schemas/waterbody.py. A species
+// someone has recorded at this lake (GBIF: museum collections, surveys,
+// iNaturalist). Evidence it has been found here, NOT an official
+// confirmation: never shown as confirmed, never scored, never given to the
+// AI advisor. See docs/adr/0012-gbif-reported-species.md.
+export interface ReportedSource {
+  name: string;
+  records: number;
+}
+
+export interface ReportedSpecies {
+  common_name: string;
+  records: number;
+  last_year: number | null;
+  sources: ReportedSource[];
+  latest_record_url: string | null;
+  // A single record from before 2000, or undated.
+  weak: boolean;
+  // Also on this lake's official species list.
+  also_confirmed: boolean;
+}
+
 export interface WaterbodyDetail {
   id: number;
   name: string;
@@ -73,6 +97,7 @@ export interface WaterbodyDetail {
   water_type: WaterType | null;
   access_points: AccessPoint[];
   species: SpeciesSummary[];
+  reported_species: ReportedSpecies[];
 }
 
 // Mirrors backend/app/schemas/admin.py.

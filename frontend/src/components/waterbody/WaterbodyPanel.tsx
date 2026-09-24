@@ -6,6 +6,7 @@ import { ApiError, getWaterbody } from "@/lib/api/client";
 import type { WaterbodyDetail } from "@/lib/api/types";
 import { SpeciesHowTo } from "@/components/species/SpeciesHowTo";
 import { AdvisorPanel } from "./AdvisorPanel";
+import { ReportedSpeciesList } from "./ReportedSpeciesList";
 import { WeatherRecommendations } from "./WeatherRecommendations";
 
 function ConfidenceBadge({ confidence }: { confidence: string }) {
@@ -153,26 +154,32 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
         )}
       </ul>
 
-      <h3>Species</h3>
-      <ul className="species-list">
-        {detail.species.map((s) => (
-          <li key={s.common_name}>
-            <div className="species-row">
-              <strong>{s.common_name}</strong>
-              <ConfidenceBadge confidence={s.confidence} />
-            </div>
-            <p className="evidence">{s.evidence}</p>
-            <SpeciesHowTo commonName={s.common_name} />
-          </li>
-        ))}
-        {detail.species.length === 0 && (
-          <li className="muted">
-            {isOsm
-              ? "Fish species not verified for this lake. FishMate only lists species from official surveys, never guesses."
-              : "No confirmed species on file yet — never assumed from a statewide list."}
-          </li>
-        )}
-      </ul>
+      {/* An unverified lake has no official species list, so only the
+          records section is shown. A verified lake shows its official list,
+          then any species on record that the survey doesn't mention. */}
+      {!isOsm && (
+        <>
+          <h3>Species</h3>
+          <ul className="species-list">
+            {detail.species.map((s) => (
+              <li key={s.common_name}>
+                <div className="species-row">
+                  <strong>{s.common_name}</strong>
+                  <ConfidenceBadge confidence={s.confidence} />
+                </div>
+                <p className="evidence">{s.evidence}</p>
+                <SpeciesHowTo commonName={s.common_name} />
+              </li>
+            ))}
+            {detail.species.length === 0 && (
+              <li className="muted">
+                No confirmed species on file yet — never assumed from a statewide list.
+              </li>
+            )}
+          </ul>
+        </>
+      )}
+      <ReportedSpeciesList reported={detail.reported_species ?? []} isOsm={isOsm} />
 
       {!isClosed && (
         <>
