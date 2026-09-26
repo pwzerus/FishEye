@@ -202,9 +202,12 @@ export interface SpotCandidate {
 }
 
 export interface TimeWindow {
+  // ISO with the lake's own UTC offset ("…T18:00:00-05:00"): lake time.
   start_time: string;
   end_time: string;
   reason: string;
+  label?: "morning" | "evening" | null;
+  score?: number | null;
 }
 
 export interface WeatherWarning {
@@ -270,6 +273,7 @@ export interface AdvisorResponse {
   confidence: number;
   safety_warnings: WeatherWarning[];
   best_time_window: TimeWindow | null;
+  bite_windows?: TimeWindow[];
   candidates: SpotCandidate[];
   weather_source: WeatherSource;
   trace: AdvisorTrace;
@@ -282,6 +286,9 @@ export interface RecommendationResponse {
   target_species: string | null;
   candidates: SpotCandidate[];
   best_time_window: TimeWindow | null;
+  // The morning and the evening bite, each its own best 3-hour block, in
+  // time order. Empty when the forecast isn't live.
+  bite_windows?: TimeWindow[];
   // Top-level, not per-candidate: severe-weather warnings must take
   // priority over the ranking itself (PRD §17), so a caller can't render
   // the candidate list without also having these in hand.
@@ -328,4 +335,197 @@ export interface SpeciesGuide {
   legal_notes: string[];
   limits_url: string;
   sources: GuideSource[];
+}
+
+// GET /api/species/photos (backend app/services/species_photos.py).
+// A real, freely licensed photo; `author` and `license` must be shown with it.
+export interface SpeciesPhoto {
+  url: string;
+  width: number;
+  height: number;
+  author: string;
+  license: string;
+  license_url: string | null;
+  file_page: string;
+  source: string;
+}
+
+export type SpeciesPhotos = Record<string, SpeciesPhoto | null>;
+
+// POST /api/ask (backend app/services/rag/ask.py).
+export interface AskRequest {
+  question: string;
+  species_slug?: string | null;
+}
+
+export interface AskCitation {
+  id: string; // "<species-slug>#<section>"
+  species_slug: string;
+  species_name: string; // "" for passages that apply to every fish
+  section: string; // "diet", "live_baits", "setup-2", ...
+  title: string;
+  excerpt: string;
+  sources: GuideSource[];
+}
+
+export type AskAnswerSource = "llm" | "fallback" | "no_match";
+
+export interface AskTrace {
+  trace_id: string;
+  retriever: string;
+  routed_species: string[];
+  retrieved: { id: string; score: number }[];
+  provider: string;
+  model: string;
+  latency_ms: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  estimated_cost_usd: number;
+  validation_attempts: number;
+  outcome: string;
+  cache_hit: boolean;
+}
+
+export interface AskResponse {
+  question: string;
+  answer: string;
+  answer_source: AskAnswerSource;
+  citations: AskCitation[];
+  trace: AskTrace;
+}
+
+// ---------------------------------------------------------------------------
+// Accounts and community pins (backend app/api/auth.py, pins.py,
+// admin_community.py; docs/adr/0016-accounts-and-community-pins.md)
+
+export interface User {
+  id: number;
+  email: string;
+  display_name: string;
+  role: "user" | "admin";
+  status: "active" | "suspended";
+  has_password: boolean;
+  google_connected: boolean;
+  created_at: string;
+}
+
+export interface AuthProviders {
+  password: boolean;
+  google: boolean;
+}
+
+export type PinVisibility = "public" | "private";
+export type PinStatus = "published" | "hidden" | "removed";
+
+export interface PinPhoto {
+  id: number;
+  url: string;
+  thumb_url: string;
+  width: number;
+  height: number;
+}
+
+export interface PinSummary {
+  id: number;
+  latitude: number;
+  longitude: number;
+  title: string;
+  species_slug: string | null;
+  species_label: string | null;
+  caught_on: string | null;
+  created_at: string;
+  visibility: PinVisibility;
+  status: PinStatus;
+  // "reports" (auto-hidden) | "moderator"
+  status_reason: string | null;
+  author: { id: number; display_name: string };
+  lake: { id: number; name: string } | null;
+  photo_count: number;
+  thumb_url: string | null;
+  is_mine: boolean;
+}
+
+export interface PinDetail extends PinSummary {
+  note: string | null;
+  photos: PinPhoto[];
+  can_edit: boolean;
+  can_report: boolean;
+  reported_by_me: boolean;
+}
+
+export interface PinOptions {
+  species: { slug: string; label: string }[];
+  report_reasons: { id: string; label: string }[];
+  max_photos: number;
+  max_photo_mb: number;
+}
+
+export interface PinUpdate {
+  title?: string;
+  note?: string;
+  species_slug?: string;
+  species_other?: string;
+  caught_on?: string;
+  visibility?: PinVisibility;
+  clear_note?: boolean;
+  clear_species?: boolean;
+  clear_caught_on?: boolean;
+}
+
+export interface AdminStats {
+  users: number;
+  users_new_7d: number;
+  users_active_7d: number;
+  admins: number;
+  suspended: number;
+  pins: number;
+  pins_new_7d: number;
+  pins_public: number;
+  pins_private: number;
+  pins_hidden: number;
+  pins_removed: number;
+  photos: number;
+  open_reports: number;
+  pins_awaiting_review: number;
+}
+
+export interface AdminReportGroup {
+  pin: PinSummary;
+  reports: { id: number; reason: string; reason_label: string; detail: string | null; reporter: string; created_at: string }[];
+}
+
+export interface AdminPin extends PinSummary {
+  open_reports: number;
+  author_email: string;
+}
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  display_name: string;
+  role: "user" | "admin";
+  status: "active" | "suspended";
+  has_password: boolean;
+  google_connected: boolean;
+  created_at: string;
+  last_login_at: string | null;
+  pins: number;
+  reports_against: number;
+}
+
+export interface AuditEntry {
+  id: number;
+  actor: string;
+  action: string;
+  target_type: string;
+  target_id: number;
+  detail: string | null;
+  created_at: string;
+}
+
+export interface Paged<T> {
+  total: number;
+  page: number;
+  page_size: number;
+  items: T[];
 }

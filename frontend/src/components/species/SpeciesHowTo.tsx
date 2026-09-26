@@ -47,7 +47,7 @@ export function SpeciesHowTo({ commonName }: { commonName: string }) {
           {guide && (
             <>
               <SpeciesGuideBody guide={guide} compact />
-              <Link href={`/fish#${slug}`} className="species-howto-full">
+              <Link href={`/fish/${slug}`} className="species-howto-full">
                 Full {guide.common_name} guide →
               </Link>
             </>

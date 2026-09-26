@@ -7,15 +7,9 @@ import type {
   RecommendationResponse,
   SpeciesSummary,
   SpotCandidate,
+  TimeWindow,
   Weather,
 } from "@/lib/api/types";
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 function WeatherAlertBanner({ warnings }: { warnings: RecommendationResponse["safety_warnings"] }) {
   if (warnings.length === 0) return null;
@@ -63,13 +57,94 @@ function CurrentWeather({ weather }: { weather: Weather }) {
   );
 }
 
-function BestTimeWindow({ window }: { window: RecommendationResponse["best_time_window"] }) {
-  if (window === null) return null;
+/**
+ * Clock time read straight off the ISO string, which carries the lake's own
+ * UTC offset. Formatting through `Date` would convert to the viewer's zone:
+ * someone in Michigan planning a Texas trip would see the dawn bite an hour
+ * late.
+ */
+export function lakeClock(iso: string): string {
+  const m = /T(\d{2}):(\d{2})/.exec(iso);
+  if (!m) return iso;
+  const h = Number(m[1]);
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}${m[2] === "00" ? "" : `:${m[2]}`} ${h < 12 ? "AM" : "PM"}`;
+}
+
+/** "Today" / "Tomorrow" / weekday, judged in lake time too. */
+export function lakeDay(iso: string, now: Date = new Date()): string {
+  const off = /([+-])(\d{2}):(\d{2})$/.exec(iso);
+  const offsetMin = off ? (off[1] === "-" ? -1 : 1) * (Number(off[2]) * 60 + Number(off[3])) : 0;
+  const lakeToday = new Date(now.getTime() + offsetMin * 60_000).toISOString().slice(0, 10);
+  const date = iso.slice(0, 10);
+  if (date === lakeToday) return "Today";
+  const tomorrow = new Date(Date.parse(`${lakeToday}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+  if (date === tomorrow) return "Tomorrow";
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: "long", timeZone: "UTC" });
+}
+
+function SunIcon({ rising }: { rising: boolean }) {
   return (
-    <div className="best-time-window">
-      <strong>Best window:</strong> {formatTime(window.start_time)}–{formatTime(window.end_time)}
-      <p className="muted">{window.reason}</p>
-    </div>
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M3 18h18M6 18a6 6 0 0 1 12 0" />
+      <path d="M12 4v3M4.9 8.9l2 2M19.1 8.9l-2 2" />
+      {rising ? <path d="M12 14V11M10 12.5l2-2 2 2" /> : <path d="M12 10.5v3M10 12l2 2 2-2" />}
+    </svg>
+  );
+}
+
+export function BiteWindows({
+  windows,
+  fallbackWindow,
+}: {
+  windows: TimeWindow[];
+  fallbackWindow: TimeWindow | null;
+}) {
+  if (windows.length === 0) {
+    // Older backend, or a forecast with no complete morning/evening block.
+    if (!fallbackWindow) return null;
+    return (
+      <div className="best-time-window">
+        <strong>Best window:</strong> {lakeClock(fallbackWindow.start_time)}–{lakeClock(fallbackWindow.end_time)}
+        <p className="muted">{fallbackWindow.reason}</p>
+      </div>
+    );
+  }
+  // Only call one "the better bet" when the difference is real.
+  const scored = windows.filter((w) => typeof w.score === "number");
+  const top = scored.length === 2 ? [...scored].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0] : null;
+  const clearWinner =
+    top && scored.length === 2 && Math.abs((scored[0].score ?? 0) - (scored[1].score ?? 0)) >= 0.03 ? top : null;
+
+  return (
+    <section className="bite-windows" aria-label="Best times to fish">
+      <div className="bite-windows-head">
+        <strong>Best times to fish</strong>
+        <span className="bite-tz">lake time</span>
+      </div>
+      <div className="bite-grid">
+        {windows.map((w) => {
+          const morning = w.label === "morning";
+          return (
+            <div
+              key={w.start_time}
+              className={`bite-card ${morning ? "bite-morning" : "bite-evening"}${w === clearWinner ? " is-best" : ""}`}
+            >
+              <div className="bite-top">
+                <SunIcon rising={morning} />
+                <span>{morning ? "Morning bite" : "Evening bite"}</span>
+                {w === clearWinner && <span className="bite-best">Better bet</span>}
+              </div>
+              <div className="bite-time">
+                {lakeClock(w.start_time)} – {lakeClock(w.end_time)}
+              </div>
+              <div className="bite-day">{lakeDay(w.start_time)}</div>
+              <p className="bite-reason">{w.reason}</p>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -203,7 +278,12 @@ export function WeatherRecommendations({
 
       {recommendations && <WeatherAlertBanner warnings={recommendations.safety_warnings} />}
       {weather && <CurrentWeather weather={weather} />}
-      {recommendations && <BestTimeWindow window={recommendations.best_time_window} />}
+      {recommendations && (
+        <BiteWindows
+          windows={recommendations.bite_windows ?? []}
+          fallbackWindow={recommendations.best_time_window}
+        />
+      )}
 
       {recommendations && (
         <ul className="candidate-list">

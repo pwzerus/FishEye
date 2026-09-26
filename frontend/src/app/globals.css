@@ -1,117 +1,5 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html {
-  height: 100%;
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-}
-
-.page {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-
-.page-header {
-  padding: 12px 20px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.page-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.brand-link {
-  display: inline-flex;
-  line-height: 0;
-}
-
-.brand-lockup {
-  height: 32px;
-  width: auto;
-}
-
-.site-nav {
-  display: flex;
-  gap: 4px;
-}
-
-.site-nav-link {
-  font-size: 14px;
-  font-weight: 600;
-  color: #4b5563;
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-
-.site-nav-link:hover {
-  background: rgba(14, 159, 158, 0.08);
-}
-
-.site-nav-link.active {
-  color: #0e9f9e;
-  background: rgba(14, 159, 158, 0.12);
-}
-
-.page-header p {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.backend-error {
-  margin: 24px;
-  padding: 16px;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
-}
+/* Map, lake panel and compact guide styles. The design system (tokens,
+   chrome, pages, motion) is in base.css, imported first. */
 
 .map-view {
   display: flex;
@@ -197,12 +85,12 @@ a {
 
 .location-search-button {
   border: none;
-  background: #2563eb;
+  background: #0a7f84;
   color: white;
 }
 
 .location-search-button:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: #0b5d7a;
 }
 
 .locate-me-button {
@@ -342,7 +230,7 @@ a {
 .field-tested-tag {
   font-size: 11px;
   font-weight: 600;
-  color: #1d4ed8;
+  color: #0b5d7a;
   background: #dbeafe;
   border-radius: 4px;
   padding: 2px 6px;
@@ -502,10 +390,10 @@ a {
   display: inline-block;
   margin-top: 4px;
   font-size: 12px;
-  color: #2563eb;
+  color: #0a7f84;
 }
 
-.muted {
+.side-panel .muted {
   color: #9ca3af;
   font-style: italic;
 }
@@ -605,6 +493,92 @@ a {
 }
 
 .best-time-window .muted {
+  margin-top: 2px;
+}
+
+/* Morning and evening bite (WeatherRecommendations.tsx) */
+.bite-windows {
+  margin-bottom: 14px;
+  display: grid;
+  gap: 8px;
+}
+.bite-windows-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+}
+.bite-tz {
+  font-size: 11px;
+  color: #6b7f89;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+.bite-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.bite-card {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e3eaec;
+  font-size: 13px;
+  color: #0f2530;
+  animation: rise 520ms var(--ease) both;
+}
+.bite-card + .bite-card {
+  animation-delay: 80ms;
+}
+.bite-morning {
+  background: linear-gradient(160deg, #fff7e8, #ffe7c2);
+}
+.bite-evening {
+  background: linear-gradient(160deg, #f3ecff, #ffd9c7);
+}
+.bite-card.is-best {
+  border-color: #f08c2b;
+  box-shadow: 0 0 0 2px rgba(240, 140, 43, 0.25);
+}
+.bite-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: #7a4a12;
+}
+.bite-evening .bite-top {
+  color: #5b3a8a;
+}
+.bite-best {
+  /* Pinned to the card's top edge so it never pushes the title onto two lines. */
+  position: absolute;
+  top: -9px;
+  right: 10px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #fff;
+  background: #f08c2b;
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+.bite-time {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.bite-day {
+  font-size: 12px;
+  color: #5b6f78;
+  font-weight: 600;
+}
+.bite-reason {
+  font-size: 12px;
+  color: #4b6470;
   margin-top: 2px;
 }
 
@@ -819,7 +793,7 @@ a {
 }
 
 .advisor-sources a {
-  color: #1d4ed8;
+  color: #0b5d7a;
 }
 
 .advisor-trace {
@@ -871,10 +845,6 @@ a {
    Backgrounds and borders use translucent neutrals rather than fixed light
    greys so the guide stays readable when the system is in dark mode. */
 
-.page.page-scroll {
-  height: auto;
-  min-height: 100vh;
-}
 
 .species-howto {
   margin-top: 6px;
@@ -1023,7 +993,7 @@ a {
 }
 
 .guide-tag-intermediate {
-  color: #1d4ed8;
+  color: #0b5d7a;
   background: rgba(59, 130, 246, 0.15);
 }
 

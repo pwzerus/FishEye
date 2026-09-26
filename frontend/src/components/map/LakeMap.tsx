@@ -8,7 +8,8 @@ import { useEffect, useRef } from "react";
 import { MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 
-import type { WaterbodyListItem } from "@/lib/api/types";
+import type { PinSummary, WaterbodyListItem } from "@/lib/api/types";
+import { DraftMarker, PinMarkers, PlaceOnClick } from "./PinLayer";
 
 // Leaflet's default marker icons reference image files by relative URL,
 // which breaks under bundlers (webpack rewrites the paths). Point them at
@@ -157,6 +158,10 @@ export default function LakeMap({
   onViewportChange,
   focusPoint = null,
   initialView = null,
+  pins = [],
+  placing = false,
+  draft = null,
+  onPlace,
 }: {
   waterbodies: WaterbodyListItem[];
   onSelect: (id: number) => void;
@@ -164,6 +169,11 @@ export default function LakeMap({
   focusPoint?: { latitude: number; longitude: number } | null;
   // Where to open the map; defaults to the Texas overview.
   initialView?: { center: [number, number]; zoom: number } | null;
+  // Community pins in view, and the "add a pin" mode (MapView.tsx).
+  pins?: PinSummary[];
+  placing?: boolean;
+  draft?: { latitude: number; longitude: number } | null;
+  onPlace?: (lat: number, lng: number) => void;
 }) {
   const verified = waterbodies.filter((w) => w.data_tier !== "osm");
   const osm = waterbodies.filter((w) => w.data_tier === "osm");
@@ -173,6 +183,7 @@ export default function LakeMap({
       center={initialView?.center ?? TEXAS_CENTER}
       zoom={initialView?.zoom ?? 6}
       scrollWheelZoom
+      className={placing ? "is-placing" : undefined}
       // Moved to the bottom right: the search bar sits in the top left,
       // where Leaflet puts the zoom buttons by default.
       zoomControl={false}
@@ -199,6 +210,10 @@ export default function LakeMap({
           <LakeMarker key={lake.id} lake={lake} onSelect={onSelect} />
         ))}
       </MarkerClusterGroup>
+
+      <PinMarkers pins={pins} />
+      {placing && onPlace && <PlaceOnClick onPlace={onPlace} />}
+      {draft && onPlace && <DraftMarker point={draft} onMove={onPlace} />}
     </MapContainer>
   );
 }

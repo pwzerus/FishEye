@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { SiteHeader } from "@/components/SiteHeader";
-import { DifficultyTag, SpeciesGuideBody } from "@/components/species/SpeciesGuideBody";
-import { listSpeciesGuides } from "@/lib/api/client";
-import type { SpeciesGuide } from "@/lib/api/types";
+import { FishGrid } from "@/components/fish/FishGrid";
+import { PageTransition } from "@/components/motion/Transition";
+import { listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
+import type { SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
 
 export const metadata: Metadata = {
   title: "Fish guide · FishMate",
@@ -12,60 +12,57 @@ export const metadata: Metadata = {
 
 export default async function FishGuidePage() {
   let guides: SpeciesGuide[] = [];
+  let photos: SpeciesPhotos = {};
   let backendError: string | null = null;
   try {
-    guides = await listSpeciesGuides();
+    [guides, photos] = await Promise.all([listSpeciesGuides(), listSpeciesPhotos()]);
   } catch {
     backendError = "Could not reach the backend API. Is it running? See backend/README.md.";
   }
 
-  const sport = guides.filter((g) => g.role === "sport");
-  const forage = guides.filter((g) => g.role === "forage");
+  const baitRules = guides.find((g) => g.legal_notes.length > 0)?.legal_notes ?? [];
 
   return (
-    <main className="page page-scroll">
-      <SiteHeader current="fish" />
-      {backendError ? (
-        <div className="backend-error">{backendError}</div>
-      ) : (
-        <div className="fish-guide">
-          <section className="fish-guide-intro">
-            <h1>How to catch them</h1>
-            <p>
-              What each fish eats, where to look for it, which bait to use, and a few rod and
-              reel setups that work, from a first cane pole to heavier gear. Every setup lists
-              the source it came from, mostly Texas Parks and Wildlife and other state
-              fisheries agencies.
-            </p>
-            <nav className="fish-guide-jump" aria-label="Jump to a fish">
-              {sport.map((g) => (
-                <a key={g.slug} href={`#${g.slug}`}>
-                  {g.common_name}
-                </a>
-              ))}
-              {forage.length > 0 && <span className="fish-guide-jump-divider">Bait fish:</span>}
-              {forage.map((g) => (
-                <a key={g.slug} href={`#${g.slug}`}>
-                  {g.common_name}
-                </a>
-              ))}
-            </nav>
-          </section>
+    <PageTransition>
+      <main className="page-scroll fish-index">
+        <section className="page-intro">
+          <p className="eyebrow reveal" style={{ "--i": 0 } as React.CSSProperties}>
+            Fish guide
+          </p>
+          <h1 className="reveal" style={{ "--i": 1 } as React.CSSProperties}>
+            Meet the fish
+          </h1>
+          <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
+            Twelve Texas freshwater fish: what each one eats, where to look, which bait works, and
+            rod-and-reel setups from a first cane pole up. Every setup names its source, mostly
+            Texas Parks and Wildlife and other state agencies.
+          </p>
+        </section>
 
-          {guides.map((g) => (
-            <article key={g.slug} id={g.slug} className="fish-guide-card">
-              <header className="fish-guide-card-header">
-                <div>
-                  <h2>{g.common_name}</h2>
-                  <p className="fish-guide-sci">{g.scientific_name}</p>
-                </div>
-                <DifficultyTag guide={g} />
-              </header>
-              <SpeciesGuideBody guide={g} />
-            </article>
-          ))}
-        </div>
-      )}
-    </main>
+        {backendError ? (
+          <div className="backend-error">{backendError}</div>
+        ) : (
+          <FishGrid guides={guides} photos={photos} />
+        )}
+
+        {baitRules.length > 0 && (
+          <section id="bait_rules" className="rules-card reveal" style={{ "--i": 6 } as React.CSSProperties}>
+            <h2>Texas bait rules, for every fish</h2>
+            <ul>
+              {baitRules.map((rule) => (
+                <li key={rule}>{rule}</li>
+              ))}
+            </ul>
+            <p className="muted">
+              Size and bag limits change and vary by lake.{" "}
+              <a href={guides[0]?.limits_url} target="_blank" rel="noreferrer">
+                Check TPWD&apos;s current limits
+              </a>{" "}
+              before you keep a fish.
+            </p>
+          </section>
+        )}
+      </main>
+    </PageTransition>
   );
 }

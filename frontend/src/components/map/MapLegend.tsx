@@ -8,7 +8,7 @@ const ROWS = [
   { className: "osm-marker", label: "On the map only, nothing verified" },
 ];
 
-export function MapLegend() {
+export function MapLegend({ showPins = false }: { showPins?: boolean }) {
   return (
     <div className="map-legend" aria-label="Map legend">
       {ROWS.map((row) => (
@@ -18,6 +18,12 @@ export function MapLegend() {
           <span>{row.label}</span>
         </div>
       ))}
+      {showPins && (
+        <div className="map-legend-row">
+          <span className="legend-catch" aria-hidden="true" />
+          <span>Community pin (an angler&apos;s report)</span>
+        </div>
+      )}
     </div>
   );
 }

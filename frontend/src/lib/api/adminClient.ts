@@ -1,8 +1,8 @@
-// Admin-only calls (see backend/app/api/admin.py + docs/adr/0003). Kept
-// separate from client.ts because these need an admin token header and
-// must never be cached — client.ts's apiFetch intentionally caches
-// (`next: { revalidate: 30 }`), which is exactly wrong for a live job
-// status the user is actively polling.
+// TPWD refresh calls (backend/app/api/admin.py, docs/adr/0003). A signed-in
+// admin's session cookie authorises them (ADR 0016); the shared token is
+// still accepted for scripts. Never cached — client.ts's apiFetch
+// intentionally caches, which is exactly wrong for a live job status the
+// user is actively polling.
 import type { RefreshStatus, RefreshTrigger } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -21,9 +21,10 @@ async function adminFetch<T>(path: string, token: string, init?: RequestInit): P
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     cache: "no-store",
+    credentials: "include",
     headers: {
       ...(init?.headers ?? {}),
-      "X-Admin-Token": token,
+      ...(token ? { "X-Admin-Token": token } : {}),
     },
   });
   if (!res.ok) {

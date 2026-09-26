@@ -126,7 +126,7 @@ describe("SpeciesHowTo", () => {
     expect(getSpeciesGuide).toHaveBeenCalledWith("largemouth-bass");
     expect(screen.getByRole("link", { name: /full largemouth bass guide/i })).toHaveAttribute(
       "href",
-      "/fish#largemouth-bass",
+      "/fish/largemouth-bass",
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Hide how to catch it" }));

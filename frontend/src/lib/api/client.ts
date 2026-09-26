@@ -1,6 +1,9 @@
 import type {
   AdvisorRequest,
   AdvisorResponse,
+  AskRequest,
+  AskResponse,
+  SpeciesPhotos,
   GeocodeResult,
   RecommendationRequest,
   SpeciesGuide,
@@ -16,6 +19,8 @@ class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
+    /** Set when the server wants something specific, e.g. "reauth_required". */
+    public code?: string,
   ) {
     super(message);
     this.name = "ApiError";
@@ -131,6 +136,29 @@ export function listSpeciesGuides(): Promise<SpeciesGuide[]> {
 
 export function getSpeciesGuide(slug: string): Promise<SpeciesGuide> {
   return apiFetch<SpeciesGuide>(`/api/species/guides/${encodeURIComponent(slug)}`);
+}
+
+export async function listSpeciesPhotos(): Promise<SpeciesPhotos> {
+  // Photos come from Wikipedia via the backend, which caches good results
+  // for days and never caches a failure. A long cache here would undo that
+  // by pinning one bad moment's empty answer, so it's kept short. A failure
+  // isn't an error for the page — the illustrations stand on their own.
+  try {
+    return await apiFetch<SpeciesPhotos>("/api/species/photos", { next: { revalidate: 60 } });
+  } catch {
+    return {};
+  }
+}
+
+export function postAsk(payload: AskRequest): Promise<AskResponse> {
+  // Not cached here: the backend caches accepted answers keyed on the
+  // question and the passages it was grounded in.
+  return apiFetch<AskResponse>("/api/ask", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
 }
 
 export { ApiError };
