@@ -95,6 +95,7 @@ class AdvisorResponse(BaseModel):
     confidence: float
     safety_warnings: list[WeatherWarningOut]
     best_time_window: TimeWindowOut | None
+    bite_windows: list[TimeWindowOut] = []
     candidates: list[SpotCandidateOut]
     weather_source: str
     trace: AdvisorTraceOut

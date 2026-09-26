@@ -516,6 +516,7 @@ def server_controlled_fields(facts: dict[str, Any]) -> dict[str, Any]:
         "confidence": candidates[0]["confidence"] if candidates else 0.0,
         "safety_warnings": recommendations["safety_warnings"],
         "best_time_window": recommendations["best_time_window"],
+        "bite_windows": recommendations["bite_windows"],
         "candidates": candidates,
         "weather_source": recommendations["weather_source"],
         "generated_at": datetime.now(timezone.utc),

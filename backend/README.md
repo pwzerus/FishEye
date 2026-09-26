@@ -64,6 +64,59 @@ when the API starts. After pulling model changes that add *columns*, delete
 
 API docs: http://localhost:8000/docs
 
+### Accounts, community pins and admin
+
+After pulling this change, install the two new packages (photo uploads):
+
+```bash
+pip install -r requirements.txt
+```
+
+Create the first admin from the command line (there's deliberately no way to
+become admin from the website):
+
+```bash
+python -m app.cli.users create-admin --email you@example.com --name "Your Name"
+python -m app.cli.users list
+python -m app.cli.users promote --email someone@example.com
+```
+
+Then sign in at http://localhost:3000/login and open http://localhost:3000/admin.
+Uploaded photos go to `MEDIA_ROOT` (default `./media`, gitignored).
+
+Optional Google sign-in: create an OAuth client ("Web application") in Google
+Cloud Console, add the redirect URI
+`http://localhost:8000/api/auth/google/callback`, and set `GOOGLE_CLIENT_ID`
+and `GOOGLE_CLIENT_SECRET` in `.env`. Without them the Google button simply
+isn't shown. Design and security notes: docs/adr/0016-accounts-and-community-pins.md.
+
+### Fish-guide Q&A (RAG) and the LLM
+
+`POST /api/ask` answers questions from the fish guides with citations
+(docs/adr/0014-rag-over-species-guides.md). It runs with no key: the mock
+provider answers by quoting the retrieved passages. For real generated
+answers, put these in the backend's `.env` (never the frontend's):
+
+```bash
+LLM_PROVIDER=anthropic
+LLM_API_KEY=sk-ant-...
+# LLM_MODEL=            # blank = claude-haiku-4-5
+```
+
+Try a failure path on demand: `LLM_MOCK_FAILURE_MODE=invented_number`
+(or `hallucinated_species`, `hallucinated_source`, `invalid_json`,
+`unavailable`) with the mock provider.
+
+Retrieval and grounding eval:
+
+```bash
+python -m app.eval.rag_runner      # hit@4, MRR, off-topic rejection, failures caught
+python -m app.eval.runner          # the advisor's eval (ADR 0008)
+```
+
+Fish photos (`GET /api/species/photos`) come from Wikipedia at runtime, with
+credit (ADR 0015). Set `SPECIES_PHOTOS_ENABLED=false` to turn that off.
+
 ## Tests
 
 ```bash

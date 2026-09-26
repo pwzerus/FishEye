@@ -148,6 +148,7 @@ def build_recommendations(
     candidates.sort(key=lambda c: (c["score"], c["confidence"]), reverse=True)
 
     window = scoring.best_time_window(snapshot)
+    bites = scoring.bite_windows(snapshot)
 
     return {
         "waterbody_id": waterbody.id,
@@ -163,6 +164,18 @@ def build_recommendations(
             if window
             else None
         ),
+        # The morning and evening bite, each its own best block (see
+        # scoring.bite_windows); what the UI shows.
+        "bite_windows": [
+            {
+                "start_time": w.start_time,
+                "end_time": w.end_time,
+                "reason": w.reason,
+                "label": w.label,
+                "score": w.score,
+            }
+            for w in bites
+        ],
         "safety_warnings": [
             {"event": a.event, "severity": a.severity, "headline": a.headline}
             for a in snapshot.alerts

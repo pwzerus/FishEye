@@ -45,7 +45,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
-from app.services.weather_adapter import WeatherSnapshot
+from app.services.weather_adapter import HourlyPeriod, WeatherSnapshot
 
 # PRD §5.2 default weights. They must sum to 1.0 — `confidence` is defined
 # as the share of total weight that had data, which only means anything if
@@ -452,73 +452,148 @@ class TimeWindow:
     start_time: datetime
     end_time: datetime
     reason: str
+    # "morning" / "evening" for the bite windows; None for the single
+    # overall best block.
+    label: str | None = None
+    # Mean hour score (0 to about 1.15), so a caller can say which of two
+    # windows is the better bet without re-deriving it.
+    score: float | None = None
+
+
+# The two classic bite windows, as ranges of the forecast's own local hour
+# (NWS startTime carries the gridpoint's UTC offset, so .hour is lake time).
+# A window must fit entirely inside its range: a "morning" block that runs
+# into midday isn't the morning bite anymore.
+BITE_WINDOW_HOURS: tuple[tuple[str, int, int], ...] = (
+    ("morning", 4, 12),
+    ("evening", 15, 23),
+)
+LOW_LIGHT_HOURS = (5, 6, 7, 18, 19, 20)
+
+
+def _hour_score(period: HourlyPeriod) -> float:
+    """One forecast hour, scored the way `score_weather` scores current
+    conditions, plus a modest low-light bonus."""
+    # Same wind bands as the spot score, so "when to go" and "where to
+    # go" can't disagree about what counts as good wind.
+    wind = _parse_wind_mph(period.wind_speed)
+    if wind is None:
+        wind_value = 0.6
+    elif wind < WIND_CALM_MAX:
+        wind_value = 0.55
+    elif wind <= WIND_FAVORABLE_MAX:
+        wind_value = 1.0
+    elif wind <= WIND_WORKABLE_MAX:
+        wind_value = 0.6
+    else:
+        wind_value = 0.2
+
+    precip = period.probability_of_precipitation
+    if precip is None:
+        precip_value = 0.8
+    elif precip <= 20:
+        precip_value = 1.0
+    elif precip <= 50:
+        precip_value = 0.7
+    else:
+        precip_value = 0.35
+
+    # Low-light feeding windows. Kept modest, and kept *here* rather than
+    # in the spot score, because the sources support it for timing ("when
+    # to go") far better than as a property of a place — above ~75F
+    # feeding shifts to dawn/dusk/night, which arrives through water
+    # temperature as much as through light.
+    low_light_bonus = 0.15 if period.start_time.hour in LOW_LIGHT_HOURS else 0.0
+
+    return 0.6 * wind_value + 0.3 * precip_value + low_light_bonus
+
+
+def _trustworthy(snapshot: WeatherSnapshot) -> bool:
+    """`source` is the authoritative signal, and testing it (not just
+    emptiness) means a fallback that ever carries placeholder hourly
+    entries still can't produce advice. A made-up "best time to fish" is
+    worse than no advice."""
+    return snapshot.source != "fallback" and bool(snapshot.hourly)
+
+
+def _window(
+    snapshot: WeatherSnapshot, start: int, length: int, scores: list[float], label: str | None
+) -> TimeWindow:
+    first = snapshot.hourly[start]
+    last = snapshot.hourly[start + length - 1]
+    block = snapshot.hourly[start : start + length]
+    if label is None:
+        reason = (
+            f"steadiest conditions in the forecast window: "
+            f"{first.short_forecast.lower()}, wind {first.wind_speed}"
+        )
+    else:
+        rain = max((p.probability_of_precipitation or 0) for p in block)
+        light = "dawn" if label == "morning" else "dusk"
+        low_light = any(p.start_time.hour in LOW_LIGHT_HOURS for p in block)
+        reason = (f"{light} low light; " if low_light else "") + (
+            f"{first.short_forecast.lower()}, wind {first.wind_speed}, "
+            f"rain chance up to {rain}%"
+        )
+    return TimeWindow(
+        start_time=first.start_time,
+        # NWS hourly periods are one hour long and carry only a start time,
+        # so the window ends an hour after its last period begins.
+        end_time=last.start_time + timedelta(hours=1),
+        reason=reason,
+        label=label,
+        score=round(sum(scores[start : start + length]) / length, 3),
+    )
 
 
 def best_time_window(snapshot: WeatherSnapshot, max_hours: int = 3) -> TimeWindow | None:
-    """Picks the best contiguous block in the hourly forecast, scoring each
-    hour the same way `score_weather` scores current conditions.
-
-    Returns None whenever the weather data isn't trustworthy — no hourly
-    periods, or a fallback snapshot. Both checks matter: `source` is the
-    authoritative signal, and testing it (not just emptiness) means a
-    fallback that ever carries placeholder hourly entries still can't
-    produce advice. A made-up "best time to fish" is worse than no advice.
-    """
-    if snapshot.source == "fallback" or not snapshot.hourly:
+    """The single best contiguous block in the hourly forecast, whatever the
+    time of day. Kept for the AI advisor's facts; the UI shows
+    `bite_windows`. Returns None when the weather isn't trustworthy."""
+    if not _trustworthy(snapshot):
         return None
-
-    hour_scores: list[float] = []
-    for period in snapshot.hourly:
-        # Same wind bands as the spot score, so "when to go" and "where to
-        # go" can't disagree about what counts as good wind.
-        wind = _parse_wind_mph(period.wind_speed)
-        if wind is None:
-            wind_value = 0.6
-        elif wind < WIND_CALM_MAX:
-            wind_value = 0.55
-        elif wind <= WIND_FAVORABLE_MAX:
-            wind_value = 1.0
-        elif wind <= WIND_WORKABLE_MAX:
-            wind_value = 0.6
-        else:
-            wind_value = 0.2
-
-        precip = period.probability_of_precipitation
-        if precip is None:
-            precip_value = 0.8
-        elif precip <= 20:
-            precip_value = 1.0
-        elif precip <= 50:
-            precip_value = 0.7
-        else:
-            precip_value = 0.35
-
-        # Low-light feeding windows. Kept modest, and kept *here* rather than
-        # in the spot score, because the sources support it for timing ("when
-        # to go") far better than as a property of a place — above ~75F
-        # feeding shifts to dawn/dusk/night, which arrives through water
-        # temperature as much as through light.
-        hour = period.start_time.hour
-        low_light_bonus = 0.15 if hour in (5, 6, 7, 18, 19, 20) else 0.0
-
-        hour_scores.append(0.6 * wind_value + 0.3 * precip_value + low_light_bonus)
-
-    window = min(max_hours, len(hour_scores))
+    scores = [_hour_score(p) for p in snapshot.hourly]
+    window = min(max_hours, len(scores))
     best_start = max(
-        range(len(hour_scores) - window + 1),
-        key=lambda i: sum(hour_scores[i : i + window]),
+        range(len(scores) - window + 1),
+        key=lambda i: sum(scores[i : i + window]),
     )
-    best_period = snapshot.hourly[best_start]
-    last_period = snapshot.hourly[best_start + window - 1]
-    # NWS hourly periods are one hour long and carry only a start time, so
-    # the window ends an hour after its last period begins.
-    end_time = last_period.start_time + timedelta(hours=1)
+    return _window(snapshot, best_start, window, scores, label=None)
 
-    return TimeWindow(
-        start_time=best_period.start_time,
-        end_time=end_time,
-        reason=(
-            f"steadiest conditions in the forecast window: "
-            f"{best_period.short_forecast.lower()}, wind {best_period.wind_speed}"
-        ),
-    )
+
+def bite_windows(snapshot: WeatherSnapshot, max_hours: int = 3) -> list[TimeWindow]:
+    """The best morning block and the best evening block in the forecast,
+    in time order.
+
+    Anglers plan around both bites, and a single "best window" hid one of
+    them every day: whichever scored a little higher won, and the other
+    simply wasn't shown. Each range is searched on its own, so a windy
+    morning still gets its best block (with a lower score) instead of
+    vanishing. A range with no complete block inside the forecast horizon
+    is left out rather than padded.
+    """
+    if not _trustworthy(snapshot):
+        return []
+    hourly = snapshot.hourly
+    scores = [_hour_score(p) for p in hourly]
+    found: list[TimeWindow] = []
+    for label, first_hour, end_hour in BITE_WINDOW_HOURS:
+        best: tuple[float, int] | None = None
+        for i in range(len(hourly) - max_hours + 1):
+            block = hourly[i : i + max_hours]
+            inside = all(first_hour <= p.start_time.hour < end_hour for p in block)
+            consecutive = all(
+                block[j + 1].start_time - block[j].start_time == timedelta(hours=1)
+                for j in range(len(block) - 1)
+            )
+            if not (inside and consecutive):
+                continue
+            total = sum(scores[i : i + max_hours])
+            # Strictly greater: on a tie the earlier block wins, which is
+            # the one a person can still make.
+            if best is None or total > best[0]:
+                best = (total, i)
+        if best is not None:
+            found.append(_window(snapshot, best[1], max_hours, scores, label=label))
+    found.sort(key=lambda w: w.start_time)
+    return found

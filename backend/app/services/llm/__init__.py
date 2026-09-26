@@ -46,8 +46,20 @@ def get_provider() -> LLMProvider:
         _cached_provider = MockProvider(failure_mode=_configured_failure_mode())
         return _cached_provider
 
-    # Real providers land here as they're added (openai, anthropic). Until
-    # then, an explicit error beats silently pretending the key was used.
+    if provider_name == "anthropic":
+        from app.services.llm.anthropic import AnthropicProvider
+
+        model = settings.llm_model
+        if model and model.startswith("gpt-"):
+            # An older .env copied from .env.example still says gpt-4o-mini;
+            # sending that to Anthropic is a guaranteed 404 on every call.
+            print(f"LLM_MODEL={model!r} is not an Anthropic model; using the default.")
+            model = None
+        _cached_provider = AnthropicProvider(settings.llm_api_key, model=model)
+        return _cached_provider
+
+    # Other vendors land here as they're added. Until then, an explicit
+    # error beats silently pretending the key was used.
     raise NotImplementedError(
         f"LLM provider {provider_name!r} is configured but not implemented yet. "
         "Set LLM_PROVIDER=mock to run the advisor without a vendor."

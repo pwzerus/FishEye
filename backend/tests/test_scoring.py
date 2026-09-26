@@ -402,3 +402,83 @@ def test_no_time_window_from_a_fallback_snapshot_even_if_it_has_hourly_data():
     populated_fallback = _snapshot(source="fallback")
     assert populated_fallback.hourly  # the helper gave it hourly data
     assert scoring.best_time_window(populated_fallback) is None
+
+
+# --------------------------------------------------------------------------
+# Morning and evening bite windows
+# --------------------------------------------------------------------------
+
+CDT = timezone(timedelta(hours=-5))
+
+
+def _day(start: datetime, winds: dict[int, str] | None = None, hours: int = 24) -> list[HourlyPeriod]:
+    """`hours` consecutive hourly periods from `start` (lake local time),
+    8 mph and dry unless `winds` overrides an hour of the day."""
+    winds = winds or {}
+    out = []
+    for k in range(hours):
+        t = start + timedelta(hours=k)
+        out.append(
+            HourlyPeriod(
+                start_time=t,
+                temperature=75,
+                temperature_unit="F",
+                wind_speed=winds.get(t.hour, "8 mph"),
+                wind_direction="S",
+                short_forecast="Sunny",
+                probability_of_precipitation=10,
+            )
+        )
+    return out
+
+
+def test_bite_windows_returns_a_morning_and_an_evening_block_in_time_order():
+    hourly = _day(datetime(2026, 9, 22, 12, tzinfo=CDT))  # noon today -> noon tomorrow
+    windows = scoring.bite_windows(_snapshot(hourly=hourly))
+    assert [w.label for w in windows] == ["evening", "morning"]
+    evening, morning = windows
+    # Calm, dry day: the low-light hours decide it.
+    assert (evening.start_time.hour, evening.end_time.hour) == (18, 21)
+    assert (morning.start_time.hour, morning.end_time.hour) == (5, 8)
+    assert morning.start_time.day == 23  # tomorrow's dawn
+    assert "dawn low light" in morning.reason and "dusk low light" in evening.reason
+
+
+def test_hours_are_read_in_the_lakes_own_time_not_utc():
+    # 05:00 CDT is 10:00 UTC; judged in UTC this would never look like dawn.
+    hourly = _day(datetime(2026, 9, 23, 0, tzinfo=CDT))
+    morning = next(w for w in scoring.bite_windows(_snapshot(hourly=hourly)) if w.label == "morning")
+    assert morning.start_time.utcoffset() == timedelta(hours=-5)
+    assert morning.start_time.hour == 5
+
+
+def test_a_windy_morning_still_gets_its_best_block_instead_of_disappearing():
+    hourly = _day(datetime(2026, 9, 23, 0, tzinfo=CDT), winds={h: "30 mph" for h in range(4, 10)})
+    windows = {w.label: w for w in scoring.bite_windows(_snapshot(hourly=hourly))}
+    assert windows["morning"].start_time.hour == 9  # 09-12: only 09 is still windy
+    assert windows["morning"].score < windows["evening"].score
+
+
+def test_a_window_never_spills_out_of_its_part_of_the_day():
+    hourly = _day(datetime(2026, 9, 23, 0, tzinfo=CDT))
+    for w in scoring.bite_windows(_snapshot(hourly=hourly)):
+        lo, hi = {"morning": (4, 12), "evening": (15, 23)}[w.label]
+        assert lo <= w.start_time.hour and (w.end_time - timedelta(hours=1)).hour < hi
+
+
+def test_a_part_of_the_day_outside_the_forecast_is_left_out():
+    # 13:00 -> 19:00: there is an evening block but no morning at all.
+    hourly = _day(datetime(2026, 9, 22, 13, tzinfo=CDT), hours=7)
+    assert [w.label for w in scoring.bite_windows(_snapshot(hourly=hourly))] == ["evening"]
+
+
+def test_gaps_in_the_forecast_never_join_into_one_window():
+    hourly = _day(datetime(2026, 9, 23, 4, tzinfo=CDT), hours=8)
+    del hourly[2]  # 06:00 missing
+    for w in scoring.bite_windows(_snapshot(hourly=hourly)):
+        assert w.end_time - w.start_time == timedelta(hours=3)
+        assert not (w.start_time.hour <= 6 < w.end_time.hour)
+
+
+def test_no_bite_windows_from_fallback_weather():
+    assert scoring.bite_windows(_snapshot(source="fallback")) == []

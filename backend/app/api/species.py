@@ -1,20 +1,34 @@
-"""GET /api/species/guides — how to catch each species (app/knowledge/species_guides.py)."""
+"""GET /api/species/guides — how to catch each species (app/knowledge/species_guides.py).
+GET /api/species/photos — a real photo per species, with credit (services/species_photos.py)."""
+from dataclasses import asdict
+
 from fastapi import APIRouter, HTTPException
 
 from app.knowledge.species_guides import (
     GUIDES,
     TPWD_LIMITS_URL,
+    Source,
     SpeciesGuide,
     get_guide,
     sources_for,
 )
-from app.schemas.species_guide import GuideSourceOut, SpeciesGuideOut, TackleSetupOut
+from app.schemas.species_guide import (
+    GuideSourceOut,
+    SpeciesGuideOut,
+    SpeciesPhotoOut,
+    TackleSetupOut,
+)
+from app.services import species_photos
 
 router = APIRouter(prefix="/species", tags=["species"])
 
 
+def source_out(s: Source) -> GuideSourceOut:
+    return GuideSourceOut(label=s.label, url=s.url, kind=s.kind)
+
+
 def _sources(ids: tuple[str, ...]) -> list[GuideSourceOut]:
-    return [GuideSourceOut(label=s.label, url=s.url, kind=s.kind) for s in sources_for(ids)]
+    return [source_out(s) for s in sources_for(ids)]
 
 
 def to_out(guide: SpeciesGuide) -> SpeciesGuideOut:
@@ -65,3 +79,14 @@ def get_species_guide(slug: str) -> SpeciesGuideOut:
     if guide is None:
         raise HTTPException(status_code=404, detail=f"no guide for {slug!r}")
     return to_out(guide)
+
+
+@router.get("/photos", response_model=dict[str, SpeciesPhotoOut | None])
+def list_species_photos() -> dict[str, SpeciesPhotoOut | None]:
+    """Separate from /guides on purpose: the guides are local and instant,
+    the photos come from Wikipedia and may be slow or missing. A page can
+    render the guides first and add photos when (and if) they arrive."""
+    return {
+        slug: SpeciesPhotoOut(**asdict(photo)) if photo else None
+        for slug, photo in species_photos.get_photos().items()
+    }

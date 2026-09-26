@@ -38,9 +38,13 @@ class SpotCandidateOut(BaseModel):
 
 
 class TimeWindowOut(BaseModel):
+    # Serialized with the forecast's own UTC offset, i.e. in the lake's
+    # local time — the UI shows clock times from it as-is.
     start_time: datetime
     end_time: datetime
     reason: str
+    label: str | None = None  # "morning" | "evening" for bite windows
+    score: float | None = None
 
 
 class WeatherWarningOut(BaseModel):
@@ -63,6 +67,7 @@ class RecommendationResponse(BaseModel):
     target_species: str | None
     candidates: list[SpotCandidateOut]
     best_time_window: TimeWindowOut | None
+    bite_windows: list[TimeWindowOut] = []
     safety_warnings: list[WeatherWarningOut]
     weather_source: str  # "nws" | "fallback"
     generated_at: datetime

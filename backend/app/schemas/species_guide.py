@@ -36,3 +36,17 @@ class SpeciesGuideOut(BaseModel):
     legal_notes: list[str]
     limits_url: str
     sources: list[GuideSourceOut]
+
+
+class SpeciesPhotoOut(BaseModel):
+    """A real, freely licensed photo (services/species_photos.py). The UI
+    must show `author` and `license` with it — that's the licence's term."""
+
+    url: str
+    width: int
+    height: int
+    author: str
+    license: str
+    license_url: str | None
+    file_page: str
+    source: str

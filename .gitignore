@@ -33,3 +33,7 @@ npm-debug.log*
 backend/tx_osm.json
 backend/gbif_tx_raw.json
 backend/gbif_tx_report.json
+
+# Community photo uploads (MEDIA_ROOT): user content, never committed
+backend/media/
+media/

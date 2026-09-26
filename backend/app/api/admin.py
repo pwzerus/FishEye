@@ -1,30 +1,38 @@
-"""Admin-only endpoints — currently just the TPWD manual-refresh trigger.
+"""Admin-only endpoints — the TPWD manual-refresh trigger.
 
-Gated by a single shared token (Settings.admin_api_token), not a real user
-auth system. That's a deliberate, disclosed shortcut for a portfolio demo
-with exactly one operator (me) — see docs/adr/0003-tpwd-manual-refresh.md
-for the reasoning and what a real deployment would need instead (per-user
-accounts, rate limiting, audit logging).
+Originally gated only by a shared token (Settings.admin_api_token), a
+disclosed shortcut from before there were accounts (ADR 0003). Now a
+signed-in admin (ADR 0016) may use it too; the token still works for
+scripts and CI.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, BackgroundTasks, Header, HTTPException
+import hmac
+
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException
+
+from app.api.auth_deps import optional_user, same_origin
+from app.models.community import User
 
 from app.core.config import get_settings
 from app.schemas.admin import LakeResultOut, RefreshStatusOut, RefreshTriggerOut
 from app.services.tpwd_refresh_job import JobStatus, tpwd_refresh_job
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(same_origin)])
 
 
-def _check_admin_token(x_admin_token: str | None) -> None:
+def _check_admin_token(x_admin_token: str | None, user: User | None = None) -> None:
+    if user is not None and user.is_admin:
+        return
     settings = get_settings()
     if not settings.admin_api_token:
         # Fail closed: an unconfigured token means the endpoint doesn't
         # exist as far as any caller is concerned, not "anyone can use
         # it." A missing secret should never widen access.
         raise HTTPException(status_code=503, detail="admin endpoints are not configured")
-    if x_admin_token != settings.admin_api_token:
+    if not x_admin_token or not hmac.compare_digest(
+        x_admin_token.encode("utf-8"), settings.admin_api_token.encode("utf-8")
+    ):
         raise HTTPException(status_code=401, detail="invalid or missing X-Admin-Token")
 
 
@@ -33,8 +41,9 @@ def trigger_tpwd_refresh(
     background_tasks: BackgroundTasks,
     dry_run: bool = False,
     x_admin_token: str | None = Header(default=None),
+    user: User | None = Depends(optional_user),
 ) -> RefreshTriggerOut:
-    _check_admin_token(x_admin_token)
+    _check_admin_token(x_admin_token, user)
 
     started = tpwd_refresh_job.try_start()
     if not started:
@@ -48,8 +57,11 @@ def trigger_tpwd_refresh(
 
 
 @router.get("/tpwd-refresh/status", response_model=RefreshStatusOut)
-def get_tpwd_refresh_status(x_admin_token: str | None = Header(default=None)) -> RefreshStatusOut:
-    _check_admin_token(x_admin_token)
+def get_tpwd_refresh_status(
+    x_admin_token: str | None = Header(default=None),
+    user: User | None = Depends(optional_user),
+) -> RefreshStatusOut:
+    _check_admin_token(x_admin_token, user)
 
     state = tpwd_refresh_job.snapshot()
     return RefreshStatusOut(

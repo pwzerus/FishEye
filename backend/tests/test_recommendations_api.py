@@ -150,6 +150,7 @@ def test_weather_outage_lowers_confidence_but_still_returns_candidates(
 
     assert body["weather_source"] == "fallback"
     assert body["best_time_window"] is None
+    assert body["bite_windows"] == []
     candidate = body["candidates"][0]
     assert set(candidate["missing_signals"]) == {"weather"}
     assert candidate["confidence"] == 0.75  # 1.0 - 0.25 weather
@@ -207,3 +208,23 @@ def test_unknown_waterbody_returns_404(client, stub_weather):
     stub_weather(_snapshot())
     resp = client.post("/api/recommendations", json={"waterbody_id": 99999})
     assert resp.status_code == 404
+
+
+def test_bite_windows_come_back_in_lake_time_with_labels(client, seeded_lake, stub_weather):
+    from dataclasses import replace
+    from datetime import timedelta
+
+    cdt = timezone(timedelta(hours=-5))
+    start = datetime(2026, 9, 22, 12, tzinfo=cdt)
+    base = _snapshot()
+    hourly = [replace(base.hourly[0], start_time=start + timedelta(hours=k)) for k in range(24)]
+    stub_weather(replace(base, hourly=hourly))
+
+    body = client.post("/api/recommendations", json={"waterbody_id": seeded_lake["waterbody"].id}).json()
+
+    labels = [w["label"] for w in body["bite_windows"]]
+    assert labels == ["evening", "morning"]
+    evening = body["bite_windows"][0]
+    assert evening["start_time"].endswith("-05:00")  # lake time, not converted to UTC
+    assert evening["start_time"].startswith("2026-09-22T18:00")
+    assert 0 < evening["score"] <= 1.2

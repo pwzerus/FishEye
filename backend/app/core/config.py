@@ -35,16 +35,43 @@ class Settings(BaseSettings):
     # docs/adr/0009-geocoding.md for why this app never calls Nominatim
     # from the browser.
     nominatim_user_agent: str = "fishmate (github.com/pwzerus/FishEye)"
+    # Wikimedia's API policy asks for an identifying User-Agent too.
+    wikimedia_user_agent: str = "fishmate/0.1 (github.com/pwzerus/FishEye)"
+    # Real fish photos on the guide pages (services/species_photos.py).
+    # False = illustrations only, and no calls to Wikipedia.
+    species_photos_enabled: bool = True
     google_places_api_key: str | None = None
-    llm_provider: str = "mock"  # "openai" | "anthropic" | "mock"
+    llm_provider: str = "mock"  # "mock" | "anthropic" ("openai" not implemented)
     llm_api_key: str | None = None
-    llm_model: str = "gpt-4o-mini"
+    # Empty means the provider's own default (anthropic: claude-haiku-4-5).
+    llm_model: str | None = None
 
     # Admin-only endpoints (e.g. manual data-refresh triggers). None means
     # "not configured" — routes gated on this must refuse all requests
     # rather than fall back to an open/unauthenticated endpoint. Set via
     # .env (gitignored), never hardcode a real token here.
     admin_api_token: str | None = None
+
+    # Accounts and community pins (docs/adr/0016-accounts-and-community-pins.md)
+    # The browser origin of the frontend: CORS, the CSRF origin check, and
+    # where OAuth sends people back to.
+    frontend_origin: str = "http://localhost:3000"
+    # This API as the browser reaches it; Google's redirect URI is built on it.
+    api_public_url: str = "http://localhost:8000"
+    session_cookie_name: str = "fm_session"
+    session_ttl_days: int = 30
+    # True whenever the site is served over HTTPS (any real deployment).
+    cookie_secure: bool = False
+    # Optional "Sign in with Google". Both unset = the button isn't shown.
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    # Uploaded photos. A local folder for the demo; media.py is the seam for
+    # object storage later.
+    media_root: str = "./media"
+    max_photo_bytes: int = 10 * 1024 * 1024
+    max_photos_per_pin: int = 4
+    # Distinct open reports that hide a pin until an admin looks at it.
+    report_auto_hide_threshold: int = 3
 
     # Feature flags
     use_seed_data_only: bool = True

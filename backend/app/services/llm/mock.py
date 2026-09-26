@@ -34,6 +34,8 @@ from app.services.llm.base import LLMProvider, LLMResponse, LLMUnavailable
 # marker here (rather than in the prompt builder) puts it next to the only
 # code that parses it.
 FACTS_BLOCK_RE = re.compile(r"<facts>\s*(\{.*\})\s*</facts>", re.DOTALL)
+# The guide Q&A flow (services/rag/ask.py) sends retrieved passages instead.
+PASSAGES_BLOCK_RE = re.compile(r"<passages>\s*(\[.*\])\s*</passages>", re.DOTALL)
 
 # Failure modes, selectable at runtime for demos and asserted against in
 # tests. "none" is the default everywhere except when explicitly set.
@@ -42,6 +44,12 @@ FAILURE_UNAVAILABLE = "unavailable"  # provider outage -> fixed-template fallbac
 FAILURE_INVALID_JSON = "invalid_json"  # unparseable -> retry, then fallback
 FAILURE_HALLUCINATED_SOURCE = "hallucinated_source"  # cites a URL we never supplied
 FAILURE_HALLUCINATED_SPECIES = "hallucinated_species"  # names a fish not in this lake
+FAILURE_INVENTED_NUMBER = "invented_number"  # guide Q&A: a hook size no passage gives
+
+# For the guide Q&A's hallucinated_species mode: a real guide species, so the
+# grounding check has to catch it by comparing against the passages, not by
+# simply not recognising the name.
+_DECOY_SPECIES = ("Blue Catfish", "Bluegill", "Largemouth Bass")
 
 
 class MockProvider(LLMProvider):
@@ -56,10 +64,14 @@ class MockProvider(LLMProvider):
         if self.failure_mode == FAILURE_UNAVAILABLE:
             raise LLMUnavailable("mock provider: simulated outage")
 
-        facts = self._read_facts(user_prompt)
+        passages_match = PASSAGES_BLOCK_RE.search(user_prompt)
         if self.failure_mode == FAILURE_INVALID_JSON:
             text = '{"summary": "truncated response with no closing brace'
+        elif passages_match is not None:
+            passages = json.loads(passages_match.group(1))
+            text = json.dumps(self._compose_answer(passages), ensure_ascii=False)
         else:
+            facts = self._read_facts(user_prompt)
             text = json.dumps(self._compose(facts), ensure_ascii=False)
 
         # Rough token accounting so the trace record has realistic shape.
@@ -149,6 +161,35 @@ class MockProvider(LLMProvider):
             "risks": risks,
             "sources": sources,
         }
+
+    def _compose_answer(self, passages: list[dict[str, str]]) -> dict[str, Any]:
+        """Guide Q&A: restate the top passages, citing them.
+
+        Extractive on purpose — the mock has no knowledge of its own, so the
+        honest thing it can do is relay what the passages say, framed for a
+        beginner. A real model paraphrases; the validator treats both the
+        same way.
+        """
+        used = passages[:2]
+        sentences: list[str] = []
+        for p in used:
+            header, _, body = p["text"].partition(": ")
+            species, _, section = header.partition(" — ")
+            where = f"the {species} guide" if section else "the guides"
+            label = section.lower() if section else header.lower()
+            sentences.append(f"From {where} ({label}): {body}")
+        answer = " ".join(sentences)
+        citations = [p["id"] for p in used]
+
+        if self.failure_mode == FAILURE_HALLUCINATED_SOURCE:
+            citations.append("made-up-guide#secret-spot")
+        if self.failure_mode == FAILURE_HALLUCINATED_SPECIES:
+            given = " ".join(p["text"] for p in passages).lower()
+            decoy = next((s for s in _DECOY_SPECIES if s.lower() not in given), "Peacock Bass")
+            answer += f" {decoy} bite on the same thing."
+        if self.failure_mode == FAILURE_INVENTED_NUMBER:
+            answer += " A size 37 hook works best."
+        return {"answer": answer, "citations": citations}
 
     @staticmethod
     def _top_reason(candidate: dict[str, Any]) -> str:
