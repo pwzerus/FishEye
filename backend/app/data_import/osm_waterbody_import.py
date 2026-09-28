@@ -89,14 +89,14 @@ VERIFIED_MATCH_MARGIN_M = 5000.0
 EXCLUDED_ACCESS_VALUES = {"private", "no", "customers", "agricultural", "forestry", "delivery"}
 
 OSM_LAKE_SUMMARY = (
-    "Mapped in OpenStreetMap, a community-edited map. FishMate has no verified "
+    "Mapped in OpenStreetMap, a community-edited map. FishEye has no verified "
     "information about the fish or public access here yet. Check with Texas Parks "
     "and Wildlife before you go."
 )
 OSM_POND_SUMMARY = (
     "Mapped in OpenStreetMap, a community-edited map. Many ponds are on private "
     "land (ranches, neighborhoods, golf courses): make sure this one is open to "
-    "the public before you fish it. FishMate has no verified information about "
+    "the public before you fish it. FishEye has no verified information about "
     "the fish here."
 )
 

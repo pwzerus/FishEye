@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     # App
-    app_name: str = "FishMate"
+    app_name: str = "FishEye"
     environment: str = "development"
     api_prefix: str = "/api"
 
@@ -28,15 +28,15 @@ class Settings(BaseSettings):
     # server's admin, not something that needs a real contact baked into
     # git history forever. Override via .env (gitignored) with a real
     # address if you actually want one used for live requests.
-    nws_user_agent: str = "fishmate (github.com/pwzerus/FishEye)"
-    tpwd_user_agent: str = "fishmate (github.com/pwzerus/FishEye) student portfolio project"
+    nws_user_agent: str = "fisheye (github.com/pwzerus/FishEye)"
+    tpwd_user_agent: str = "fisheye (github.com/pwzerus/FishEye) student portfolio project"
     # Nominatim's usage policy requires an identifying User-Agent (same
     # courtesy-not-secret shape as the other two above) — see
     # docs/adr/0009-geocoding.md for why this app never calls Nominatim
     # from the browser.
-    nominatim_user_agent: str = "fishmate (github.com/pwzerus/FishEye)"
+    nominatim_user_agent: str = "fisheye (github.com/pwzerus/FishEye)"
     # Wikimedia's API policy asks for an identifying User-Agent too.
-    wikimedia_user_agent: str = "fishmate/0.1 (github.com/pwzerus/FishEye)"
+    wikimedia_user_agent: str = "fisheye/0.1 (github.com/pwzerus/FishEye)"
     # Real fish photos on the guide pages (services/species_photos.py).
     # False = illustrations only, and no calls to Wikipedia.
     species_photos_enabled: bool = True

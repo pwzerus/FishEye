@@ -164,7 +164,7 @@ class SpeciesOccurrence(Base):
     One row per record, not per species, so the licence stays attached to
     each record: non-commercial records can be excluded later with a setting,
     without re-importing (docs/commercialization.md). `source` leaves room for
-    other kinds of report, e.g. future FishMate community photos."""
+    other kinds of report, e.g. future FishEye community photos."""
 
     __tablename__ = "species_occurrences"
 

@@ -56,7 +56,7 @@ ANSWER_FALLBACK = "fallback"
 ANSWER_NO_MATCH = "no_match"
 
 NO_MATCH_ANSWER = (
-    "The FishMate fish guides don't cover that yet. They cover twelve Texas freshwater "
+    "The FishEye fish guides don't cover that yet. They cover twelve Texas freshwater "
     "fish: what each one eats, where and when to find it, which bait and lures work, "
     "and rod-and-reel setups. Try asking about one of those."
 )
@@ -101,7 +101,7 @@ class AskResult:
 # --------------------------------------------------------------------------
 
 SYSTEM_PROMPT = """You answer questions from beginner anglers using ONLY the \
-passages you are given, which come from FishMate's reviewed fish guides.
+passages you are given, which come from FishEye's reviewed fish guides.
 
 Rules:
 - Use only facts stated in the passages. If they don't answer the question, \
@@ -230,7 +230,7 @@ def body_of(passage: Passage) -> str:
 def fallback_answer(passages: list[Passage], limit: int = 2) -> tuple[str, list[Passage]]:
     used = passages[:limit]
     parts = [f"{p.species_name or 'All fish'}, {p.title.lower()}: {body_of(p)}" for p in used]
-    return "Here's what the FishMate guides say:\n\n" + "\n\n".join(parts), used
+    return "Here's what the FishEye guides say:\n\n" + "\n\n".join(parts), used
 
 
 # --------------------------------------------------------------------------

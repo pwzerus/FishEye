@@ -31,7 +31,7 @@ MAX_PASSWORD_LENGTH = 128
 _COMMON_PASSWORDS = frozenset(
     """password password1 password123 12345678 123456789 1234567890 qwerty123
     qwertyuiop iloveyou letmein1 welcome1 abc12345 11111111 00000000 fishing1
-    fishmate fishmate1 bassfishing""".split()
+    fisheye fisheye1 bassfishing""".split()
 )
 
 

@@ -269,7 +269,7 @@ def test_every_failure_mode_falls_back_to_quoting_the_guides(mode, outcome, atte
     assert result.answer_source == rag.ANSWER_FALLBACK
     assert result.trace.outcome == outcome
     assert result.trace.validation_attempts == attempts
-    assert result.answer.startswith("Here's what the FishMate guides say:")
+    assert result.answer.startswith("Here's what the FishEye guides say:")
     # The fallback quotes passages verbatim, so it cites exactly what it quotes.
     for p in result.citations:
         assert rag.body_of(p) in result.answer

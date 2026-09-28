@@ -280,7 +280,7 @@ def google_sign_in(db: Session, profile: GoogleProfile, current: User | None) ->
 
     - Known Google account: sign in as its owner.
     - Signed in already: connect Google to the current account.
-    - Email matches an existing FishMate account: refuse. Local emails are
+    - Email matches an existing FishEye account: refuse. Local emails are
       never verified here, so auto-linking would hand a password-holder's
       account to whoever controls the Google address, or the reverse. The
       owner signs in with their password and connects Google from the
@@ -290,7 +290,7 @@ def google_sign_in(db: Session, profile: GoogleProfile, current: User | None) ->
     by_sub = db.scalar(select(User).where(User.google_sub == profile.sub))
     if current is not None:
         if by_sub is not None and by_sub.id != current.id:
-            raise AuthError(409, "That Google account is connected to a different FishMate account.", "google_in_use")
+            raise AuthError(409, "That Google account is connected to a different FishEye account.", "google_in_use")
         current.google_sub = profile.sub
         return current
     if by_sub is not None:
