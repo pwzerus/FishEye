@@ -103,6 +103,36 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     }
   }, [placing, authLoading, user, router]);
 
+  // First open, no deep link and no lake already selected: ask the browser
+  // for the person's location and centre there. Silent on denial/failure —
+  // this is a courtesy attempt, not a request the person made, so it falls
+  // back to the statewide overview without an error banner. A ?lake= or
+  // ?at= link, or picking a lake before this resolves, means the person
+  // already told us where they want to look, so it's skipped.
+  const triedAutoLocate = useRef(false);
+  useEffect(() => {
+    if (triedAutoLocate.current) return;
+    if (focusPoint !== null || selectedId !== null) {
+      triedAutoLocate.current = true;
+      return;
+    }
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) return;
+    triedAutoLocate.current = true;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFocusPoint({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          label: "your location",
+        });
+      },
+      () => undefined, // denied or unavailable: stay on the statewide view
+      { enableHighAccuracy: false, timeout: 10_000 },
+    );
+    // Runs once, before the person can have interacted with the map.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function handleViewportChange({ bbox, zoom: newZoom, center }: Viewport) {
     const requestId = ++latestRequest.current;
     setZoom(newZoom);
@@ -224,6 +254,12 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
                 </div>
               )}
               {loading && <div className="map-status-chip">Loading lakes…</div>}
+              {!loading && !placing && zoom === null && (
+                <div className="map-status-chip">
+                  Search a city, lake, or ZIP code, or allow location access, to see fishing spots
+                  near you.
+                </div>
+              )}
               {!loading && !zoomedOut && truncated && (
                 <div className="map-status-chip">
                   Showing the first {VIEWPORT_LIMIT} lakes and ponds here. Zoom in to see the rest.
@@ -238,7 +274,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
                 // Honest, not apologetic: the statewide layer covers Texas
                 // only for now (docs/adr/0010-statewide-osm-layer.md).
                 <div className="no-nearby-lakes-banner">
-                  No lakes on file near {focusPoint?.label} yet. FishMate covers Texas for now.
+                  No lakes on file near {focusPoint?.label} yet. FishEye covers Texas for now.
                 </div>
               )}
             </div>

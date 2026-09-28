@@ -6,7 +6,7 @@ import { listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
 import type { SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
 
 export const metadata: Metadata = {
-  title: "Fish guide · FishMate",
+  title: "Fish guide · FishEye",
   description: "How to catch Texas freshwater fish: what they eat, where to look, baits and tackle setups.",
 };
 

@@ -92,17 +92,17 @@ export function SiteHeader() {
         <Link
           href="/"
           className="brand-link"
-          aria-label="FishMate home"
+          aria-label="FishEye home"
           transitionTypes={onRoot ? undefined : ["nav-back"]}
         >
           <picture>
-            <source srcSet="/brand/fishmate-lockup-dark.svg" media="(prefers-color-scheme: dark)" />
+            <source srcSet="/brand/fisheye-lockup-dark.svg" media="(prefers-color-scheme: dark)" />
             {/* A static SVG logo: next/image would add nothing here. */}
-            <img src="/brand/fishmate-lockup.svg" alt="FishMate" className="brand-lockup" />
+            <img src="/brand/fisheye-lockup.svg" alt="FishEye" className="brand-lockup" />
           </picture>
           {/* On narrow screens the wordmark gives way to the mark alone. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/fishmate-mark.svg" alt="" className="brand-mark" aria-hidden="true" />
+          <img src="/brand/fisheye-mark.svg" alt="" className="brand-mark" aria-hidden="true" />
         </Link>
         <div className="site-header-right">
         <nav className="site-nav" aria-label="Main">

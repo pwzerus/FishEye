@@ -11,7 +11,7 @@ export default function NotFound() {
       <h1>This one got away.</h1>
       <p className="lede">There&apos;s nothing at this address.</p>
       <Link href="/" className="btn btn-primary">
-        Back to FishMate
+        Back to FishEye
       </Link>
     </main>
   );

@@ -160,7 +160,7 @@ function Thinking() {
     <div className="msg msg-assistant msg-thinking" aria-live="polite">
       <span className="avatar" aria-hidden="true">
         {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG mark, nothing to optimize */}
-        <img src="/brand/fishmate-mark.svg" alt="" />
+        <img src="/brand/fisheye-mark.svg" alt="" />
       </span>
       <div className="bubble-card">
         <span className="sr-only">Looking through the guides…</span>
@@ -281,10 +281,10 @@ export function AskChat({
               <div key={turn.id} className="msg msg-assistant">
                 <span className="avatar" aria-hidden="true">
                   {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG mark, nothing to optimize */}
-        <img src="/brand/fishmate-mark.svg" alt="" />
+        <img src="/brand/fisheye-mark.svg" alt="" />
                 </span>
                 <div className="bubble-card bubble-error">
-                  <p>Couldn&apos;t reach FishMate&apos;s server. Is the backend running?</p>
+                  <p>Couldn&apos;t reach FishEye&apos;s server. Is the backend running?</p>
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => ask(turn.question)} disabled={busy}>
                     Try again
                   </button>
@@ -297,7 +297,7 @@ export function AskChat({
             <div key={turn.id} className="msg msg-assistant">
               <span className="avatar" aria-hidden="true">
                 {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG mark, nothing to optimize */}
-        <img src="/brand/fishmate-mark.svg" alt="" />
+        <img src="/brand/fisheye-mark.svg" alt="" />
               </span>
               <div className="bubble-card">
                 <div className="bubble-meta">

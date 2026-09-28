@@ -39,7 +39,7 @@ async function sfetch<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     res = await fetch(`${API_BASE_URL}${path}`, { ...init, credentials: "include", cache: "no-store" });
   } catch {
-    throw new ApiError("Couldn't reach FishMate's server. Is the backend running?", 0);
+    throw new ApiError("Couldn't reach FishEye's server. Is the backend running?", 0);
   }
   if (res.status === 204) return undefined as T;
   let body: unknown = null;
@@ -128,7 +128,7 @@ function upload<T>(path: string, form: FormData, onProgress?: (fraction: number)
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total);
     };
-    xhr.onerror = () => reject(new ApiError("Couldn't reach FishMate's server. Is the backend running?", 0));
+    xhr.onerror = () => reject(new ApiError("Couldn't reach FishEye's server. Is the backend running?", 0));
     xhr.onload = () => {
       let body: unknown = null;
       try {

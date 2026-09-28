@@ -89,7 +89,7 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
 
       {isOsm && (
         <div className="unverified-banner">
-          This lake comes from OpenStreetMap, a community-edited map. FishMate hasn&apos;t
+          This lake comes from OpenStreetMap, a community-edited map. FishEye hasn&apos;t
           verified its fish or public access. Any entrances below are what OpenStreetMap
           reports: confirm they&apos;re open to the public before you go.
         </div>

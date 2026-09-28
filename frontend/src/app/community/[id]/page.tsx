@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { PinDetailView } from "@/components/community/PinDetailView";
 import { PageTransition } from "@/components/motion/Transition";
 
-export const metadata: Metadata = { title: "Pin · FishMate" };
+export const metadata: Metadata = { title: "Pin · FishEye" };
 
 export default async function PinPage(props: PageProps<"/community/[id]">) {
   const { id } = await props.params;

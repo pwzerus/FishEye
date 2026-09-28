@@ -25,8 +25,8 @@ const FEATURES = [
   {
     href: "/ask",
     title: "Ask anything",
-    body: "Ask in plain words. Answers come only from the reviewed guides and cite the passage they used. If the guides don't cover it, FishMate says so.",
-    cta: "Ask FishMate",
+    body: "Ask in plain words. Answers come only from the reviewed guides and cite the passage they used. If the guides don't cover it, FishEye says so.",
+    cta: "Ask FishEye",
     art: "channel-catfish",
   },
 ] as const;
@@ -53,7 +53,7 @@ export default async function Home() {
               <span className="hero-accent"> Start here.</span>
             </h1>
             <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
-              FishMate finds lakes and ponds near you, ranks the best spot for right now, and
+              FishEye finds lakes and ponds near you, ranks the best spot for right now, and
               teaches you how to catch what lives there, with every answer traced back to its
               source.
             </p>
@@ -93,7 +93,7 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="feature-grid" aria-label="What FishMate does">
+        <section className="feature-grid" aria-label="What FishEye does">
           {FEATURES.map((f, i) => (
             <Link
               key={f.href}
@@ -157,7 +157,7 @@ export default async function Home() {
             <h2>Answers you can check</h2>
             <p>
               A language model is good at explaining and bad at knowing where fish are. So in
-              FishMate it only explains. Spot rankings come from a transparent scoring engine;
+              FishEye it only explains. Spot rankings come from a transparent scoring engine;
               answers come from reviewed guides. Before any AI answer is shown, the server checks
               that every fish, number and citation in it came from the guide passages it was
               given. If one didn&apos;t, you see the guide text instead.

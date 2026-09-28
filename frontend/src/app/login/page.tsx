@@ -5,8 +5,8 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { PageTransition } from "@/components/motion/Transition";
 
 export const metadata: Metadata = {
-  title: "Sign in · FishMate",
-  description: "Sign in or create a FishMate account to pin your catches.",
+  title: "Sign in · FishEye",
+  description: "Sign in or create a FishEye account to pin your catches.",
 };
 
 export default function LoginPage() {

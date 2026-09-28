@@ -50,7 +50,7 @@ export function CommunityFeed() {
           </h1>
           <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
             Spots other anglers pinned, with their photos and notes. These are their reports, not
-            verified survey data, and they never change what FishMate says a lake holds.
+            verified survey data, and they never change what FishEye says a lake holds.
           </p>
         </div>
         <Link href={addHref} className="btn btn-primary reveal" style={{ "--i": 3 } as React.CSSProperties}>

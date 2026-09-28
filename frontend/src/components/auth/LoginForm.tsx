@@ -15,9 +15,9 @@ type Mode = "signin" | "signup";
 // Errors the Google callback sends back as ?error=… (backend app/api/auth.py).
 const OAUTH_ERRORS: Record<string, string> = {
   google_email_exists:
-    "There's already a FishMate account with that email. Sign in with your password, then connect Google from your account page.",
+    "There's already a FishEye account with that email. Sign in with your password, then connect Google from your account page.",
   google_unverified: "Your Google email address isn't verified, so it can't be used here.",
-  google_in_use: "That Google account is connected to a different FishMate account.",
+  google_in_use: "That Google account is connected to a different FishEye account.",
   google_cancelled: "Google sign-in was cancelled.",
   google_state: "That sign-in link expired. Try again.",
   google_failed: "Google sign-in didn't complete. Try again.",
@@ -79,7 +79,7 @@ export function LoginForm() {
     try {
       const u = mode === "signin" ? await login(email, password) : await register(email, password, name);
       setUser(u);
-      toast(mode === "signin" ? `Welcome back, ${u.display_name}` : `Welcome to FishMate, ${u.display_name}`);
+      toast(mode === "signin" ? `Welcome back, ${u.display_name}` : `Welcome to FishEye, ${u.display_name}`);
       router.replace(next);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Try again.");
@@ -210,7 +210,7 @@ export function LoginForm() {
       </form>
 
       <p className="auth-foot muted">
-        {mode === "signin" ? "New to FishMate? " : "Already have an account? "}
+        {mode === "signin" ? "New to FishEye? " : "Already have an account? "}
         <button type="button" className="link-btn" onClick={() => setMode(mode === "signin" ? "signup" : "signin")}>
           {mode === "signin" ? "Create an account" : "Sign in"}
         </button>

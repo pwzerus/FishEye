@@ -33,9 +33,9 @@ export async function generateMetadata(props: PageProps<"/fish/[slug]">): Promis
   const { slug } = await props.params;
   try {
     const g = await getSpeciesGuide(slug);
-    return { title: `${g.common_name} · FishMate`, description: g.summary };
+    return { title: `${g.common_name} · FishEye`, description: g.summary };
   } catch {
-    return { title: "Fish guide · FishMate" };
+    return { title: "Fish guide · FishEye" };
   }
 }
 

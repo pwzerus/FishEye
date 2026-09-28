@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { AccountView } from "@/components/auth/AccountView";
 import { PageTransition } from "@/components/motion/Transition";
 
-export const metadata: Metadata = { title: "Account · FishMate" };
+export const metadata: Metadata = { title: "Account · FishEye" };
 
 export default function AccountPage() {
   return (

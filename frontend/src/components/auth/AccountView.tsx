@@ -30,7 +30,7 @@ interface ReauthRequest {
 }
 
 const CALLBACK_ERRORS: Record<string, string> = {
-  google_in_use: "That Google account is connected to a different FishMate account.",
+  google_in_use: "That Google account is connected to a different FishEye account.",
   google_unverified: "That Google email address isn't verified.",
   google_cancelled: "Connecting Google was cancelled.",
   google_state: "That link expired. Try again.",

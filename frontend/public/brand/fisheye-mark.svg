@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="FishEye">
+  <defs>
+    <linearGradient id="fm-water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#14B8A6"/>
+      <stop offset="1" stop-color="#0B5D7A"/>
+    </linearGradient>
+  </defs>
+  <!-- Map pin -->
+  <path d="M32 3C18.7 3 8 13.5 8 26.6 8 43.4 32 61 32 61S56 43.4 56 26.6C56 13.5 45.3 3 32 3Z" fill="url(#fm-water)"/>
+  <!-- Fish -->
+  <path d="M19.5 26.5C23.8 18.6 33.6 16.9 41.1 21.3 44 23 46 24.8 47.2 26.5 46 28.2 44 30 41.1 31.7 33.6 36.1 23.8 34.4 19.5 26.5Z" fill="#FFFFFF"/>
+  <path d="M21 26.5 13.2 20.6 15.2 26.5 13.2 32.4Z" fill="#FFFFFF"/>
+  <circle cx="40.2" cy="25.2" r="1.9" fill="#0B3B52"/>
+  <path d="M34.6 22.2C36.4 24.8 36.4 28.2 34.6 30.8" fill="none" stroke="#0B5D7A" stroke-width="1.6" stroke-linecap="round" opacity=".55"/>
+  <!-- Water -->
+  <path d="M18.5 41.2c2.4-2.1 4.8-2.1 7.2 0s4.8 2.1 7.2 0 4.8-2.1 7.2 0 4.8 2.1 7.2 0" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" opacity=".85"/>
+</svg>

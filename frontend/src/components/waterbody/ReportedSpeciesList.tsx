@@ -38,7 +38,7 @@ function ReportedItem({ s }: { s: ReportedSpecies }) {
  * a lake (GBIF). Kept visually and verbally apart from the official species
  * list: a record says a fish was found here, at some point, by someone.
  *
- * On an unverified lake this is all FishMate knows about its fish. On a
+ * On an unverified lake this is all FishEye knows about its fish. On a
  * verified lake it only lists species the official survey doesn't mention.
  */
 export function ReportedSpeciesList({
@@ -72,7 +72,7 @@ export function ReportedSpeciesList({
         </>
       ) : (
         <p className="muted">
-          No fish records for this lake yet, and no official survey. FishMate never guesses
+          No fish records for this lake yet, and no official survey. FishEye never guesses
           which fish live somewhere.
         </p>
       )}

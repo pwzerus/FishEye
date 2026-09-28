@@ -4,8 +4,8 @@ import { AskChat } from "@/components/ask/AskChat";
 import { PageTransition } from "@/components/motion/Transition";
 
 export const metadata: Metadata = {
-  title: "Ask · FishMate",
-  description: "Ask a fishing question. Answers come from FishMate's reviewed fish guides, with sources.",
+  title: "Ask · FishEye",
+  description: "Ask a fishing question. Answers come from FishEye's reviewed fish guides, with sources.",
 };
 
 const SUGGESTIONS = [
@@ -26,14 +26,14 @@ export default async function AskPage(props: PageProps<"/ask">) {
       <main className="page-scroll ask-page">
         <section className="page-intro page-intro-center">
           <p className="eyebrow reveal" style={{ "--i": 0 } as React.CSSProperties}>
-            Ask FishMate
+            Ask FishEye
           </p>
           <h1 className="reveal" style={{ "--i": 1 } as React.CSSProperties}>
             What do you want to know?
           </h1>
           <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
-            Answers come only from FishMate&apos;s reviewed fish guides and cite the passage they
-            used. If the guides don&apos;t cover your question, FishMate says so instead of
+            Answers come only from FishEye&apos;s reviewed fish guides and cite the passage they
+            used. If the guides don&apos;t cover your question, FishEye says so instead of
             guessing.
           </p>
         </section>

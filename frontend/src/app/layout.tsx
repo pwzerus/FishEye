@@ -8,8 +8,8 @@ import "./globals.css";
 import "./community.css";
 
 export const metadata: Metadata = {
-  title: "FishMate",
-  description: "FishMate: find a lake, see what's biting, and learn how to catch it.",
+  title: "FishEye",
+  description: "FishEye: find a lake, see what's biting, and learn how to catch it.",
 };
 
 export const viewport: Viewport = {
