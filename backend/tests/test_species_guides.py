@@ -11,7 +11,7 @@ from app.data_import.tpwd_lake_survey_scraper import (
     PLACEHOLDER_PROFILE,
     upsert_species,
 )
-from app.knowledge.species_guides import GUIDES, SOURCES, TPWD_LIMITS_URL, get_guide
+from app.knowledge.species_guides import DIET_TYPES, GUIDES, SOURCES, TPWD_LIMITS_URL, get_guide
 from app.models.waterbody import Species
 
 
@@ -36,6 +36,24 @@ def test_every_sport_fish_has_at_least_two_setups_and_a_bait():
             assert len(guide.setups) >= 2, guide.common_name
             assert guide.live_baits or guide.lures, guide.common_name
             assert guide.difficulty in {"beginner", "intermediate", "advanced"}
+
+
+def test_every_guide_has_a_diet_type():
+    for guide in GUIDES:
+        assert guide.diet_type in DIET_TYPES, guide.common_name
+    # Both bait fish are filter feeders; every sport fish here is a
+    # predator of some kind (carnivore) except the catch-all-eater catfish.
+    forage = {g.common_name: g.diet_type for g in GUIDES if g.role == "forage"}
+    assert set(forage.values()) == {"filter_feeder"}
+
+
+def test_every_setup_names_whether_its_lure_or_bait():
+    """The page groups setups into a Lure-fishing and a Bait-fishing
+    section (previously an undifferentiated numbered list), so every
+    setup needs a method the frontend can group on."""
+    for guide in GUIDES:
+        for setup in guide.setups:
+            assert setup.method in {"lure", "bait", "either"}, (guide.common_name, setup.name)
 
 
 def test_forage_fish_have_no_rod_setups_and_say_how_to_get_them():
@@ -70,8 +88,10 @@ def test_guide_endpoint_expands_setup_sources(client):
     body = client.get("/api/species/guides/largemouth-bass").json()
     assert body["common_name"] == "Largemouth Bass"
     assert body["scientific_name"] == "Micropterus salmoides"
+    assert body["diet_type"] == "carnivore"
     first = body["setups"][0]
     assert first["sources"] and first["sources"][0]["url"].startswith("https://")
+    assert first["method"] in {"lure", "bait", "either"}
     assert {s["kind"] for s in body["sources"]} <= {"agency", "publication", "guide"}
 
 

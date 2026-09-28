@@ -99,11 +99,26 @@ SOURCES: dict[str, Source] = {
 class TackleSetup:
     name: str
     use_when: str
+    method: str  # "lure" (artificial) | "bait" (live/natural) | "either" — which group this belongs in
     rod: str
     reel: str
     line: str
     terminal: str  # hook, rig, or lure — what goes on the end of the line
     source_ids: tuple[str, ...]
+
+
+# What each species mainly eats, in one word for a UI badge. "carnivore"
+# covers fish that eat mostly other animals (fish, crayfish, insects);
+# "omnivore" eats a broad mix including plants; "filter_feeder" strains
+# tiny food from the water rather than pursuing prey, and never really
+# bites a hook (the forage fish here are both filter feeders).
+DIET_TYPES = ("carnivore", "omnivore", "filter_feeder")
+
+DIET_TYPE_LABEL = {
+    "carnivore": "Carnivore",
+    "omnivore": "Omnivore",
+    "filter_feeder": "Filter feeder",
+}
 
 
 @dataclass(frozen=True)
@@ -114,6 +129,7 @@ class SpeciesGuide:
     difficulty: str | None  # "beginner" | "intermediate" | "advanced"; None for forage fish
     summary: str
     diet: str
+    diet_type: str  # one of DIET_TYPES
     where_and_when: tuple[str, ...]
     live_baits: tuple[str, ...] = ()
     lures: tuple[str, ...] = ()
@@ -152,6 +168,7 @@ _CRAPPIE_SETUPS = (
     TackleSetup(
         name="Minnow under a bobber",
         use_when="The classic way, especially around brush piles and docks in spring.",
+        method="bait",
         rod="6–7 ft light spinning rod",
         reel="Small spinning reel",
         line="4–8 lb",
@@ -165,6 +182,7 @@ _CRAPPIE_SETUPS = (
     TackleSetup(
         name="Small jig",
         use_when="Casting to cover, or once you've found a school.",
+        method="lure",
         rod="6–7 ft light spinning rod",
         reel="Small spinning reel",
         line="4–8 lb (6 lb mono is a good default)",
@@ -177,6 +195,7 @@ _CRAPPIE_SETUPS = (
     TackleSetup(
         name="Long pole, straight down",
         use_when="Dipping a jig or minnow into thick brush without casting.",
+        method="either",
         rod="9–10 ft or longer pole (a cane pole or fly rod works)",
         reel="None needed",
         line="4–8 lb",
@@ -196,6 +215,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "prey, so fish your bait close to logs, weeds and docks."
         ),
         diet="Adults eat almost only other fish and crayfish.",
+        diet_type="carnivore",
         where_and_when=(
             "Near cover: logs, rock ledges, weeds, docks, bridges, sunken trees and drop-offs.",
             "Spawns in spring when the water reaches about 60°F, anywhere from February "
@@ -216,6 +236,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Beginner spinning",
                 use_when="Your first bass setup; open water and light cover.",
+                method="lure",
                 rod="Medium-action spinning rod",
                 reel="Spinning reel",
                 line="6–8 lb",
@@ -225,6 +246,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Texas-rigged worm",
                 use_when="Working a plastic worm around wood, docks and weeds.",
+                method="lure",
                 rod="6–8 ft baitcasting rod (7–7½ ft is a good all-round length)",
                 reel="Baitcasting reel",
                 line="15 lb or heavier",
@@ -234,6 +256,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Flipping heavy cover",
                 use_when="Thick or matted weeds where a hooked fish has to be pulled out fast.",
+                method="lure",
                 rod="7'6\" or longer casting rod",
                 reel="Baitcasting reel",
                 line="65 lb braid or stronger",
@@ -243,6 +266,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Live shiner",
                 use_when="Big bass, fished slowly near cover.",
+                method="bait",
                 rod="A rod rated for 30 lb line",
                 reel="Spinning or baitcasting reel",
                 line="Heavy mono, around 30 lb",
@@ -253,6 +277,11 @@ GUIDES: tuple[SpeciesGuide, ...] = (
         tips=(
             "If fish are active near the surface, use bigger lures and reel faster. If "
             "they're holding near the bottom, slow down and go smaller.",
+            "A bass will almost always eat a real shiner or crayfish faster than a "
+            "plastic one — but an inactive bass may strike a fast-moving topwater plug "
+            "or buzzbait out of annoyance when it would ignore a live shiner sitting "
+            "still under a bobber. Use live bait for a bass you know is feeding; switch "
+            "to lures to provoke one that isn't.",
         ),
         source_ids=("tpwd-lmb", "mn-lmb", "tmf-bass", "fwc-bass", "mdc-bass"),
     ),
@@ -266,6 +295,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "and travels in schools. Light line and small soft plastics catch the most."
         ),
         diet="Fish and crayfish. It ambushes shad and crawfish where deep water rises to shallow.",
+        diet_type="carnivore",
         where_and_when=(
             "Likes more current than largemouth. Native to East Texas rivers such as the "
             "Sabine, Neches and Cypress.",
@@ -281,6 +311,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Shaky head",
                 use_when="The go-to setup: dragged slowly along points and rock.",
+                method="lure",
                 rod="7 ft medium to medium-heavy spinning rod",
                 reel="Spinning reel",
                 line="6–10 lb",
@@ -290,6 +321,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Braid with a fluorocarbon leader",
                 use_when="Deeper, clearer water where the fish can see heavy line.",
+                method="lure",
                 rod="7'1\" medium spinning rod",
                 reel="Spinning reel",
                 line="12 lb braid main line, 8 lb fluorocarbon leader",
@@ -313,6 +345,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "they run up rivers and creeks to spawn: the easiest time to catch a lot of them."
         ),
         diet="Gizzard and threadfin shad above all; also insects and crustaceans near the surface.",
+        diet_type="carnivore",
         where_and_when=(
             "Spring run: they leave the reservoir and swim up rivers and creeks to spawn over "
             "gravel or rock in moving water.",
@@ -335,6 +368,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Grub or spinner",
                 use_when="The spring run, and schools near the surface.",
+                method="lure",
                 rod="Medium-light to medium spinning rod; a longer rod casts farther",
                 reel="Spinning reel",
                 line="6–12 lb",
@@ -344,6 +378,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Slab jigging",
                 use_when="Schools deep in open water, found with a fish finder.",
+                method="lure",
                 rod="Medium spinning rod",
                 reel="Spinning reel",
                 line="6–12 lb",
@@ -353,6 +388,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Live minnow",
                 use_when="Slow days, and bottom fishing at night.",
+                method="bait",
                 rod="Medium-light spinning rod",
                 reel="Spinning reel",
                 line="6–12 lb",
@@ -376,6 +412,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "fished from a boat. Lake Texoma, on the Texas–Oklahoma border, is known for them."
         ),
         diet="Shad, minnows and insects.",
+        diet_type="carnivore",
         where_and_when=(
             "Schools in open water and avoids the shoreline.",
             "On Lake Texoma the best months are May–June and October–December.",
@@ -395,6 +432,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Topwater and slabs",
                 use_when="Schools busting shad at the surface, or deep schools on the fish finder.",
+                method="lure",
                 rod="Rod rated for 1–2 oz lures",
                 reel="Spinning or baitcasting reel",
                 line="20 lb",
@@ -404,6 +442,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Live shad drift",
                 use_when="Drifting slowly over schools.",
+                method="bait",
                 rod="Medium to medium-heavy rod",
                 reel="Spinning, spincast or baitcasting reel",
                 line="8–14 lb",
@@ -413,6 +452,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="All-round",
                 use_when="A lighter setup that also covers hybrids and white bass.",
+                method="either",
                 rod="Medium to medium-heavy rod",
                 reel="Spinning, spincast or baitcasting reel",
                 line="8–14 lb",
@@ -444,6 +484,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "Like both parents, it schools up and chases shad."
         ),
         diet="Threadfin and gizzard shad; also minnows, crustaceans and insects.",
+        diet_type="carnivore",
         where_and_when=(
             "Open-water schools, most active at dawn and dusk.",
             "Early morning: topwater near the banks. Midday: follow birds working the water.",
@@ -462,6 +503,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="All-round casting",
                 use_when="Casting to schools and points.",
+                method="lure",
                 rod="Medium to medium-heavy rod",
                 reel="Spinning, spincast or baitcasting reel",
                 line="8–14 lb",
@@ -471,6 +513,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Vertical slab",
                 use_when="Nothing showing on the surface; fish holding near the bottom.",
+                method="lure",
                 rod="Medium to medium-heavy rod",
                 reel="Spinning or baitcasting reel",
                 line="8–14 lb",
@@ -480,6 +523,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Live shad",
                 use_when="Slow bites, or anchored over a school.",
+                method="bait",
                 rod="Medium to medium-heavy rod",
                 reel="Spinning or baitcasting reel",
                 line="8–14 lb",
@@ -504,6 +548,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "stocks them in city ponds through its Neighborhood Fishin' program."
         ),
         diet="Almost anything: insects, snails and clams, crayfish, fish and some plants.",
+        diet_type="omnivore",
         where_and_when=(
             "Found statewide. Spawns in late spring or early summer at about 75°F water.",
             "Moves into the shallows at night from late spring to early fall. By day, look in "
@@ -523,6 +568,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Pond slip-sinker rig",
                 use_when="City ponds and small lakes; the easiest place to start.",
+                method="bait",
                 rod="Spincast or spinning combo",
                 reel="Spincast or spinning reel",
                 line="8 lb or heavier",
@@ -535,6 +581,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Lake bottom rig",
                 use_when="Bigger lakes and bigger fish.",
+                method="bait",
                 rod="7 ft or slightly longer",
                 reel="Baitcasting reel preferred; spincast also works",
                 line="15–20 lb",
@@ -549,6 +596,9 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "Use only enough weight to keep the bait on the bottom, then reel the line tight.",
             "A small treble hook holds soft baits like liver or cheese better.",
             "No bite in 15 minutes? Move to a new spot.",
+            "In a creek or river, fresh cut shad's natural oil trail is hard to beat. In "
+            "warm, murky or slow-moving water, a strong-smelling prepared stink bait "
+            "carries just as well and is easier to keep on the hook.",
         ),
         source_ids=("tpwd-ccf", "tpwd-nf", "tmf-cat", "mn-ccf", "mdc-cat", "utah-cat", "agfc-hooks"),
     ),
@@ -562,6 +612,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "fresh cut shad is the bait to use, and it needs heavy tackle."
         ),
         diet="Fish once they're a few inches long, plus large invertebrates.",
+        diet_type="carnivore",
         where_and_when=(
             "Main river channels, tributaries and big reservoirs. Moves upstream in summer "
             "for cooler water and downstream in winter for warmer water.",
@@ -578,6 +629,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Big-fish rig",
                 use_when="Anchored on channel edges and drop-offs.",
+                method="bait",
                 rod="7–10 ft medium-heavy to heavy rod",
                 reel="Heavy-duty baitcasting or spinning reel",
                 line="30–50 lb mono",
@@ -587,6 +639,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Winter drift",
                 use_when="Drifting flats and shad schools in winter.",
+                method="bait",
                 rod="Same heavy rod as the big-fish rig",
                 reel="Same as the big-fish rig",
                 line="Same as the big-fish rig",
@@ -610,6 +663,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "bridge pilings. Good to eat. A minnow under a bobber is the classic way to catch it."
         ),
         diet="Small fish (minnows and shad), insects and crayfish.",
+        diet_type="carnivore",
         where_and_when=(
             "Around sunken trees, brush piles, docks and bridge pilings. Handles muddier "
             "water than black crappie.",
@@ -651,6 +705,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "Northeast Texas. Fish it the same way."
         ),
         diet="Fewer fish and more insects and crustaceans than white crappie.",
+        diet_type="carnivore",
         where_and_when=(
             "Most common in the clear waters of East and Northeast Texas.",
             "Spawns at about 60°F.",
@@ -676,6 +731,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "pond and lake, which makes it a great first fish."
         ),
         diet="Mostly aquatic insects and their larvae; midge larvae can be half its diet.",
+        diet_type="omnivore",
         where_and_when=(
             "In fresh water all over Texas.",
             "Spawns from about 70°F, peaking in May–June and sometimes lasting into fall. "
@@ -700,6 +756,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Cane pole",
                 use_when="Kids and first-timers: no casting or reeling.",
+                method="bait",
                 rod="Cane pole",
                 reel="None: just flip the line out",
                 line="2–6 lb",
@@ -709,6 +766,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Spincast with a bobber",
                 use_when="The standard beginner setup.",
+                method="bait",
                 rod="5–6½ ft rod",
                 reel="Closed-face spincast reel (the easiest for beginners)",
                 line="2–6 lb",
@@ -718,6 +776,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             TackleSetup(
                 name="Ultralight lures",
                 use_when="When you want to cast lures instead of bait.",
+                method="lure",
                 rod="Ultralight spinning rod",
                 reel="Small spinning reel",
                 line="2–6 lb",
@@ -728,6 +787,9 @@ GUIDES: tuple[SpeciesGuide, ...] = (
         tips=(
             "Use the smallest bobber that floats your bait. You'll see more bites.",
             "If you're fishing on the bottom, watch your line closely: bites are light.",
+            "A small soft-plastic grub on a 1/16 oz tungsten jig under a slip bobber "
+            "catches just as many bluegill as live bait, without rebaiting the hook "
+            "every fish.",
         ),
         source_ids=("tpwd-bgl", "tmf-bluegill", "mdc-bluegill", "mdc-beginners"),
     ),
@@ -741,6 +803,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "cast net to use as bait for catfish, stripers and hybrids."
         ),
         diet="A filter feeder: it strains tiny plants and animals from the water.",
+        diet_type="filter_feeder",
         where_and_when=(
             "Around marinas and dock lights in the early morning, and in feeder creeks.",
         ),
@@ -781,6 +844,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "and white bass are chasing, so it makes excellent live bait. Catch it with a cast net."
         ),
         diet="A filter feeder.",
+        diet_type="filter_feeder",
         where_and_when=(
             "Usually in the top 5 ft of water.",
             "Dies off when the water drops below 45°F.",

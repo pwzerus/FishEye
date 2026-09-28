@@ -40,6 +40,7 @@ def to_out(guide: SpeciesGuide) -> SpeciesGuideOut:
         difficulty=guide.difficulty,
         summary=guide.summary,
         diet=guide.diet,
+        diet_type=guide.diet_type,
         where_and_when=list(guide.where_and_when),
         live_baits=list(guide.live_baits),
         lures=list(guide.lures),
@@ -47,6 +48,7 @@ def to_out(guide: SpeciesGuide) -> SpeciesGuideOut:
             TackleSetupOut(
                 name=s.name,
                 use_when=s.use_when,
+                method=s.method,
                 rod=s.rod,
                 reel=s.reel,
                 line=s.line,

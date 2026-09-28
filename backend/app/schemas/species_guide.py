@@ -10,6 +10,7 @@ class GuideSourceOut(BaseModel):
 class TackleSetupOut(BaseModel):
     name: str
     use_when: str
+    method: str  # "lure" | "bait" | "either" — which of the two groups this setup belongs in
     rod: str
     reel: str
     line: str
@@ -25,6 +26,7 @@ class SpeciesGuideOut(BaseModel):
     difficulty: str | None
     summary: str
     diet: str
+    diet_type: str  # "carnivore" | "omnivore" | "filter_feeder"
     where_and_when: list[str]
     live_baits: list[str]
     lures: list[str]
