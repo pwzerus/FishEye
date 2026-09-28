@@ -11,6 +11,7 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 
 from app.api.deps import get_db  # noqa: E402
 from app.db.session import Base, enforce_sqlite_foreign_keys  # noqa: E402
+from app.db.spatial import ensure_spatial_schema  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models.waterbody import (  # noqa: E402
     AccessPoint,
@@ -20,11 +21,24 @@ from app.models.waterbody import (  # noqa: E402
     WaterbodySpecies,
 )
 
-TEST_ENGINE = create_engine(
-    "sqlite:///:memory:",
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+# In-memory SQLite by default: no setup, and every test gets a clean file.
+# Point TEST_DATABASE_URL at a PostgreSQL database to run this same suite
+# against the deployment database instead — the one way to find out before
+# a release that a query only ever worked because of SQLite's laxness. e.g.
+#   TEST_DATABASE_URL=postgresql+psycopg://user:pw@localhost/fisheye_test pytest
+TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL", "sqlite:///:memory:")
+_TEST_IS_SQLITE = TEST_DATABASE_URL.startswith("sqlite")
+
+if _TEST_IS_SQLITE:
+    TEST_ENGINE = create_engine(
+        TEST_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        # One shared connection, so ":memory:" is one database rather than a
+        # fresh empty one per checkout.
+        poolclass=StaticPool,
+    )
+else:
+    TEST_ENGINE = create_engine(TEST_DATABASE_URL)
 enforce_sqlite_foreign_keys(TEST_ENGINE)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=TEST_ENGINE)
 
@@ -32,6 +46,9 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=TEST_
 @pytest.fixture()
 def db_session():
     Base.metadata.create_all(bind=TEST_ENGINE)
+    # Re-run per test: create_all above has just rebuilt waterbodies, so its
+    # PostGIS column and index need adding back. A no-op on SQLite.
+    ensure_spatial_schema(TEST_ENGINE)
     session = TestingSessionLocal()
     try:
         yield session

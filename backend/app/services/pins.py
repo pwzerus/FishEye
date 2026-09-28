@@ -38,6 +38,7 @@ from app.models.community import (
 )
 from app.models.waterbody import Waterbody
 from app.services import audit
+from app.db.spatial import bbox_filter
 from app.services.geo import haversine_km
 from app.services.media import MediaStore, PhotoRejected, clean_photo, new_key
 
@@ -153,12 +154,10 @@ def validate(
 
 def nearest_waterbody(db: Session, lat: float, lng: float) -> Waterbody | None:
     # A cheap bounding box first (~0.03° ≈ 3.3 km), then exact distance.
+    # bbox_filter puts this on the PostGIS index where there is one.
     d = 0.035
     rows = db.scalars(
-        select(Waterbody).where(
-            Waterbody.latitude.between(lat - d, lat + d),
-            Waterbody.longitude.between(lng - d, lng + d),
-        )
+        select(Waterbody).where(bbox_filter(db, lng - d, lat - d, lng + d, lat + d))
     ).all()
     best, best_km = None, LINK_RADIUS_KM
     for wb in rows:

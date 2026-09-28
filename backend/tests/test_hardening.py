@@ -179,6 +179,13 @@ def test_ids_are_never_handed_out_twice(make_client):
 
 
 def test_sqlite_enforces_foreign_keys(db_session):
+    # PRAGMA is SQLite's own dialect, and the opt-in it checks only exists
+    # there — PostgreSQL enforces foreign keys unconditionally. Skipping
+    # keeps this suite runnable against the deployment database
+    # (TEST_DATABASE_URL, see conftest.py) instead of failing on a
+    # question that database doesn't have to be asked.
+    if db_session.get_bind().dialect.name != "sqlite":
+        pytest.skip("PRAGMA foreign_keys is SQLite-only; Postgres always enforces them")
     assert db_session.execute(text("PRAGMA foreign_keys")).scalar() == 1
 
 

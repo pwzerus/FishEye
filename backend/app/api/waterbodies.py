@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_db
+from app.db.spatial import bbox_filter, radius_filter, radius_is_exact
 from app.models.waterbody import Species, Waterbody, WaterbodySpecies
 from app.schemas.waterbody import (
     SpeciesDetail,
@@ -60,16 +61,12 @@ def list_waterbodies(
         stmt = stmt.where(Waterbody.data_tier == tier)
     if bbox:
         west, south, east, north = _parse_bbox(bbox)
-        stmt = stmt.where(
-            Waterbody.latitude.between(south, north),
-            Waterbody.longitude.between(west, east),
-        )
+        stmt = stmt.where(bbox_filter(db, west, south, east, north))
     if lat is not None and lng is not None:
-        # Coarse bounding-box prefilter in SQL (1 degree of latitude is
-        # ~111 km) so the exact haversine check below runs on a handful of
-        # rows, not the whole statewide table.
-        pad = radius_km / 111.0
-        stmt = stmt.where(Waterbody.latitude.between(lat - pad, lat + pad))
+        # PostGIS answers this exactly from its spatial index; SQLite gets a
+        # coarse latitude-band prefilter and the haversine pass below does
+        # the rest (app/db/spatial.py).
+        stmt = stmt.where(radius_filter(db, lat, lng, radius_km))
 
     # Verified lakes first, so a capped result can never drop one of the
     # lakes this app actually knows something about in favour of an
@@ -78,7 +75,7 @@ def list_waterbodies(
 
     waterbodies = list(db.scalars(stmt).unique().all())
 
-    if lat is not None and lng is not None:
+    if lat is not None and lng is not None and not radius_is_exact(db):
         waterbodies = [
             w for w in waterbodies if haversine_km(lat, lng, w.latitude, w.longitude) <= radius_km
         ]

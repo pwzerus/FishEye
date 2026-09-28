@@ -21,6 +21,7 @@ from app.api import (
 )
 from app.core.config import get_settings
 from app.db.session import Base, engine
+from app.db.spatial import ensure_spatial_schema
 
 settings = get_settings()
 
@@ -34,6 +35,10 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     import app.models  # noqa: F401  (register every model)
 
     Base.metadata.create_all(bind=engine)
+    # On PostgreSQL this adds the PostGIS geography column and its GiST
+    # index, and decides whether the map's viewport queries may use them.
+    # A no-op on SQLite (app/db/spatial.py explains the two shapes).
+    ensure_spatial_schema(engine)
     yield
 
 app = FastAPI(

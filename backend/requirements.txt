@@ -2,6 +2,11 @@ fastapi==0.115.0
 uvicorn[standard]==0.30.6
 sqlalchemy==2.0.35
 alembic==1.13.2
+# PostgreSQL driver. Unused by the SQLite default, needed the moment
+# DATABASE_URL points at a Postgres (see app/db/spatial.py) — installed
+# up front so deploying isn't the first time it's missing. [binary] ships
+# the compiled libpq, so no system postgresql-dev is required.
+psycopg[binary]==3.2.3
 pydantic==2.9.2
 pydantic-settings==2.5.2
 python-dotenv==1.0.1

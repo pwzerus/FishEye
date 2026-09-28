@@ -9,8 +9,23 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
-engine = create_engine(settings.database_url, connect_args=connect_args)
+_is_sqlite = settings.database_url.startswith("sqlite")
+
+if _is_sqlite:
+    # One file, many FastAPI threads: SQLite would otherwise refuse a
+    # connection used off the thread that opened it.
+    engine = create_engine(settings.database_url, connect_args={"check_same_thread": False})
+else:
+    # A hosted Postgres (Neon, Supabase, RDS…) drops connections that have
+    # been idle — on the serverless ones, aggressively. Without pre_ping the
+    # first request after a quiet spell fails on a dead pooled connection
+    # instead of transparently opening a new one. pool_recycle keeps this
+    # side of the pool younger than any sensible server-side idle timeout.
+    engine = create_engine(
+        settings.database_url,
+        pool_pre_ping=True,
+        pool_recycle=300,
+    )
 
 
 def enforce_sqlite_foreign_keys(target: Engine) -> None:
