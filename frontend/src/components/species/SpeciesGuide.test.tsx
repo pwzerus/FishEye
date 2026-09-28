@@ -20,6 +20,7 @@ const bass: SpeciesGuide = {
   difficulty: "beginner",
   summary: "Texas's most sought-after freshwater fish.",
   diet: "Other fish and crayfish.",
+  diet_type: "carnivore",
   where_and_when: ["Near cover."],
   live_baits: ["Large live shiners"],
   lures: ["Plastic worms"],
@@ -27,6 +28,7 @@ const bass: SpeciesGuide = {
     {
       name: "Beginner spinning",
       use_when: "Your first bass setup.",
+      method: "lure",
       rod: "Medium-action spinning rod",
       reel: "Spinning reel",
       line: "6–8 lb",
@@ -36,6 +38,7 @@ const bass: SpeciesGuide = {
     {
       name: "Live shad drift",
       use_when: "Drifting.",
+      method: "bait",
       rod: "Medium rod",
       reel: "Spinning reel",
       line: "8–14 lb",
@@ -58,6 +61,7 @@ const shad: SpeciesGuide = {
   common_name: "Gizzard Shad",
   role: "forage",
   difficulty: null,
+  diet_type: "filter_feeder",
   setups: [],
   live_baits: [],
   lures: [],
@@ -98,14 +102,31 @@ describe("SpeciesGuideBody", () => {
     render(<SpeciesGuideBody guide={shad} />);
     expect(screen.getByText("How to get it")).toBeInTheDocument();
     expect(screen.getByText("Blue catfish, as cut bait")).toBeInTheDocument();
-    expect(screen.queryByText("Rod and reel setups")).not.toBeInTheDocument();
+    expect(screen.queryByText("Lure fishing")).not.toBeInTheDocument();
+    expect(screen.queryByText("Bait fishing")).not.toBeInTheDocument();
+  });
+
+  it("groups setups into a lure-fishing and a bait-fishing section", () => {
+    render(<SpeciesGuideBody guide={bass} />);
+    const lureHeading = screen.getByText("Lure fishing");
+    const baitHeading = screen.getByText("Bait fishing");
+    expect(lureHeading.closest("section")).toHaveTextContent("Beginner spinning");
+    expect(lureHeading.closest("section")).not.toHaveTextContent("Live shad drift");
+    expect(baitHeading.closest("section")).toHaveTextContent("Live shad drift");
+    expect(baitHeading.closest("section")).not.toHaveTextContent("Beginner spinning");
+  });
+
+  it("shows a carnivore/omnivore/filter-feeder tag next to what it eats", () => {
+    render(<SpeciesGuideBody guide={bass} />);
+    expect(screen.getByText("Carnivore")).toBeInTheDocument();
   });
 
   it("keeps the compact version short", () => {
     render(<SpeciesGuideBody guide={bass} compact />);
     expect(screen.queryByText("What it eats")).not.toBeInTheDocument();
     expect(screen.queryByText("Sources")).not.toBeInTheDocument();
-    expect(screen.getByText("Rod and reel setups")).toBeInTheDocument();
+    expect(screen.getByText("Lure fishing")).toBeInTheDocument();
+    expect(screen.getByText("Bait fishing")).toBeInTheDocument();
   });
 });
 

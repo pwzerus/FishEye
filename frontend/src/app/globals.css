@@ -1007,6 +1007,38 @@
   background: rgba(127, 127, 127, 0.15);
 }
 
+.guide-tag-diet {
+  margin-left: 6px;
+  text-transform: none;
+  letter-spacing: normal;
+  vertical-align: middle;
+}
+
+.guide-tag-diet-carnivore {
+  color: #9a3412;
+  background: rgba(249, 115, 22, 0.15);
+}
+
+.guide-tag-diet-omnivore {
+  color: #4d7c0f;
+  background: rgba(132, 204, 22, 0.15);
+}
+
+.guide-tag-diet-filter_feeder {
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.guide-setups-intro {
+  font-size: 12px;
+  color: #6b7280;
+  margin: -4px 0 10px;
+}
+
+.guide-setup-group h4 {
+  color: #0e7c7b;
+}
+
 .fish-guide {
   max-width: 820px;
   width: 100%;

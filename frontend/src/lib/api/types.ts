@@ -309,6 +309,9 @@ export interface GuideSource {
 export interface TackleSetup {
   name: string;
   use_when: string;
+  // Which group this setup belongs in on the page: artificial lure, live
+  // or natural bait, or either (some setups explicitly name both).
+  method: "lure" | "bait" | "either";
   rod: string;
   reel: string;
   line: string;
@@ -324,6 +327,7 @@ export interface SpeciesGuide {
   difficulty: "beginner" | "intermediate" | "advanced" | null;
   summary: string;
   diet: string;
+  diet_type: "carnivore" | "omnivore" | "filter_feeder";
   where_and_when: string[];
   live_baits: string[];
   lures: string[];

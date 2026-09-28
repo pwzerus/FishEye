@@ -16,6 +16,7 @@ function guide(slug: string, name: string, extra: Partial<SpeciesGuide> = {}): S
     difficulty: "beginner",
     summary: `${name} summary.`,
     diet: "",
+    diet_type: "carnivore",
     where_and_when: [],
     live_baits: [],
     lures: [],

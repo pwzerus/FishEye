@@ -8,6 +8,7 @@ import { Tag } from "@/components/fish/FishGrid";
 import { HeroPhoto } from "@/components/fish/PhotoCard";
 import { SectionTabs, type SectionLink } from "@/components/fish/SectionTabs";
 import { PageTransition, VT } from "@/components/motion/Transition";
+import { DietTypeTag, groupSetups } from "@/components/species/SpeciesGuideBody";
 import { ApiError, getSpeciesGuide, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
 import { waterFor } from "@/lib/fishArt";
 import type { GuideSource, SpeciesGuide, TackleSetup } from "@/lib/api/types";
@@ -171,7 +172,9 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
               {guide.summary}
             </p>
             <div id="diet" className="fact reveal" style={{ "--i": 5 } as React.CSSProperties}>
-              <span className="fact-label">What it eats</span>
+              <span className="fact-label">
+                What it eats <DietTypeTag guide={guide} />
+              </span>
               <span>{guide.diet}</span>
             </div>
           </div>
@@ -216,16 +219,39 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
             <ListBlock id="how_to_get" title="How to get it for bait" items={guide.how_to_get} />
             <ListBlock id="bait_for" title="Use it as bait for" items={guide.bait_for} />
 
-            {guide.setups.length > 0 && (
-              <section id="setups" className="guide-block">
-                <h2>Rod and reel setups</h2>
-                <div className="setup-list">
-                  {guide.setups.map((s, i) => (
-                    <SetupCard key={s.name} setup={s} index={i + 1} />
-                  ))}
-                </div>
-              </section>
-            )}
+            {guide.setups.length > 0 &&
+              (() => {
+                const { lure, bait } = groupSetups(guide.setups);
+                return (
+                  <section id="setups" className="guide-block">
+                    <h2>Rod and reel setups</h2>
+                    <p className="muted">
+                      Grouped by lure fishing (artificial baits) and bait fishing (live or natural
+                      bait).
+                    </p>
+                    {lure.length > 0 && (
+                      <div className="setup-group">
+                        <h3>Lure fishing</h3>
+                        <div className="setup-list">
+                          {lure.map((s, i) => (
+                            <SetupCard key={s.name} setup={s} index={i + 1} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {bait.length > 0 && (
+                      <div className="setup-group">
+                        <h3>Bait fishing</h3>
+                        <div className="setup-list">
+                          {bait.map((s, i) => (
+                            <SetupCard key={s.name} setup={s} index={i + 1} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </section>
+                );
+              })()}
 
             <ListBlock id="tips" title="Tips" items={guide.tips} />
 

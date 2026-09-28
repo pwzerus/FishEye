@@ -28,6 +28,22 @@ export function DifficultyTag({ guide }: { guide: SpeciesGuide }) {
   );
 }
 
+const DIET_TYPE_LABEL: Record<SpeciesGuide["diet_type"], string> = {
+  carnivore: "Carnivore",
+  omnivore: "Omnivore",
+  filter_feeder: "Filter feeder",
+};
+
+/** What it eats, in one word: carnivore, omnivore, or (for shad) filter
+ * feeder. Shown next to "What it eats" so it reads at a glance. */
+export function DietTypeTag({ guide }: { guide: SpeciesGuide }) {
+  return (
+    <span className={`guide-tag guide-tag-diet guide-tag-diet-${guide.diet_type}`}>
+      {DIET_TYPE_LABEL[guide.diet_type]}
+    </span>
+  );
+}
+
 function SourceLinks({ sources }: { sources: GuideSource[] }) {
   return (
     <p className="guide-setup-sources">
@@ -65,6 +81,30 @@ function SetupCard({ setup }: { setup: TackleSetup }) {
   );
 }
 
+/** Lure setups and bait setups, grouped for the two sections below. A
+ * setup naming both (method "either") appears in both groups, since the
+ * text already says it works either way. */
+export function groupSetups(setups: TackleSetup[]) {
+  return {
+    lure: setups.filter((s) => s.method === "lure" || s.method === "either"),
+    bait: setups.filter((s) => s.method === "bait" || s.method === "either"),
+  };
+}
+
+function SetupGroup({ title, setups }: { title: string; setups: TackleSetup[] }) {
+  if (setups.length === 0) return null;
+  return (
+    <section className="guide-section guide-setup-group">
+      <h4>{title}</h4>
+      <ul className="guide-setups">
+        {setups.map((setup) => (
+          <SetupCard key={setup.name} setup={setup} />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function Bullets({ title, items }: { title: string; items: string[] }) {
   if (items.length === 0) return null;
   return (
@@ -94,7 +134,9 @@ export function SpeciesGuideBody({
 
       {!compact && (
         <section className="guide-section">
-          <h4>What it eats</h4>
+          <h4>
+            What it eats <DietTypeTag guide={guide} />
+          </h4>
           <p>{guide.diet}</p>
         </section>
       )}
@@ -111,14 +153,12 @@ export function SpeciesGuideBody({
         <>
           <Bullets title="Live and natural bait" items={guide.live_baits} />
           <Bullets title="Lures" items={guide.lures} />
-          <section className="guide-section">
-            <h4>Rod and reel setups</h4>
-            <ul className="guide-setups">
-              {guide.setups.map((setup) => (
-                <SetupCard key={setup.name} setup={setup} />
-              ))}
-            </ul>
-          </section>
+          <p className="guide-setups-intro">
+            Rod and reel setups, grouped by lure fishing (artificial baits) and bait
+            fishing (live or natural bait):
+          </p>
+          <SetupGroup title="Lure fishing" setups={groupSetups(guide.setups).lure} />
+          <SetupGroup title="Bait fishing" setups={groupSetups(guide.setups).bait} />
         </>
       )}
 

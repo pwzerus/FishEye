@@ -1278,6 +1278,15 @@ h3 {
 .bait-card h3 {
   font-size: 16px;
 }
+.setup-group + .setup-group {
+  margin-top: 18px;
+}
+.setup-group h3 {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--brand-strong);
+  margin-bottom: 10px;
+}
 .setup-list {
   display: grid;
   gap: 12px;
