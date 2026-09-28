@@ -9,6 +9,7 @@ import { MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap, useMapEven
 import MarkerClusterGroup from "react-leaflet-cluster";
 
 import type { PinSummary, WaterbodyListItem } from "@/lib/api/types";
+import { TILE_ATTRIBUTION, TILE_URL } from "@/lib/map/tiles";
 import { DraftMarker, PinMarkers, PlaceOnClick } from "./PinLayer";
 
 // Leaflet's default marker icons reference image files by relative URL,
@@ -38,7 +39,7 @@ const osmIcon = L.icon({
 });
 
 // An unverified lake that has fish records (GBIF): tinted amber so people can
-// find the lakes FishMate knows *something* about, while staying distinct
+// find the lakes FishEye knows *something* about, while staying distinct
 // from a verified lake's blue pin. See docs/adr/0012-gbif-reported-species.md.
 const reportedIcon = L.icon({
   ...defaultIcon.options,
@@ -56,12 +57,19 @@ export interface Viewport {
 }
 
 /**
- * Reports the visible area after the user stops moving the map — and once
- * on mount, since Leaflet doesn't fire moveend for the initial view. The
- * parent decides what to load for it (MapView.tsx); this component only
- * says where the map is looking.
+ * Reports the visible area after the user stops moving the map — including
+ * a real move that FlyToFocus triggers (geolocation, search, a ?at= deep
+ * link), since Leaflet fires moveend for those the same as a manual pan.
+ *
+ * It deliberately does *not* also report on mount for the plain default
+ * view (Texas, unzoomed, no focus point): that view carries no information
+ * about where the person actually is, so loading and showing this app's
+ * handful of "verified" lakes for it would just be noise before the person
+ * has said where they're interested in. `loadOnMount` is true only when
+ * restoring a previously-visited view (returning from a lake's detail
+ * page), where the view itself is meaningful.
  */
-function ViewportWatcher({ onChange }: { onChange: (viewport: Viewport) => void }) {
+function ViewportWatcher({ onChange, loadOnMount }: { onChange: (viewport: Viewport) => void; loadOnMount: boolean }) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const map = useMapEvents({
     moveend: () => schedule(),
@@ -78,7 +86,7 @@ function ViewportWatcher({ onChange }: { onChange: (viewport: Viewport) => void 
   }
 
   useEffect(() => {
-    onChange(read());
+    if (loadOnMount) onChange(read());
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
@@ -189,12 +197,9 @@ export default function LakeMap({
       zoomControl={false}
       style={{ height: "100%", width: "100%" }}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      <TileLayer attribution={TILE_ATTRIBUTION} url={TILE_URL} />
       <ZoomControl position="bottomright" />
-      <ViewportWatcher onChange={onViewportChange} />
+      <ViewportWatcher onChange={onViewportChange} loadOnMount={initialView !== null} />
       <FlyToFocus focusPoint={focusPoint} skipOnMount={initialView !== null} />
 
       {/* Verified lakes are never clustered: there are few of them and

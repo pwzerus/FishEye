@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 
 import { ApiError, getWaterbody } from "@/lib/api/client";
 import type { WaterbodyDetail } from "@/lib/api/types";
+import { TILE_ATTRIBUTION, TILE_URL } from "@/lib/map/tiles";
 
 // Same CDN icon approach as LakeMap.tsx (see its comment) — a distinct
 // color for access points so they read as a different kind of pin than
@@ -99,10 +100,7 @@ export default function LakeDetailMap({ waterbodyId }: { waterbodyId: number }) 
       zoomControl={false}
       style={{ height: "100%", width: "100%" }}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      <TileLayer attribution={TILE_ATTRIBUTION} url={TILE_URL} />
       <ZoomControl position="bottomright" />
       <FitToLakeExtent detail={detail} />
       <Marker position={[detail.latitude, detail.longitude]} icon={lakeCenterIcon}>
