@@ -38,7 +38,9 @@ and never create a second "Lake Somerville" next to ours.
 
 Location is approximate by design: a lake is plotted at its OSM centre,
 and an access point is matched to a lake by bounding box, not shoreline
-geometry (no PostGIS yet — ADR 0001).
+geometry. PostGIS is now available when the deployment provides it
+(ADR 0018), but this importer still writes no polygons — matching by
+bounding box is a data decision here, not a missing capability.
 
 Run (needs network access to the Overpass API):
     python -m app.data_import.osm_waterbody_import --state TX
@@ -126,6 +128,14 @@ class Bounds:
 
     def area(self) -> float:
         return (self.north - self.south) * (self.east - self.west)
+
+    def area_km2(self) -> float:
+        """Box area in km² (equirectangular, fine at lake scale). Stored as
+        Waterbody.extent_km2 to rank lakes when a view holds too many."""
+        mid_lat = math.radians((self.south + self.north) / 2)
+        dy = (self.north - self.south) * 111.32
+        dx = (self.east - self.west) * 111.32 * math.cos(mid_lat)
+        return dx * dy
 
 
 @dataclass(frozen=True)
@@ -454,6 +464,7 @@ def upsert(
                 data_tier="osm",
                 osm_ref=lake.osm_ref,
                 water_type=lake.water_type,
+                extent_km2=lake.bounds.area_km2(),
             )
             db.add(wb)
             db.flush()
@@ -465,6 +476,7 @@ def upsert(
             wb.latitude = lake.latitude
             wb.longitude = lake.longitude
             wb.water_type = lake.water_type
+            wb.extent_km2 = lake.bounds.area_km2()
             wb.access_summary = (
                 OSM_POND_SUMMARY if lake.water_type == "pond" else OSM_LAKE_SUMMARY
             )

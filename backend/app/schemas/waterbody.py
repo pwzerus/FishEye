@@ -9,6 +9,11 @@ class StateOut(BaseModel):
     name: str
     code: str
     official_source_url: str
+    # Whether any lake in this state is on file. The national map lights the
+    # states where this is true and greys the rest as "coming soon". A State
+    # row alone does not mean coverage: an import that found nothing still
+    # creates one.
+    has_waterbodies: bool = False
 
 
 class AccessPointOut(BaseModel):

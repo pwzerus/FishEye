@@ -1,26 +1,45 @@
 """The map's "what is inside this box / near this point" filters, in the
-two shapes this app's two databases can answer them.
+shapes this app's two databases can answer them.
 
-WHY THIS EXISTS
----------------
-The viewport query is the single hottest query in the app: the map fires one
-every time it stops moving. On SQLite with a few thousand Texas lakes, a
-plain `latitude BETWEEN … AND longitude BETWEEN …` against the composite
-B-tree index is perfectly fine. It stops being fine at national scale.
+WHAT IS AND IS NOT WORTH A SPATIAL INDEX
+----------------------------------------
+Measured on a million synthetic waterbodies spread over the United States,
+clustered the way real lakes are (see docs/adr/0018):
 
-A composite B-tree on (latitude, longitude) can only range-scan on its first
-column: the latitude band narrows the scan, the longitude test is then
-applied row by row to everything in that band. A viewport over Houston has
-to walk every lake and pond in the United States that shares Houston's
-latitude — Florida, Louisiana, northern Mexico's neighbours — to throw
-almost all of them away. The radius query is worse: it pre-filters on
-latitude alone and then computes haversine in *Python* over whatever came
-back, so the work grows with the width of the country, not with the size of
-the circle the person asked about.
+The *radius* query is where PostGIS earns its place. The portable shape can
+only pre-filter on a latitude band and then compute haversine in Python, so
+the work grows with the width of the country rather than the size of the
+circle: 250,000 rows dragged through the ORM to keep 34,000, about 4.8
+seconds. `ST_DWithin` over a GiST index answers the same question in the
+database, exactly, in about 0.7 — and unlike the band, it stays flat as the
+map's coverage grows.
 
-PostGIS answers both from a GiST index over a real spatial type, where the
-index understands two dimensions at once and the distance test happens in
-the database.
+The *viewport* query turned out not to need it. The expectation was that a
+composite B-tree on (latitude, longitude) could only range-scan its first
+column and would have to walk every lake in the country sharing the
+viewport's latitude. PostgreSQL does better than that: it takes both columns
+as index conditions and, for a count, never touches the heap at all. A city
+viewport is about a millisecond, and the PostGIS alternatives were slower on
+every viewport bigger than a metro area — 3 to 6 times slower on a region.
+
+So the bbox filter is the same lat/lng comparison on both databases. That is
+not a compromise: it is exact by construction, it is what the frontend
+actually asked for (Leaflet's `toBBoxString()` rectangle has edges of
+constant latitude and longitude), and having one shape instead of two is one
+less thing that can silently disagree.
+
+A WARNING, PAID FOR
+-------------------
+The first version of this module answered the bbox with
+`geog && ST_MakeEnvelope(...)::geography`. That is wrong, and quietly:
+`&&` on geography compares *geodetic* bounding boxes, which PostGIS keeps as
+3-D cartesian boxes. Converting one back to a lat/lng rectangle neither
+contains nor is contained by it. On the data above it returned 9 lakes too
+many on a city viewport, 31,000 too many nationally, and — in the same
+query — dropped a dozen that were genuinely inside. It is a prefilter, never
+an answer, and it is not even a sound prefilter. The tests missed it because
+their fixtures were hundreds of kilometres apart, so nothing sat near an
+edge; `test_spatial.py` now puts lakes either side of one.
 
 THE SHAPE OF THE COMPROMISE
 ---------------------------
@@ -63,6 +82,8 @@ _postgis_ready: dict[str, bool] = {}
 # drop lakes that are genuinely in range.
 KM_PER_DEGREE_LAT = 111.0
 
+# All of this exists for `radius_filter` alone — the bbox filter is served by
+# the ordinary (latitude, longitude) index on the model.
 _SPATIAL_DDL = (
     "CREATE EXTENSION IF NOT EXISTS postgis",
     # GENERATED … STORED: Postgres recomputes this whenever latitude or
@@ -132,18 +153,16 @@ def uses_postgis(db: Session) -> bool:
 
 def bbox_filter(
     db: Session, west: float, south: float, east: float, north: float
-) -> ColumnElement[bool] | TextClause:
-    """Lakes inside the map's visible rectangle."""
-    if uses_postgis(db):
-        # ST_MakeEnvelope builds the viewport rectangle; && is the bounding
-        # box overlap operator, which is what the GiST index actually
-        # answers. For point rows "bounding boxes overlap" and "the point is
-        # inside the rectangle" are the same question, so this needs no
-        # second, exact pass.
-        return text(
-            "waterbodies.geog && ST_MakeEnvelope(:west, :south, :east, :north, 4326)::geography"
-        ).bindparams(west=west, south=south, east=east, north=north)
+) -> ColumnElement[bool]:
+    """Lakes inside the map's visible rectangle.
 
+    One shape for both databases, deliberately. The rectangle is Leaflet's
+    `toBBoxString()`, whose edges are lines of constant latitude and
+    longitude, so this comparison *is* the question rather than an
+    approximation of it — and PostgreSQL answers it from
+    ix_waterbodies_lat_lng using both columns. The module docstring has the
+    measurements, and the reason the PostGIS form was removed.
+    """
     return Waterbody.latitude.between(south, north) & Waterbody.longitude.between(west, east)
 
 
@@ -152,9 +171,16 @@ def radius_filter(
 ) -> ColumnElement[bool] | TextClause:
     """Lakes within `radius_km` of a point.
 
-    On PostGIS this is the whole answer. On SQLite it is only a bounding-box
-    pre-filter and the caller must still run `refine_radius` — see
-    `radius_is_exact`.
+    On PostGIS this is the whole answer, and an exact one. Otherwise it is
+    only a latitude-band pre-filter and the caller must still drop the
+    extras with `haversine_km` — ask `radius_is_exact` which case you are in.
+
+    The two do not agree to the last row: `ST_DWithin` on geography measures
+    on the spheroid, `haversine_km` on a sphere, so lakes sitting within a
+    few tenths of a percent of the boundary can fall either side of it
+    (measured at a million rows: 72 lakes of 33,832 at 160 km, 8 of 2,152 at
+    40 km). That is a smaller error than plotting a lake at its centre point
+    in the first place.
     """
     if uses_postgis(db):
         return text(

@@ -1,7 +1,13 @@
 # ADR 0001: Defer PostGIS, use plain lat/lng for the MVP
 
 ## Status
-Accepted (2026-09-19)
+Accepted (2026-09-19). Amended by ADR 0018: the "Consequences" below name
+the threshold at which this would need revisiting, and the statewide OSM
+layer (ADR 0010) crossed it — for the radius search, which ADR 0018 moves
+into PostGIS when `database_url` points at PostgreSQL. The viewport query
+stayed on the plain lat/lng columns this ADR chose; measurement said it
+never needed the index. The decision to store points rather than shoreline
+polygons, which is the substance of this ADR, is unchanged.
 
 ## Context
 The PRD (§7, §8) specifies PostgreSQL + PostGIS so waterbody shoreline

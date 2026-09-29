@@ -73,3 +73,15 @@ def test_waterbody_species_endpoint_returns_conditions_shape(client, seeded_lake
     assert len(body) == 1
     assert body[0]["common_name"] == "Largemouth Bass"
     assert body[0]["conditions"] == []  # none added in this fixture
+
+
+def test_states_say_which_ones_have_lakes(client, db_session, seeded_lake):
+    # A State row with no lakes behind it (an import that found nothing) must
+    # not light up as covered on the national map.
+    from app.models.waterbody import State
+
+    db_session.add(State(name="Oklahoma", code="OK", official_source_url="https://example.test"))
+    db_session.commit()
+
+    body = {s["code"]: s["has_waterbodies"] for s in client.get("/api/states").json()}
+    assert body == {"OK": False, "TX": True}

@@ -63,11 +63,54 @@ def test_bbox_returns_only_what_is_inside_it(lakes):
 
 
 def test_bbox_excludes_a_lake_that_shares_only_its_latitude(lakes):
-    # The case a (latitude, longitude) B-tree index cannot answer on its
-    # own, and the reason for the spatial index: Tahoe is at a different
-    # longitude entirely but the box must not be decided on latitude alone.
+    # Tahoe is at a different longitude entirely: the box must not be
+    # decided on the latitude band alone.
     band = _names(lakes, bbox_filter(lakes, -98.5, 29.0, -95.0, 40.0))
     assert "Lake Tahoe" not in band
+
+
+def test_bbox_is_exact_at_its_edges(db_session):
+    """The fixtures above are hundreds of km apart, which is what let a
+    wrong bbox implementation pass: it was out by thousandths of a degree.
+    A viewport edge is where the two implementations have to agree, so put
+    lakes just either side of one.
+
+    (The implementation this caught answered with
+    `geog && ST_MakeEnvelope(...)::geography`, whose geodetic bounding box
+    is neither a superset nor a subset of the rectangle asked for.)
+    """
+    tx = State(name="Texas", code="TX", official_source_url="https://tpwd.texas.gov/")
+    db_session.add(tx)
+    db_session.flush()
+
+    west, south, east, north = -97.0, 30.0, -96.0, 31.0
+    nudge = 0.002  # ~200 m: far below the error that slipped through before
+    placed = {
+        "Just inside NE": (north - nudge, east - nudge),
+        "Just inside SW": (south + nudge, west + nudge),
+        "Just outside N": (north + nudge, (west + east) / 2),
+        "Just outside S": (south - nudge, (west + east) / 2),
+        "Just outside E": ((south + north) / 2, east + nudge),
+        "Just outside W": ((south + north) / 2, west - nudge),
+    }
+    for name, (lat, lng) in placed.items():
+        db_session.add(
+            Waterbody(
+                state_id=tx.id,
+                name=name,
+                latitude=lat,
+                longitude=lng,
+                access_summary="",
+                source_url="https://example.test",
+                source_updated_at=NOW,
+            )
+        )
+    db_session.commit()
+
+    assert _names(db_session, bbox_filter(db_session, west, south, east, north)) == [
+        "Just inside NE",
+        "Just inside SW",
+    ]
 
 
 def test_an_empty_corner_of_the_map_returns_nothing(lakes):

@@ -48,37 +48,74 @@ def list_waterbodies(
     tier: str | None = Query(None, description="'verified' or 'osm'; omit for both"),
     limit: int = Query(2000, ge=1, le=MAX_LIST_RESULTS),
 ) -> list[WaterbodyListItem]:
-    stmt = select(Waterbody).join(Waterbody.state)
-    if state_code:
-        from app.models.waterbody import State
+    """Lakes matching the filters, verified ones first.
 
-        stmt = stmt.where(State.code == state_code.upper())
-    if species:
-        stmt = stmt.join(Waterbody.species_links).join(WaterbodySpecies.species).where(
-            Species.common_name.ilike(species)
+    When more match than `limit`, the ones kept are the LARGEST (by
+    `extent_km2`), not the first alphabetically. This matters at national
+    scale: a map view a few degrees wide over Minnesota matches ~150,000
+    lakes, and "the first 2000 by name" would be a random-looking scatter of
+    the letters A to C. Verified lakes are never displaced by it — they are
+    what this app actually knows something about, and there are few.
+
+    The limit is applied in SQL. It used to be applied after loading every
+    match into memory, which is invisible at Texas scale and a
+    multi-second, multi-hundred-megabyte request at national scale.
+    """
+
+    def matching(*conditions):  # type: ignore[no-untyped-def]
+        """The filtered query, before any tier split, ordering or limit."""
+        stmt = select(Waterbody).join(Waterbody.state)
+        if state_code:
+            from app.models.waterbody import State
+
+            stmt = stmt.where(State.code == state_code.upper())
+        if species:
+            stmt = stmt.join(Waterbody.species_links).join(WaterbodySpecies.species).where(
+                Species.common_name.ilike(species)
+            )
+        if bbox:
+            west, south, east, north = _parse_bbox(bbox)
+            stmt = stmt.where(bbox_filter(db, west, south, east, north))
+        if lat is not None and lng is not None:
+            # PostGIS answers this exactly from its spatial index; SQLite gets
+            # a coarse latitude-band prefilter and the haversine pass below
+            # does the rest (app/db/spatial.py).
+            stmt = stmt.where(radius_filter(db, lat, lng, radius_km))
+        return stmt.where(*conditions)
+
+    # A Python distance pass over the rows means the database cannot know how
+    # many will survive it, so it cannot be asked for "the first N".
+    refine = lat is not None and lng is not None and not radius_is_exact(db)
+
+    def fetch(stmt, order_by, cap):  # type: ignore[no-untyped-def]
+        stmt = stmt.order_by(*order_by)
+        if cap is not None and not refine:
+            stmt = stmt.limit(cap)
+        rows = list(db.scalars(stmt).unique().all())
+        if refine:
+            rows = [
+                w for w in rows if haversine_km(lat, lng, w.latitude, w.longitude) <= radius_km
+            ]
+        return rows
+
+    by_name = (Waterbody.name,)
+    by_size = (Waterbody.extent_km2.desc(), Waterbody.name)
+
+    if tier == "verified":
+        waterbodies = fetch(matching(Waterbody.data_tier == "verified"), by_name, limit)
+    elif tier:
+        waterbodies = fetch(matching(Waterbody.data_tier == tier), by_size, limit)
+    else:
+        # Two queries rather than one ordered by (tier, size): the composite
+        # sort cannot use an index, so it would sort every match in view to
+        # keep a handful. Split, each half has an index that serves it —
+        # ix_waterbodies_verified_lat_lng and ix_waterbodies_extent.
+        verified = fetch(matching(Waterbody.data_tier == "verified"), by_name, limit)
+        room = limit - len(verified)
+        others = (
+            fetch(matching(Waterbody.data_tier != "verified"), by_size, room) if room > 0 else []
         )
-    if tier:
-        stmt = stmt.where(Waterbody.data_tier == tier)
-    if bbox:
-        west, south, east, north = _parse_bbox(bbox)
-        stmt = stmt.where(bbox_filter(db, west, south, east, north))
-    if lat is not None and lng is not None:
-        # PostGIS answers this exactly from its spatial index; SQLite gets a
-        # coarse latitude-band prefilter and the haversine pass below does
-        # the rest (app/db/spatial.py).
-        stmt = stmt.where(radius_filter(db, lat, lng, radius_km))
-
-    # Verified lakes first, so a capped result can never drop one of the
-    # lakes this app actually knows something about in favour of an
-    # OSM-only pond.
-    stmt = stmt.order_by((Waterbody.data_tier != "verified"), Waterbody.name)
-
-    waterbodies = list(db.scalars(stmt).unique().all())
-
-    if lat is not None and lng is not None and not radius_is_exact(db):
-        waterbodies = [
-            w for w in waterbodies if haversine_km(lat, lng, w.latitude, w.longitude) <= radius_km
-        ]
+        waterbodies = verified + others
 
     waterbodies = waterbodies[:limit]
     counts = reported_species_counts(db, (w.id for w in waterbodies))

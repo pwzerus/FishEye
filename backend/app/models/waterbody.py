@@ -1,17 +1,26 @@
 """Core waterbody/species domain models.
 
-Design note (see docs/adr/0001-defer-postgis.md): coordinates are plain
-lat/lng floats for the MVP rather than PostGIS geometry columns. The PRD
-calls for PostGIS to support shoreline/polygon analysis later (satellite
-imagery features, contour-based structure detection); none of the MVP
-scoring signals need real geometry yet, and requiring PostGIS pushes
-first-run friction onto anyone trying the demo. Swapping AccessPoint.lat/lng
-and Waterbody bounding info for geometry columns later is a additive
-migration, not a rewrite.
+Design note (see docs/adr/0001-defer-postgis.md, amended by
+docs/adr/0018-postgis-for-radius-queries.md): coordinates are plain lat/lng
+floats, and they are the source of truth everywhere — every importer and
+test writes these and nothing else.
+
+The map's viewport query is answered from ix_waterbodies_lat_lng below, on
+either database. The radius query, on PostgreSQL, is answered from a PostGIS
+geography column and a GiST index — but that column is GENERATED from the
+two floats below and added at startup by app/db/spatial.py, not declared
+here: nothing in this schema, and no code that writes to it, needs to know
+whether the deployment has PostGIS. Without it the radius search falls back
+to a latitude band plus a haversine pass in Python.
+
+Still points, not shapes. The PRD calls for polygon geometry later
+(shoreline analysis, satellite-derived structure); adding it is an additive
+migration rather than a rewrite, because lat/lng being the only
+representation is a property of this module alone.
 """
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -72,6 +81,14 @@ class Waterbody(Base):
     # many are on private land, and unlike a reservoir there's rarely an
     # official public-access page to check.
     water_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    # Bounding-box area of the water, in km² — a size proxy used only to
+    # RANK lakes when a map view holds more than it can show, so that "the
+    # first 2000" means the largest 2000 rather than the first 2000
+    # alphabetically. A long thin reservoir overstates its size; that is fine
+    # for ranking. 0 for hand-curated rows (they are never ranked — verified
+    # lakes are always shown) and for OSM rows imported before this column
+    # existed, which sort last until the importer is re-run.
+    extent_km2: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
 
     state: Mapped["State"] = relationship(back_populates="waterbodies")
     access_points: Mapped[list["AccessPoint"]] = relationship(
@@ -86,7 +103,35 @@ class Waterbody(Base):
 
     # The map's viewport query filters on lat/lng ranges; with a statewide
     # import this table goes from 7 rows to thousands.
-    __table_args__ = (Index("ix_waterbodies_lat_lng", "latitude", "longitude"),)
+    #
+    # The partial index is for the "verified lakes in view" query the map
+    # makes on every pan. Verified rows are ~0.5% of the table, and without it
+    # that query scans the whole (latitude, longitude) index and discards 99.5%
+    # of it: measured at a million rows, 114 ms without and 5.8 ms with.
+    #
+    # Both extra indexes are ALSO created by app/db/upgrades.py for databases
+    # that predate them, because create_all never touches an existing table.
+    #
+    # ix_waterbodies_state_id: /api/states asks "does this state have any
+    # lake" for every state. Without it, a state with none (an import that
+    # found nothing) makes that a full table scan — 124 ms at a million rows.
+    __table_args__ = (
+        Index("ix_waterbodies_lat_lng", "latitude", "longitude"),
+        Index("ix_waterbodies_state_id", "state_id"),
+        Index(
+            "ix_waterbodies_verified_lat_lng",
+            "latitude",
+            "longitude",
+            postgresql_where=text("data_tier = 'verified'"),
+            sqlite_where=text("data_tier = 'verified'"),
+        ),
+    )
+
+
+# Declared here rather than in __table_args__ because a DESC index needs the
+# column object, which does not exist as a Column until the class is built.
+# Serves "largest N in view" — ORDER BY extent_km2 DESC LIMIT N.
+Index("ix_waterbodies_extent", Waterbody.extent_km2.desc())
 
 
 class AccessPoint(Base):
