@@ -3,6 +3,16 @@
 // once the API surface stabilizes (Day 3+), rather than doing that up
 // front for a schema that's still moving daily.
 
+/** GET /api/states — a state FishEye has a row for, and whether any lake in
+ * it is on file (the national map lights those and greys the rest). */
+export interface StateCoverage {
+  id: number;
+  name: string;
+  code: string;
+  official_source_url: string;
+  has_waterbodies: boolean;
+}
+
 export interface WaterbodyListItem {
   id: number;
   name: string;

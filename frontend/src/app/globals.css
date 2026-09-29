@@ -1117,3 +1117,41 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* --- National states layer (StatesLayer.tsx) ---
+   Leaflet writes fill/stroke as SVG attributes; CSS properties override
+   them, which is what lets these follow the theme tokens. */
+.state-shape {
+  stroke: var(--surface);
+  stroke-width: 1;
+  transition: fill-opacity var(--dur-fast) var(--ease);
+}
+.state-shape.is-open {
+  fill: var(--brand);
+  fill-opacity: 0.32;
+}
+.state-shape.is-open:hover {
+  fill-opacity: 0.55;
+}
+.state-shape.is-soon {
+  fill: var(--muted);
+  fill-opacity: 0.14;
+}
+.state-shape.is-soon:hover {
+  fill-opacity: 0.24;
+}
+/* Chromium draws a rectangular focus ring around a clicked SVG path — here,
+   the state's bounding box, which reads as a stray border. Clicking already
+   gives feedback (the map moves, or a popup opens). */
+.state-shape:focus {
+  outline: none;
+}
+.state-tooltip {
+  font-size: 12px;
+  font-weight: 600;
+}
+.state-popup .leaflet-popup-content {
+  margin: 8px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+}

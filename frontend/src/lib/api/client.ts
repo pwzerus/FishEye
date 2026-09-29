@@ -7,6 +7,7 @@ import type {
   GeocodeResult,
   RecommendationRequest,
   SpeciesGuide,
+  StateCoverage,
   RecommendationResponse,
   Weather,
   WaterbodyDetail,
@@ -74,6 +75,10 @@ export function listWaterbodies(params?: {
   const interactive = params?.lat !== undefined || params?.bbox !== undefined;
   const cacheOpt = interactive ? { cache: "no-store" as const } : undefined;
   return apiFetch<WaterbodyListItem[]>(`/api/waterbodies${suffix}`, cacheOpt);
+}
+
+export function listStates(): Promise<StateCoverage[]> {
+  return apiFetch<StateCoverage[]>("/api/states");
 }
 
 export function geocodePlace(query: string): Promise<GeocodeResult> {

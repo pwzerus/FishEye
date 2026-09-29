@@ -8,13 +8,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { PinForm } from "@/components/community/PinForm";
 import { useToast } from "@/components/ui/Toast";
-import { ApiError, listWaterbodies } from "@/lib/api/client";
+import { ApiError, listStates, listWaterbodies } from "@/lib/api/client";
 import { listPins } from "@/lib/api/session";
 import type { PinDetail, PinSummary, WaterbodyListItem } from "@/lib/api/types";
 import { WaterbodyPanel } from "@/components/waterbody/WaterbodyPanel";
 import type { Viewport } from "./LakeMap";
 import { LocationSearchBar, type LocatedPoint } from "./LocationSearchBar";
 import { MapLegend } from "./MapLegend";
+import { MIN_ZOOM_FOR_ALL_LAKES, MIN_ZOOM_FOR_LAKES, lakeQueryForZoom, listStateNames } from "./zoomPolicy";
 
 // Leaflet touches `window` at import time, which breaks server-side
 // rendering. next/dynamic with ssr:false has to be called from a client
@@ -29,14 +30,12 @@ const LakeDetailMap = dynamic(() => import("./LakeDetailMap"), {
   loading: () => <div className="map-loading">Loading lake map…</div>,
 });
 
-// Below this zoom only verified lakes are loaded. A statewide view holds
-// thousands of OpenStreetMap lakes; loading a capped, arbitrary subset of
-// them would look like the full picture when it isn't, so the map asks the
-// user to zoom in instead.
-export const MIN_ZOOM_FOR_ALL_LAKES = 8;
-// Per-request cap. A dense metro view (with ponds included) can exceed it;
-// the backend returns verified lakes first, and the map says the view is
-// partial rather than silently dropping the rest.
+// Per-request cap. A dense view (with ponds included) can exceed it — at
+// national coverage a view a few degrees wide over Minnesota matches
+// ~150,000 lakes. The backend returns verified lakes first and then the
+// LARGEST of the rest, so what is dropped is the smallest ponds and never a
+// lake this app knows something about; the map says the view is partial
+// rather than silently dropping the rest.
 const VIEWPORT_LIMIT = 2000;
 const PIN_LIMIT = 300;
 
@@ -67,10 +66,13 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   const [loading, setLoading] = useState(false);
   const [truncated, setTruncated] = useState(false);
   // Where the overview map was last looking, so "← All lakes" returns there
-  // instead of resetting to the whole of Texas.
+  // instead of resetting to the whole country.
   const [lastView, setLastView] = useState<{ center: [number, number]; zoom: number } | null>(null);
   // Pans can overlap: only the newest request's answer is shown.
   const latestRequest = useRef(0);
+  // Which states have lakes on file: lights them on the national map and
+  // names them when a search lands somewhere empty. null = not known (yet).
+  const [coverage, setCoverage] = useState<{ codes: Set<string>; names: string[] } | null>(null);
 
   const [showPins, setShowPins] = useState(true);
   const [pins, setPins] = useState<PinSummary[]>([]);
@@ -126,25 +128,44 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
           label: "your location",
         });
       },
-      () => undefined, // denied or unavailable: stay on the statewide view
+      () => undefined, // denied or unavailable: stay on the states map
       { enableHighAccuracy: false, timeout: 10_000 },
     );
     // Runs once, before the person can have interacted with the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    listStates()
+      .then((states) => {
+        const covered = states.filter((s) => s.has_waterbodies);
+        setCoverage({ codes: new Set(covered.map((s) => s.code)), names: covered.map((s) => s.name) });
+      })
+      // Unknown, not "none": the states layer then leaves every state open.
+      .catch(() => undefined);
+  }, []);
+
   function handleViewportChange({ bbox, zoom: newZoom, center }: Viewport) {
     const requestId = ++latestRequest.current;
     setZoom(newZoom);
     setLastView({ center, zoom: newZoom });
+    const query = lakeQueryForZoom(newZoom);
+    if (query === null) {
+      // Country scale: the states layer is the way in, so no lakes and no
+      // pins. Bumping the counters drops any answer still in flight from a
+      // closer view, which would otherwise land after this and repaint pins.
+      ++latestPins.current;
+      lastBbox.current = null;
+      setWaterbodies([]);
+      setPins([]);
+      setTruncated(false);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     lastBbox.current = bbox;
     if (showPins) loadPins(bbox);
-    listWaterbodies({
-      bbox,
-      tier: newZoom < MIN_ZOOM_FOR_ALL_LAKES ? "verified" : undefined,
-      limit: VIEWPORT_LIMIT,
-    })
+    listWaterbodies({ bbox, ...query, limit: VIEWPORT_LIMIT })
       .then((lakes) => {
         if (requestId !== latestRequest.current) return;
         setWaterbodies(lakes);
@@ -193,7 +214,10 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     if (params.get("addPin")) router.replace("/map", { scroll: false });
   }
 
-  const zoomedOut = zoom !== null && zoom < MIN_ZOOM_FOR_ALL_LAKES;
+  // Nothing has told us where to look yet, or the person zoomed out to the
+  // whole country: either way the states are what's on screen.
+  const countryScale = zoom === null || zoom < MIN_ZOOM_FOR_LAKES;
+  const zoomedOut = !countryScale && zoom < MIN_ZOOM_FOR_ALL_LAKES;
   const showEmpty = focusPoint !== null && !loading && !zoomedOut && waterbodies.length === 0 && !placing;
 
   let panel: React.ReactNode;
@@ -254,15 +278,15 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
                 </div>
               )}
               {loading && <div className="map-status-chip">Loading lakes…</div>}
-              {!loading && !placing && zoom === null && (
+              {!loading && !placing && countryScale && (
                 <div className="map-status-chip">
-                  Search a city, lake, or ZIP code, or allow location access, to see fishing spots
-                  near you.
+                  Pick a highlighted state, search a city, lake, or ZIP code, or allow location
+                  access, to see fishing spots.
                 </div>
               )}
               {!loading && !zoomedOut && truncated && (
                 <div className="map-status-chip">
-                  Showing the first {VIEWPORT_LIMIT} lakes and ponds here. Zoom in to see the rest.
+                  Showing the largest {VIEWPORT_LIMIT} lakes and ponds here. Zoom in to see the rest.
                 </div>
               )}
               {!loading && zoomedOut && !placing && (
@@ -271,10 +295,13 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
                 </div>
               )}
               {showEmpty && (
-                // Honest, not apologetic: the statewide layer covers Texas
-                // only for now (docs/adr/0010-statewide-osm-layer.md).
+                // Honest, not apologetic, and named from the data rather than
+                // hardcoded, so it stays true as states are imported.
                 <div className="no-nearby-lakes-banner">
-                  No lakes on file near {focusPoint?.label} yet. FishEye covers Texas for now.
+                  No lakes on file near {focusPoint?.label} yet.
+                  {coverage && coverage.names.length > 0 && coverage.names.length <= 4
+                    ? ` FishEye covers ${listStateNames(coverage.names)} for now.`
+                    : ""}
                 </div>
               )}
             </div>
@@ -288,6 +315,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
               placing={placing}
               draft={draft}
               onPlace={(latitude, longitude) => setDraft({ latitude, longitude })}
+              coveredStates={coverage?.codes ?? null}
             />
             <div className="map-fabs">
               <button
