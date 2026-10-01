@@ -122,8 +122,10 @@ def gather_facts(
     if waterbody is None:
         raise WaterbodyNotFound(f"no waterbody with id {waterbody_id}")
 
+    # No plan: its fish picker draws on reported (unconfirmed) species, which
+    # the model must never see.
     recommendations = build_recommendations(
-        db, waterbody_id, target_species=target_species, limit=limit, weather=weather
+        db, waterbody_id, target_species=target_species, limit=limit, weather=weather, include_plan=False
     )
 
     species_rows = list(

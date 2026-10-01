@@ -21,7 +21,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.waterbody import AccessPoint, Species, Waterbody, WaterbodySpecies
-from app.services import scoring
+from app.services import fishing_plan, scoring
+from app.services.reported_species import reported_species
 from app.services.weather_adapter import WeatherSnapshot, get_weather
 
 
@@ -75,12 +76,45 @@ def _freshness_date(
     return waterbody.source_updated_at
 
 
+def _plan_species(
+    db: Session, waterbody_id: int, target_species: str | None
+) -> tuple[str | None, list[str], bool | None]:
+    """Which fish the plan is for, which fish to offer in the picker, and
+    whether the chosen one is on record in this lake.
+
+    The picker offers the sport fish this lake has any record of (official
+    survey or reported observation) that also have a guide, in guide order —
+    so Largemouth Bass leads where it's present. A lake with no records at
+    all offers every guided sport fish and picks none: the angler knows what
+    they're after better than we do.
+    """
+    official = set(
+        db.execute(
+            select(Species.common_name)
+            .join(WaterbodySpecies, WaterbodySpecies.species_id == Species.id)
+            .where(WaterbodySpecies.waterbody_id == waterbody_id)
+        ).scalars()
+    )
+    reported = {r.common_name for r in reported_species(db, waterbody_id)}
+    on_record = official | reported
+    guided = fishing_plan.sport_species_with_guides()
+    from_lake = [name for name in guided if name in on_record]
+    options = from_lake or guided
+
+    if target_species and target_species in guided:
+        chosen: str | None = target_species
+    else:
+        chosen = from_lake[0] if from_lake else None
+    return chosen, options, (chosen in on_record) if chosen else None
+
+
 def build_recommendations(
     db: Session,
     waterbody_id: int,
     target_species: str | None = None,
     limit: int = 5,
     weather: WeatherSnapshot | None = None,
+    include_plan: bool = True,
 ) -> dict:
     """Scores every confirmed-public access point on a waterbody and returns
     them ranked. `weather` is injectable so tests (and any future caller
@@ -150,6 +184,11 @@ def build_recommendations(
     window = scoring.best_time_window(snapshot)
     bites = scoring.bite_windows(snapshot)
 
+    plan = None
+    if include_plan:
+        plan_species, plan_options, plan_on_record = _plan_species(db, waterbody_id, target_species)
+        plan = fishing_plan.build_plan(snapshot, plan_species, plan_options, plan_on_record)
+
     return {
         "waterbody_id": waterbody.id,
         "waterbody_name": waterbody.name,
@@ -182,4 +221,6 @@ def build_recommendations(
         ],
         "weather_source": snapshot.source,
         "generated_at": datetime.now(timezone.utc),
+        # What the lake page shows: where, when and what to fish with today.
+        "plan": plan,
     }

@@ -53,6 +53,39 @@ class WeatherWarningOut(BaseModel):
     headline: str | None
 
 
+class PlanPickOut(BaseModel):
+    name: str
+    why: str
+
+
+class PlanWhereOut(BaseModel):
+    shore: str | None  # compass point of the bank to fish, when one stands out
+    text: str
+
+
+class PlanWindowOut(BaseModel):
+    start_time: datetime
+    end_time: datetime
+    label: str | None = None
+
+
+class FishingPlanOut(BaseModel):
+    """Where, when and what to fish with today (app/services/fishing_plan.py)."""
+
+    species: str | None
+    species_slug: str | None = None
+    species_options: list[str]
+    species_on_record: bool | None
+    where: PlanWhereOut | None
+    when: PlanWindowOut | None
+    also: PlanWindowOut | None
+    conditions: str | None
+    lures: list[PlanPickOut]
+    baits: list[PlanPickOut]
+    lure_note: str | None
+    heads_up: list[str]
+
+
 class RecommendationResponse(BaseModel):
     """POST /api/recommendations response (PRD §9).
 
@@ -71,3 +104,4 @@ class RecommendationResponse(BaseModel):
     safety_warnings: list[WeatherWarningOut]
     weather_source: str  # "nws" | "fallback"
     generated_at: datetime
+    plan: FishingPlanOut | None = None
