@@ -48,6 +48,10 @@ STOPWORDS = frozenset(
 # asks how to recognise a fish. The phrase is removed before tokenising so
 # the two don't collide.
 _QUERY_NOISE_RE = re.compile(r"\btell me\b")
+# "What does it look like" asks how to recognise a fish. Only the phrase is
+# rewritten: a bare "look" usually means where to search ("where should I
+# look for crappie"), so it can't be a single-word synonym.
+_LOOK_LIKE_RE = re.compile(r"\blooks? like\b")
 # "fish", "catch", "fishing", "texas", "best" appear in nearly every question
 # and carry no signal about which passage answers it. They are still matched
 # inside passages through species names like "catfish" and "bait fish".
@@ -182,7 +186,8 @@ def tokenize(text: str) -> list[str]:
 
 
 def tokenize_query(text: str) -> list[str]:
-    return tokenize(_QUERY_NOISE_RE.sub(" ", text.lower()))
+    text = _QUERY_NOISE_RE.sub(" ", text.lower())
+    return tokenize(_LOOK_LIKE_RE.sub(" recognise ", text))
 
 
 def is_on_topic(tokens: list[str]) -> bool:

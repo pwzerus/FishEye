@@ -39,17 +39,16 @@ OFF_TOPIC: tuple[str, ...] = (
 
 # Questions that name a guide fish but ask something its guide doesn't
 # cover. The right retrieval is again nothing: the answer is "not covered",
-# not the nearest passage from some other fish. The first one is the bug
-# that motivated it — it used to come back with the threadfin shad bait
-# list, which mentions both fish by name. When a guide gains a section that
-# answers one of these (identification, say), the question moves to CASES
-# with that passage as its label.
+# not the nearest passage from some other fish. This group started with
+# "how do I tell white bass from hybrid striped bass", which used to come
+# back with the threadfin shad bait list (it mentions both fish by name).
+# Those look-alike questions moved to CASES once the guides gained
+# identification sections; when a guide gains a section that answers one of
+# these, it moves too, with that passage as its label.
 NOT_COVERED: tuple[str, ...] = (
-    "how do I tell white bass from hybrid striped bass",
-    "how do I tell largemouth from spotted bass",
-    "how do I tell white crappie from black crappie",
-    "how can I tell a channel cat from a blue cat",
-    "how do I tell a striper from a hybrid",
+    "how do I clean a crappie",
+    "how do I cook channel catfish",
+    "how do I fillet a striper",
 )
 
 CASES: tuple[RagCase, ...] = (
@@ -82,6 +81,12 @@ CASES: tuple[RagCase, ...] = (
     _c("sandbass-eat", "what do sand bass eat", "white-bass#diet"),
     _c("bluecat-diet", "what do they feed on", "blue-catfish#diet", context="blue-catfish", note="asked from the fish's page"),
     _c("shad-id", "how do I tell gizzard shad from threadfin shad", "gizzard-shad#identification", "threadfin-shad#identification"),
+    _c("wb-vs-hybrid", "how do I tell white bass from hybrid striped bass", "white-bass#identification", "hybrid-striped-bass#identification", note="was answered with a shad bait list"),
+    _c("lmb-vs-spb", "how do I tell largemouth from spotted bass", "largemouth-bass#identification", "spotted-bass#identification"),
+    _c("crappie-id", "how do I tell white crappie from black crappie", "white-crappie#identification", "black-crappie#identification"),
+    _c("catfish-id", "how can I tell a channel cat from a blue cat", "channel-catfish#identification", "blue-catfish#identification", note="nicknames"),
+    _c("striper-vs-hybrid", "how do I tell a striper from a hybrid", "striped-bass#identification", "hybrid-striped-bass#identification", note="nicknames"),
+    _c("bcp-look", "what does a black crappie look like", "black-crappie#identification", note="paraphrase"),
     # --- bait fish and rules ---
     _c("get-shad", "how do I catch shad to use as bait", "gizzard-shad#how_to_get", "threadfin-shad#how_to_get"),
     _c("cast-net", "how big a cast net can I use", "gizzard-shad#how_to_get", "threadfin-shad#how_to_get"),

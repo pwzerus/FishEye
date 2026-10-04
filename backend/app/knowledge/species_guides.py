@@ -60,6 +60,8 @@ SOURCES: dict[str, Source] = {
         Source("tpwmag-texoma-2020", "Texas Parks & Wildlife magazine: Texoma (2020)", "https://tpwmagazine.com/archive/2020/mar/ed_1_texoma/index.phtml", "publication"),
         Source("tpwmag-hybrid-2014", "Texas Parks & Wildlife magazine: hybrid bass (2014)", "https://tpwmagazine.com/archive/2014/mar/ed_3_hybridbass/", "publication"),
         Source("tpwmag-bluecat-2020", "Texas Parks & Wildlife magazine: winter blue catfish (2020)", "https://tpwmagazine.com/archive/2020/dec/scout10_nicecatch/index.phtml", "publication"),
+        Source("tpwd-bass-id", "TPWD Outdoor Annual: Bass identification", "https://tpwd.texas.gov/regulations/outdoor-annual/fishing/freshwater-fishing/bass-identification", "agency"),
+        Source("tpwd-cat-id", "TPWD Outdoor Annual: Catfish identification", "https://tpwd.texas.gov/regulations/outdoor-annual/fishing/freshwater-fishing/catfish-identification", "agency"),
         Source("tamu-hsb", "Texas A&M Fisheries: Hybrid Striped Bass", "https://fisheries.tamu.edu/pond-management/species/hybrid-striped-bass/", "agency"),
         # Other state agencies
         Source("mn-lmb", "Minnesota DNR: How to catch largemouth bass", "https://www.dnr.state.mn.us/gofishing/how-catch-largemouth-bass.html", "agency"),
@@ -78,6 +80,7 @@ SOURCES: dict[str, Source] = {
         Source("odwc-hybrid-fg", "Oklahoma Dept. of Wildlife Conservation: Hybrid striped bass field guide", "https://www.wildlifedepartment.com/wildlife/field-guide/fish/bass-striped-hybrid", "agency"),
         Source("odwc-wcp", "Oklahoma Dept. of Wildlife Conservation: White crappie field guide", "https://www.wildlifedepartment.com/wildlife/field-guide/fish/crappie-white", "agency"),
         Source("odwc-bcp", "Oklahoma Dept. of Wildlife Conservation: Black crappie field guide", "https://www.wildlifedepartment.com/wildlife/field-guide/fish/crappie-black", "agency"),
+        Source("odwc-fish-id", "Oklahoma Dept. of Wildlife Conservation: Fish identification", "https://wildlifedepartment.com/outdoorok/ooj/chapter-5-fish-identification", "agency"),
         Source("va-crappie", "Virginia DWR: Four tactics for spring crappie", "https://dwr.virginia.gov/blog/four-great-tactics-for-spring-crappie-success/", "agency"),
         Source("agfc-hooks", "Arkansas Game & Fish: Getting to the point on hooks", "https://www.agfc.com/news/getting-to-the-point-on-fishing-hooks/", "agency"),
         Source("utah-cat", "Utah DWR: Catfish at Pole Creek", "https://wildlife.utah.gov/wildlife-news/647-pole-creek.html", "agency"),
@@ -135,8 +138,12 @@ class SpeciesGuide:
     lures: tuple[str, ...] = ()
     setups: tuple[TackleSetup, ...] = ()
     tips: tuple[str, ...] = ()
-    # Forage fish only: how anglers get them, and what they're bait for.
+    # How to tell this fish from the ones it's confused with. Written as
+    # matching features across look-alikes (jaw vs eye, tooth patches,
+    # stripes, dorsal spines, anal fin) so a question about two fish can be
+    # answered by setting their passages side by side.
     identification: tuple[str, ...] = ()
+    # Forage fish only: how anglers get them, and what they're bait for.
     how_to_get: tuple[str, ...] = ()
     bait_for: tuple[str, ...] = ()
     legal_notes: tuple[str, ...] = ()
@@ -216,6 +223,11 @@ GUIDES: tuple[SpeciesGuide, ...] = (
         ),
         diet="Adults eat almost only other fish and crayfish.",
         diet_type="carnivore",
+        identification=(
+            "A dark stripe runs along each side.",
+            "With the mouth closed, the jaw reaches well past the back edge of the eye. This is the quickest way to tell it from a spotted bass.",
+            "Most have no tooth patch on the tongue.",
+        ),
         where_and_when=(
             "Near cover: logs, rock ledges, weeds, docks, bridges, sunken trees and drop-offs.",
             "Spawns in spring when the water reaches about 60°F, anywhere from February "
@@ -283,7 +295,15 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "still under a bobber. Use live bait for a bass you know is feeding; switch "
             "to lures to provoke one that isn't.",
         ),
-        source_ids=("tpwd-lmb", "mn-lmb", "tmf-bass", "fwc-bass", "mdc-bass"),
+        source_ids=(
+            "tpwd-lmb",
+            "mn-lmb",
+            "tmf-bass",
+            "fwc-bass",
+            "mdc-bass",
+            "tpwd-bass-id",
+            "odwc-fish-id",
+        ),
     ),
     SpeciesGuide(
         common_name="Spotted Bass",
@@ -296,6 +316,12 @@ GUIDES: tuple[SpeciesGuide, ...] = (
         ),
         diet="Fish and crayfish. It ambushes shad and crawfish where deep water rises to shallow.",
         diet_type="carnivore",
+        identification=(
+            "The side stripe is more broken than a largemouth bass's.",
+            "With the mouth closed, the jaw ends at the back edge of the eye, not past it as on a largemouth bass.",
+            "Rows of dark spots on the whitish belly look like thin stripes.",
+            "Has a tooth patch on the tongue; most largemouth bass don't.",
+        ),
         where_and_when=(
             "Likes more current than largemouth. Native to East Texas rivers such as the "
             "Sabine, Neches and Cypress.",
@@ -333,7 +359,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "Drag a shaky head slowly across deep points, 10–40 ft down.",
             "They school: once you catch one, stay put and keep casting there.",
         ),
-        source_ids=("tpwd-spb", "mercury-spb"),
+        source_ids=("tpwd-spb", "mercury-spb", "tpwd-bass-id", "odwc-fish-id"),
     ),
     SpeciesGuide(
         common_name="White Bass",
@@ -346,6 +372,11 @@ GUIDES: tuple[SpeciesGuide, ...] = (
         ),
         diet="Gizzard and threadfin shad above all; also insects and crustaceans near the surface.",
         diet_type="carnivore",
+        identification=(
+            "Faint stripes, often broken; only one reaches the tail.",
+            "A deep body with an arched back: the body is deeper than 1/3 of its length.",
+            "One tooth patch near the middle of the back of the tongue. Striped bass and hybrid striped bass have two.",
+        ),
         where_and_when=(
             "Spring run: they leave the reservoir and swim up rivers and creeks to spawn over "
             "gravel or rock in moving water.",
@@ -400,7 +431,15 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "Keep a steady retrieve close to the bottom.",
         ),
         legal_notes=BAIT_RULES,
-        source_ids=("tpwd-wtb", "tpwd-tawakoni", "odwc-whitebass", "coastal-sandbass", "mdc-bass"),
+        source_ids=(
+            "tpwd-wtb",
+            "tpwd-tawakoni",
+            "odwc-whitebass",
+            "coastal-sandbass",
+            "mdc-bass",
+            "tpwd-bass-id",
+            "odwc-fish-id",
+        ),
     ),
     SpeciesGuide(
         common_name="Striped Bass",
@@ -413,6 +452,11 @@ GUIDES: tuple[SpeciesGuide, ...] = (
         ),
         diet="Shad, minnows and insects.",
         diet_type="carnivore",
+        identification=(
+            "Strong, dark, unbroken stripes, several of them reaching the tail.",
+            "A slender body with a flat back: the body is less than 1/3 as deep as it is long.",
+            "Two distinct tooth patches near the middle of the back of the tongue.",
+        ),
         where_and_when=(
             "Schools in open water and avoids the shoreline.",
             "On Lake Texoma the best months are May–June and October–December.",
@@ -472,6 +516,8 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "tpwmag-texoma-2020",
             "tpwd-tawakoni",
             "buckley-striper",
+            "tpwd-bass-id",
+            "odwc-fish-id",
         ),
     ),
     SpeciesGuide(
@@ -485,6 +531,11 @@ GUIDES: tuple[SpeciesGuide, ...] = (
         ),
         diet="Threadfin and gizzard shad; also minnows, crustaceans and insects.",
         diet_type="carnivore",
+        identification=(
+            "Distinct stripes, usually broken, several of them reaching the tail. A striped bass's stripes are unbroken; a white bass's are faint.",
+            "A deep body with a slightly arched back: the body is deeper than 1/3 of its length, unlike the slender striped bass.",
+            "Two tooth patches on the back of the tongue, sometimes close together. A white bass has one.",
+        ),
         where_and_when=(
             "Open-water schools, most active at dawn and dusk.",
             "Early morning: topwater near the banks. Midday: follow birds working the water.",
@@ -536,7 +587,15 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "If nothing's on the surface, jig slabs near the bottom.",
         ),
         legal_notes=BAIT_RULES,
-        source_ids=("tamu-hsb", "odwc-hybrid-fg", "odwc-striper", "tpwmag-hybrid-2014", "tpwd-tawakoni"),
+        source_ids=(
+            "tamu-hsb",
+            "odwc-hybrid-fg",
+            "odwc-striper",
+            "tpwmag-hybrid-2014",
+            "tpwd-tawakoni",
+            "tpwd-bass-id",
+            "odwc-fish-id",
+        ),
     ),
     SpeciesGuide(
         common_name="Channel Catfish",
@@ -549,6 +608,10 @@ GUIDES: tuple[SpeciesGuide, ...] = (
         ),
         diet="Almost anything: insects, snails and clams, crayfish, fish and some plants.",
         diet_type="omnivore",
+        identification=(
+            "Dark spots on the body, though large adults may lose them.",
+            "The outer edge of the anal fin is rounded, with 24 to 29 rays. A blue catfish's is straight.",
+        ),
         where_and_when=(
             "Found statewide. Spawns in late spring or early summer at about 75°F water.",
             "Moves into the shallows at night from late spring to early fall. By day, look in "
@@ -600,7 +663,17 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "warm, murky or slow-moving water, a strong-smelling prepared stink bait "
             "carries just as well and is easier to keep on the hook.",
         ),
-        source_ids=("tpwd-ccf", "tpwd-nf", "tmf-cat", "mn-ccf", "mdc-cat", "utah-cat", "agfc-hooks"),
+        source_ids=(
+            "tpwd-ccf",
+            "tpwd-nf",
+            "tmf-cat",
+            "mn-ccf",
+            "mdc-cat",
+            "utah-cat",
+            "agfc-hooks",
+            "tpwd-cat-id",
+            "odwc-fish-id",
+        ),
     ),
     SpeciesGuide(
         common_name="Blue Catfish",
@@ -613,6 +686,10 @@ GUIDES: tuple[SpeciesGuide, ...] = (
         ),
         diet="Fish once they're a few inches long, plus large invertebrates.",
         diet_type="carnivore",
+        identification=(
+            "No dark spots on the body.",
+            "The outer edge of the anal fin is straight, with 30 to 36 rays. A channel catfish's is rounded.",
+        ),
         where_and_when=(
             "Main river channels, tributaries and big reservoirs. Moves upstream in summer "
             "for cooler water and downstream in winter for warmer water.",
@@ -651,7 +728,15 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "Blues of 20–50 lb are common in some waters, so heavy gear isn't overkill.",
         ),
         legal_notes=BAIT_RULES,
-        source_ids=("tpwd-blc", "tpwmag-bluecat-2020", "mdc-bigcat", "mdc-cat", "tpwd-cedarcreek"),
+        source_ids=(
+            "tpwd-blc",
+            "tpwmag-bluecat-2020",
+            "mdc-bigcat",
+            "mdc-cat",
+            "tpwd-cedarcreek",
+            "tpwd-cat-id",
+            "odwc-fish-id",
+        ),
     ),
     SpeciesGuide(
         common_name="White Crappie",
@@ -664,6 +749,11 @@ GUIDES: tuple[SpeciesGuide, ...] = (
         ),
         diet="Small fish (minnows and shad), insects and crayfish.",
         diet_type="carnivore",
+        identification=(
+            "Distinct vertical bars on the sides.",
+            "5 to 6 spines in the dorsal fin; a black crappie has 7 or 8.",
+            "Silvery, from white on the belly to green or dark green on the back.",
+        ),
         where_and_when=(
             "Around sunken trees, brush piles, docks and bridge pilings. Handles muddier "
             "water than black crappie.",
@@ -693,6 +783,7 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "mn-crappie",
             "va-crappie",
             "agfc-hooks",
+            "odwc-fish-id",
         ),
     ),
     SpeciesGuide(
@@ -706,6 +797,11 @@ GUIDES: tuple[SpeciesGuide, ...] = (
         ),
         diet="Fewer fish and more insects and crustaceans than white crappie.",
         diet_type="carnivore",
+        identification=(
+            "Irregular black blotches with no clear pattern, instead of vertical bars.",
+            "7 or 8 spines in the dorsal fin; a white crappie has 5 to 6.",
+            "Deeper-bodied than a white crappie.",
+        ),
         where_and_when=(
             "Most common in the clear waters of East and Northeast Texas.",
             "Spawns at about 60°F.",
@@ -719,7 +815,15 @@ GUIDES: tuple[SpeciesGuide, ...] = (
             "Crappie have soft mouths. Set the hook with a steady lift, not a hard jerk.",
             "Hold the jig still right next to the cover instead of jerking it.",
         ),
-        source_ids=("tpwd-bcp", "odwc-bcp", "mdc-crappie", "mn-crappie", "va-crappie", "agfc-hooks"),
+        source_ids=(
+            "tpwd-bcp",
+            "odwc-bcp",
+            "mdc-crappie",
+            "mn-crappie",
+            "va-crappie",
+            "agfc-hooks",
+            "odwc-fish-id",
+        ),
     ),
     SpeciesGuide(
         common_name="Bluegill",

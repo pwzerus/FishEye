@@ -59,7 +59,13 @@ model:
   question, the result is "not covered". (It used to retry the whole
   index, which answered "how do I tell white bass from hybrid striped
   bass" with the threadfin shad bait list; `NOT_COVERED` in the eval set
-  now holds that line at 100%.)
+  now holds that line at 100%.) The real fix for that question was content:
+  the sport fish now have identification sections (TPWD's bass and catfish
+  identification pages, cross-checked against Oklahoma's), written on
+  matching features so look-alike pairs can be compared side by side, and
+  the look-alike questions are ordinary eval cases. "Looks like" is
+  rewritten to "recognise" as a phrase; a bare "look" is left alone because
+  it usually means where to search.
 - **Synonyms** for beginner words the guides don't use ("gear" → rod, reel,
   setup; "how deep" → ft).
 - **A topic gate.** A question naming no fish must use at least one fishing

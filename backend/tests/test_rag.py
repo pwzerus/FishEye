@@ -255,18 +255,35 @@ def test_nothing_retrieved_short_circuits_without_calling_the_model():
 
 
 def test_a_named_fish_question_its_guide_cannot_answer_is_not_covered():
-    # Regression: this used to widen to every guide and come back with the
-    # threadfin shad bait list ("Striped bass and hybrid striped bass, live").
-    result = rag.ask("how do I tell white bass from hybrid striped bass", provider=_NeverCalled())
+    result = rag.ask("how do I fillet a striper", provider=_NeverCalled())
     assert result.answer_source == rag.ANSWER_NO_MATCH
-    assert result.trace.routed_species == ["hybrid-striped-bass", "white-bass"]
+    assert result.trace.routed_species == ["striped-bass"]
     assert result.citations == []
 
 
+def test_look_alike_question_is_answered_from_both_identification_sections():
+    # Regression: before the guides had identification sections this widened
+    # to every guide and came back with the threadfin shad bait list
+    # ("Striped bass and hybrid striped bass, live").
+    result = rag.ask("how do I tell white bass from hybrid striped bass", provider=MockProvider())
+    assert result.answer_source == rag.ANSWER_LLM
+    assert {p.id for p in result.citations} == {
+        "white-bass#identification",
+        "hybrid-striped-bass#identification",
+    }
+
+
 def test_routing_never_widens_to_other_fish():
-    for q in ("how do I tell white bass from hybrid striped bass", "how do I tell a striper from a hybrid"):
+    for q in ("how do I fillet a striper", "how do I tell a striper from a hybrid"):
         hits = default_retriever().search(q)
-        assert all("shad" not in h.passage.species_slug for h in hits), q
+        assert all(
+            h.passage.species_slug in {"striped-bass", "hybrid-striped-bass", SHARED_SLUG} for h in hits
+        ), q
+
+
+def test_look_like_means_recognise_but_bare_look_still_means_where():
+    assert _ids(default_retriever().search("what does a black crappie look like"))[0] == "black-crappie#identification"
+    assert "where_and_when" in _ids(default_retriever().search("where should I look for crappie"))[0]
 
 
 @pytest.mark.parametrize(
