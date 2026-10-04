@@ -55,6 +55,11 @@ model:
   from the query — otherwise "crappie bait" also ranks the catfish bait list
   (both are bait lists), and passages that merely repeat the name win. A
   question about two fish ("catfish") is interleaved so both get slots.
+  Routing never widens: if the named fish's passages don't answer the
+  question, the result is "not covered". (It used to retry the whole
+  index, which answered "how do I tell white bass from hybrid striped
+  bass" with the threadfin shad bait list; `NOT_COVERED` in the eval set
+  now holds that line at 100%.)
 - **Synonyms** for beginner words the guides don't use ("gear" → rod, reel,
   setup; "how deep" → ft).
 - **A topic gate.** A question naming no fish must use at least one fishing

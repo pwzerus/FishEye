@@ -37,6 +37,21 @@ OFF_TOPIC: tuple[str, ...] = (
     "recommend a good pizza place",
 )
 
+# Questions that name a guide fish but ask something its guide doesn't
+# cover. The right retrieval is again nothing: the answer is "not covered",
+# not the nearest passage from some other fish. The first one is the bug
+# that motivated it — it used to come back with the threadfin shad bait
+# list, which mentions both fish by name. When a guide gains a section that
+# answers one of these (identification, say), the question moves to CASES
+# with that passage as its label.
+NOT_COVERED: tuple[str, ...] = (
+    "how do I tell white bass from hybrid striped bass",
+    "how do I tell largemouth from spotted bass",
+    "how do I tell white crappie from black crappie",
+    "how can I tell a channel cat from a blue cat",
+    "how do I tell a striper from a hybrid",
+)
+
 CASES: tuple[RagCase, ...] = (
     # --- bait and lures ---
     _c("crappie-bait", "what bait for crappie", "white-crappie#live_baits", "black-crappie#live_baits"),

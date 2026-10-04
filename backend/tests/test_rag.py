@@ -254,6 +254,21 @@ def test_nothing_retrieved_short_circuits_without_calling_the_model():
     assert result.citations == []
 
 
+def test_a_named_fish_question_its_guide_cannot_answer_is_not_covered():
+    # Regression: this used to widen to every guide and come back with the
+    # threadfin shad bait list ("Striped bass and hybrid striped bass, live").
+    result = rag.ask("how do I tell white bass from hybrid striped bass", provider=_NeverCalled())
+    assert result.answer_source == rag.ANSWER_NO_MATCH
+    assert result.trace.routed_species == ["hybrid-striped-bass", "white-bass"]
+    assert result.citations == []
+
+
+def test_routing_never_widens_to_other_fish():
+    for q in ("how do I tell white bass from hybrid striped bass", "how do I tell a striper from a hybrid"):
+        hits = default_retriever().search(q)
+        assert all("shad" not in h.passage.species_slug for h in hits), q
+
+
 @pytest.mark.parametrize(
     "mode, outcome, attempts",
     [

@@ -29,7 +29,7 @@ from app.services.llm.mock import (
 from app.services.rag import ask as rag
 from app.services.rag.retriever import Retriever, default_retriever
 
-from .rag_cases import CASES, OFF_TOPIC
+from .rag_cases import CASES, NOT_COVERED, OFF_TOPIC
 
 ADVERSARIAL_MODES = (
     FAILURE_HALLUCINATED_SOURCE,
@@ -55,6 +55,7 @@ class RagReport:
     hit_at_k: float
     mrr: float
     off_topic_rejection: float
+    not_covered_rejection: float
     adversarial_caught: float
     misses: list[str]
     results: list[RagCaseResult]
@@ -70,6 +71,7 @@ def run(retriever: Retriever | None = None, k: int = rag.DEFAULT_K) -> RagReport
         results.append(RagCaseResult(case.id, case.question, rank is not None, rank, ids))
 
     off_topic_ok = sum(1 for q in OFF_TOPIC if not retr.search(q, k=k))
+    not_covered_ok = sum(1 for q in NOT_COVERED if not retr.search(q, k=k))
 
     caught = 0
     rag.reset_cache()
@@ -85,6 +87,7 @@ def run(retriever: Retriever | None = None, k: int = rag.DEFAULT_K) -> RagReport
         hit_at_k=sum(r.hit for r in results) / n,
         mrr=sum(1 / r.rank for r in results if r.rank) / n,
         off_topic_rejection=off_topic_ok / len(OFF_TOPIC),
+        not_covered_rejection=not_covered_ok / len(NOT_COVERED),
         adversarial_caught=caught / len(ADVERSARIAL_MODES),
         misses=[r.id for r in results if not r.hit],
         results=results,
@@ -106,6 +109,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"hit@{report.k}:              {report.hit_at_k:.0%}  ({report.cases} questions)")
     print(f"MRR:                {report.mrr:.2f}")
     print(f"off-topic rejected: {report.off_topic_rejection:.0%}")
+    print(f"not-covered rejected: {report.not_covered_rejection:.0%}")
     print(f"adversarial caught: {report.adversarial_caught:.0%}")
     if report.misses:
         print(f"misses:             {', '.join(report.misses)}")

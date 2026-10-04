@@ -310,11 +310,16 @@ class BM25Retriever:
         every routed passage is about that fish already, so the name only
         rewards passages that happen to repeat it.
 
-        A question that named a fish but matched none of its passages is
-        retried against the whole index with the full question, so a
-        misread nickname degrades to "less focused" rather than "no answer".
-        A page-context filter is never widened that way: someone asking on
-        the crappie page expects a crappie answer or an honest "not covered".
+        Once routed, the search never widens. A question that names a fish
+        but matches none of that fish's passages gets an empty result (the
+        "not covered" answer), not the best matches from other fish.
+        Widening used to be the fallback, and it answered "how do I tell
+        white bass from hybrid striped bass" — which no guide covers — with
+        the threadfin shad bait list, because that passage happens to say
+        "striped bass and hybrid striped bass". Retrieval only reaches this
+        point when a name *was* recognised, so there is no misread nickname
+        to recover from; an unrecognised name never routes and is searched
+        across the whole index below.
         """
         named, residual = split_species(question)
         routed = named or species or ()
@@ -325,13 +330,10 @@ class BM25Retriever:
             if not query:
                 return self._by_section(routed, k)
             hits = self._rank(query, allowed)
-            if hits:
-                return _interleave(hits, k)
-            if not named:
-                return []
+            return _interleave(hits, k) if hits else []
 
         tokens = tokenize_query(question)
-        if not named and not is_on_topic(tokens):
+        if not is_on_topic(tokens):
             return []
         query = expand_query(tokens)
         return self._rank(query, None)[:k] if query else []

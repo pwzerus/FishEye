@@ -19,6 +19,12 @@ def test_off_topic_questions_are_never_answered_from_the_guides():
     assert run().off_topic_rejection == 1.0
 
 
+def test_a_named_fish_whose_guide_lacks_the_answer_gets_not_covered():
+    # Not the nearest passage from another fish (that used to answer
+    # "white bass vs hybrid" with the threadfin shad bait list).
+    assert run().not_covered_rejection == 1.0
+
+
 def test_every_injected_model_failure_is_caught():
     assert run().adversarial_caught == 1.0
 
