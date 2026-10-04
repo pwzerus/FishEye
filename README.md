@@ -14,13 +14,34 @@ for system design and `docs/adr/` for engineering decisions.
 
 ## Quickstart
 
+Needs Docker (Docker Desktop on Windows or macOS). No API keys.
+
 ```bash
-cp .env.example .env
 docker compose up --build
 ```
 
 - Frontend: http://localhost:3000
 - Backend API docs: http://localhost:8000/docs
+
+This starts PostgreSQL with PostGIS, the API and the web app, and seeds three
+demo lakes on first start. The fish guides and guide Q&A work right away; the
+Q&A uses the built-in mock model (no key, no cost). Data is kept in Docker
+volumes between runs; `docker compose down -v` wipes it and the next start
+re-seeds.
+
+Optional settings (map tiles, a real LLM, Google sign-in) go in a `.env` file
+next to `docker-compose.yml`: `cp .env.example .env` and fill in what you
+have. Compose reads it if it's there.
+
+To load every named lake in Texas from OpenStreetMap (a few minutes, needs
+network), run once while the stack is up:
+
+```bash
+docker compose exec backend python -m app.data_import.osm_waterbody_import --state TX
+```
+
+Running the backend and frontend directly, without Docker, is covered in
+`backend/README.md` and `frontend/README.md`.
 
 ## Why this project exists
 

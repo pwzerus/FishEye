@@ -1,0 +1,19 @@
+# Keep the build context small and keep local data and secrets out of the image.
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.coverage
+htmlcov
+.env
+.env.*
+*.db
+media
+tests
+# Downloaded import data (large, re-fetchable; see backend/README.md)
+tx_osm.json
+gbif_tx_raw.json
+gbif_tx_report.json
+Dockerfile
+.dockerignore
