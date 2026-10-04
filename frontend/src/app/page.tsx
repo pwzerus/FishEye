@@ -7,6 +7,13 @@ import { listSpeciesGuides } from "@/lib/api/client";
 import { waterFor } from "@/lib/fishArt";
 import type { SpeciesGuide } from "@/lib/api/types";
 
+// Render on each request, not once during `next build`. A build made
+// without the API running (a Docker image, CI) would otherwise bake in the
+// "could not reach the backend" fallback, and the first visitor after every
+// deploy would get it. The API calls themselves still cache for 30 seconds
+// (lib/api/client.ts), so this costs the backend almost nothing.
+export const dynamic = "force-dynamic";
+
 const FEATURES = [
   {
     href: "/map",
@@ -157,10 +164,9 @@ export default async function Home() {
             <h2>Answers you can check</h2>
             <p>
               A language model is good at explaining and bad at knowing where fish are. So in
-              FishEye it only explains. Spot rankings come from a transparent scoring engine;
-              answers come from reviewed guides. Before any AI answer is shown, the server checks
-              that every fish, number and citation in it came from the guide passages it was
-              given. If one didn&apos;t, you see the guide text instead.
+              FishEye it only explains. Answers come from reviewed guides. Before any AI answer is
+              shown, the server checks that every fish, number and citation in it came from the
+              guide passages it was given. If one didn&apos;t, you see the guide text instead.
             </p>
           </div>
           <ol className="trust-steps">

@@ -5,6 +5,13 @@ import { PageTransition } from "@/components/motion/Transition";
 import { listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
 import type { SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
 
+// Render on each request, not once during `next build`. A build made
+// without the API running (a Docker image, CI) would otherwise bake in the
+// "could not reach the backend" fallback, and the first visitor after every
+// deploy would get it. The API calls themselves still cache for 30 seconds
+// (lib/api/client.ts), so this costs the backend almost nothing.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Fish guide · FishEye",
   description: "How to catch Texas freshwater fish: what they eat, where to look, baits and tackle setups.",

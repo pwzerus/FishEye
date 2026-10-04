@@ -14,7 +14,25 @@ import type {
   WaterbodyListItem,
 } from "./types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
+/**
+ * Where to reach the API from wherever this code is running.
+ *
+ * In the browser it's NEXT_PUBLIC_API_BASE_URL, inlined at build time. On
+ * the server (server components and their revalidation) it can be a
+ * different address: under Docker Compose, the browser's "localhost:8000"
+ * is the frontend container itself, and the backend is "backend:8000".
+ * API_INTERNAL_URL has no NEXT_PUBLIC_ prefix, so Next never inlines it
+ * into the browser bundle and the server reads it at run time. Unset (plain
+ * `npm run dev`), the server uses the public URL, as before.
+ */
+function apiBaseUrl(): string {
+  if (typeof window === "undefined") {
+    return process.env.API_INTERNAL_URL || PUBLIC_API_BASE_URL;
+  }
+  return PUBLIC_API_BASE_URL;
+}
 
 class ApiError extends Error {
   constructor(
@@ -29,7 +47,7 @@ class ApiError extends Error {
 }
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+  const res = await fetch(`${apiBaseUrl()}${path}`, {
     // Server data changes rarely relative to how often a demo page is
     // reloaded; a short cache keeps repeated clicks from hammering the
     // backend without going stale mid-session.
