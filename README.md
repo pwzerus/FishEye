@@ -53,6 +53,7 @@ flowchart LR
     C -->|/api/*| B[FastAPI backend]
     C -->|pages| F[Next.js frontend<br/>React, Leaflet / MapLibre]
     F -->|server-side render| B
+    U -->|map tiles| T[MapTiler vector basemap<br/>OSM raster fallback]
 
     B --> DB[(PostgreSQL + PostGIS)]
     B --> M[(Photo storage)]
@@ -92,7 +93,10 @@ flowchart LR
   PostgreSQL; the same API on SQLite for zero-setup development.
 
 **Frontend** (Next.js 16, React 19, TypeScript): server-rendered pages,
-Leaflet and MapLibre maps, a US states layer, Vitest + Testing Library.
+a MapLibre vector basemap (MapTiler style, with its airport icons hidden
+so rural airstrips don't drown out the lakes) and Leaflet layers on top, falling back to
+OpenStreetMap raster tiles when no key is configured; a US states layer;
+Vitest + Testing Library.
 
 **Infrastructure**: Docker Compose runs the whole stack with one command;
 a production layer adds Caddy (automatic HTTPS) for a single server.
