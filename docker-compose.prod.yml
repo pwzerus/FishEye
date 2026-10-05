@@ -1,0 +1,62 @@
+# Production layer on top of docker-compose.yml, for one server:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+#
+# Differences from the local setup:
+#   - Caddy is the only thing reachable from outside (ports 80 and 443).
+#     The backend and frontend ports are closed.
+#   - The browser talks to PUBLIC_URL for everything, API included.
+#   - Containers restart on their own after a crash or a reboot.
+#
+# Settings come from a .env file next to this one (compose reads it for the
+# ${...} values below). See docs/deploy-aws.md.
+#
+#   PUBLIC_URL=http://203.0.113.10       or  https://fisheye.example.com
+#   SITE_ADDRESS=:80                      or  fisheye.example.com
+#   COOKIE_SECURE=false                   or  true (only with https)
+#
+# Needs Docker Compose 2.24 or newer (the !reset tag).
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS in .env (":80" or your domain)}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Issued certificates; losing them means asking for new ones.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+
+  db:
+    restart: unless-stopped
+
+  backend:
+    restart: unless-stopped
+    ports: !reset []
+    environment:
+      FRONTEND_ORIGIN: ${PUBLIC_URL:?set PUBLIC_URL in .env}
+      API_PUBLIC_URL: ${PUBLIC_URL}
+      # The session cookie is only sent over HTTPS when this is true, which
+      # breaks sign-in on a plain-HTTP address. Turn it on with a domain.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+
+  frontend:
+    restart: unless-stopped
+    ports: !reset []
+    build:
+      args:
+        # Baked into the browser bundle: same address as the pages, so API
+        # calls go through Caddy's /api route.
+        NEXT_PUBLIC_API_BASE_URL: ${PUBLIC_URL:?set PUBLIC_URL in .env}
+
+volumes:
+  caddy_data:
+  caddy_config:

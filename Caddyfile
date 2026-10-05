@@ -1,0 +1,23 @@
+# The one public entrance in production (see docker-compose.prod.yml).
+#
+# SITE_ADDRESS decides how it listens:
+#   :80            plain HTTP on any address. Fine for trying it on a server's
+#                  IP address, but browsers will call it "not secure".
+#   fisheye.app    a domain name: Caddy gets and renews a certificate by
+#                  itself and serves HTTPS (needs ports 80 and 443 open and
+#                  the domain's DNS pointing at this server).
+#
+# The API and the web pages share one address, so the browser never makes a
+# cross-site request and the login cookie stays first-party.
+{$SITE_ADDRESS::80} {
+	encode zstd gzip
+
+	@backend path /api/* /health
+	handle @backend {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+}
