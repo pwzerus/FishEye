@@ -37,3 +37,7 @@ backend/gbif_tx_report.json
 # Community photo uploads (MEDIA_ROOT): user content, never committed
 backend/media/
 media/
+
+# Private notes kept next to the code but never published
+docs/commercialization.md
+docs/private/
