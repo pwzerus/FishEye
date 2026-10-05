@@ -12,10 +12,19 @@ import { ApiError, listStates, listWaterbodies } from "@/lib/api/client";
 import { listPins } from "@/lib/api/session";
 import type { PinDetail, PinSummary, WaterbodyListItem } from "@/lib/api/types";
 import { WaterbodyPanel } from "@/components/waterbody/WaterbodyPanel";
+import type L from "leaflet";
+
 import type { Viewport } from "./LakeMap";
 import { LocationSearchBar, type LocatedPoint } from "./LocationSearchBar";
 import { MapLegend } from "./MapLegend";
-import { MIN_ZOOM_FOR_ALL_LAKES, MIN_ZOOM_FOR_LAKES, lakeQueryForZoom, listStateNames } from "./zoomPolicy";
+import {
+  MIN_ZOOM_FOR_ALL_LAKES,
+  type MapMode,
+  type MapViewState,
+  asExploringView,
+  lakeQueryFor,
+  listStateNames,
+} from "./zoomPolicy";
 
 // Leaflet touches `window` at import time, which breaks server-side
 // rendering. next/dynamic with ssr:false has to be called from a client
@@ -62,6 +71,23 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   );
   const [waterbodies, setWaterbodies] = useState(initialWaterbodies);
   const [focusPoint, setFocusPoint] = useState<LocatedPoint | null>(() => parseAt(params.get("at")));
+  // National (whole country, states only) or exploring (zoomPolicy.ts). A
+  // link to a lake or a point already says where to look, so it opens
+  // exploring; everything else starts at the states map.
+  const [mode, setModeState] = useState<MapMode>(() =>
+    params.get("at") || params.get("lake") ? "exploring" : "national",
+  );
+  // Read by the viewport handler, which runs off a debounce timer and could
+  // otherwise act on the mode from an earlier render.
+  const modeRef = useRef(mode);
+  const setMode = useCallback((next: MapMode) => {
+    modeRef.current = next;
+    setModeState(next);
+  }, []);
+  // A state just picked on the national map, for the map to fit itself to.
+  const [focusBounds, setFocusBounds] = useState<L.LatLngBounds | null>(null);
+  // Where the single-lake map is looking; see leaveLake.
+  const detailView = useRef<MapViewState | null>(null);
   const [zoom, setZoom] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [truncated, setTruncated] = useState(false);
@@ -122,6 +148,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     triedAutoLocate.current = true;
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        setMode("exploring");
         setFocusPoint({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
@@ -145,23 +172,58 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
       .catch(() => undefined);
   }, []);
 
+  function clearLakesAndPins() {
+    // Bumping the counters drops any answer still in flight from a closer
+    // view, which would otherwise land after this and repaint the map.
+    ++latestRequest.current;
+    ++latestPins.current;
+    lastBbox.current = null;
+    setWaterbodies([]);
+    setPins([]);
+    setTruncated(false);
+    setLoading(false);
+  }
+
+  const enterState = useCallback(
+    (bounds: L.LatLngBounds) => {
+      setMode("exploring");
+      setFocusBounds(bounds);
+    },
+    [setMode],
+  );
+
+  function backToStates() {
+    setMode("national");
+    setFocusPoint(null); // also clears the "no lakes near …" banner
+    setFocusBounds(null);
+    setLastView(null);
+    clearLakesAndPins();
+  }
+
+  /** Back from a single lake to the overview. `view` is where the lake map
+   * was when the person zoomed out of it; the button passes nothing and
+   * returns to where the overview last was — or, for a lake opened from a
+   * link with no overview behind it, to where the lake map is. */
+  function leaveLake(view?: MapViewState) {
+    const target = view ?? lastView ?? detailView.current;
+    setLastView(target ? asExploringView(target) : null);
+    setMode("exploring");
+    setSelectedId(null);
+  }
+
   function handleViewportChange({ bbox, zoom: newZoom, center }: Viewport) {
-    const requestId = ++latestRequest.current;
     setZoom(newZoom);
-    setLastView({ center, zoom: newZoom });
-    const query = lakeQueryForZoom(newZoom);
+    const query = lakeQueryFor(modeRef.current, newZoom);
     if (query === null) {
-      // Country scale: the states layer is the way in, so no lakes and no
-      // pins. Bumping the counters drops any answer still in flight from a
-      // closer view, which would otherwise land after this and repaint pins.
-      ++latestPins.current;
-      lastBbox.current = null;
-      setWaterbodies([]);
-      setPins([]);
-      setTruncated(false);
-      setLoading(false);
+      // National mode: the states layer is the way in, so no lakes and no
+      // pins — not a single request.
+      clearLakesAndPins();
       return;
     }
+    // Only exploring views are remembered: "← All lakes" must never return
+    // someone to the locked national map.
+    setLastView({ center, zoom: newZoom });
+    const requestId = ++latestRequest.current;
     setLoading(true);
     lastBbox.current = bbox;
     if (showPins) loadPins(bbox);
@@ -183,6 +245,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
 
   function handleLocate(point: LocatedPoint) {
     setSelectedId(null);
+    setMode("exploring");
     // Flying there fires moveend, which loads that area's lakes through
     // handleViewportChange like any other pan.
     setFocusPoint(point);
@@ -196,6 +259,8 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     setCreated(null);
     setDraft(null);
     setShowPins(true);
+    // A pin needs a map you can zoom into; the national map is locked.
+    setMode("exploring");
     setPlacing(true);
   }
 
@@ -214,11 +279,10 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     if (params.get("addPin")) router.replace("/map", { scroll: false });
   }
 
-  // Nothing has told us where to look yet, or the person zoomed out to the
-  // whole country: either way the states are what's on screen.
-  const countryScale = zoom === null || zoom < MIN_ZOOM_FOR_LAKES;
-  const zoomedOut = !countryScale && zoom < MIN_ZOOM_FOR_ALL_LAKES;
-  const showEmpty = focusPoint !== null && !loading && !zoomedOut && waterbodies.length === 0 && !placing;
+  const national = mode === "national";
+  const zoomedOut = !national && zoom !== null && zoom < MIN_ZOOM_FOR_ALL_LAKES;
+  const showEmpty =
+    !national && focusPoint !== null && !loading && !zoomedOut && waterbodies.length === 0 && !placing;
 
   let panel: React.ReactNode;
   if (placing && draft) {
@@ -278,13 +342,13 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
                 </div>
               )}
               {loading && <div className="map-status-chip">Loading lakes…</div>}
-              {!loading && !placing && countryScale && (
+              {!loading && !placing && national && (
                 <div className="map-status-chip">
                   Pick a highlighted state, search a city, lake, or ZIP code, or allow location
                   access, to see fishing spots.
                 </div>
               )}
-              {!loading && !zoomedOut && truncated && (
+              {!loading && !national && !zoomedOut && truncated && (
                 <div className="map-status-chip">
                   Showing the largest {VIEWPORT_LIMIT} lakes and ponds here. Zoom in to see the rest.
                 </div>
@@ -310,12 +374,16 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
               onSelect={placing ? () => undefined : setSelectedId}
               onViewportChange={handleViewportChange}
               focusPoint={focusPoint}
-              initialView={lastView}
+              initialView={national ? null : lastView}
               pins={showPins ? pins : []}
               placing={placing}
               draft={draft}
               onPlace={(latitude, longitude) => setDraft({ latitude, longitude })}
               coveredStates={coverage?.codes ?? null}
+              mode={mode}
+              onEnterState={enterState}
+              focusBounds={focusBounds}
+              onAllStates={backToStates}
             />
             <div className="map-fabs">
               <button
@@ -344,12 +412,24 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
         ) : (
           <>
             {/* Drill-down, not an overlay: clicking a lake replaces the
-                statewide map with that lake's own zoomed-in view — this
-                button is the only way back. */}
-            <button type="button" className="back-to-map-button" onClick={() => setSelectedId(null)}>
+                overview with that lake's own zoomed-in view. Two ways back:
+                this button, or zooming out of the lake. */}
+            <button
+              type="button"
+              className="back-to-map-button"
+              title="Or just zoom out"
+              onClick={() => leaveLake()}
+            >
               ← All lakes
             </button>
-            <LakeDetailMap key={selectedId} waterbodyId={selectedId} />
+            <LakeDetailMap
+              key={selectedId}
+              waterbodyId={selectedId}
+              onExit={leaveLake}
+              onViewChange={(v) => {
+                detailView.current = v;
+              }}
+            />
           </>
         )}
       </div>

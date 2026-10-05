@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { ApiError, getWaterbody } from "@/lib/api/client";
 import type { WaterbodyDetail } from "@/lib/api/types";
 import { SpeciesHowTo } from "@/components/species/SpeciesHowTo";
-import { AdvisorPanel } from "./AdvisorPanel";
 import { ReportedSpeciesList } from "./ReportedSpeciesList";
 import { WeatherRecommendations } from "./WeatherRecommendations";
 
@@ -32,9 +31,6 @@ function ConfidenceBadge({ confidence }: { confidence: string }) {
 export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) {
   const [detail, setDetail] = useState<WaterbodyDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Shared by the recommendations panel (which owns the <select>) and the
-  // advisor panel below it, so both are always talking about the same fish.
-  const [targetSpecies, setTargetSpecies] = useState<string>("");
 
   // Deliberately no separate `loading` state: react-hooks/set-state-in-effect
   // flags setState called synchronously in an effect body (only calls inside
@@ -114,8 +110,8 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
         // situation this banner exists to avoid conflating).
         <div className="closed-banner">
           This lake is currently closed to public access, per its official
-          source. No public access points are shown, and weather-based
-          recommendations are not scored for it below.
+          source. No public access points are shown, and no weather or best
+          times are given for it below.
         </div>
       )}
 
@@ -182,21 +178,13 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
       <ReportedSpeciesList reported={detail.reported_species ?? []} isOsm={isOsm} />
 
       {!isClosed && (
-        <>
-          <WeatherRecommendations
-            waterbodyId={detail.id}
-            latitude={detail.latitude}
-            longitude={detail.longitude}
-            species={detail.species}
-            targetSpecies={targetSpecies}
-            onTargetSpeciesChange={setTargetSpecies}
-          />
-          {/* Below the ranking, not above it: the scored candidates are the
-              product, and the written explanation is commentary on them.
-              Not offered for unverified lakes: there is no ranking or
-              species evidence for it to explain. */}
-          {!isOsm && <AdvisorPanel waterbodyId={detail.id} targetSpecies={targetSpecies} />}
-        </>
+        <WeatherRecommendations
+          // Keyed by lake, so the fish picked on one lake doesn't carry over.
+          key={detail.id}
+          waterbodyId={detail.id}
+          latitude={detail.latitude}
+          longitude={detail.longitude}
+        />
       )}
     </div>
   );

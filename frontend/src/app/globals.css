@@ -409,27 +409,6 @@
   padding-top: 16px;
 }
 
-.species-select-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-bottom: 12px;
-}
-
-.species-select {
-  font-size: 13px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: white;
-  color: #171717;
-  text-transform: none;
-}
-
 .weather-alert-banner {
   background: #fef2f2;
   border: 1px solid #fecaca;
@@ -487,191 +466,115 @@
   color: #6b7280;
 }
 
-.best-time-window {
-  font-size: 13px;
-  margin-bottom: 12px;
-}
-
-.best-time-window .muted {
-  margin-top: 2px;
-}
-
-/* Morning and evening bite (WeatherRecommendations.tsx) */
-.bite-windows {
-  margin-bottom: 14px;
-  display: grid;
-  gap: 8px;
-}
-.bite-windows-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 13px;
-}
-.bite-tz {
-  font-size: 11px;
-  color: #6b7f89;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 700;
-}
-.bite-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-.bite-card {
-  position: relative;
-  display: grid;
-  gap: 2px;
-  padding: 10px 12px;
+/* Today's plan (WeatherRecommendations.tsx) */
+.plan-card {
+  border: 1px solid #d7e6dd;
+  background: linear-gradient(170deg, #f6fbf8, #ffffff);
   border-radius: 12px;
-  border: 1px solid #e3eaec;
+  padding: 12px 14px;
+  margin-bottom: 12px;
   font-size: 13px;
   color: #0f2530;
   animation: rise 520ms var(--ease) both;
 }
-.bite-card + .bite-card {
-  animation-delay: 80ms;
-}
-.bite-morning {
-  background: linear-gradient(160deg, #fff7e8, #ffe7c2);
-}
-.bite-evening {
-  background: linear-gradient(160deg, #f3ecff, #ffd9c7);
-}
-.bite-card.is-best {
-  border-color: #f08c2b;
-  box-shadow: 0 0 0 2px rgba(240, 140, 43, 0.25);
-}
-.bite-top {
+.plan-fish {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  font-size: 12px;
   font-weight: 700;
-  color: #7a4a12;
-}
-.bite-evening .bite-top {
-  color: #5b3a8a;
-}
-.bite-best {
-  /* Pinned to the card's top edge so it never pushes the title onto two lines. */
-  position: absolute;
-  top: -9px;
-  right: 10px;
-  font-size: 10.5px;
-  font-weight: 800;
-  color: #fff;
-  background: #f08c2b;
-  padding: 1px 7px;
-  border-radius: 999px;
-}
-.bite-time {
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-}
-.bite-day {
-  font-size: 12px;
-  color: #5b6f78;
-  font-weight: 600;
-}
-.bite-reason {
-  font-size: 12px;
   color: #4b6470;
-  margin-top: 2px;
 }
-
-.candidate-list {
+.plan-fish select {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f2530;
+  padding: 4px 6px;
+  border: 1px solid #cfdcd5;
+  border-radius: 8px;
+  background: #fff;
+}
+.plan-note {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #92400e;
+}
+.plan-heads-up {
   list-style: none;
-  display: flex;
-  flex-direction: column;
+  margin-top: 10px;
+  display: grid;
+  gap: 4px;
+}
+.plan-heads-up li {
+  font-size: 12.5px;
+  color: #7c2d12;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.plan-rows {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+.plan-rows > div {
+  display: grid;
+  grid-template-columns: 52px 1fr;
   gap: 8px;
 }
-
-.candidate-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 8px;
-  background: white;
-}
-
-.candidate-header {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-size: 13px;
-  text-align: left;
-  color: inherit;
-  font-family: inherit;
-}
-
-.candidate-access-type {
-  color: #6b7280;
-  font-size: 12px;
-}
-
-.candidate-score {
-  font-size: 16px;
-  font-weight: 700;
-  color: #15803d;
-}
-
-.confidence-bar {
-  position: relative;
-  height: 6px;
-  background: #e5e7eb;
-  border-radius: 3px;
-  margin-top: 6px;
-  overflow: hidden;
-}
-
-.confidence-bar-fill {
-  height: 100%;
-  background: #93c5fd;
-}
-
-.confidence-bar-label {
-  display: block;
+.plan-rows dt {
   font-size: 11px;
-  color: #6b7280;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #2f7a55;
+  padding-top: 2px;
+}
+.plan-rows dd {
+  margin: 0;
+  line-height: 1.45;
+}
+.plan-also {
+  color: #5b6f78;
+}
+.plan-conditions {
+  display: block;
+  font-size: 12px;
+  color: #5b6f78;
   margin-top: 2px;
 }
-
-.factor-list {
+.plan-picks {
   list-style: none;
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 6px;
 }
-
-.factor-list li {
+.plan-picks strong {
+  display: block;
+}
+.plan-why {
+  display: block;
   font-size: 12px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: #f9fafb;
+  color: #4b6470;
 }
-
-.factor-missing {
-  opacity: 0.7;
+.plan-guide-link {
+  font-weight: 700;
+  color: #0a7f84;
+  text-decoration: none;
 }
-
-.factor-row {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 600;
-  text-transform: capitalize;
+.plan-guide-link:hover {
+  text-decoration: underline;
 }
-
-.factor-reason {
-  margin-top: 2px;
-  color: #6b7280;
+.plan-now-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7f89;
+  margin-bottom: 4px;
 }
 
 /* --- AI advisor panel --- */

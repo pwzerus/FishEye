@@ -2,12 +2,14 @@
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap } from "react-leaflet";
-import { useEffect, useState } from "react";
+import { MapContainer, Marker, Popup, ZoomControl, useMap, useMapEvents } from "react-leaflet";
+import { useEffect, useRef, useState } from "react";
 
 import { ApiError, getWaterbody } from "@/lib/api/client";
 import type { WaterbodyDetail } from "@/lib/api/types";
-import { TILE_ATTRIBUTION, TILE_URL } from "@/lib/map/tiles";
+import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from "@/lib/map/tiles";
+import { BaseMap } from "./BaseMap";
+import { type MapViewState, lakeDetailExitZoom } from "./zoomPolicy";
 
 // Same CDN icon approach as LakeMap.tsx (see its comment) — a distinct
 // color for access points so they read as a different kind of pin than
@@ -28,22 +30,80 @@ const accessPointIcon = L.icon({
   className: "access-point-marker",
 });
 
-function FitToLakeExtent({ detail }: { detail: WaterbodyDetail }) {
+const FIT_PADDING = 60;
+const SINGLE_POINT_ZOOM = 12;
+
+/** Frames the lake, and reports the zoom it actually settles at so the
+ * zoom-out exit below can be measured from there. Measured after the fit
+ * rather than predicted before it: a prediction off by a level or two (the
+ * map's size still settling, say) would close the lake the moment it opened
+ * or never at all. */
+function FitToLakeExtent({
+  detail,
+  onSettled,
+}: {
+  detail: WaterbodyDetail;
+  onSettled: (zoom: number) => void;
+}) {
   const map = useMap();
   useEffect(() => {
     const points: [number, number][] = [
       [detail.latitude, detail.longitude],
       ...detail.access_points.map((ap) => [ap.latitude, ap.longitude] as [number, number]),
     ];
+    const settle = () => onSettled(map.getZoom());
+    map.once("moveend", settle);
+    // A fit that changes nothing may not move the map; don't wait forever.
+    const fallback = setTimeout(settle, 1500);
     if (points.length === 1) {
       // Just the centroid — a fitBounds on a single point zooms in far
       // too aggressively (or not at all), so set an explicit lake-scale
       // zoom instead.
-      map.setView(points[0], 12);
-      return;
+      map.setView(points[0], SINGLE_POINT_ZOOM);
+    } else {
+      map.fitBounds(L.latLngBounds(points), { padding: [FIT_PADDING, FIT_PADDING] });
     }
-    map.fitBounds(L.latLngBounds(points), { padding: [60, 60] });
+    return () => {
+      map.off("moveend", settle);
+      clearTimeout(fallback);
+    };
+    // onSettled is a state setter wrapper from the parent; stable in effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [detail, map]);
+  return null;
+}
+
+/**
+ * Zooming out of a single lake means the person is looking around, not at
+ * this lake: behave like "← All lakes" and hand back the current view, so the
+ * overview opens right where they are instead of jumping. The threshold is
+ * two steps out from where this lake settled (zoomPolicy.lakeDetailExitZoom),
+ * so a big reservoir framed at zoom 9 doesn't exit on its own initial fit.
+ */
+function ExitWhenZoomedOut({
+  exitBelow,
+  onExit,
+  onViewChange,
+}: {
+  exitBelow: number | null;
+  onExit: (view: MapViewState) => void;
+  onViewChange: (view: MapViewState) => void;
+}) {
+  const exited = useRef(false);
+  const map = useMapEvents({
+    moveend: () => onViewChange(read()),
+    zoomend: () => {
+      if (exited.current || exitBelow === null) return;
+      if (map.getZoom() < exitBelow) {
+        exited.current = true;
+        onExit(read());
+      }
+    },
+  });
+  function read(): MapViewState {
+    const c = map.getCenter();
+    return { center: [c.lat, c.lng], zoom: map.getZoom() };
+  }
   return null;
 }
 
@@ -61,9 +121,21 @@ function FitToLakeExtent({ detail }: { detail: WaterbodyDetail }) {
  * map scoped to one lake, not the statewide view, which is the whole
  * reason this component exists rather than just re-centering LakeMap.
  */
-export default function LakeDetailMap({ waterbodyId }: { waterbodyId: number }) {
+export default function LakeDetailMap({
+  waterbodyId,
+  onExit = () => undefined,
+  onViewChange = () => undefined,
+}: {
+  waterbodyId: number;
+  // Zoomed out far enough to leave the lake: MapView returns to the overview.
+  onExit?: (view: MapViewState) => void;
+  // Where the map is looking, so "← All lakes" has somewhere to return to
+  // when the lake was opened from a link rather than from the overview.
+  onViewChange?: (view: MapViewState) => void;
+}) {
   const [detail, setDetail] = useState<WaterbodyDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [exitBelow, setExitBelow] = useState<number | null>(null);
 
   useEffect(() => {
     // No reset of detail/error at the top of this effect: MapView mounts
@@ -95,14 +167,17 @@ export default function LakeDetailMap({ waterbodyId }: { waterbodyId: number }) 
     <MapContainer
       center={[detail.latitude, detail.longitude]}
       zoom={12}
+      minZoom={MAP_MIN_ZOOM}
+      maxZoom={MAP_MAX_ZOOM}
       scrollWheelZoom
       // Bottom right, clear of the "← All lakes" button (same fix as LakeMap).
       zoomControl={false}
       style={{ height: "100%", width: "100%" }}
     >
-      <TileLayer attribution={TILE_ATTRIBUTION} url={TILE_URL} />
+      <BaseMap />
       <ZoomControl position="bottomright" />
-      <FitToLakeExtent detail={detail} />
+      <FitToLakeExtent detail={detail} onSettled={(z) => setExitBelow(lakeDetailExitZoom(z))} />
+      <ExitWhenZoomedOut exitBelow={exitBelow} onExit={onExit} onViewChange={onViewChange} />
       <Marker position={[detail.latitude, detail.longitude]} icon={lakeCenterIcon}>
         <Popup>
           <strong>{detail.name}</strong>

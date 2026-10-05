@@ -290,6 +290,39 @@ export interface AdvisorResponse {
   generated_at: string;
 }
 
+// Mirrors FishingPlanOut in backend/app/schemas/recommendation.py.
+export interface PlanPick {
+  name: string;
+  why: string;
+}
+
+export interface PlanWindow {
+  start_time: string;
+  end_time: string;
+  label?: "morning" | "evening" | null;
+}
+
+export interface FishingPlan {
+  species: string | null;
+  // The fish's guide page, /fish/<slug>.
+  species_slug?: string | null;
+  // Fish to offer in the picker: the lake's own (official or reported), or
+  // every guided sport fish when the lake has no records.
+  species_options: string[];
+  // false: the chosen fish isn't on record in this lake.
+  species_on_record: boolean | null;
+  where: { shore: string | null; text: string } | null;
+  when: PlanWindow | null;
+  also: PlanWindow | null;
+  // The forecast for the chosen window, e.g. "78°F, partly sunny, SE wind 10 mph".
+  conditions: string | null;
+  lures: PlanPick[];
+  baits: PlanPick[];
+  lure_note: string | null;
+  // Only what would change the trip: a front, strong wind, thunder, rain.
+  heads_up: string[];
+}
+
 export interface RecommendationResponse {
   waterbody_id: number;
   waterbody_name: string;
@@ -305,6 +338,8 @@ export interface RecommendationResponse {
   safety_warnings: WeatherWarning[];
   weather_source: WeatherSource;
   generated_at: string;
+  // Where, when and what to fish with today. Absent from an older backend.
+  plan?: FishingPlan | null;
 }
 
 // Mirrors backend/app/schemas/species_guide.py.
