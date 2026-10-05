@@ -5,14 +5,15 @@ import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import L from "leaflet";
 import { useEffect, useRef } from "react";
-import { MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, Popup, ZoomControl, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 
 import type { PinSummary, WaterbodyListItem } from "@/lib/api/types";
-import { TILE_ATTRIBUTION, TILE_URL } from "@/lib/map/tiles";
+import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from "@/lib/map/tiles";
+import { BaseMap } from "./BaseMap";
 import { DraftMarker, PinMarkers, PlaceOnClick } from "./PinLayer";
 import { StatesLayer } from "./StatesLayer";
-import { US_CENTER, US_ZOOM } from "./zoomPolicy";
+import { US_CENTER, US_ZOOM, type MapMode, zoomLimitsFor } from "./zoomPolicy";
 
 // Leaflet's default marker icons reference image files by relative URL,
 // which breaks under bundlers (webpack rewrites the paths). Point them at
@@ -113,14 +114,103 @@ function FlyToFocus({
   const map = useMap();
   // When the map is remounted to restore a previous view (coming back from
   // a lake's detail map), the old search point must not yank it away again.
-  const skip = useRef(skipOnMount);
+  // Tracks the point already flown to rather than skipping "the first run":
+  // React runs mount effects twice in development, which used up such a
+  // skip and flew anyway.
+  const applied = useRef(skipOnMount ? focusPoint : null);
   useEffect(() => {
-    if (skip.current) {
-      skip.current = false;
-      return;
-    }
-    if (focusPoint) map.flyTo([focusPoint.latitude, focusPoint.longitude], SEARCH_ZOOM);
+    if (!focusPoint || focusPoint === applied.current) return;
+    applied.current = focusPoint;
+    map.flyTo([focusPoint.latitude, focusPoint.longitude], SEARCH_ZOOM);
   }, [focusPoint, map]);
+  return null;
+}
+
+/**
+ * Applies the zoom limits of the current mode (zoomPolicy.ts), and on the
+ * way back to national mode re-centres on the country. Rendered before
+ * FitToBounds and FlyToFocus so that, when a state click or a search switches
+ * the mode and asks for a new view in the same update, the ceiling is lifted
+ * before the map flies in rather than clamping the flight at country scale.
+ *
+ * Order matters inside each branch too: Leaflet rejects a minimum above the
+ * current maximum, so the limit that moves outward is set first.
+ */
+function ModeLimits({ mode }: { mode: MapMode }) {
+  const map = useMap();
+  const previous = useRef<MapMode | null>(null);
+  useEffect(() => {
+    const { min, max } = zoomLimitsFor(mode);
+    // Only when they change. Re-applying a floor the map already has is not
+    // a no-op in Leaflet: setMinZoom snaps any map below it up to it, and if
+    // that lands mid-flight (React re-runs mount effects in development, and
+    // the fly-to for a search or ?at= link starts in the same update) it
+    // cancels the flight and strands the map at state scale.
+    if (map.getMinZoom() === min && map.getMaxZoom() === max && previous.current === mode) return;
+    if (mode === "national") {
+      map.setMinZoom(min);
+      if (previous.current === "exploring") map.setView(US_CENTER, US_ZOOM, { animate: false });
+      map.setMaxZoom(max);
+    } else {
+      map.setMaxZoom(max);
+      map.setMinZoom(min);
+    }
+    previous.current = mode;
+  }, [map, mode]);
+  return null;
+}
+
+/** Fits the map to a chosen state's outline (StatesLayer → MapView).
+ *
+ * Acts only on a state it hasn't fitted yet. When the map is remounted to
+ * restore a view (coming back from a lake), the state picked earlier is still
+ * the current `bounds`, and re-fitting to it would throw the person from where
+ * they zoomed out of the lake back to the whole state. Tracking the applied
+ * target, rather than skipping "the first run", also survives React running
+ * mount effects twice in development. */
+function FitToBounds({ bounds, skipOnMount }: { bounds: L.LatLngBounds | null; skipOnMount: boolean }) {
+  const map = useMap();
+  const applied = useRef<L.LatLngBounds | null>(skipOnMount ? bounds : null);
+  useEffect(() => {
+    if (!bounds || bounds === applied.current) return;
+    applied.current = bounds;
+    map.fitBounds(bounds, { padding: [24, 24] });
+  }, [bounds, map]);
+  return null;
+}
+
+/**
+ * "All states": the only way back to the national map, since exploring mode
+ * stops zooming out at state scale (zoomPolicy.ts). A real Leaflet control in
+ * the bottom-right corner, added after the zoom buttons so Leaflet stacks it
+ * directly above + / − — it *is* the next zoom-out step — rather than another
+ * floating button competing with the search bar at narrow widths.
+ */
+function AllStatesControl({ onClick }: { onClick: () => void }) {
+  const map = useMap();
+  const latest = useRef(onClick);
+  useEffect(() => {
+    latest.current = onClick;
+  });
+  useEffect(() => {
+    const control = new L.Control({ position: "bottomright" });
+    control.onAdd = () => {
+      const button = L.DomUtil.create("button", "map-toggle active all-states-control");
+      button.type = "button";
+      button.title = "Back to the map of all states";
+      button.innerHTML =
+        '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+        '<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z M9 3v15 M15 6v15" stroke-linejoin="round"/></svg>' +
+        "<span>All states</span>";
+      L.DomEvent.disableClickPropagation(button);
+      L.DomEvent.on(button, "click", () => latest.current());
+      return button;
+    };
+    control.addTo(map);
+    return () => {
+      control.remove();
+    };
+  }, [map]);
   return null;
 }
 
@@ -172,6 +262,10 @@ export default function LakeMap({
   draft = null,
   onPlace,
   coveredStates = null,
+  mode = "exploring",
+  onEnterState = () => undefined,
+  focusBounds = null,
+  onAllStates,
 }: {
   waterbodies: WaterbodyListItem[];
   onSelect: (id: number) => void;
@@ -187,6 +281,13 @@ export default function LakeMap({
   onPlace?: (lat: number, lng: number) => void;
   // State codes with lakes on file; null while unknown (StatesLayer.tsx).
   coveredStates?: Set<string> | null;
+  // National (states only, zoom locked) or exploring — zoomPolicy.ts.
+  mode?: MapMode;
+  onEnterState?: (bounds: L.LatLngBounds) => void;
+  // A state the person just picked, to fit the map to.
+  focusBounds?: L.LatLngBounds | null;
+  // Shown (exploring mode, not placing a pin) when given.
+  onAllStates?: () => void;
 }) {
   const verified = waterbodies.filter((w) => w.data_tier !== "osm");
   const osm = waterbodies.filter((w) => w.data_tier === "osm");
@@ -195,6 +296,8 @@ export default function LakeMap({
     <MapContainer
       center={initialView?.center ?? US_CENTER}
       zoom={initialView?.zoom ?? US_ZOOM}
+      minZoom={MAP_MIN_ZOOM}
+      maxZoom={MAP_MAX_ZOOM}
       scrollWheelZoom
       className={placing ? "is-placing" : undefined}
       // Moved to the bottom right: the search bar sits in the top left,
@@ -202,34 +305,46 @@ export default function LakeMap({
       zoomControl={false}
       style={{ height: "100%", width: "100%" }}
     >
-      <TileLayer attribution={TILE_ATTRIBUTION} url={TILE_URL} />
+      <BaseMap />
       <ZoomControl position="bottomright" />
-      {/* Hidden while placing a pin: a tap then means "here", not "go to
-          this state". */}
-      {!placing && <StatesLayer covered={coveredStates} />}
+      {mode === "exploring" && !placing && onAllStates && <AllStatesControl onClick={onAllStates} />}
+      {/* Only at country scale, and never while placing a pin: a tap then
+          means "here", not "go to this state". */}
+      {mode === "national" && !placing && <StatesLayer covered={coveredStates} onEnter={onEnterState} />}
+      <ModeLimits mode={mode} />
+      <FitToBounds bounds={focusBounds} skipOnMount={initialView !== null} />
       <ViewportWatcher onChange={onViewportChange} loadOnMount={initialView !== null} />
       <FlyToFocus focusPoint={focusPoint} skipOnMount={initialView !== null} />
 
-      {/* Verified lakes are never clustered: there are few of them and
-          they're the ones this app can actually say something about.
-          That is a claim about data volume, not a rule of the map. Tried
-          against a synthetic 5,000 verified lakes, a zoomed-out view of the
-          whole country becomes an unreadable clump of pins. With dozens (a
-          state's worth of curated lakes) it is fine; once a wide view can
-          hold a few hundred, cluster them below some zoom. */}
-      {verified.map((lake) => (
-        <LakeMarker key={lake.id} lake={lake} onSelect={onSelect} />
-      ))}
-
-      {/* OSM lakes can number in the thousands in one view; clustering
-          keeps the map readable and the browser responsive. */}
-      <MarkerClusterGroup chunkedLoading showCoverageOnHover={false}>
-        {osm.map((lake) => (
+      {/* No lake or pin layers at all on the national map, not just empty
+          ones. Besides being what national mode means, removing the cluster
+          group outright matters: emptying it in the same instant the map
+          jumps back to the whole country left behind a ghost "0" cluster
+          bubble that could be panned into view. */}
+      {mode === "exploring" && (
+        <>
+        {/* Verified lakes are never clustered: there are few of them and
+            they're the ones this app can actually say something about.
+            That is a claim about data volume, not a rule of the map. Tried
+            against a synthetic 5,000 verified lakes, a zoomed-out view of the
+            whole country becomes an unreadable clump of pins. With dozens (a
+            state's worth of curated lakes) it is fine; once a wide view can
+            hold a few hundred, cluster them below some zoom. */}
+        {verified.map((lake) => (
           <LakeMarker key={lake.id} lake={lake} onSelect={onSelect} />
         ))}
-      </MarkerClusterGroup>
 
-      <PinMarkers pins={pins} />
+        {/* OSM lakes can number in the thousands in one view; clustering
+            keeps the map readable and the browser responsive. */}
+        <MarkerClusterGroup chunkedLoading showCoverageOnHover={false}>
+          {osm.map((lake) => (
+            <LakeMarker key={lake.id} lake={lake} onSelect={onSelect} />
+          ))}
+        </MarkerClusterGroup>
+
+        <PinMarkers pins={pins} />
+        </>
+      )}
       {placing && onPlace && <PlaceOnClick onPlace={onPlace} />}
       {draft && onPlace && <DraftMarker point={draft} onMove={onPlace} />}
     </MapContainer>

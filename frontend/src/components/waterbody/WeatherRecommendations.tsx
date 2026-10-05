@@ -1,21 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { ApiError, getWeather, postRecommendations } from "@/lib/api/client";
-import type {
-  RecommendationResponse,
-  SpeciesSummary,
-  SpotCandidate,
-  TimeWindow,
-  Weather,
-} from "@/lib/api/types";
+import type { FishingPlan, PlanPick, PlanWindow, RecommendationResponse, Weather } from "@/lib/api/types";
 
 function WeatherAlertBanner({ warnings }: { warnings: RecommendationResponse["safety_warnings"] }) {
   if (warnings.length === 0) return null;
-  // Deliberately rendered above the candidate list and styled to demand
+  // Deliberately rendered first and styled to demand
   // attention: PRD §17 requires severe-weather warnings to take priority
-  // over the recommendations themselves, not sit as a footnote under them.
+  // over everything else on the panel, not sit as a footnote under it.
   return (
     <div className="weather-alert-banner">
       {warnings.map((w, i) => (
@@ -34,8 +29,8 @@ function CurrentWeather({ weather }: { weather: Weather }) {
     // as real readings — say plainly that the service is unavailable.
     return (
       <div className="weather-summary weather-unavailable">
-        Weather data is temporarily unavailable. Recommendations below are
-        scored without it rather than guessing.
+        Weather data is temporarily unavailable, so no readings are shown rather than
+        guessing.
       </div>
     );
   }
@@ -83,145 +78,159 @@ export function lakeDay(iso: string, now: Date = new Date()): string {
   return new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: "long", timeZone: "UTC" });
 }
 
-function SunIcon({ rising }: { rising: boolean }) {
+/** "6–9 PM", or "11 AM–2 PM" when the window crosses noon. */
+export function lakeRange(startIso: string, endIso: string): string {
+  const start = lakeClock(startIso);
+  const end = lakeClock(endIso);
+  const [startTime, startHalf] = start.split(" ");
+  return startHalf === end.split(" ")[1] ? `${startTime}–${end}` : `${start}–${end}`;
+}
+
+function windowText(w: PlanWindow): string {
+  const bite = w.label === "morning" ? "Morning bite" : w.label === "evening" ? "Evening bite" : "Best window";
+  return `${bite}, ${lakeRange(w.start_time, w.end_time)} ${lakeDay(w.start_time).toLowerCase()}`;
+}
+
+function shortWindowText(w: PlanWindow): string {
+  return `${lakeRange(w.start_time, w.end_time)} ${lakeDay(w.start_time).toLowerCase()}`;
+}
+
+function Picks({ picks }: { picks: PlanPick[] }) {
   return (
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <path d="M3 18h18M6 18a6 6 0 0 1 12 0" />
-      <path d="M12 4v3M4.9 8.9l2 2M19.1 8.9l-2 2" />
-      {rising ? <path d="M12 14V11M10 12.5l2-2 2 2" /> : <path d="M12 10.5v3M10 12l2 2 2-2" />}
-    </svg>
+    <ul className="plan-picks">
+      {picks.map((p) => (
+        <li key={p.name}>
+          <strong>{p.name}</strong>
+          <span className="plan-why">{p.why}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
-export function BiteWindows({
-  windows,
-  fallbackWindow,
+/**
+ * Today's plan for one lake: where, when, and what to fish with. Every line
+ * is something an angler can act on; the reasons are in plain words, and
+ * nothing is scored. The plan is for the whole lake: it never ranks access
+ * points or community pins.
+ */
+export function PlanCard({
+  plan,
+  onSpeciesChange,
 }: {
-  windows: TimeWindow[];
-  fallbackWindow: TimeWindow | null;
+  plan: FishingPlan;
+  onSpeciesChange: (species: string) => void;
 }) {
-  if (windows.length === 0) {
-    // Older backend, or a forecast with no complete morning/evening block.
-    if (!fallbackWindow) return null;
-    return (
-      <div className="best-time-window">
-        <strong>Best window:</strong> {lakeClock(fallbackWindow.start_time)}–{lakeClock(fallbackWindow.end_time)}
-        <p className="muted">{fallbackWindow.reason}</p>
-      </div>
-    );
-  }
-  // Only call one "the better bet" when the difference is real.
-  const scored = windows.filter((w) => typeof w.score === "number");
-  const top = scored.length === 2 ? [...scored].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0] : null;
-  const clearWinner =
-    top && scored.length === 2 && Math.abs((scored[0].score ?? 0) - (scored[1].score ?? 0)) >= 0.03 ? top : null;
-
   return (
-    <section className="bite-windows" aria-label="Best times to fish">
-      <div className="bite-windows-head">
-        <strong>Best times to fish</strong>
-        <span className="bite-tz">lake time</span>
-      </div>
-      <div className="bite-grid">
-        {windows.map((w) => {
-          const morning = w.label === "morning";
-          return (
-            <div
-              key={w.start_time}
-              className={`bite-card ${morning ? "bite-morning" : "bite-evening"}${w === clearWinner ? " is-best" : ""}`}
-            >
-              <div className="bite-top">
-                <SunIcon rising={morning} />
-                <span>{morning ? "Morning bite" : "Evening bite"}</span>
-                {w === clearWinner && <span className="bite-best">Better bet</span>}
-              </div>
-              <div className="bite-time">
-                {lakeClock(w.start_time)} – {lakeClock(w.end_time)}
-              </div>
-              <div className="bite-day">{lakeDay(w.start_time)}</div>
-              <p className="bite-reason">{w.reason}</p>
+    <section className="plan-card" aria-label="Today's plan">
+      <label className="plan-fish">
+        <span>Fishing for</span>
+        <select value={plan.species ?? ""} onChange={(e) => onSpeciesChange(e.target.value)}>
+          {plan.species === null && <option value="">Pick a fish</option>}
+          {plan.species_options.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+      </label>
+      {plan.species && plan.species_on_record === false && (
+        <p className="plan-note">Not on record in this lake, so this is general advice for the fish.</p>
+      )}
+
+      {plan.heads_up.length > 0 && (
+        <ul className="plan-heads-up">
+          {plan.heads_up.map((h) => (
+            <li key={h}>{h}</li>
+          ))}
+        </ul>
+      )}
+
+      <dl className="plan-rows">
+        {plan.where && (
+          <div>
+            <dt>Where</dt>
+            <dd>{plan.where.text}</dd>
+          </div>
+        )}
+        {plan.when && (
+          <div>
+            <dt>When</dt>
+            <dd>
+              {windowText(plan.when)}
+              {plan.also && <span className="plan-also"> · or {shortWindowText(plan.also)}</span>}
+              {plan.conditions && <span className="plan-conditions">{plan.conditions}</span>}
+            </dd>
+          </div>
+        )}
+        {!plan.where && !plan.when && (
+          <div>
+            <dt>When</dt>
+            <dd className="muted">No live forecast right now, so no bank or time to suggest.</dd>
+          </div>
+        )}
+        {plan.species ? (
+          <>
+            <div>
+              <dt>Lures</dt>
+              <dd>{plan.lures.length > 0 ? <Picks picks={plan.lures} /> : plan.lure_note}</dd>
             </div>
-          );
-        })}
-      </div>
+            {plan.baits.length > 0 && (
+              <div>
+                <dt>Bait</dt>
+                <dd>
+                  <Picks picks={plan.baits} />
+                </dd>
+              </div>
+            )}
+            {plan.species_slug && (
+              <div>
+                <dt>Guide</dt>
+                <dd>
+                  <Link href={`/fish/${plan.species_slug}`} className="plan-guide-link">
+                    How to rig and fish for {plan.species}, with photos <span aria-hidden="true">→</span>
+                  </Link>
+                </dd>
+              </div>
+            )}
+          </>
+        ) : (
+          <div>
+            <dt>Tackle</dt>
+            <dd className="muted">Pick a fish to see lures and bait for today.</dd>
+          </div>
+        )}
+      </dl>
     </section>
   );
 }
 
-function ConfidenceBar({ confidence }: { confidence: number }) {
-  const pct = Math.round(confidence * 100);
-  return (
-    <div className="confidence-bar" title={`${pct}% of the intended signal was available`}>
-      <div className="confidence-bar-fill" style={{ width: `${pct}%` }} />
-      <span className="confidence-bar-label">{pct}% confidence</span>
-    </div>
-  );
-}
-
-function CandidateCard({ candidate }: { candidate: SpotCandidate }) {
-  const [expanded, setExpanded] = useState(false);
-  const scorePct = Math.round(candidate.score * 100);
-
-  return (
-    <li className="candidate-card">
-      <button
-        type="button"
-        className="candidate-header"
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-      >
-        <div>
-          <strong>{candidate.name}</strong>
-          <span className="candidate-access-type"> · {candidate.access_type.replace("_", " ")}</span>
-        </div>
-        <span className="candidate-score">{scorePct}</span>
-      </button>
-      <ConfidenceBar confidence={candidate.confidence} />
-      {expanded && (
-        <ul className="factor-list">
-          {candidate.factors.map((f) => (
-            <li key={f.name} className={f.value === null ? "factor-missing" : undefined}>
-              <div className="factor-row">
-                <span className="factor-name">{f.name.replace("_", " ")}</span>
-                <span className="factor-value">
-                  {f.value === null ? "no data" : `${Math.round(f.value * 100)}`}
-                </span>
-              </div>
-              <p className="factor-reason">{f.reason}</p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </li>
-  );
-}
-
+/**
+ * Today's plan, severe-weather warnings and the weather right now for a
+ * lake. Deliberately no ranked list of spots: the access points are listed
+ * (and confirmed or not) by the lake panel, and a ranking would read as the
+ * app's own pick among them — including, one day, among community pins that
+ * anglers placed themselves.
+ */
 export function WeatherRecommendations({
   waterbodyId,
   latitude,
   longitude,
-  species,
-  targetSpecies,
-  onTargetSpeciesChange,
 }: {
   waterbodyId: number;
   latitude: number;
   longitude: number;
-  species: SpeciesSummary[];
-  // Lifted to WaterbodyPanel so the advisor panel below asks about the same
-  // fish this ranking was computed for — two panels disagreeing about the
-  // target species would be a quiet, plausible-looking bug.
-  targetSpecies: string;
-  onTargetSpeciesChange: (value: string) => void;
 }) {
   const [weather, setWeather] = useState<Weather | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // "" = let the backend pick this lake's main fish.
+  const [species, setSpecies] = useState("");
   // The request a completed fetch answered. Deriving `loading` from this
   // (rather than resetting state at the top of the effect) is what keeps
   // react-hooks/set-state-in-effect quiet — only the async callbacks below
   // ever call setState, same fix as WaterbodyPanel's own loading flag.
-  const requestKey = `${waterbodyId}:${latitude}:${longitude}:${targetSpecies}`;
+  const requestKey = `${waterbodyId}:${latitude}:${longitude}:${species}`;
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const loading = loadedKey !== requestKey;
 
@@ -230,10 +239,7 @@ export function WeatherRecommendations({
 
     Promise.all([
       getWeather(latitude, longitude),
-      postRecommendations({
-        waterbody_id: waterbodyId,
-        target_species: targetSpecies || undefined,
-      }),
+      postRecommendations({ waterbody_id: waterbodyId, target_species: species || undefined }),
     ])
       .then(([w, r]) => {
         if (cancelled) return;
@@ -244,56 +250,29 @@ export function WeatherRecommendations({
       })
       .catch((e: unknown) => {
         if (cancelled) return;
-        setError(e instanceof ApiError ? e.message : "Could not load weather or recommendations.");
+        setError(e instanceof ApiError ? e.message : "Could not load today's plan.");
         setLoadedKey(requestKey);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [waterbodyId, latitude, longitude, targetSpecies, requestKey]);
+  }, [waterbodyId, latitude, longitude, species, requestKey]);
 
   return (
     <div className="weather-recommendations">
-      <h3>Weather &amp; recommended spots</h3>
-
-      <label className="species-select-label">
-        Target species
-        <select
-          value={targetSpecies}
-          onChange={(e) => onTargetSpeciesChange(e.target.value)}
-          className="species-select"
-        >
-          <option value="">Any species biting</option>
-          {species.map((s) => (
-            <option key={s.common_name} value={s.common_name}>
-              {s.common_name}
-            </option>
-          ))}
-        </select>
-      </label>
+      <h3>Today&apos;s plan</h3>
 
       {error && !loading && <div className="panel-error">{error}</div>}
-      {loading && <div className="muted">Loading weather and recommendations…</div>}
+      {loading && !recommendations && <div className="muted">Loading today&apos;s plan…</div>}
 
       {recommendations && <WeatherAlertBanner warnings={recommendations.safety_warnings} />}
-      {weather && <CurrentWeather weather={weather} />}
-      {recommendations && (
-        <BiteWindows
-          windows={recommendations.bite_windows ?? []}
-          fallbackWindow={recommendations.best_time_window}
-        />
-      )}
-
-      {recommendations && (
-        <ul className="candidate-list">
-          {recommendations.candidates.map((c) => (
-            <CandidateCard key={c.access_point_id} candidate={c} />
-          ))}
-          {recommendations.candidates.length === 0 && (
-            <li className="muted">No confirmed-public access points to rank yet.</li>
-          )}
-        </ul>
+      {recommendations?.plan && <PlanCard plan={recommendations.plan} onSpeciesChange={setSpecies} />}
+      {weather && (
+        <>
+          <div className="plan-now-label">Right now</div>
+          <CurrentWeather weather={weather} />
+        </>
       )}
     </div>
   );

@@ -1237,6 +1237,11 @@
 .map-toggle:not(.active) .legend-catch {
   filter: grayscale(1);
 }
+/* LakeMap's AllStatesControl: a Leaflet control, so it takes Leaflet's
+   corner spacing; this only undoes the pill's resting transparency. */
+.all-states-control {
+  opacity: 1;
+}
 .map-add {
   box-shadow: 0 10px 22px -8px rgba(11, 127, 134, 0.8);
 }

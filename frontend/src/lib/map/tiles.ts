@@ -42,6 +42,28 @@
 export const TILE_URL =
   process.env.NEXT_PUBLIC_TILE_URL || "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
+/**
+ * A MapLibre style.json URL for a vector basemap, e.g.
+ * https://api.maptiler.com/maps/streets-v4/style.json?key=…
+ *
+ * When set (and the browser has WebGL), the maps draw this instead of the
+ * raster tiles above — which is what lets individual layers be switched off
+ * (src/lib/map/basemapStyle.ts). The raster settings stay the fallback: for
+ * no WebGL, a failed style fetch, or a deployment that sets neither.
+ */
+export const MAP_STYLE_URL = process.env.NEXT_PUBLIC_MAP_STYLE_URL || null;
+
 export const TILE_ATTRIBUTION =
   process.env.NEXT_PUBLIC_TILE_ATTRIBUTION ||
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+/**
+ * Zoom limits for every map. Leaflet normally takes its maximum zoom from the
+ * raster tile layer; with the vector basemap there is none, and the marker
+ * clustering library refuses to start without a maximum ("Map has no maxZoom
+ * specified"), taking the whole map page down. So they are set explicitly.
+ * 18 matches the raster tiles' own limit; the vector tiles stop at 15 and are
+ * drawn over-zoomed beyond that, which MapLibre does cleanly.
+ */
+export const MAP_MIN_ZOOM = 3;
+export const MAP_MAX_ZOOM = 18;

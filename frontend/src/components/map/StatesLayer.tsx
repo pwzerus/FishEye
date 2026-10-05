@@ -3,9 +3,7 @@
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import L from "leaflet";
 import { useEffect, useState } from "react";
-import { GeoJSON, useMap, useMapEvents } from "react-leaflet";
-
-import { MIN_ZOOM_FOR_LAKES } from "./zoomPolicy";
+import { GeoJSON, useMap } from "react-leaflet";
 
 type StateProps = { code: string; name: string };
 type StatesFile = FeatureCollection<Geometry, StateProps>;
@@ -23,11 +21,13 @@ function loadStates(): Promise<StatesFile> {
 }
 
 /**
- * The way into the map at country scale: every state as a shape. A state
- * FishEye has lakes for flies the map to it; after that it's the ordinary
- * map — pan anywhere, across state lines too. The state is an entrance, not
- * a filter: someone north of Dallas may be closest to a lake on the Oklahoma
- * side, and that should just show up.
+ * The way into the map at country scale: every state as a shape. Clicking a
+ * state FishEye has lakes for reports it through `onEnter`; MapView then
+ * switches the map into exploring mode and fits it to the state
+ * (zoomPolicy.ts). After that it's the ordinary map — pan anywhere, across
+ * state lines too. The state is an entrance, not a filter: someone north of
+ * Dallas may be closest to a lake on the Oklahoma side, and that should just
+ * show up.
  *
  * A state with nothing on file says so and stays put, rather than flying the
  * person to an empty map.
@@ -36,11 +36,15 @@ function loadStates(): Promise<StatesFile> {
  * is then treated as open: greying out the whole country because one request
  * failed would say "nothing here" when the truth is "don't know".
  */
-export function StatesLayer({ covered }: { covered: Set<string> | null }) {
+export function StatesLayer({
+  covered,
+  onEnter,
+}: {
+  covered: Set<string> | null;
+  onEnter: (bounds: L.LatLngBounds) => void;
+}) {
   const map = useMap();
-  const [zoom, setZoom] = useState(() => map.getZoom());
   const [data, setData] = useState<StatesFile | null>(null);
-  useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
 
   useEffect(() => {
     let live = true;
@@ -55,7 +59,7 @@ export function StatesLayer({ covered }: { covered: Set<string> | null }) {
     };
   }, []);
 
-  if (!data || zoom >= MIN_ZOOM_FOR_LAKES) return null;
+  if (!data) return null;
 
   const isOpen = (code: string) => covered === null || covered.has(code);
 
@@ -69,7 +73,8 @@ export function StatesLayer({ covered }: { covered: Set<string> | null }) {
     });
     layer.on("click", (e: L.LeafletMouseEvent) => {
       if (open) {
-        map.fitBounds((layer as L.Polygon).getBounds(), { padding: [24, 24] });
+        layer.closeTooltip();
+        onEnter((layer as L.Polygon).getBounds());
         return;
       }
       // The hover tooltip says the same thing; don't leave it under the popup.
