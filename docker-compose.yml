@@ -1,0 +1,82 @@
+# FishEye, the whole stack on one machine:
+#
+#   docker compose up --build
+#
+# then open http://localhost:3000 (API docs: http://localhost:8000/docs).
+# No keys are needed: the LLM runs as the mock provider, weather comes from
+# the National Weather Service (no key), and the map falls back to
+# OpenStreetMap tiles. Optional settings go in a .env file next to this one
+# (copy .env.example); compose reads it if it exists.
+#
+# Data lives in two named volumes, so it survives `docker compose down`.
+# `docker compose down -v` deletes it and the next start re-seeds.
+
+name: fisheye
+
+services:
+  db:
+    # PostgreSQL with PostGIS, which the backend turns on at startup for the
+    # map's radius and viewport queries (docs/adr/0018).
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: fisheye
+      # Local-only credentials: the database port is not published to the
+      # host, so only the other containers can reach it.
+      POSTGRES_PASSWORD: fisheye
+      POSTGRES_DB: fisheye
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fisheye -d fisheye"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build: ./backend
+    env_file:
+      - path: .env
+        required: false
+    # These win over anything in .env, which is written for running the
+    # backend directly on your machine (SQLite, ./media).
+    environment:
+      DATABASE_URL: postgresql+psycopg://fisheye:fisheye@db:5432/fisheye
+      MEDIA_ROOT: /app/media
+      FRONTEND_ORIGIN: http://localhost:3000
+      API_PUBLIC_URL: http://localhost:8000
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - media:/app/media
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+      # Inlined into the browser bundle at build time (see frontend/Dockerfile).
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+        NEXT_PUBLIC_MAP_STYLE_URL: ${NEXT_PUBLIC_MAP_STYLE_URL:-}
+        NEXT_PUBLIC_TILE_URL: ${NEXT_PUBLIC_TILE_URL:-}
+        NEXT_PUBLIC_TILE_ATTRIBUTION: ${NEXT_PUBLIC_TILE_ATTRIBUTION:-}
+    environment:
+      # Server-side rendering runs inside this container, where
+      # "localhost:8000" is the frontend itself; the backend is "backend".
+      API_INTERNAL_URL: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
+  media:

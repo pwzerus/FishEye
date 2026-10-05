@@ -1,0 +1,1060 @@
+/* Map, lake panel and compact guide styles. The design system (tokens,
+   chrome, pages, motion) is in base.css, imported first. */
+
+.map-view {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.map-container {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.back-to-map-button {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #171717;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.back-to-map-button:hover {
+  background: #f9fafb;
+}
+
+/* --- Location search bar --- */
+
+.location-search-bar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 480px;
+}
+
+.location-search-form {
+  display: flex;
+  gap: 6px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  flex: 1;
+  min-width: 220px;
+}
+
+.location-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: #171717;
+  background: transparent;
+}
+
+.location-search-button,
+.locate-me-button {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #171717;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.location-search-button {
+  border: none;
+  background: #0a7f84;
+  color: white;
+}
+
+.location-search-button:hover:not(:disabled) {
+  background: #0b5d7a;
+}
+
+.locate-me-button {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.locate-me-button:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.location-search-button:disabled,
+.locate-me-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.location-search-error {
+  flex-basis: 100%;
+  background: white;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.map-status-stack {
+  position: absolute;
+  top: 60px;
+  left: 12px;
+  right: 12px;
+  z-index: 999;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.map-status-chip {
+  background: white;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #4b5563;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.no-nearby-lakes-banner {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* Lakes from the OpenStreetMap layer: same pin, greyed, so verified lakes
+   stand out. See LakeMap.tsx. */
+.osm-marker {
+  filter: grayscale(1) brightness(1.15);
+  opacity: 0.75;
+}
+
+/* Unverified lakes with fish records (GBIF): amber, between the grey
+   map-only pin and a verified lake's blue. */
+.osm-marker-reported {
+  filter: hue-rotate(165deg) saturate(1.6) brightness(1.05);
+}
+
+.map-legend {
+  position: absolute;
+  bottom: 24px;
+  left: 12px;
+  z-index: 999;
+  background: white;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: #4b5563;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: none;
+}
+
+.map-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Leaflet icons are filtered green via CSS rather than a second icon
+   image set — same "no extra image assets for the MVP" reasoning as the
+   default marker icons themselves (see LakeMap.tsx / LakeDetailMap.tsx). */
+.access-point-marker {
+  filter: hue-rotate(90deg) saturate(1.4);
+}
+
+.map-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6b7280;
+}
+
+.side-panel {
+  width: 360px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  border-left: 1px solid #e5e7eb;
+  padding: 16px;
+}
+
+.panel-empty {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.panel-error {
+  color: #991b1b;
+}
+
+.panel h2 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-tested-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0b5d7a;
+  background: #dbeafe;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.closed-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #991b1b;
+  background: #fee2e2;
+  border-radius: 4px;
+  padding: 2px 6px;
+  text-transform: uppercase;
+}
+
+.unverified-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4b5563;
+  background: #e5e7eb;
+  border-radius: 4px;
+  padding: 2px 6px;
+  text-transform: uppercase;
+}
+
+.unverified-banner {
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+/* Two classes deep so it beats .public-status's green, which is reserved
+   for confirmed access. */
+.pond-warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.public-status.public-status-unverified {
+  color: #92400e;
+}
+
+.closed-banner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.access-summary {
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.source-line {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+.source-line a {
+  text-decoration: underline;
+}
+
+.panel h3 {
+  font-size: 14px;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+}
+
+.access-list,
+.species-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.access-list > li,
+.species-list > li {
+  font-size: 13px;
+  padding: 8px;
+  border-radius: 6px;
+  background: #f9fafb;
+}
+
+.public-status {
+  display: block;
+  font-size: 11px;
+  color: #16a34a;
+  text-transform: capitalize;
+}
+
+.species-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.evidence {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* --- Species on record (GBIF), kept apart from the official list --- */
+.reported-species h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reported-intro {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.reported-intro a,
+.record-link {
+  text-decoration: underline;
+}
+
+.reported-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 4px;
+  padding: 2px 6px;
+  text-transform: uppercase;
+}
+
+.weak-evidence {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #92400e;
+}
+
+.record-link {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #0a7f84;
+}
+
+.side-panel .muted {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+.weather-recommendations {
+  margin-top: 20px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+}
+
+.weather-alert-banner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.weather-alert-banner p {
+  margin: 0;
+}
+
+.weather-alert-banner p + p {
+  margin-top: 4px;
+}
+
+.weather-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.weather-unavailable {
+  display: block;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  font-size: 13px;
+}
+
+.weather-now {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.weather-temp {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.weather-forecast {
+  font-size: 13px;
+  color: #374151;
+}
+
+.weather-wind {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Today's plan (WeatherRecommendations.tsx) */
+.plan-card {
+  border: 1px solid #d7e6dd;
+  background: linear-gradient(170deg, #f6fbf8, #ffffff);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #0f2530;
+  animation: rise 520ms var(--ease) both;
+}
+.plan-fish {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4b6470;
+}
+.plan-fish select {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f2530;
+  padding: 4px 6px;
+  border: 1px solid #cfdcd5;
+  border-radius: 8px;
+  background: #fff;
+}
+.plan-note {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #92400e;
+}
+.plan-heads-up {
+  list-style: none;
+  margin-top: 10px;
+  display: grid;
+  gap: 4px;
+}
+.plan-heads-up li {
+  font-size: 12.5px;
+  color: #7c2d12;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.plan-rows {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+.plan-rows > div {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 8px;
+}
+.plan-rows dt {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #2f7a55;
+  padding-top: 2px;
+}
+.plan-rows dd {
+  margin: 0;
+  line-height: 1.45;
+}
+.plan-also {
+  color: #5b6f78;
+}
+.plan-conditions {
+  display: block;
+  font-size: 12px;
+  color: #5b6f78;
+  margin-top: 2px;
+}
+.plan-picks {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+.plan-picks strong {
+  display: block;
+}
+.plan-why {
+  display: block;
+  font-size: 12px;
+  color: #4b6470;
+}
+.plan-guide-link {
+  font-weight: 700;
+  color: #0a7f84;
+  text-decoration: none;
+}
+.plan-guide-link:hover {
+  text-decoration: underline;
+}
+.plan-now-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7f89;
+  margin-bottom: 4px;
+}
+
+/* --- AI advisor panel --- */
+
+.advisor-panel {
+  margin-top: 20px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+}
+
+.advisor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.advisor-header h3 {
+  margin: 0;
+}
+
+.advisor-button {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #171717;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.advisor-button:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.advisor-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.advisor-answer-meta {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+/* The badge is not decoration: it is how a reader tells a validated model
+   answer from the fixed template from a mock. See AdvisorPanel.tsx. */
+.advisor-badge {
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 2px 6px;
+  background: #f3f4f6;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.advisor-badge-llm {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.advisor-badge-mock {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.advisor-badge-fallback {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.advisor-outcome-note {
+  font-size: 12px;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+.advisor-summary {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.advisor-section {
+  margin-bottom: 10px;
+}
+
+.advisor-section h4 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.advisor-section ul {
+  list-style: disc;
+  padding-left: 18px;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.advisor-sources {
+  list-style: none;
+  padding-left: 0;
+}
+
+.advisor-sources a {
+  color: #0b5d7a;
+}
+
+.advisor-trace {
+  margin-top: 12px;
+  border-top: 1px dashed #e5e7eb;
+  padding-top: 8px;
+}
+
+.advisor-trace-toggle {
+  font-size: 11px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: #6b7280;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
+.advisor-trace-list {
+  margin-top: 8px;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.advisor-trace-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.advisor-trace-list dt {
+  color: #6b7280;
+}
+
+.advisor-trace-list dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.advisor-trace-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+}
+
+/* --- Species guides (panel "How to catch it" and the /fish page) ---
+   Backgrounds and borders use translucent neutrals rather than fixed light
+   greys so the guide stays readable when the system is in dark mode. */
+
+
+.species-howto {
+  margin-top: 6px;
+}
+
+.species-howto-toggle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0e9f9e;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.species-howto-toggle::before {
+  content: "▸ ";
+}
+
+.species-howto-toggle[aria-expanded="true"]::before {
+  content: "▾ ";
+}
+
+.species-howto-content {
+  margin-top: 8px;
+}
+
+.species-howto-full {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0e9f9e;
+}
+
+.guide-body {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.guide-body-compact {
+  font-size: 12px;
+}
+
+.guide-summary {
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+.guide-section {
+  margin-bottom: 12px;
+}
+
+.guide-section h4 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.guide-section ul {
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.guide-setups {
+  list-style: none;
+  padding-left: 0 !important;
+  gap: 8px !important;
+}
+
+.guide-setup {
+  border: 1px solid rgba(127, 127, 127, 0.25);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgba(20, 184, 166, 0.05);
+}
+
+.guide-setup-name {
+  font-weight: 700;
+}
+
+.guide-setup-when {
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.guide-setup-specs {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 10px;
+  row-gap: 2px;
+}
+
+.guide-setup-specs dt {
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.guide-setup-specs dd {
+  margin: 0;
+}
+
+.guide-setup-sources {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.guide-setup-sources a,
+.guide-sources a,
+.guide-limits a {
+  text-decoration: underline;
+}
+
+.guide-source-kind {
+  color: #b45309;
+}
+
+.guide-limits {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.guide-legal {
+  border-left: 3px solid #f59e0b;
+  padding-left: 10px;
+}
+
+.guide-tag {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+.guide-tag-beginner {
+  color: #047857;
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.guide-tag-intermediate {
+  color: #0b5d7a;
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.guide-tag-advanced {
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.guide-tag-forage {
+  color: #6b7280;
+  background: rgba(127, 127, 127, 0.15);
+}
+
+.guide-tag-diet {
+  margin-left: 6px;
+  text-transform: none;
+  letter-spacing: normal;
+  vertical-align: middle;
+}
+
+.guide-tag-diet-carnivore {
+  color: #9a3412;
+  background: rgba(249, 115, 22, 0.15);
+}
+
+.guide-tag-diet-omnivore {
+  color: #4d7c0f;
+  background: rgba(132, 204, 22, 0.15);
+}
+
+.guide-tag-diet-filter_feeder {
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.guide-setups-intro {
+  font-size: 12px;
+  color: #6b7280;
+  margin: -4px 0 10px;
+}
+
+.guide-setup-group h4 {
+  color: #0e7c7b;
+}
+
+.fish-guide {
+  max-width: 820px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.fish-guide-intro h1 {
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+
+.fish-guide-intro p {
+  color: #6b7280;
+  max-width: 640px;
+}
+
+.fish-guide-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+  align-items: center;
+}
+
+.fish-guide-jump a {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(127, 127, 127, 0.3);
+}
+
+.fish-guide-jump a:hover {
+  border-color: #0e9f9e;
+  color: #0e9f9e;
+}
+
+.fish-guide-jump-divider {
+  font-size: 12px;
+  color: #6b7280;
+  margin-left: 6px;
+}
+
+.fish-guide-card {
+  border: 1px solid rgba(127, 127, 127, 0.25);
+  border-radius: 12px;
+  padding: 20px;
+  scroll-margin-top: 16px;
+}
+
+.fish-guide-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.fish-guide-card-header h2 {
+  font-size: 22px;
+}
+
+.fish-guide-sci {
+  font-style: italic;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+@media (min-width: 720px) {
+  .guide-body:not(.guide-body-compact) .guide-setups {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* --- National states layer (StatesLayer.tsx) ---
+   Leaflet writes fill/stroke as SVG attributes; CSS properties override
+   them, which is what lets these follow the theme tokens. */
+.state-shape {
+  stroke: var(--surface);
+  stroke-width: 1;
+  transition: fill-opacity var(--dur-fast) var(--ease);
+}
+.state-shape.is-open {
+  fill: var(--brand);
+  fill-opacity: 0.32;
+}
+.state-shape.is-open:hover {
+  fill-opacity: 0.55;
+}
+.state-shape.is-soon {
+  fill: var(--muted);
+  fill-opacity: 0.14;
+}
+.state-shape.is-soon:hover {
+  fill-opacity: 0.24;
+}
+/* Chromium draws a rectangular focus ring around a clicked SVG path — here,
+   the state's bounding box, which reads as a stray border. Clicking already
+   gives feedback (the map moves, or a popup opens). */
+.state-shape:focus {
+  outline: none;
+}
+.state-tooltip {
+  font-size: 12px;
+  font-weight: 600;
+}
+.state-popup .leaflet-popup-content {
+  margin: 8px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+}

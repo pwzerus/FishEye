@@ -1,0 +1,13 @@
+# Normalize line endings so Windows checkouts don't show spurious
+# CRLF-vs-LF diffs on every file. Git stores LF in the repo and
+# converts to the platform's native ending on checkout.
+* text=auto eol=lf
+
+# Binary files should never be touched by line-ending conversion
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.db binary
+*.sqlite binary

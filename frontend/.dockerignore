@@ -1,0 +1,10 @@
+# Keep the build context small and keep local secrets out of the image.
+node_modules
+.next
+out
+*.tsbuildinfo
+.env*
+!.env.local.example
+npm-debug.log*
+Dockerfile
+.dockerignore

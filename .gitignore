@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+.next/
+out/
+npm-debug.log*
+
+# Env
+.env
+.env.local
+*.db
+
+# OS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+
+# local git worktrees (per-branch checkouts for running features side by side)
+.worktrees/
+
+# Downloaded data: large, and re-fetchable (see backend/README.md)
+backend/tx_osm.json
+backend/gbif_tx_raw.json
+backend/gbif_tx_report.json
+
+# Community photo uploads (MEDIA_ROOT): user content, never committed
+backend/media/
+media/
