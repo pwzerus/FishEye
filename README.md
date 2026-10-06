@@ -120,11 +120,16 @@ a production frontend build, and a Docker build with smoke tests on every push.
   Access points are hand-verified rather than geocoded from driving
   directions, because a wrong pin labelled "public access" sends someone
   onto private land.
+- **Built to be public.** Per-visitor request limits on every endpoint that
+  spends something (model calls, the free geocoder's one-a-second quota,
+  weather lookups), plus a daily total on the model endpoints that bounds
+  the bill however many addresses a script uses. Behind the proxy, the
+  visitor's real address is what's counted, not the proxy's.
 - **Runs without keys.** A mock LLM provider with injectable failures,
   keyless weather (NWS) and OpenStreetMap tiles mean a clean clone works
   with `docker compose up`, and the failure paths are tested, not just the
   happy path.
-- **Decisions written down.** 20 architecture decision records in
+- **Decisions written down.** 21 architecture decision records in
   [`docs/adr/`](docs/adr/), each with the alternatives considered and the
   trade-off taken.
 
@@ -172,7 +177,6 @@ docker-compose.prod.yml   single-server production layer (with Caddyfile)
 ## Roadmap
 
 **Next: public demo**
-- Rate limiting on anonymous endpoints (Q&A, geocoding, advisor).
 - Deploy on AWS: one EC2 server with Docker and Caddy, a domain and HTTPS.
 - Then managed services: RDS PostgreSQL + PostGIS, photos on S3, images in
   ECR, secrets in SSM Parameter Store, logs and alarms in CloudWatch.

@@ -47,6 +47,15 @@ services:
       # The session cookie is only sent over HTTPS when this is true, which
       # breaks sign-in on a plain-HTTP address. Turn it on with a domain.
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      # Every visitor reaches the backend through Caddy, so without this the
+      # backend sees Caddy's address for all of them, and the per-visitor
+      # request limits (app/api/rate_limits.py) and login limits become one
+      # limit shared by the whole internet. With it, uvicorn takes the
+      # visitor's address from X-Forwarded-For. Trusting any sender is safe
+      # here only because the backend's port is closed: just Caddy and the
+      # frontend can reach it, and Caddy replaces any X-Forwarded-For a
+      # visitor sends with the address the connection really came from.
+      FORWARDED_ALLOW_IPS: "*"
 
   frontend:
     restart: unless-stopped

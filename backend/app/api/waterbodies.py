@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.api import rate_limits
 from app.api.deps import get_db
 from app.db.spatial import bbox_filter, radius_filter, radius_is_exact
 from app.models.waterbody import Species, Waterbody, WaterbodySpecies
@@ -14,7 +15,7 @@ from app.schemas.waterbody import (
 from app.services.geo import haversine_km
 from app.services.reported_species import reported_species, reported_species_counts
 
-router = APIRouter(prefix="/waterbodies", tags=["waterbodies"])
+router = APIRouter(prefix="/waterbodies", tags=["waterbodies"], dependencies=[Depends(rate_limits.MAP)])
 
 
 MAX_LIST_RESULTS = 5000

@@ -158,6 +158,7 @@ def _isolated_community_state(tmp_path, monkeypatch):
     """Photos go to a temp folder, and in-memory rate limits start empty,
     for every test."""
     from app.api import auth as auth_api
+    from app.api import rate_limits
     from app.api import pins as pins_api
     from app.core.config import get_settings
 
@@ -170,6 +171,7 @@ def _isolated_community_state(tmp_path, monkeypatch):
         pins_api.report_by_user,
     ):
         limiter.reset()
+    rate_limits.reset_all()
     yield
 
 

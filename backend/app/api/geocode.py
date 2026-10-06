@@ -2,15 +2,16 @@
 Nominatim (see app/services/geocoding.py for why: never call it from the
 browser). The frontend's search box and "use my location" flow both go
 through this endpoint, never the third-party one directly."""
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.api import rate_limits
 from app.schemas.geocoding import GeocodeResultOut
 from app.services import geocoding
 
 router = APIRouter(prefix="/geocode", tags=["geocode"])
 
 
-@router.get("", response_model=GeocodeResultOut)
+@router.get("", response_model=GeocodeResultOut, dependencies=[Depends(rate_limits.GEOCODE)])
 def geocode_place(
     q: str = Query(..., min_length=2, description="Place name or address, e.g. 'Lake Fork, TX'"),
 ) -> GeocodeResultOut:

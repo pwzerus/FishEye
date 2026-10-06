@@ -1,6 +1,7 @@
 """POST /api/ask — answer a question from the reviewed fish guides."""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.api import rate_limits
 from app.api.species import source_out
 from app.knowledge.species_guides import get_guide, sources_for
 from app.schemas.ask import (
@@ -15,7 +16,7 @@ from app.services.rag import ask as rag_ask
 router = APIRouter(prefix="/ask", tags=["ask"])
 
 
-@router.post("", response_model=AskResponse)
+@router.post("", response_model=AskResponse, dependencies=[Depends(rate_limits.LLM)])
 def ask_question(payload: AskRequest) -> AskResponse:
     """Like /advisor/explain, there's no error path for a model failure: a
     rejected or missing answer degrades to quoting the guides and still

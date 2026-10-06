@@ -46,6 +46,8 @@ export function LocationSearchBar({ onLocate }: { onLocate: (point: LocatedPoint
       .catch((e: unknown) => {
         if (e instanceof ApiError && e.status === 404) {
           setError(`Couldn't find "${trimmed}". Try a city, lake name, or ZIP code.`);
+        } else if (e instanceof ApiError && e.code === "rate_limited") {
+          setError(e.message);
         } else {
           setError("Location search is temporarily unavailable. Try again shortly.");
         }

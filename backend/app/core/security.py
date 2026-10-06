@@ -126,6 +126,12 @@ class RateLimiter:
         self.window = window_seconds
         self._hits: dict[str, deque[float]] = {}
         self._lock = threading.Lock()
+        # Keys are only pruned when they're seen again, so a client that
+        # never comes back would stay in memory for good. Once the table
+        # passes this size every key is pruned, and the bar is set to twice
+        # what's left: memory stays proportional to clients active within
+        # one window, at an amortized constant cost per hit.
+        self._sweep_at = 1024
 
     def _prune(self, key: str, now: float) -> deque[float] | None:
         q = self._hits.get(key)
@@ -157,6 +163,10 @@ class RateLimiter:
             if q is None:
                 q = self._hits[key] = deque()
             q.append(now)
+            if len(self._hits) > self._sweep_at:
+                for other in list(self._hits):
+                    self._prune(other, now)
+                self._sweep_at = max(1024, 2 * len(self._hits))
 
     def __len__(self) -> int:
         return len(self._hits)

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { FishArt } from "@/components/fish/FishArt";
-import { postAsk } from "@/lib/api/client";
+import { ApiError, postAsk } from "@/lib/api/client";
 import { waterFor } from "@/lib/fishArt";
 import type { AskCitation, AskResponse } from "@/lib/api/types";
 
@@ -25,7 +25,7 @@ import type { AskCitation, AskResponse } from "@/lib/api/types";
 type Turn =
   | { id: number; role: "user"; text: string }
   | { id: number; role: "assistant"; response: AskResponse }
-  | { id: number; role: "error"; question: string };
+  | { id: number; role: "error"; question: string; message?: string };
 
 const MAX_LEN = 300;
 
@@ -206,8 +206,11 @@ export function AskChat({
       try {
         const response = await postAsk({ question: q, species_slug: speciesSlug ?? null });
         setTurns((t) => [...t, { id: nextId.current++, role: "assistant", response }]);
-      } catch {
-        setTurns((t) => [...t, { id: nextId.current++, role: "error", question: q }]);
+      } catch (e) {
+        // A request limit has its own message; anything else means the
+        // server couldn't be reached.
+        const message = e instanceof ApiError && e.code === "rate_limited" ? e.message : undefined;
+        setTurns((t) => [...t, { id: nextId.current++, role: "error", question: q, message }]);
       } finally {
         setBusy(false);
       }
@@ -284,7 +287,7 @@ export function AskChat({
         <img src="/brand/fisheye-mark.svg" alt="" />
                 </span>
                 <div className="bubble-card bubble-error">
-                  <p>Couldn&apos;t reach FishEye&apos;s server. Is the backend running?</p>
+                  <p>{turn.message ?? "Couldn't reach FishEye's server. Is the backend running?"}</p>
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => ask(turn.question)} disabled={busy}>
                     Try again
                   </button>

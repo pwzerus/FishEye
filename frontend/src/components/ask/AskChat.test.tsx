@@ -8,7 +8,7 @@ vi.mock("@/lib/api/client", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api/client")>("@/lib/api/client");
   return { ...actual, postAsk: vi.fn() };
 });
-const { postAsk } = await import("@/lib/api/client");
+const { ApiError, postAsk } = await import("@/lib/api/client");
 const mockedAsk = vi.mocked(postAsk);
 
 function response(overrides: Partial<AskResponse> = {}): AskResponse {
@@ -137,6 +137,14 @@ describe("AskChat", () => {
     fireEvent.click(await screen.findByText("Try again"));
     expect(await screen.findByText("Use small live minnows.")).toBeInTheDocument();
     expect(mockedAsk).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows the server's message when a request limit is hit, not 'can't reach'", async () => {
+    mockedAsk.mockRejectedValueOnce(new ApiError("Please wait a moment and try again.", 429, "rate_limited"));
+    render(<AskChat suggestions={SUGGESTIONS} />);
+    await askVia("what bait for crappie");
+    expect(await screen.findByText("Please wait a moment and try again.")).toBeInTheDocument();
+    expect(screen.queryByText(/Couldn't reach/)).not.toBeInTheDocument();
   });
 
   it("asks a suggestion when it's clicked, and hides suggestions once a thread starts", async () => {

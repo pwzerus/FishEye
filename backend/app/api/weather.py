@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
+from app.api import rate_limits
 from app.schemas.weather import (
     CurrentConditionsOut,
     HourlyPeriodOut,
@@ -8,7 +9,7 @@ from app.schemas.weather import (
 )
 from app.services.weather_adapter import WeatherSnapshot, get_weather
 
-router = APIRouter(tags=["weather"])
+router = APIRouter(tags=["weather"], dependencies=[Depends(rate_limits.WEATHER)])
 
 
 def _to_response(snapshot: WeatherSnapshot) -> WeatherOut:

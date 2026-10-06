@@ -112,8 +112,6 @@ Data lives in Docker volumes and survives restarts and rebuilds. Do not run
 
 ## What this does not do yet
 
-- **Rate limiting on the anonymous endpoints.** Until that is in, share the
-  link with people you know rather than posting it publicly.
 - **Managed database and backups.** The database is a container on the same
   disk. The plan is RDS PostgreSQL + PostGIS, photos on S3.
 - **Statewide lake data.** The server starts with the three demo lakes. The

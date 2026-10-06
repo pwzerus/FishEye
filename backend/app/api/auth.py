@@ -19,6 +19,7 @@ from app.api.auth_deps import (
     set_session_cookie,
 )
 from app.api.deps import get_db
+from app.api.rate_limits import client_ip
 from app.core.config import get_settings
 from app.core.security import RateLimiter, new_token, verify_password
 from app.db.types import utcnow
@@ -79,10 +80,6 @@ def _require_fresh(auth: AuthContext) -> None:
         raise HTTPException(status_code=403, detail=REAUTH_MESSAGE, headers={"X-Reauth-Required": "1"})
 
 
-def _client_ip(request: Request) -> str:
-    return request.client.host if request.client else "unknown"
-
-
 def _raise(exc: AuthError) -> NoReturn:
     raise HTTPException(status_code=exc.status, detail=exc.message) from exc
 
@@ -104,7 +101,7 @@ def providers() -> ProvidersOut:
 
 @router.post("/register", response_model=UserOut, status_code=201)
 def register(payload: RegisterIn, request: Request, response: Response, db: Session = Depends(get_db)) -> UserOut:
-    ip = _client_ip(request)
+    ip = client_ip(request)
     _throttle(register_by_ip, ip)
     register_by_ip.hit(ip)
     try:
@@ -120,7 +117,7 @@ def register(payload: RegisterIn, request: Request, response: Response, db: Sess
 @router.post("/login", response_model=UserOut)
 def login(payload: LoginIn, request: Request, response: Response, db: Session = Depends(get_db)) -> UserOut:
     email_key = auth_service.normalize_email(payload.email)
-    ip = _client_ip(request)
+    ip = client_ip(request)
     _throttle(login_by_email, email_key)
     _throttle(login_by_ip, ip)
     try:

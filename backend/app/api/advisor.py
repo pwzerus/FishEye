@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.api import rate_limits
 from app.api.deps import get_db
 from app.schemas.advisor import AdvisorRequest, AdvisorResponse, AdvisorTraceOut
 from app.services import ai_advisor
@@ -9,7 +10,7 @@ from app.services.recommendations import WaterbodyNotFound
 router = APIRouter(prefix="/advisor", tags=["advisor"])
 
 
-@router.post("/explain", response_model=AdvisorResponse)
+@router.post("/explain", response_model=AdvisorResponse, dependencies=[Depends(rate_limits.LLM)])
 def explain_recommendations(
     payload: AdvisorRequest, db: Session = Depends(get_db)
 ) -> AdvisorResponse:

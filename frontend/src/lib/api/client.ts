@@ -54,6 +54,14 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     next: { revalidate: 30 },
     ...init,
   });
+  if (res.status === 429) {
+    // Over a request limit (backend app/api/rate_limits.py). The server's
+    // message says whether to wait a moment or come back later, so show it.
+    const body = (await res.json().catch(() => null)) as { detail?: unknown } | null;
+    const message =
+      typeof body?.detail === "string" ? body.detail : "Too many requests. Please wait a moment and try again.";
+    throw new ApiError(message, 429, "rate_limited");
+  }
   if (!res.ok) {
     throw new ApiError(`${path} failed with ${res.status}`, res.status);
   }

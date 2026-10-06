@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.api import rate_limits
 from app.api.deps import get_db
 from app.schemas.recommendation import RecommendationRequest, RecommendationResponse
 from app.services.recommendations import WaterbodyNotFound, build_recommendations
 
-router = APIRouter(tags=["recommendations"])
+router = APIRouter(tags=["recommendations"], dependencies=[Depends(rate_limits.WEATHER)])
 
 
 @router.post("/recommendations", response_model=RecommendationResponse)

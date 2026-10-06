@@ -83,6 +83,19 @@ describe("LocationSearchBar", () => {
     );
   });
 
+  it("shows the server's message when the search limit is hit", async () => {
+    vi.mocked(geocodePlace).mockRejectedValue(
+      new ApiError("Please wait a moment and try again.", 429, "rate_limited"),
+    );
+    render(<LocationSearchBar onLocate={vi.fn()} />);
+
+    search("Lake Fork");
+
+    await waitFor(() =>
+      expect(screen.getByText("Please wait a moment and try again.")).toBeInTheDocument(),
+    );
+  });
+
   describe("use my location", () => {
     const originalGeolocation = navigator.geolocation;
 

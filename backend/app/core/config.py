@@ -73,6 +73,10 @@ class Settings(BaseSettings):
     # Distinct open reports that hide a pin until an admin looks at it.
     report_auto_hide_threshold: int = 3
 
+    # Per-client request limits on the endpoints anyone can call
+    # (app/api/rate_limits.py). Only for turning them off in a pinch.
+    rate_limits_enabled: bool = True
+
     # Feature flags
     use_seed_data_only: bool = True
     # GBIF species records carry their own licences; about 12% of Texas's are
