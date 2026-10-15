@@ -20,7 +20,7 @@ representation is a property of this module alone.
 """
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -99,6 +99,9 @@ class Waterbody(Base):
     )
     occurrences: Mapped[list["SpeciesOccurrence"]] = relationship(
         back_populates="waterbody", cascade="all, delete-orphan"
+    )
+    agency_profile: Mapped["AgencyLakeProfile | None"] = relationship(
+        back_populates="waterbody", cascade="all, delete-orphan", uselist=False
     )
 
     # The map's viewport query filters on lat/lng ranges; with a statewide
@@ -267,3 +270,45 @@ class SourceRecord(Base):
     retrieved_at: Mapped[datetime] = mapped_column(DateTime)
     valid_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     checksum: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
+class AgencyLakeProfile(Base):
+    """What a state fisheries agency itself publishes about one lake: its
+    lake page and latest survey report (TPWD today; the `agency` column is
+    for other states later). See docs/adr/0022-statewide-tpwd-lakes.md.
+
+    Kept apart from Waterbody because none of it is ours to interpret: the
+    predominant-species list and the fishing ratings are stored as the
+    agency wrote them and shown with a link back. The species links
+    (WaterbodySpecies) derived from them carry their own evidence.
+    """
+
+    __tablename__ = "agency_lake_profiles"
+    __table_args__ = (UniqueConstraint("agency", "agency_lake_id", name="uq_agency_lake"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    waterbody_id: Mapped[int] = mapped_column(ForeignKey("waterbodies.id"), unique=True)
+    agency: Mapped[str] = mapped_column(String(16))  # "tpwd"
+    agency_lake_id: Mapped[str] = mapped_column(String(64))  # TPWD's page slug, e.g. "somerville"
+    agency_name: Mapped[str] = mapped_column(String(128))  # the lake's name on the agency's page
+    page_url: Mapped[str] = mapped_column(String(512))
+    access_page_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    survey_report_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    survey_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    location: Mapped[str | None] = mapped_column(Text, nullable=True)
+    surface_acres: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    max_depth_ft: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    impounded: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    # The "Predominant Fish Species" list items, verbatim.
+    predominant_species: Mapped[list[str]] = mapped_column(JSON, default=list)
+    # [{"label": "Largemouth Bass", "rating": "Excellent"}, ...], verbatim.
+    ratings: Mapped[list[dict[str, str]]] = mapped_column(JSON, default=list)
+    # How the lake was placed on the map: "osm_name" (an OpenStreetMap lake
+    # of the same name, confirmed by TPWD's boat ramps when there are any),
+    # "osm_name_only" (same name, one candidate, no ramps to confirm it),
+    # "ramps" (no OpenStreetMap lake: plotted at its ramps), or "existing"
+    # (one of the hand-curated lakes).
+    placement: Mapped[str] = mapped_column(String(16))
+    retrieved_at: Mapped[datetime] = mapped_column(DateTime)
+
+    waterbody: Mapped["Waterbody"] = relationship(back_populates="agency_profile")

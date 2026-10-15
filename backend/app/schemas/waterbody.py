@@ -77,6 +77,33 @@ class WaterbodyListItem(BaseModel):
     reported_species_count: int = 0
 
 
+class AgencyRatingOut(BaseModel):
+    label: str  # the agency's own species-group label
+    rating: str  # Poor | Fair | Good | Excellent
+
+
+class AgencyProfileOut(BaseModel):
+    """What the state agency publishes about this lake, as it wrote it
+    (models.waterbody.AgencyLakeProfile)."""
+
+    model_config = ConfigDict(from_attributes=True)
+    agency: str
+    agency_name: str
+    page_url: str
+    access_page_url: str | None = None
+    survey_report_url: str | None = None
+    survey_year: int | None = None
+    location: str | None = None
+    surface_acres: int | None = None
+    max_depth_ft: int | None = None
+    impounded: str | None = None
+    predominant_species: list[str] = []
+    ratings: list[AgencyRatingOut] = []
+    # How the lake was put on the map; "ramps" means at its boat ramps, with
+    # no outline (see tpwd_statewide_import.py).
+    placement: str
+
+
 class WaterbodyDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -93,6 +120,7 @@ class WaterbodyDetail(BaseModel):
     access_points: list[AccessPointOut]
     species: list[SpeciesSummaryOut]
     reported_species: list[ReportedSpeciesOut] = []
+    agency_profile: AgencyProfileOut | None = None
 
 
 class SpeciesConditionOut(BaseModel):

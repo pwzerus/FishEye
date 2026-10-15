@@ -93,6 +93,32 @@ export interface ReportedSpecies {
   also_confirmed: boolean;
 }
 
+// Mirrors backend/app/schemas/waterbody.py AgencyProfileOut: what the state
+// agency itself publishes about a lake, in its own words.
+export type AgencyRatingLevel = "Poor" | "Fair" | "Good" | "Excellent";
+
+export interface AgencyRating {
+  label: string;
+  rating: AgencyRatingLevel;
+}
+
+export interface AgencyProfile {
+  agency: string;
+  agency_name: string;
+  page_url: string;
+  access_page_url: string | null;
+  survey_report_url: string | null;
+  survey_year: number | null;
+  location: string | null;
+  surface_acres: number | null;
+  max_depth_ft: number | null;
+  impounded: string | null;
+  predominant_species: string[];
+  ratings: AgencyRating[];
+  // "ramps": plotted at the agency's boat ramps, with no outline.
+  placement: string;
+}
+
 export interface WaterbodyDetail {
   id: number;
   name: string;
@@ -108,6 +134,7 @@ export interface WaterbodyDetail {
   access_points: AccessPoint[];
   species: SpeciesSummary[];
   reported_species: ReportedSpecies[];
+  agency_profile?: AgencyProfile | null;
 }
 
 // Mirrors backend/app/schemas/admin.py.

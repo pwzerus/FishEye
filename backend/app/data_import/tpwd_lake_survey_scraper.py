@@ -274,20 +274,42 @@ class SpeciesMention:
     evidence_sentence: str
 
 
+# Every alias, longest first, as a whole-word pattern. Longest first matters:
+# "hybrid striped bass" must be claimed before "striped bass" can look at
+# the same words, or every lake with hybrids would also "have" stripers.
+_ALIASES_LONGEST_FIRST: list[tuple[re.Pattern[str], str]] = sorted(
+    (
+        (re.compile(r"\b" + re.escape(alias) + r"(?:e?s)?\b"), canonical)
+        for canonical, aliases in KNOWN_SPECIES.items()
+        for alias in aliases
+    ),
+    key=lambda pair: -len(pair[0].pattern),
+)
+
+
+def species_in_sentence(lowered: str) -> list[str]:
+    """Canonical names in one lowercased sentence. Each alias match blanks
+    out the words it used, so a shorter alias inside a longer one never
+    matches on its own."""
+    found: list[tuple[int, str]] = []
+    for pattern, canonical in _ALIASES_LONGEST_FIRST:
+        for m in pattern.finditer(lowered):
+            found.append((m.start(), canonical))
+            lowered = lowered[: m.start()] + " " * (m.end() - m.start()) + lowered[m.end() :]
+    return [name for _, name in sorted(found)]
+
+
 def extract_species_mentions(text: str) -> list[SpeciesMention]:
-    """Substring-match KNOWN_SPECIES against page text, sentence by
-    sentence, so every hit carries the exact sentence it came from as
-    evidence. A species matched by more than one alias in the same
-    sentence is only recorded once."""
+    """Match KNOWN_SPECIES against page text, sentence by sentence, so every
+    hit carries the exact sentence it came from as evidence. Whole words
+    (a plural counts), longest alias first (see _ALIASES_LONGEST_FIRST). A species is
+    recorded once, with the first sentence that names it."""
     sentences = _SENTENCE_SPLIT_RE.split(text)
     seen: set[str] = set()
     mentions: list[SpeciesMention] = []
     for sentence in sentences:
-        lowered = sentence.lower()
-        for canonical_name, aliases in KNOWN_SPECIES.items():
-            if canonical_name in seen:
-                continue
-            if any(alias in lowered for alias in aliases):
+        for canonical_name in species_in_sentence(sentence.lower()):
+            if canonical_name not in seen:
                 mentions.append(SpeciesMention(canonical_name, sentence.strip()))
                 seen.add(canonical_name)
     return mentions

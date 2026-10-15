@@ -436,4 +436,82 @@ describe("WaterbodyPanel", () => {
     await waitFor(() => expect(screen.getByText("Lake Fork")).toBeInTheDocument());
     expect(screen.queryByRole("region", { name: "Fish on record" })).not.toBeInTheDocument();
   });
+  // --- What the state agency says (TPWD lake page and survey) ---
+
+  const profiled: WaterbodyDetail = {
+    ...mockDetail,
+    id: 9,
+    name: "Lake Somerville",
+    agency_profile: {
+      agency: "tpwd",
+      agency_name: "Lake Somerville",
+      page_url: "https://tpwd.texas.gov/fishboat/fish/recreational/lakes/somerville/",
+      access_page_url: "https://tpwd.texas.gov/fishboat/fish/recreational/lakes/somerville/access.phtml",
+      survey_report_url: "https://tpwd.texas.gov/publications/pwdpubs/lake_survey/pwd_rp_t3200_1374/",
+      survey_year: 2020,
+      location: "On Yegua Creek in Washington County",
+      surface_acres: 11456,
+      max_depth_ft: 38,
+      impounded: "1967",
+      predominant_species: ["Largemouth bass", "White & black crappie"],
+      ratings: [
+        { label: "Largemouth Bass", rating: "Excellent" },
+        { label: "Crappie", rating: "Good" },
+      ],
+      placement: "osm_name",
+    },
+  };
+
+  it("shows the agency's own ratings, facts and links, credited to the agency", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(profiled);
+    render(<WaterbodyPanel waterbodyId={9} />);
+
+    await waitFor(() => expect(screen.getByText("What Texas Parks & Wildlife says")).toBeInTheDocument());
+    expect(screen.getByText(/11,456 acres · up to 38 ft deep · impounded 1967/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Excellent, 4 of 4")).toBeInTheDocument();
+    expect(screen.getByLabelText("Good, 3 of 4")).toBeInTheDocument();
+    expect(screen.getByText("2020 survey report").closest("a")).toHaveAttribute(
+      "href",
+      "https://tpwd.texas.gov/publications/pwdpubs/lake_survey/pwd_rp_t3200_1374/",
+    );
+    expect(screen.queryByText(/marker is near the shore/)).not.toBeInTheDocument();
+  });
+
+  it("says when a lake is plotted at its boat ramps", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue({
+      ...profiled,
+      agency_profile: { ...profiled.agency_profile!, placement: "ramps" },
+    });
+    render(<WaterbodyPanel waterbodyId={9} />);
+    await waitFor(() => expect(screen.getByText(/marker is near the shore/)).toBeInTheDocument());
+  });
+
+  it("doesn't call a verified lake's OpenStreetMap entrances confirmed", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue({
+      ...profiled,
+      access_points: [{ ...osmDetail.access_points[0] }],
+    });
+    render(<WaterbodyPanel waterbodyId={9} />);
+    await waitFor(() => expect(screen.getByText("Public access points")).toBeInTheDocument());
+    expect(screen.queryByText("Confirmed public access points")).not.toBeInTheDocument();
+    expect(screen.getByText("reported, not verified")).toBeInTheDocument();
+  });
+  it("shows a few of a big lake's ramps and the rest on request", async () => {
+    const ramps = Array.from({ length: 12 }, (_, i) => ({
+      id: 100 + i,
+      name: `Public boat ramp (TPWD #${i})`,
+      latitude: 31,
+      longitude: -94,
+      access_type: "boat_ramp",
+      public_status: "confirmed_public",
+      parking: false,
+    }));
+    vi.mocked(getWaterbody).mockResolvedValue({ ...profiled, access_points: ramps });
+    render(<WaterbodyPanel waterbodyId={9} />);
+
+    await waitFor(() => expect(screen.getByText("Public boat ramp (TPWD #0)")).toBeInTheDocument());
+    expect(screen.queryByText("Public boat ramp (TPWD #5)")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show all 12" }));
+    expect(screen.getByText("Public boat ramp (TPWD #11)")).toBeInTheDocument();
+  });
 });

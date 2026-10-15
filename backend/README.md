@@ -41,10 +41,24 @@ Run these in order (Windows PowerShell shown; set `DATABASE_URL` as above):
 
 ```powershell
 python -m app.data_import.seed_tx_lakes                    # 3 demo lakes
-python -m app.data_import.tpwd_lake_survey_scraper         # TPWD-verified lakes (needs network)
+python -m app.data_import.tpwd_lake_survey_scraper         # 7 hand-checked lakes (needs network)
 python -m app.data_import.osm_waterbody_import --state TX --save-raw tx_osm.json
+python -m app.data_import.tpwd_fetch                       # TPWD's lake pages -> tpwd_cache/ (~15 min)
+python -m app.data_import.tpwd_statewide_import            # needs the boat-ramp file, below
 python -m app.data_import.gbif_occurrence_import --osm tx_osm.json --save-raw gbif_tx_raw.json
 ```
+
+The TPWD statewide import makes the ~175 lakes TPWD publishes a page for
+verified: TPWD's species lists and survey-report evidence, its fishing
+ratings, and its public boat ramps (`docs/adr/0022-statewide-tpwd-lakes.md`).
+It works in two steps. `tpwd_fetch` is the only one that uses the network:
+it saves the pages to `tpwd_cache/` (gitignored), checking robots.txt and
+pausing between requests, and a re-run skips what it already has. The
+import reads only that folder, so it can be re-run and changed offline.
+It also needs TPWD's Public Boat Ramps dataset: download it as GeoJSON from
+<https://gis-tpwd.opendata.arcgis.com/datasets/public-boat-ramps> into
+`tpwd_cache/`. Run the OSM import first (the TPWD lakes are matched to its
+lakes); `--dry-run` shows what would change.
 
 The OSM import pulls every named lake and reservoir in Texas, plus public boat
 ramps and fishing piers, from OpenStreetMap's Overpass API. It can take a few

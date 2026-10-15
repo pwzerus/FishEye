@@ -25,10 +25,15 @@ FishEye pulls those sources into one place, organised around **where you are**:
 
 1. **Find water nearby.** Your location (or a search) centres the map; nearby
    lakes load for whatever is in view. Every named lake in Texas can be loaded
-   from OpenStreetMap, with a curated set of verified lakes on top.
-2. **Know what you'll find.** Species are split into evidence tiers and labelled
-   as such: *confirmed* by an official survey (Texas Parks & Wildlife), or
-   *reported* from museum, agency and citizen-science records (GBIF).
+   from OpenStreetMap, and 160 of the 175 lakes Texas Parks & Wildlife (TPWD)
+   publishes a page for are verified on top.
+2. **Know what you'll find, and where to get in.** On those 160 lakes the
+   species come from TPWD's own lists and survey reports, TPWD's
+   poor-to-excellent fishing ratings are shown as TPWD wrote them, and the
+   public boat ramps come from TPWD's statewide ramp dataset (about 900).
+   Elsewhere, species *reported* in museum, agency and citizen-science records
+   (GBIF) are shown as exactly that, and entrances from OpenStreetMap are
+   labelled unverified.
 3. **Know when and how.** A spot score and morning/evening bite windows from
    the National Weather Service forecast, reviewed guides for twelve species,
    and a Q&A over those guides that answers in plain language and cites them.
@@ -40,7 +45,7 @@ Coverage today is Texas; the data model and importers are per-state (see
 
 | Page | |
 |---|---|
-| **Map** (`/map`) | Locate me / search; lakes in view, with verified lakes always kept and the rest ranked by size when a view is crowded; a lake panel with species, access points, weather, bite windows and an AI explanation of the ranking. |
+| **Map** (`/map`) | Locate me / search; lakes in view, with verified lakes always kept and the rest ranked by size when a view is crowded; a lake panel with TPWD's profile and fishing ratings, species with their evidence, public boat ramps, weather, bite windows and an AI explanation of the ranking. |
 | **Fish guides** (`/fish`) | Twelve species: how to recognise each one (look-alikes compared on the same features), where and when, bait, lures, beginner tackle setups. Every section cites its sources. |
 | **Ask** (`/ask`) | Free-text questions ("how do I tell white bass from hybrid striped bass?") answered from the guides only, with citations; "not covered" when the guides don't say. |
 | **Community** (`/community`) | Accounts and catch pins with photos, with moderation tools for admins. |
@@ -80,8 +85,9 @@ flowchart LR
 
 **Backend** (Python 3.11, FastAPI, SQLAlchemy 2, Alembic, Pydantic)
 
-- `data_import/`: TPWD survey scraper (respects robots.txt), statewide OSM
-  lake import, GBIF occurrence import, demo seed.
+- `data_import/`: TPWD lake pages and survey reports (a polite, robots.txt-checked
+  fetch to a local cache, then an offline import), TPWD's boat-ramp dataset,
+  statewide OSM lake import, GBIF occurrence import, demo seed.
 - `services/scoring.py`: the spot score. Each factor is a value *or* "no
   data", never a silent zero; missing factors are dropped and the rest
   renormalised, and the result carries a confidence.
@@ -117,9 +123,12 @@ a production frontend build, and a Docker build with smoke tests on every push.
   The eval runs in the test suite, so a regression fails CI.
 - **Honest data.** Confirmed, reported and map-only lakes are separate tiers,
   enforced in the scoring engine and the AI checks, not just in the UI.
-  Access points are hand-verified rather than geocoded from driving
-  directions, because a wrong pin labelled "public access" sends someone
-  onto private land.
+  Public access comes only from official sources (TPWD's ramp dataset, or
+  hand-checked), never geocoded from driving directions, because a wrong pin
+  labelled "public access" sends someone onto private land. When the import
+  can't tell which of two same-named lakes TPWD means, it leaves the lake out
+  and lists it, rather than guessing; and a survey sentence like "No White
+  Crappie were collected" is not counted as evidence that they're there.
 - **Built to be public.** Per-visitor request limits on every endpoint that
   spends something (model calls, the free geocoder's one-a-second quota,
   weather lookups), plus a daily total on the model endpoints that bounds
@@ -129,7 +138,7 @@ a production frontend build, and a Docker build with smoke tests on every push.
   keyless weather (NWS) and OpenStreetMap tiles mean a clean clone works
   with `docker compose up`, and the failure paths are tested, not just the
   happy path.
-- **Decisions written down.** 21 architecture decision records in
+- **Decisions written down.** 22 architecture decision records in
   [`docs/adr/`](docs/adr/), each with the alternatives considered and the
   trade-off taken.
 
@@ -152,11 +161,18 @@ Optional settings (map tiles, a real LLM, Google sign-in) go in a `.env` file
 next to `docker-compose.yml`: `cp .env.example .env` and fill in what you
 have.
 
-To load every named lake in Texas from OpenStreetMap (a few minutes, needs
-network):
+The demo lakes are a start. To load Texas (needs network, about 20 minutes
+in all):
 
 ```bash
+# every named lake, from OpenStreetMap
 docker compose exec backend python -m app.data_import.osm_waterbody_import --state TX
+# TPWD's lake pages and survey reports, saved to a local folder (~15 min, polite)
+docker compose exec backend python -m app.data_import.tpwd_fetch --out /tmp/tpwd_cache
+# TPWD's Public Boat Ramps: download it as GeoJSON from
+# https://gis-tpwd.opendata.arcgis.com/datasets/public-boat-ramps, then
+docker compose cp BoatRamps_Public.geojson backend:/tmp/tpwd_cache/
+docker compose exec backend python -m app.data_import.tpwd_statewide_import --cache /tmp/tpwd_cache
 ```
 
 Running without Docker: [`backend/README.md`](backend/README.md) and
@@ -188,8 +204,12 @@ docker-compose.prod.yml   single-server production layer (with Caddyfile)
   eval shows paraphrase misses worth fixing.
 
 **Coverage**
-- Beyond Texas: the OSM and GBIF importers already take a state; each new
-  state needs its agency's survey data and regulations.
+- Beyond Texas: the OSM and GBIF importers already take a state, and the
+  agency-profile table is keyed by agency; each new state needs its own
+  agency's lake data, ramps and regulations, surveyed first.
+- Texas lakes TPWD covers but the import couldn't place (15 of 175), and
+  OpenStreetMap lakes split into several pieces that still show as
+  separate unverified markers next to the verified one.
 - More species guides, and identification sections for the remaining ones.
 - Mobile-friendly map and offline-tolerant lake pages for use at the water.
 

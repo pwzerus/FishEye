@@ -93,6 +93,29 @@ Caddy requests a certificate by itself on the first visit. If it fails, the
 usual causes are DNS not pointing here yet, or ports 80/443 closed in the
 security group. `docker compose ... logs caddy` says which.
 
+## Load the Texas lakes
+
+The server starts with three demo lakes. Load the rest once (about 20
+minutes; the server needs only outbound internet). Copy TPWD's boat-ramp file
+up first, from the machine you downloaded it on:
+
+```bash
+scp -i fisheye.pem BoatRamps_Public.geojson ubuntu@<ELASTIC_IP>:~/FishEye/
+```
+
+Then on the server:
+
+```bash
+DC="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+$DC exec backend python -m app.data_import.osm_waterbody_import --state TX
+$DC exec backend python -m app.data_import.tpwd_fetch --out /tmp/tpwd_cache
+$DC cp BoatRamps_Public.geojson backend:/tmp/tpwd_cache/
+$DC exec backend python -m app.data_import.tpwd_statewide_import --cache /tmp/tpwd_cache
+```
+
+The import prints what it placed and what it left out. It is safe to run
+again; nothing is duplicated.
+
 ## Everyday
 
 ```bash
@@ -114,8 +137,6 @@ Data lives in Docker volumes and survives restarts and rebuilds. Do not run
 
 - **Managed database and backups.** The database is a container on the same
   disk. The plan is RDS PostgreSQL + PostGIS, photos on S3.
-- **Statewide lake data.** The server starts with the three demo lakes. The
-  OSM import is manual (see the README) and heavy for a 2 GB server.
 - **Map key.** The map falls back to OpenStreetMap tiles. If you add a
   MapTiler key, restrict it to your domain in MapTiler's dashboard (it is
   visible in the browser by design).

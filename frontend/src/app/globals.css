@@ -333,6 +333,82 @@
   background: #f9fafb;
 }
 
+.agency-profile {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.agency-profile h3 {
+  margin-top: 0;
+}
+
+.agency-location,
+.agency-facts,
+.agency-species,
+.agency-note {
+  font-size: 13px;
+  margin: 4px 0;
+}
+
+.agency-note {
+  color: #6b7280;
+}
+
+.agency-subhead {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  margin: 8px 0 4px;
+}
+
+.agency-ratings {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 6px;
+  display: grid;
+  gap: 4px;
+}
+
+.agency-ratings li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.agency-rating {
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.agency-rating-excellent {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.agency-rating-good {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.agency-rating-fair {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.agency-rating-poor {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.agency-links {
+  margin-bottom: 0;
+}
+
 .public-status {
   display: block;
   font-size: 11px;

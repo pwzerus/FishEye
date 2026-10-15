@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 
 import { ApiError, getWaterbody } from "@/lib/api/client";
-import type { WaterbodyDetail } from "@/lib/api/types";
+import type { AccessPoint, WaterbodyDetail } from "@/lib/api/types";
 import { SpeciesHowTo } from "@/components/species/SpeciesHowTo";
+import { AgencyProfileCard } from "./AgencyProfileCard";
 import { ReportedSpeciesList } from "./ReportedSpeciesList";
 import { WeatherRecommendations } from "./WeatherRecommendations";
 
@@ -25,6 +26,39 @@ function ConfidenceBadge({ confidence }: { confidence: string }) {
     >
       {confidence}
     </span>
+  );
+}
+
+// A big reservoir can have fifty official ramps; the panel shows a few and
+// lets the rest be opened.
+const ACCESS_SHOWN_AT_FIRST = 5;
+
+function AccessPointList({ points, emptyText }: { points: AccessPoint[]; emptyText: string }) {
+  const [showAll, setShowAll] = useState(false);
+  const shown = showAll ? points : points.slice(0, ACCESS_SHOWN_AT_FIRST);
+  const hidden = points.length - shown.length;
+  return (
+    <ul className="access-list">
+      {shown.map((ap) => (
+        <li key={ap.id}>
+          <strong>{ap.name}</strong> — {ap.access_type.replace("_", " ")}
+          {ap.parking ? ", parking available" : ""}
+          {ap.public_status === "osm_reported" ? (
+            <span className="public-status public-status-unverified">reported, not verified</span>
+          ) : (
+            <span className="public-status">{ap.public_status.replace("_", " ")}</span>
+          )}
+        </li>
+      ))}
+      {hidden > 0 && (
+        <li>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowAll(true)}>
+            Show all {points.length}
+          </button>
+        </li>
+      )}
+      {points.length === 0 && <li className="muted">{emptyText}</li>}
+    </ul>
   );
 }
 
@@ -73,6 +107,10 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
   // nothing more. See backend/app/models/waterbody.py (data_tier).
   const isOsm = detail.data_tier === "osm";
   const isPond = detail.water_type === "pond";
+  // A verified lake whose agency lists no boat ramp keeps OpenStreetMap's
+  // entrances, each labelled "reported, not verified"; the heading mustn't
+  // call them confirmed.
+  const allConfirmed = detail.access_points.every((ap) => ap.public_status === "confirmed_public");
 
   return (
     <div className="panel">
@@ -126,29 +164,25 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
         {new Date(detail.source_updated_at).toLocaleDateString()}
       </p>
 
-      <h3>{isOsm ? "Entrances reported on OpenStreetMap" : "Confirmed public access points"}</h3>
-      <ul className="access-list">
-        {detail.access_points.map((ap) => (
-          <li key={ap.id}>
-            <strong>{ap.name}</strong> — {ap.access_type.replace("_", " ")}
-            {ap.parking ? ", parking available" : ""}
-            {ap.public_status === "osm_reported" ? (
-              <span className="public-status public-status-unverified">
-                reported, not verified
-              </span>
-            ) : (
-              <span className="public-status">{ap.public_status.replace("_", " ")}</span>
-            )}
-          </li>
-        ))}
-        {detail.access_points.length === 0 && (
-          <li className="muted">
-            {isOsm
-              ? "OpenStreetMap doesn't list a public boat ramp or fishing pier here."
-              : "No access points on file yet."}
-          </li>
-        )}
-      </ul>
+      {detail.agency_profile && <AgencyProfileCard profile={detail.agency_profile} />}
+
+      <h3>
+        {isOsm
+          ? "Entrances reported on OpenStreetMap"
+          : allConfirmed
+            ? "Confirmed public access points"
+            : "Public access points"}
+      </h3>
+      <AccessPointList
+        // Keyed by lake, so "show all" doesn't carry over to the next lake.
+        key={detail.id}
+        points={detail.access_points}
+        emptyText={
+          isOsm
+            ? "OpenStreetMap doesn't list a public boat ramp or fishing pier here."
+            : "No access points on file yet."
+        }
+      />
 
       {/* An unverified lake has no official species list, so only the
           records section is shown. A verified lake shows its official list,

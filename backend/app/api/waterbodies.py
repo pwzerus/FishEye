@@ -7,6 +7,7 @@ from app.api.deps import get_db
 from app.db.spatial import bbox_filter, radius_filter, radius_is_exact
 from app.models.waterbody import Species, Waterbody, WaterbodySpecies
 from app.schemas.waterbody import (
+    AgencyProfileOut,
     SpeciesDetail,
     SpeciesSummaryOut,
     WaterbodyDetail,
@@ -141,7 +142,11 @@ def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> Waterbody
     wb = db.get(
         Waterbody,
         waterbody_id,
-        options=[selectinload(Waterbody.access_points), selectinload(Waterbody.species_links)],
+        options=[
+            selectinload(Waterbody.access_points),
+            selectinload(Waterbody.species_links),
+            selectinload(Waterbody.agency_profile),
+        ],
     )
     if wb is None:
         raise HTTPException(status_code=404, detail="waterbody not found")
@@ -172,6 +177,7 @@ def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> Waterbody
         access_points=list(wb.access_points),
         species=species_out,
         reported_species=reported_species(db, wb.id, confirmed=(s.common_name for s in species_out)),
+        agency_profile=AgencyProfileOut.model_validate(wb.agency_profile) if wb.agency_profile else None,
     )
 
 

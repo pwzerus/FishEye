@@ -89,6 +89,21 @@ def test_extract_species_mentions_ignores_species_not_present():
     assert mentions == []
 
 
+def test_hybrid_striped_bass_is_not_also_striped_bass():
+    """"striped bass" is inside "hybrid striped bass"; plain substring
+    matching gave every lake with hybrids a Striped Bass population."""
+    mentions = extract_species_mentions("Recent stockings include Hybrid Striped Bass. Sunshine bass were common.")
+    assert [m.species_name for m in mentions] == ["Hybrid Striped Bass"]
+    both = extract_species_mentions("Striped Bass and Hybrid Striped Bass were both stocked.")
+    assert sorted(m.species_name for m in both) == ["Hybrid Striped Bass", "Striped Bass"]
+
+
+def test_aliases_match_whole_words_and_plurals():
+    assert [m.species_name for m in extract_species_mentions("Bluegills were small.")] == ["Bluegill"]
+    assert [m.species_name for m in extract_species_mentions("White crappies were abundant.")] == ["White Crappie"]
+    assert extract_species_mentions("Nonbluegill sunfish were rare.") == []
+
+
 def test_extract_species_mentions_handles_empty_text():
     assert extract_species_mentions("") == []
 

@@ -15,5 +15,6 @@ tests
 tx_osm.json
 gbif_tx_raw.json
 gbif_tx_report.json
+tpwd_cache
 Dockerfile
 .dockerignore
