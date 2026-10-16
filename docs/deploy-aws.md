@@ -107,10 +107,11 @@ Then on the server:
 
 ```bash
 DC="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
-$DC exec backend python -m app.data_import.osm_waterbody_import --state TX
+$DC exec backend python -m app.data_import.osm_waterbody_import --state TX --save-raw /tmp/tx_osm.json
 $DC exec backend python -m app.data_import.tpwd_fetch --out /tmp/tpwd_cache
 $DC cp BoatRamps_Public.geojson backend:/tmp/tpwd_cache/
 $DC exec backend python -m app.data_import.tpwd_statewide_import --cache /tmp/tpwd_cache
+$DC exec backend python -m app.data_import.osm_waterbody_import --state TX --from-file /tmp/tx_osm.json
 ```
 
 The import prints what it placed and what it left out. It is safe to run

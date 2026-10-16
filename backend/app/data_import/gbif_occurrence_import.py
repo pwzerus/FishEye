@@ -56,6 +56,7 @@ from app.core.config import get_settings
 from app.data_import.osm_waterbody_import import (
     OsmLake,
     _find_verified_twin,
+    merge_pieces,
     parse_elements,
 )
 from app.db.session import Base, SessionLocal, engine
@@ -342,8 +343,9 @@ def lake_targets(db: Session, state: State, lakes: list[OsmLake]) -> dict[str, i
     )
     targets: dict[str, int] = {}
     for lake in lakes:
-        if lake.osm_ref in by_ref:
-            targets[lake.osm_ref] = by_ref[lake.osm_ref]
+        row = next((by_ref[ref] for ref in lake.refs if ref in by_ref), None)
+        if row is not None:
+            targets[lake.osm_ref] = row
             continue
         twin = _find_verified_twin(lake, verified)
         if twin is not None:
@@ -391,7 +393,9 @@ def run(db: Session, state_code: str, osm_payload: dict[str, Any], records: list
     state = db.scalar(select(State).where(State.code == state_code.upper()))
     if state is None:
         raise ValueError(f"no {state_code} lakes in the database; run the OSM import first")
-    lakes, _, _ = parse_elements(osm_payload)
+    # The same merged lakes the OSM import stored (merge_pieces), so a record
+    # in any piece of a lake goes to that lake.
+    lakes = merge_pieces(parse_elements(osm_payload)[0])
     targets = lake_targets(db, state, lakes)
     matched, summary = match_records(lakes, records, targets)
     replace_occurrences(db, state, matched)

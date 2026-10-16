@@ -175,7 +175,9 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
       </h3>
       <AccessPointList
         // Keyed by lake, so "show all" doesn't carry over to the next lake.
-        key={detail.id}
+        // The prefix matters: a sibling below is keyed by the lake too, and
+        // two siblings may not share a key.
+        key={`access-${detail.id}`}
         points={detail.access_points}
         emptyText={
           isOsm
@@ -214,7 +216,7 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
       {!isClosed && (
         <WeatherRecommendations
           // Keyed by lake, so the fish picked on one lake doesn't carry over.
-          key={detail.id}
+          key={`weather-${detail.id}`}
           waterbodyId={detail.id}
           latitude={detail.latitude}
           longitude={detail.longitude}

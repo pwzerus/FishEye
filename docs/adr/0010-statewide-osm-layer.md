@@ -104,6 +104,7 @@ markers are never clustered.
   ADR 0001 anticipated.
 - OSM data is community-edited: a lake can be misnamed, a ramp can be
   closed or gated. The UI says so in every place it shows OSM data.
+- One lake can be several OSM elements (see below); handled since.
 - Lakes deleted from OSM are not deleted here on re-import. That needs a
   "last seen in import" timestamp; deferred until it matters.
 - No schema migrations exist (no Alembic, by design so far), so adding the
@@ -112,3 +113,34 @@ markers are never clustered.
   at the lake) were raised as the way to fill the species gap for OSM
   lakes. They belong to the community-pins phase and will be labelled
   "community reported", never "verified" (PRD constraints 1 and 10).
+
+## Update: lakes mapped as several elements
+
+OpenStreetMap often maps one lake more than once: a way plus a
+multipolygon relation of the same water, separate relations for two basins
+(Lake Meredith, Twin Buttes), or an English and a Spanish element of a
+border reservoir (Falcon: "Falcon International Reservoir" and "Presa
+Internacional Falcón"). Each became its own Waterbody, so a lake could
+show as two markers, and once the TPWD import verified one of them
+(ADR 0022) the other sat next to it marked "unverified".
+
+`merge_pieces()` now runs between parsing and writing. Two elements are
+one lake when they share a wikidata id, whatever their names; or when
+their names reduce to the same core name and their bounding boxes
+overlap; or, for basins, when they share a core name, are both at least
+0.5 km² and are within 3 km. The largest element gives the lake its ref,
+name and position; the boxes' union is its extent. Same name alone is
+never enough: Texas has several "Graham Lake" and hundreds of ponds
+called "playa". Against the full Texas import this merges 16 elements
+into their lakes, and the basin rule matches only Twin Buttes.
+
+Re-running the import folds in rows earlier imports made for the extra
+elements: their entrances and GBIF records move to the lake's row, or, if
+one of the elements is a verified lake, that row is kept and the OSM rows
+go (their entrances with them, as for any verified lake). The GBIF import
+uses the same merged lakes, so a record in any piece of a lake is
+credited to it. Checked on the developer database in both orders, OSM
+import before or after the TPWD import: both end with the same 3,938
+lakes, no orphaned records or entrances, and no unverified twin within
+40 km of a verified lake of the same name except a genuinely different
+Graham Lake.

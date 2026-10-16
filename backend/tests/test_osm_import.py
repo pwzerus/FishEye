@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+import pytest
+
 from sqlalchemy import select
 
 from app.data_import import osm_waterbody_import as osm
@@ -410,3 +412,118 @@ def test_rerunning_after_the_fix_removes_the_duplicate_already_in_the_db(db_sess
     assert db_session.scalar(select(Waterbody).where(Waterbody.name == "Lake Fayette")) is None
     assert verified.osm_ref == "way/93668663"
 
+
+
+# --- one lake mapped as several elements (merge_pieces) ---------------------
+
+
+def _rel(el_id, name, lat, lng, half_deg=0.02, **extra_tags):
+    return {**_lake(el_id, name, lat, lng, half_deg, **extra_tags), "type": "relation"}
+
+
+def _merged(payload_elements):
+    elements, _, _ = osm.parse_elements({"elements": payload_elements})
+    return {lake.osm_ref: lake for lake in osm.merge_pieces(elements)}
+
+
+def test_a_way_and_a_relation_of_the_same_lake_become_one():
+    lakes = _merged([
+        _lake(1, "Amistad Reservoir", 29.49, -101.11, half_deg=0.01),  # a small piece
+        _rel(2, "Amistad Reservoir", 29.6, -101.2, half_deg=0.2),  # the reservoir
+    ])
+    assert list(lakes) == ["relation/2"]
+    amistad = lakes["relation/2"]
+    assert amistad.extra_refs == ("way/1",)
+    assert amistad.refs == ("relation/2", "way/1")
+    # The biggest element decides the name and position; the box covers both.
+    assert (amistad.latitude, amistad.longitude) == (29.6, -101.2)
+    assert amistad.bounds.south == pytest.approx(29.4) and amistad.bounds.north == pytest.approx(29.8)
+
+
+def test_the_same_wikidata_id_is_the_same_lake_whatever_its_names():
+    lakes = _merged([
+        _rel(1, "Presa Internacional Falcón", 26.8, -99.2, half_deg=0.2, wikidata="Q4967120"),
+        _rel(2, "Falcon International Reservoir", 26.7, -99.25, half_deg=0.15, wikidata="Q4967120"),
+    ])
+    assert list(lakes) == ["relation/1"] and lakes["relation/1"].extra_refs == ("relation/2",)
+
+
+def test_two_basins_of_one_reservoir_close_together_are_one_lake():
+    # Twin Buttes: two sizeable basins about 1.8 km apart.
+    lakes = _merged([
+        _lake(1, "Twin Buttes Reservoir", 31.296, -100.496, half_deg=0.02),
+        _rel(2, "Twin Buttes Reservoir", 31.363, -100.567, half_deg=0.035),
+    ])
+    assert list(lakes) == ["relation/2"]
+
+
+def test_same_name_alone_does_not_merge():
+    lakes = _merged([
+        # Small same-named ponds a few hundred metres apart: different water.
+        {**_lake(1, "playa", 34.0, -101.0, half_deg=0.001), "tags": {"natural": "water", "water": "pond", "name": "playa"}},
+        {**_lake(2, "playa", 34.0, -101.006, half_deg=0.001), "tags": {"natural": "water", "water": "pond", "name": "playa"}},
+        # Same name, big, but far apart: two different lakes.
+        _lake(3, "Lake Graham", 33.16, -98.63, half_deg=0.04),
+        _lake(4, "Graham Lake", 33.0, -98.715, half_deg=0.02),
+        # Overlapping boxes but different names and no shared wikidata.
+        _lake(5, "Lake Ray Hubbard", 32.85, -96.5, half_deg=0.05),
+        _lake(6, "Rowlett Creek Cove", 32.88, -96.53, half_deg=0.02),
+    ])
+    assert sorted(lakes) == ["way/1", "way/2", "way/3", "way/4", "way/5", "way/6"]
+
+
+def test_rows_from_an_earlier_unmerged_import_collapse_into_one(db_session, seeded_lake):
+    from app.models.waterbody import SpeciesOccurrence
+
+    state = seeded_lake["state"]
+    pieces = [
+        _rel(20, "Lake Meredith", 35.68, -101.6, half_deg=0.03),
+        _rel(21, "Lake Meredith", 35.71, -101.57, half_deg=0.02),
+        _ramp(201, 35.715, -101.565, name="Fritch Fortress Ramp"),
+    ]
+    # Before merging existed, each element became its own lake.
+    elements, access, _ = osm.parse_elements({"elements": pieces})
+    by_lake, _ = osm.assign_access_to_lakes(elements, access)
+    osm.upsert(db_session, "TX", elements, by_lake, NOW)
+    small = db_session.scalar(select(Waterbody).where(Waterbody.osm_ref == "relation/21"))
+    db_session.add(SpeciesOccurrence(
+        waterbody_id=small.id, species_name="Walleye", source="gbif", source_record_id="1",
+        source_group="other", license="CC0", latitude=35.71, longitude=-101.57, imported_at=NOW,
+    ))
+    db_session.flush()
+    assert len(db_session.scalars(select(Waterbody).where(Waterbody.name == "Lake Meredith")).all()) == 2
+
+    summary = osm.run("TX", {"elements": pieces}, db_session)
+
+    merediths = db_session.scalars(select(Waterbody).where(Waterbody.name == "Lake Meredith")).all()
+    assert len(merediths) == 1
+    meredith = merediths[0]
+    assert meredith.osm_ref == "relation/20"
+    assert summary.elements_merged == 1 and summary.pieces_merged == 1
+    # The smaller piece's ramp and species record moved, not lost.
+    assert [ap.name for ap in meredith.access_points] == ["Fritch Fortress Ramp"]
+    assert [o.species_name for o in meredith.occurrences] == ["Walleye"]
+    assert state.id == meredith.state_id
+
+    again = osm.run("TX", {"elements": pieces}, db_session)
+    assert (again.lakes_created, again.pieces_merged) == (0, 0)
+    assert len(db_session.scalars(select(Waterbody).where(Waterbody.name == "Lake Meredith")).all()) == 1
+
+
+def test_an_osm_piece_next_to_a_verified_piece_is_absorbed_into_it(db_session, seeded_lake):
+    """The TPWD import verified one element of a lake; the OSM row for the
+    lake's other element must go, not sit next to it as "unverified"."""
+    pieces = [
+        _rel(30, "Twin Buttes Reservoir", 31.363, -100.567, half_deg=0.035),
+        _lake(31, "Twin Buttes Reservoir", 31.296, -100.496, half_deg=0.02),
+    ]
+    elements, access, _ = osm.parse_elements({"elements": pieces})
+    osm.upsert(db_session, "TX", elements, {}, NOW)  # unmerged, as before
+    verified = db_session.scalar(select(Waterbody).where(Waterbody.osm_ref == "way/31"))
+    verified.data_tier = "verified"  # the TPWD import picked the smaller basin
+    db_session.flush()
+
+    osm.run("TX", {"elements": pieces}, db_session)
+
+    rows = db_session.scalars(select(Waterbody).where(Waterbody.name == "Twin Buttes Reservoir")).all()
+    assert [(w.osm_ref, w.data_tier) for w in rows] == [("way/31", "verified")]

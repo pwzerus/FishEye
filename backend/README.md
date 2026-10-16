@@ -45,6 +45,7 @@ python -m app.data_import.tpwd_lake_survey_scraper         # 7 hand-checked lake
 python -m app.data_import.osm_waterbody_import --state TX --save-raw tx_osm.json
 python -m app.data_import.tpwd_fetch                       # TPWD's lake pages -> tpwd_cache/ (~15 min)
 python -m app.data_import.tpwd_statewide_import            # needs the boat-ramp file, below
+python -m app.data_import.osm_waterbody_import --state TX --from-file tx_osm.json   # again, offline: folds OSM copies of the newly verified lakes into them
 python -m app.data_import.gbif_occurrence_import --osm tx_osm.json --save-raw gbif_tx_raw.json
 ```
 

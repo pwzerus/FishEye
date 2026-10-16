@@ -149,6 +149,19 @@ describe("WaterbodyPanel", () => {
     expect(screen.getByText("confirmed")).toBeInTheDocument();
   });
 
+  it("gives each keyed part of the panel its own key (React warns when siblings share one)", async () => {
+    // The access list and the weather block are both keyed by lake so they
+    // reset when the lake changes; with the same bare id they collided.
+    const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    render(<WaterbodyPanel waterbodyId={1} />);
+    await waitFor(() => expect(screen.getByText("Lake Fork")).toBeInTheDocument());
+
+    const keyWarnings = errors.mock.calls.filter((call) => String(call[0]).includes("same key"));
+    errors.mockRestore();
+    expect(keyWarnings).toEqual([]);
+  });
+
   it("surfaces the API's own error message when the fetch fails", async () => {
     vi.mocked(getWaterbody).mockRejectedValue(new ApiError("boom", 500));
     render(<WaterbodyPanel waterbodyId={2} />);

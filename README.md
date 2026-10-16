@@ -166,13 +166,15 @@ in all):
 
 ```bash
 # every named lake, from OpenStreetMap
-docker compose exec backend python -m app.data_import.osm_waterbody_import --state TX
+docker compose exec backend python -m app.data_import.osm_waterbody_import --state TX --save-raw /tmp/tx_osm.json
 # TPWD's lake pages and survey reports, saved to a local folder (~15 min, polite)
 docker compose exec backend python -m app.data_import.tpwd_fetch --out /tmp/tpwd_cache
 # TPWD's Public Boat Ramps: download it as GeoJSON from
 # https://gis-tpwd.opendata.arcgis.com/datasets/public-boat-ramps, then
 docker compose cp BoatRamps_Public.geojson backend:/tmp/tpwd_cache/
 docker compose exec backend python -m app.data_import.tpwd_statewide_import --cache /tmp/tpwd_cache
+# once more, offline: folds OpenStreetMap's copies of the newly verified lakes into them
+docker compose exec backend python -m app.data_import.osm_waterbody_import --state TX --from-file /tmp/tx_osm.json
 ```
 
 Running without Docker: [`backend/README.md`](backend/README.md) and
@@ -207,9 +209,7 @@ docker-compose.prod.yml   single-server production layer (with Caddyfile)
 - Beyond Texas: the OSM and GBIF importers already take a state, and the
   agency-profile table is keyed by agency; each new state needs its own
   agency's lake data, ramps and regulations, surveyed first.
-- Texas lakes TPWD covers but the import couldn't place (15 of 175), and
-  OpenStreetMap lakes split into several pieces that still show as
-  separate unverified markers next to the verified one.
+- Texas lakes TPWD covers but the import couldn't place (15 of 175).
 - More species guides, and identification sections for the remaining ones.
 - Mobile-friendly map and offline-tolerant lake pages for use at the water.
 

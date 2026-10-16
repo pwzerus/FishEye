@@ -125,15 +125,17 @@ On the developer database (the same OpenStreetMap and GBIF imports):
 |---|---|---|
 | verified lakes | 10 | 161 |
 | lakes with official species | 10 | 160 |
-| share of lake area verified | 13% | 80% |
-| verified among the 50 largest lakes | 6 | 45 |
+| share of lake area verified | 13% | 90% |
+| verified among the 50 largest lakes | 6 | 47 |
 | confirmed public access points | 14 | 896, on 138 lakes |
 | lakes with TPWD's fishing ratings | 0 | 150 |
 
-Among the largest lakes still unverified, Sabine Lake is a coastal
-estuary, Lake Cherokee is privately owned, and two are second
-OpenStreetMap pieces of Amistad and Falcon, whose main pieces are verified
-(below).
+The two area rows count each lake once: they were measured after the
+OpenStreetMap import learned to merge lakes mapped as several elements
+(below). Before that, second pieces of Amistad and Falcon, unverified,
+counted as two of the largest lakes, and the share was 80%. Among the
+largest lakes still unverified, Sabine Lake is a coastal estuary and Lake
+Cherokee is privately owned.
 
 ## Consequences
 
@@ -142,11 +144,15 @@ OpenStreetMap pieces of Amistad and Falcon, whose main pieces are verified
 - The ramps have no names, fees or hours: they are shown as "Public boat
   ramp (TPWD #NNN)" and the panel links TPWD's access page for the rest.
   Parking is unknown, so it is not claimed.
-- A few large lakes are split into several OpenStreetMap elements (Amistad,
-  Falcon, Meredith, Twin Buttes, Graham, Livingston). The verified one
-  carries the data; the other pieces still show as unverified markers. The
-  fix belongs in the OpenStreetMap import (merge same-named pieces), not
-  here.
+- Some large lakes are mapped in OpenStreetMap as several elements: a way
+  and a relation of the same water, two basins (Lake Meredith, Twin
+  Buttes), an English and a Spanish element (Falcon). The verified one
+  carried the data and the others showed next to it as unverified. Fixed
+  in the OpenStreetMap import, where it belongs (ADR 0010, "Lakes mapped
+  as several elements"): 16 extra elements in Texas are now merged into
+  their lake, and re-running it folds rows from earlier imports in.
+  "Graham Lake", first listed here, turned out to be a different lake 20
+  km from Lake Graham and is correctly left alone.
 - 15 TPWD lakes are left out: 12 small state-park and city lakes that are
   in neither OpenStreetMap's import nor the ramp dataset, 2 whose name two
   OpenStreetMap lakes share with no ramps to choose between them, and Lone

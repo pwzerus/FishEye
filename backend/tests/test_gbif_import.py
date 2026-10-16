@@ -344,3 +344,16 @@ def test_an_osm_lake_replaced_by_a_verified_one_hands_over_its_records(db_sessio
 def test_import_refuses_a_state_with_no_lakes(db_session):
     with pytest.raises(ValueError, match="OSM import first"):
         gbif.run(db_session, "TX", OSM, RECORDS)
+
+
+def test_records_in_any_piece_of_a_merged_lake_go_to_that_lake(db_session, seeded_lake):
+    """The TPWD import verified the smaller element of a lake OSM maps as two;
+    the merged lake's main ref has no row, its extra ref does."""
+    verified = seeded_lake["waterbody"]
+    verified.osm_ref = "way/31"
+    db_session.flush()
+    merged = OsmLake(
+        # A name that doesn't match the verified lake's, so only the ref links them.
+        "relation/30", "Embalse Norte", 32.8, -95.6, Bounds(32.7, -95.7, 32.9, -95.5), "reservoir", extra_refs=("way/31",)
+    )
+    assert gbif.lake_targets(db_session, seeded_lake["state"], [merged]) == {"relation/30": verified.id}

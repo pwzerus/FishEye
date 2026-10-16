@@ -146,6 +146,16 @@ class OsmLake:
     longitude: float
     bounds: Bounds
     water_type: str = "lake"  # lake | reservoir | pond
+    # The element's wikidata tag, when mapped: the one identifier that says
+    # two elements are the same lake whatever they're called.
+    wikidata: str | None = None
+    # Other elements of the same lake, merged into this one (merge_pieces).
+    # This element is the largest; its ref is the lake's osm_ref.
+    extra_refs: tuple[str, ...] = ()
+
+    @property
+    def refs(self) -> tuple[str, ...]:
+        return (self.osm_ref, *self.extra_refs)
 
 
 @dataclass(frozen=True)
@@ -163,6 +173,10 @@ class ImportSummary:
     lakes_updated: int = 0
     lakes_linked_to_verified: int = 0
     lakes_replaced_by_verified: int = 0
+    # Rows for extra elements of one lake, folded into it (merge_pieces).
+    pieces_merged: int = 0
+    # Elements that turned out to be pieces of another lake in this payload.
+    elements_merged: int = 0
     access_created: int = 0
     access_updated: int = 0
     access_unmatched: int = 0
@@ -288,7 +302,9 @@ def parse_elements(payload: dict[str, Any]) -> tuple[list[OsmLake], list[OsmAcce
             if bounds.extent_m() < min_extent:
                 skip("too_small")
                 continue
-            lakes.append(OsmLake(ref, name, pos[0], pos[1], bounds, water_type))
+            lakes.append(
+                OsmLake(ref, name, pos[0], pos[1], bounds, water_type, (tags.get("wikidata") or "").strip() or None)
+            )
         else:
             if _is_excluded_access(tags):
                 skip("private_access")
@@ -303,6 +319,105 @@ def parse_elements(payload: dict[str, Any]) -> tuple[list[OsmLake], list[OsmAcce
                 )
             )
     return lakes, access, skipped
+
+
+# Two sizeable same-named waters this close are basins of one reservoir.
+BASIN_MIN_KM2 = 0.5
+BASIN_MAX_GAP_M = 3000.0
+
+
+def _overlap(a: Bounds, b: Bounds) -> bool:
+    return not (b.west > a.east or b.east < a.west or b.south > a.north or b.north < a.south)
+
+
+def _same_lake_by_name(a: Bounds, b: Bounds) -> bool:
+    if _overlap(a, b):
+        return True
+    return (
+        min(a.area_km2(), b.area_km2()) >= BASIN_MIN_KM2
+        and _overlap(a.expanded(BASIN_MAX_GAP_M), b)
+    )
+
+
+def merge_pieces(lakes: list[OsmLake]) -> list[OsmLake]:
+    """One lake mapped as several elements becomes one lake.
+
+    OpenStreetMap often maps a reservoir more than once: a way and a
+    multipolygon relation of the same water, separate relations for two
+    basins (Lake Meredith), or an English and a Spanish element of a border
+    reservoir (Falcon). Imported as they are, each became its own marker,
+    and when one was verified the others sat next to it as "unverified".
+
+    Two elements are the same lake when
+    - they carry the same wikidata id, whatever their names; or
+    - their names reduce to the same core name (core_name) and their
+      bounding boxes overlap; or
+    - same core name, both at least BASIN_MIN_KM2 in box area, and within
+      BASIN_MAX_GAP_M of each other: the two basins of Twin Buttes
+      Reservoir, 1.8 km apart.
+
+    Same name alone is not enough: Texas has several "Graham Lake" and
+    hundreds of ponds named "playa", and two of them can be a kilometre
+    apart and still be different water. The size floor is what keeps the
+    third rule to real reservoirs; against the full Texas import it
+    matches only Twin Buttes.
+
+    The merged lake keeps the largest element's ref, name, position and
+    type, and the union of the boxes as its extent.
+    """
+    parent = list(range(len(lakes)))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    def join(i: int, j: int) -> None:
+        parent[find(i)] = find(j)
+
+    by_wikidata: dict[str, int] = {}
+    by_name: dict[str, list[int]] = {}
+    for i, lake in enumerate(lakes):
+        if lake.wikidata:
+            if lake.wikidata in by_wikidata:
+                join(i, by_wikidata[lake.wikidata])
+            else:
+                by_wikidata[lake.wikidata] = i
+        key = core_name(lake.name)
+        for j in by_name.get(key, []):
+            if _same_lake_by_name(lake.bounds, lakes[j].bounds):
+                join(i, j)
+        by_name.setdefault(key, []).append(i)
+
+    groups: dict[int, list[OsmLake]] = {}
+    for i, lake in enumerate(lakes):
+        groups.setdefault(find(i), []).append(lake)
+    merged: list[OsmLake] = []
+    for members in groups.values():
+        if len(members) == 1:
+            merged.append(members[0])
+            continue
+        main = max(members, key=lambda lake: (lake.bounds.area(), lake.osm_ref))
+        union = Bounds(
+            min(m.bounds.south for m in members),
+            min(m.bounds.west for m in members),
+            max(m.bounds.north for m in members),
+            max(m.bounds.east for m in members),
+        )
+        merged.append(
+            OsmLake(
+                osm_ref=main.osm_ref,
+                name=main.name,
+                latitude=main.latitude,
+                longitude=main.longitude,
+                bounds=union,
+                water_type=main.water_type,
+                wikidata=main.wikidata or next((m.wikidata for m in members if m.wikidata), None),
+                extra_refs=tuple(sorted(m.osm_ref for m in members if m is not main)),
+            )
+        )
+    return merged
 
 
 def assign_access_to_lakes(
@@ -412,43 +527,74 @@ def upsert(
         for ap in db.scalars(select(AccessPoint).where(AccessPoint.osm_ref.is_not(None))).all()
     }
 
-    for lake in lakes:
-        existing = existing_by_ref.get(lake.osm_ref)
+    def absorb(gone: Waterbody, into: Waterbody, keep_access: bool) -> None:
+        """Delete `gone`, an OSM row this lake no longer needs, after moving
+        its species records (GBIF) to `into`; its OSM entrances move too,
+        unless `into` is verified (verified lakes show only official access)."""
+        for ref, ap in list(access_by_ref.items()):
+            if ap.waterbody_id == gone.id:
+                if keep_access:
+                    ap.waterbody_id = into.id
+                else:
+                    del access_by_ref[ref]
+        db.flush()
+        db.execute(
+            update(SpeciesOccurrence)
+            .where(SpeciesOccurrence.waterbody_id == gone.id)
+            .values(waterbody_id=into.id)
+        )
+        db.expire(gone, ["occurrences", "access_points"])
+        if gone.osm_ref is not None and existing_by_ref.get(gone.osm_ref) is gone:
+            del existing_by_ref[gone.osm_ref]
+        db.delete(gone)
+        db.flush()
 
-        if existing is not None and existing.data_tier == "verified":
+    for lake in lakes:
+        # Rows from earlier runs for any element of this lake (merge_pieces):
+        # one per element when they were imported before pieces were merged.
+        rows = [existing_by_ref[ref] for ref in lake.refs if ref in existing_by_ref]
+        verified_rows = [wb for wb in rows if wb.data_tier == "verified"]
+
+        if verified_rows:
             # Already linked on a previous run — never touch verified data.
+            # Any OSM rows for the lake's other elements are duplicates of it.
+            target = verified_rows[0]
+            for wb in rows:
+                if wb is not target and wb.data_tier != "verified":
+                    absorb(wb, target, keep_access=False)
+                    summary.lakes_replaced_by_verified += 1
             summary.lakes_linked_to_verified += 1
             continue
 
         twin = _find_verified_twin(lake, verified)
         if twin is not None:
-            if existing is not None:
-                # Imported as OSM-only on an earlier run, and a verified
-                # lake (e.g. added later by the TPWD scraper under a
-                # slightly different name) now covers it. Drop the OSM
-                # duplicate; its osm_reported access points go with it.
-                for ref, ap in list(access_by_ref.items()):
-                    if ap.waterbody_id == existing.id:
-                        del access_by_ref[ref]
-                # Species records (GBIF) found in the duplicate's extent
-                # belong to the verified lake now.
-                db.execute(
-                    update(SpeciesOccurrence)
-                    .where(SpeciesOccurrence.waterbody_id == existing.id)
-                    .values(waterbody_id=twin.id)
-                )
-                db.expire(existing, ["occurrences"])
-                db.delete(existing)
-                db.flush()
+            # Imported as OSM-only on an earlier run, and a verified lake
+            # (e.g. added later by the TPWD import under a slightly
+            # different name) now covers it. Drop the OSM duplicates; their
+            # osm_reported access points go with them, their species
+            # records (GBIF) move to the verified lake.
+            for wb in rows:
+                absorb(wb, twin, keep_access=False)
                 summary.lakes_replaced_by_verified += 1
-            # Link only once: OSM sometimes maps one lake as several
-            # elements (a way plus a relation, or named arms), and
-            # re-pointing the link on every match would churn it run to run.
+            # Link only once: re-pointing the link on every match would
+            # churn it run to run.
             if twin.osm_ref is None:
                 twin.osm_ref = lake.osm_ref
                 existing_by_ref[lake.osm_ref] = twin
             summary.lakes_linked_to_verified += 1
             continue
+
+        existing = existing_by_ref.get(lake.osm_ref) or (rows[0] if rows else None)
+        for wb in rows:
+            if wb is not existing:
+                absorb(wb, existing, keep_access=True)
+                summary.pieces_merged += 1
+        if existing is not None and existing.osm_ref != lake.osm_ref:
+            # Kept the row of a smaller element; it now stands for the lake.
+            del existing_by_ref[existing.osm_ref]
+            existing.osm_ref = lake.osm_ref
+            existing_by_ref[lake.osm_ref] = existing
+            db.flush()
 
         if existing is None:
             wb = Waterbody(
@@ -477,6 +623,7 @@ def upsert(
             wb.longitude = lake.longitude
             wb.water_type = lake.water_type
             wb.extent_km2 = lake.bounds.area_km2()
+            wb.source_url = f"https://www.openstreetmap.org/{lake.osm_ref}"
             wb.access_summary = (
                 OSM_POND_SUMMARY if lake.water_type == "pond" else OSM_LAKE_SUMMARY
             )
@@ -517,11 +664,13 @@ def upsert(
 
 
 def run(state_code: str, payload: dict[str, Any], db: Session) -> ImportSummary:
-    lakes, access, skipped = parse_elements(payload)
+    elements, access, skipped = parse_elements(payload)
+    lakes = merge_pieces(elements)
     access_by_lake, unmatched = assign_access_to_lakes(lakes, access)
     summary = upsert(db, state_code, lakes, access_by_lake)
     summary.access_unmatched = unmatched
     summary.skipped = skipped
+    summary.elements_merged = len(elements) - len(lakes)
     return summary
 
 
@@ -560,6 +709,11 @@ def main(argv: list[str] | None = None) -> int:
         + (
             f", {summary.lakes_replaced_by_verified} earlier duplicates of verified lakes removed"
             if summary.lakes_replaced_by_verified
+            else ""
+        )
+        + (
+            f"; {summary.elements_merged} elements were extra pieces of another lake and merged into it"
+            if summary.elements_merged
             else ""
         )
     )
