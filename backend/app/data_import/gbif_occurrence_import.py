@@ -34,6 +34,7 @@ api.gbif.org. The experiment's download can be reused as-is:
 
     python -m app.data_import.gbif_occurrence_import --osm tx_osm.json --from-file gbif_tx_raw.json
     python -m app.data_import.gbif_occurrence_import --osm tx_osm.json --save-raw gbif_tx_raw.json
+    python -m app.data_import.gbif_occurrence_import --state GA --osm ga_osm.json --save-raw gbif_ga_raw.json
 """
 from __future__ import annotations
 
@@ -68,6 +69,7 @@ GBIF_API = "https://api.gbif.org/v1"
 # harmless: they only count if they fall inside one of its lakes.
 STATE_BOUNDS: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {
     "TX": ((25.8, 36.6), (-106.7, -93.5)),
+    "GA": ((30.3, 35.1), (-85.7, -80.7)),
 }
 PAGE_SIZE = 300
 # GBIF documents a 100,000-record paging depth, but users report errors past
@@ -251,8 +253,14 @@ def license_family(url: str | None) -> str:
 
 
 def source_group(record: dict[str, Any]) -> str:
-    """Who collected the record, in the four groups the UI shows. Checked
-    against every institution/dataset pair in the Texas download."""
+    """Who collected the record, in the groups the UI shows. Checked against
+    every institution/dataset pair in the Texas and Georgia downloads.
+
+    MARIS (Multistate Aquatic Resources Information System) is state fish
+    and wildlife agencies' sampling-survey data, pooled by a consortium of
+    those agencies (USGS support ended in 2014). It is 82% of Georgia's
+    download and none of Texas's, mostly 1986-2010, at fixed survey stations
+    — which is why a few reservoirs hold most of Georgia's records."""
     dataset = (record.get("datasetName") or "").lower()
     institution = (record.get("institutionCode") or "").lower()
     if "fishes of texas" in dataset:
@@ -261,6 +269,8 @@ def source_group(record: dict[str, Any]) -> str:
         return "inaturalist"
     if institution == "tpwd":
         return "tpwd"
+    if "multistate aquatic resources information system" in dataset:
+        return "maris"
     return "other"
 
 
@@ -426,8 +436,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Fetching {code} records (a few minutes)...")
             records = fetch_all(client, keys, code)
         if args.save_raw:
-            args.save_raw.write_text(json.dumps(records), encoding="utf-8")
-            print(f"raw records saved to {args.save_raw}")
+            # A bad path must not throw away minutes of downloading: warn
+            # and import anyway (the records are only a cache for re-runs).
+            try:
+                args.save_raw.write_text(json.dumps(records), encoding="utf-8")
+                print(f"raw records saved to {args.save_raw}")
+            except OSError as exc:
+                print(f"warning: could not save raw records to {args.save_raw} ({exc}); importing anyway", file=sys.stderr)
 
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()

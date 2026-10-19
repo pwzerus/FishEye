@@ -44,6 +44,14 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     # index, and decides whether the map's viewport queries may use them.
     # A no-op on SQLite (app/db/spatial.py explains the two shapes).
     ensure_spatial_schema(engine)
+    # Load Ask's search now rather than on the first question: with
+    # RAG_SEMANTIC=on (the default) a missing model stops the server here,
+    # with instructions, instead of breaking Ask later; and the model and
+    # passage vectors are warm before anyone asks (docs/adr/0029).
+    if settings.rag_semantic != "off":
+        from app.services.rag.retriever import default_retriever
+
+        default_retriever()
     yield
 
 app = FastAPI(

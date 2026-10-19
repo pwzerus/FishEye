@@ -1055,5 +1055,10 @@ def default_retriever() -> Retriever:
 
                 _default = HybridRetriever(bm25_retriever(), embedder)
             elif mode == "on":
-                raise RuntimeError("RAG_SEMANTIC=on but the embedding model could not be loaded")
+                raise RuntimeError(
+                    "Ask needs the semantic model and it isn't installed (RAG_SEMANTIC=on, the default). "
+                    "From backend/: pip install -r requirements-semantic.txt, then "
+                    "python -m app.cli.fetch_embedding_model. "
+                    "RAG_SEMANTIC=off runs keyword search only (meant for tests and CI)."
+                )
     return _default

@@ -160,6 +160,7 @@ def test_licences_are_grouped_by_what_they_allow(url, family):
         ("University of Texas Biodiversity Collections (UTBC)", "Fishes of Texas Project", "fishes_of_texas"),
         ("iNaturalist", "iNaturalist research-grade observations", "inaturalist"),
         ("TPWD", None, "tpwd"),
+        ("BISON", "Multistate Aquatic Resources Information System - MARIS - Fish", "maris"),
         ("TNHC", None, "other"),
         (None, None, "other"),
     ],

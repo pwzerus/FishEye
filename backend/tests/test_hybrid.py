@@ -133,3 +133,21 @@ def test_a_states_view_of_the_hybrid_index_reuses_the_vectors():
     assert {p.region for p in view.passages} == {"all", "GA"}
     ids = _ids(view.search("is it legal to use a small bass as live bait"))
     assert "all-fish#bait_rules-ga" in ids and "all-fish#bait_rules" not in ids
+
+
+def test_semantic_search_is_the_default_and_missing_model_stops_startup(monkeypatch):
+    """ADR 0029: no quiet fallback to keyword-only in a deployment."""
+    from app.core.config import Settings
+    from app.services.rag import embeddings, retriever
+
+    monkeypatch.delenv("RAG_SEMANTIC", raising=False)
+    assert Settings().rag_semantic == "on"
+
+    monkeypatch.setattr(embeddings, "load_embedder", lambda *a, **k: None)
+    monkeypatch.setattr(retriever, "_default", None)
+    monkeypatch.setattr(
+        "app.core.config.get_settings", lambda: Settings(rag_semantic="on")
+    )
+    with pytest.raises(RuntimeError, match="fetch_embedding_model"):
+        retriever.default_retriever()
+    monkeypatch.setattr(retriever, "_default", None)

@@ -127,16 +127,18 @@ Try a failure path on demand: `LLM_MOCK_FAILURE_MODE=invented_number`
 (or `hallucinated_species`, `hallucinated_source`, `invalid_json`,
 `unavailable`) with the mock provider.
 
-Semantic search (optional, docs/adr/0025): Ask works without it, keyword
-search only. With it, rephrased questions are found more often. A local
-model (multilingual-e5-small, MIT, 118 MB after compression) runs on the
-CPU; nothing is sent anywhere.
+Semantic search (docs/adr/0025, 0029) is part of Ask and on by default: a
+local model (multilingual-e5-small, MIT, 118 MB after compression) runs on
+the CPU next to keyword search; nothing is sent anywhere. The API won't
+start without it, so install it once:
 
 ```bash
 pip install -r requirements-semantic.txt
 python -m app.cli.fetch_embedding_model   # once; into backend/models/ (gitignored)
-# RAG_SEMANTIC=auto (default: use it if installed) | off | on (refuse to start without it)
+# RAG_SEMANTIC=on (default) | off (keyword only: the test suite and CI) | auto
 ```
+
+The Docker image installs and fetches it at build time.
 
 Retrieval and grounding eval:
 

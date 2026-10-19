@@ -200,6 +200,15 @@ docker compose exec backend python -m app.data_import.tpwd_statewide_import --ca
 docker compose exec backend python -m app.data_import.osm_waterbody_import --state TX --from-file /tmp/tx_osm.json
 ```
 
+Georgia (docs/adr/0029) has the statewide layer so far — every named lake
+and OpenStreetMap's ramps and piers, plus GBIF species records — but no
+agency-verified lakes yet:
+
+```bash
+docker compose exec backend python -m app.data_import.osm_waterbody_import --state GA --save-raw /tmp/ga_osm.json
+docker compose exec backend python -m app.data_import.gbif_occurrence_import --state GA --osm /tmp/ga_osm.json --save-raw /tmp/gbif_ga_raw.json
+```
+
 Running without Docker: [`backend/README.md`](backend/README.md) and
 [`frontend/README.md`](frontend/README.md). Putting it on a server:
 [`docs/deploy-aws.md`](docs/deploy-aws.md).

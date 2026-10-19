@@ -29,6 +29,7 @@ SOURCE_LABELS = {
     "fishes_of_texas": "Fishes of Texas (UT Austin)",
     "inaturalist": "iNaturalist",
     "tpwd": "Texas Parks & Wildlife",
+    "maris": "State agency fish surveys (MARIS)",
     "other": "Other museums and surveys",
 }
 

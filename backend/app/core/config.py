@@ -41,10 +41,12 @@ class Settings(BaseSettings):
     # False = illustrations only, and no calls to Wikipedia.
     species_photos_enabled: bool = True
     google_places_api_key: str | None = None
-    # Ask's retrieval (docs/adr/0025): "auto" adds semantic search when the
-    # embedding model is installed, "off" is keyword search only, "on"
-    # refuses to start without the model.
-    rag_semantic: str = "auto"
+    # Ask's retrieval (docs/adr/0025, 0029). "on" (the default): keyword +
+    # semantic search, and the API refuses to start without the model, so a
+    # deployment can't quietly fall back to the weaker search. "off":
+    # keyword only, for the test suite and CI, which pin exact rankings and
+    # don't carry the 118 MB model. "auto": semantic if installed.
+    rag_semantic: str = "on"
     llm_provider: str = "mock"  # "mock" | "anthropic" ("openai" not implemented)
     llm_api_key: str | None = None
     # Empty means the provider's own default (anthropic: claude-haiku-4-5).

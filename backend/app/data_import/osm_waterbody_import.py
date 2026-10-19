@@ -19,8 +19,8 @@ WHAT IT DELIBERATELY LEAVES OUT
 -------------------------------
 - Anything tagged access=private/no/customers — PRD constraint 4: never
   show private land as a public entrance.
-- Unnamed water: overwhelmingly stock tanks and backyard/HOA ponds on
-  private land in Texas. (Named ponds ARE imported — a city-park pond is
+- Unnamed water: overwhelmingly stock tanks, farm ponds and backyard/HOA
+  ponds on private land. (Named ponds ARE imported — a city-park pond is
   often the best beginner spot there is — but stored with
   water_type="pond", which the UI uses to warn that ponds are often on
   private land.)
@@ -43,6 +43,7 @@ geometry. PostGIS is now available when the deployment provides it
 bounding box is a data decision here, not a missing capability.
 
 Run (needs network access to the Overpass API):
+    python -m app.data_import.osm_waterbody_import --state GA --save-raw ga_osm.json
     python -m app.data_import.osm_waterbody_import --state TX
     python -m app.data_import.osm_waterbody_import --state TX --save-raw tx_osm.json
     python -m app.data_import.osm_waterbody_import --state TX --from-file tx_osm.json   # offline re-run
@@ -74,6 +75,7 @@ REQUEST_TIMEOUT_SECONDS = 400.0
 # one-line change; the query itself is keyed on the ISO 3166-2 code.
 SUPPORTED_STATES: dict[str, tuple[str, str]] = {
     "TX": ("Texas", "https://tpwd.texas.gov"),
+    "GA": ("Georgia", "https://georgiawildlife.com"),
 }
 
 MIN_LAKE_EXTENT_M = 200.0
@@ -90,6 +92,23 @@ VERIFIED_MATCH_MARGIN_M = 5000.0
 
 EXCLUDED_ACCESS_VALUES = {"private", "no", "customers", "agricultural", "forestry", "delivery"}
 
+def osm_lake_summary(state_code: str) -> str:
+    """Who to check with names the state's own agency (knowledge/jurisdictions.py,
+    docs/adr/0027): a Georgia lake must not send people to Texas Parks and Wildlife."""
+    from app.knowledge.jurisdictions import get
+
+    j = get(state_code)
+    agency = (j.agency if j and j.agency else None) or (
+        f"{j.name}'s fish and wildlife agency" if j else "the state's fish and wildlife agency"
+    )
+    return (
+        "Mapped in OpenStreetMap, a community-edited map. FishEye has no verified "
+        f"information about the fish or public access here yet. Check with {agency} "
+        "before you go."
+    )
+
+
+# Kept for Texas rows already written with it, and for older callers.
 OSM_LAKE_SUMMARY = (
     "Mapped in OpenStreetMap, a community-edited map. FishEye has no verified "
     "information about the fish or public access here yet. Check with Texas Parks "
@@ -602,7 +621,7 @@ def upsert(
                 name=lake.name[:128],
                 latitude=lake.latitude,
                 longitude=lake.longitude,
-                access_summary=OSM_POND_SUMMARY if lake.water_type == "pond" else OSM_LAKE_SUMMARY,
+                access_summary=OSM_POND_SUMMARY if lake.water_type == "pond" else osm_lake_summary(state_code),
                 source_url=f"https://www.openstreetmap.org/{lake.osm_ref}",
                 source_updated_at=now,
                 field_tested=False,
@@ -625,7 +644,7 @@ def upsert(
             wb.extent_km2 = lake.bounds.area_km2()
             wb.source_url = f"https://www.openstreetmap.org/{lake.osm_ref}"
             wb.access_summary = (
-                OSM_POND_SUMMARY if lake.water_type == "pond" else OSM_LAKE_SUMMARY
+                OSM_POND_SUMMARY if lake.water_type == "pond" else osm_lake_summary(state_code)
             )
             wb.source_updated_at = now
             summary.lakes_updated += 1
@@ -692,8 +711,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Querying Overpass for {code} lakes and access points (this can take a few minutes)...")
         payload = fetch_overpass(build_overpass_query(code))
         if args.save_raw:
-            args.save_raw.write_text(json.dumps(payload), encoding="utf-8")
-            print(f"raw response saved to {args.save_raw}")
+            # As in the GBIF import: a bad path must not throw the download away.
+            try:
+                args.save_raw.write_text(json.dumps(payload), encoding="utf-8")
+                print(f"raw response saved to {args.save_raw}")
+            except OSError as exc:
+                print(f"warning: could not save the raw response to {args.save_raw} ({exc}); importing anyway", file=sys.stderr)
 
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()

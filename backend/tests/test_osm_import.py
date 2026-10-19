@@ -527,3 +527,36 @@ def test_an_osm_piece_next_to_a_verified_piece_is_absorbed_into_it(db_session, s
 
     rows = db_session.scalars(select(Waterbody).where(Waterbody.name == "Twin Buttes Reservoir")).all()
     assert [(w.osm_ref, w.data_tier) for w in rows] == [("way/31", "verified")]
+
+
+# --- a second state (docs/adr/0028) ------------------------------------------
+
+GA_PAYLOAD = {
+    "elements": [
+        _lake(201, "Lake Sidney Lanier", 34.20, -83.95, half_deg=0.15),
+        _ramp(301, 34.21, -83.96, name="Little Ridge Park"),
+    ]
+}
+
+
+def test_georgia_lakes_get_a_georgia_state_and_point_to_georgias_agency(client, db_session, seeded_lake):
+    osm.run("GA", GA_PAYLOAD, db_session)
+    db_session.commit()
+
+    lake = db_session.scalar(select(Waterbody).where(Waterbody.name == "Lake Sidney Lanier"))
+    assert lake.state.code == "GA" and lake.state.name == "Georgia"
+    assert "Georgia Department of Natural Resources" in lake.access_summary
+    assert "Texas" not in lake.access_summary
+    assert [a.public_status for a in lake.access_points] == ["osm_reported"]
+
+    states = {s["code"]: s for s in client.get("/api/states").json()}
+    assert states["GA"]["has_waterbodies"] is True  # the map lights Georgia up
+    assert states["GA"]["official_source_url"] == "https://georgiawildlife.com"
+
+
+def test_texas_lakes_still_point_to_tpwd():
+    assert "Texas Parks and Wildlife Department" in osm.osm_lake_summary("TX")
+
+
+def test_a_state_without_an_agency_on_file_gets_a_generic_pointer():
+    assert "Colorado's fish and wildlife agency" in osm.osm_lake_summary("CO")
