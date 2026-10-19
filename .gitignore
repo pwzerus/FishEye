@@ -30,9 +30,11 @@ npm-debug.log*
 .worktrees/
 
 # Downloaded data: large, and re-fetchable (see backend/README.md)
-backend/tx_osm.json
-backend/gbif_tx_raw.json
-backend/gbif_tx_report.json
+# Raw downloads the importers cache for offline re-runs, any state
+# (osm_waterbody_import --save-raw, gbif_occurrence_import --save-raw).
+backend/*_osm.json
+backend/gbif_*_raw.json
+backend/gbif_*_report.json
 backend/tpwd_cache/
 
 # Community photo uploads (MEDIA_ROOT): user content, never committed
