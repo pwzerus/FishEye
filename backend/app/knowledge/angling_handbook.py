@@ -37,6 +37,11 @@ CATEGORIES: dict[str, str] = {
     "care": "Releasing, keeping and cleaning fish",
     "identify": "Telling fish apart",
     "timing": "When fish bite",
+    # Added with docs/adr/0026.
+    "technique": "Casting, playing and landing a fish",
+    "conditions": "Weather, water and where fish hold",
+    "safety": "Staying safe on the water",
+    "rules": "Licence, and rules that follow you home",
 }
 
 TOPICS: tuple[HandbookTopic, ...] = (
@@ -681,6 +686,345 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "Flathead catfish feed little while spawning but heavily before and after it.",
         ),
         source_ids=("tpwd-lmb", "tpwd-wcp", "tpwd-bgl", "kyfw-redear", "tpwd-ccf", "odwc-whitebass", "tpwmag-bluecat-2020", "odwc-trout", "mdc-flathead"),
+    ),
+
+    # ------------------------------------------------------------- technique
+    HandbookTopic(
+        id="cast-spinning",
+        category="technique",
+        title="Casting a spinning or spincast reel",
+        body=(
+            "Let the bait or lure hang 10 to 18 inches below the rod tip, and hold the rod at "
+            "about waist level with the reel underneath.",
+            "Hook the line with your forefinger and open the bail, keeping hold of the line. On a "
+            "spincast reel, press and hold the button instead.",
+            "Sweep the rod tip back over your dominant shoulder, then bring it forward quickly "
+            "toward the target. As the rod comes forward past your shoulder, let go of the line "
+            "(or release the button) and the weight of the lure pulls line off the reel.",
+            "Close the bail by hand, then reel. A spincast reel's enclosed housing is what keeps "
+            "it from tangling, which is why it suits a beginner.",
+        ),
+        source_ids=("tmf-cast", "tmf-reels"),
+    ),
+    HandbookTopic(
+        id="cast-baitcast",
+        category="technique",
+        title="Casting a baitcaster without a backlash",
+        body=(
+            "Let the lure hang 8 to 10 inches below the rod tip. Hold the rod at waist level with "
+            "the reel on top and your thumb resting on the spool.",
+            "Press the button to go into free spool, keeping your thumb against the spool so it "
+            "can't unwind.",
+            "Pull the rod back over your dominant shoulder and bring it forward swiftly, aiming "
+            "the tip at the target. Lift your thumb off the spool as the rod comes forward.",
+            "Put your thumb back on the spool as the lure hits the water: the spool keeps "
+            "spinning after the lure stops, and that is what makes a backlash. Then reel once or "
+            "twice to engage the anti-reverse.",
+            "Baitcasting is an acquired skill. It is worth learning for heavy lures and heavy "
+            "line, and it is not the reel to learn to cast on.",
+        ),
+        source_ids=("tmf-cast", "tmf-reels"),
+    ),
+    HandbookTopic(
+        id="technique-drag",
+        category="technique",
+        title="Setting the drag",
+        body=(
+            "The drag is a stack of friction plates in the reel. When a fish pulls harder than the "
+            "friction, the spool turns backwards and gives line instead of letting it break.",
+            "Set it before the first cast: adjusting it while a fish is on is difficult. The knob "
+            "is on the front of a spinning reel, on top of a spincast reel, and shaped like a star "
+            "beside the handle on a baitcaster. Right tightens, left loosens.",
+            "By hand: pull line straight up above the reel. If it slips out too easily, tighten; "
+            "if it won't move, loosen. With a spring scale, set the drag to start giving line at "
+            "roughly a third to a half of the line's rated strength \u2014 about 7 to 10 lb on 20 lb "
+            "line.",
+            "Too tight and a big fish breaks the line; too loose and the fight drags on. Of the "
+            "two, too loose is the safer mistake.",
+            "With braid, pull against pliers or a pencil rather than bare hands: it cuts fingers.",
+        ),
+        source_ids=("tmf-drag",),
+    ),
+    HandbookTopic(
+        id="technique-measure",
+        category="technique",
+        title="Measuring a fish",
+        body=(
+            "Lay the fish on its side with its jaw closed, and measure a straight line from the "
+            "tip of the snout to the extreme tip of the tail fin.",
+            "Squeeze a soft tail fin together, or turn a hard tail, to get the longest overall "
+            "measurement.",
+            "Length limits are set on that measurement and they vary by water body, so check "
+            "TPWD's rules for the lake you are on before you keep a fish.",
+        ),
+        source_ids=("tpwd-measure", "tpwd-cr"),
+    ),
+    HandbookTopic(
+        id="technique-shore",
+        category="technique",
+        title="Fishing from the bank",
+        body=(
+            "You do not need a boat. Walk the shoreline and pick a spot away from roads, ramps and "
+            "crowds: noise and fishing pressure near an entrance mean fewer bites.",
+            "On a lake or pond, cast parallel to the shoreline rather than straight out into the "
+            "middle \u2014 fish hold along the bank, often within a foot or two of it.",
+            "Fish what you can reach: docks, laydowns, vegetation, rock piles, and any drop-off "
+            "where the bank falls into deeper water. Under a pier, fish right against the pilings.",
+            "On a river, look for slower water \u2014 eddies and the slack behind rocks and log jams "
+            "\u2014 because most game fish avoid heavy current. Where a bridge or pilings rub the "
+            "line, use a heavier leader.",
+        ),
+        source_ids=("tmf-shore", "nydec-where", "indnr-when"),
+    ),
+    HandbookTopic(
+        id="start-first-trip",
+        category="technique",
+        title="Your first trip in Texas",
+        body=(
+            "Three things to sort out first: somewhere to go, a licence if you need one, and the "
+            "rules for that water.",
+            "TPWD runs free fishing events and intro classes, lists where to fish across the "
+            "state, and publishes fishing and stocking reports that say what is biting where.",
+            "The Outdoor Annual app holds the regulations, works offline, and can carry a digital "
+            "copy of your licence.",
+            "A rod and reel, a few hooks, split shot and bobbers, and a tub of worms is a complete "
+            "beginner's kit. Some state parks lend tackle.",
+        ),
+        source_ids=("tpwd-beginners",),
+    ),
+    # ------------------------------------------------------------ conditions
+    HandbookTopic(
+        id="cond-cover",
+        category="conditions",
+        title="Cover: weeds, wood and docks",
+        body=(
+            "Cover gives fish shelter, shade and protection, and draws the baitfish and insects "
+            "they eat. It is where to cast first.",
+            "Weed beds and lily pads hold insects and baitfish; fish their edges and the openings "
+            "in them, which also keeps your line out of the salad. The best weed beds run into "
+            "deeper water.",
+            "Downed trees, stumps, branches and rock piles all work the same way.",
+            "Docks are productive at any time of day because of the shade. The biggest fish often "
+            "sit far underneath, so do not fish only the outside edge.",
+            "Overhanging trees and brushy banks drop insects into the water, and big fish hold "
+            "right under them \u2014 sometimes a foot from shore, wherever there is a foot of water.",
+        ),
+        source_ids=("nydec-where", "indnr-when"),
+    ),
+    HandbookTopic(
+        id="cond-points",
+        category="conditions",
+        title="Points, drop-offs and inlets",
+        body=(
+            "A point that slopes gradually into deeper water is a route fish use between deep "
+            "water and the shallows. Fish the tip and the corners. A point that drops off sharply, "
+            "or has no deep water near it, is worth less.",
+            "A drop-off \u2014 where the bottom falls away \u2014 lets fish move between depths without "
+            "crossing open water, which is why they follow it.",
+            "Where a creek or stream runs into the lake it brings food, and fish gather there. "
+            "Inlets are at their best when fish stage before moving upstream to spawn.",
+        ),
+        source_ids=("nydec-where",),
+    ),
+    HandbookTopic(
+        id="cond-clarity",
+        category="conditions",
+        title="Water clarity and lure colour",
+        body=(
+            "How far you can see into the water decides what the fish can see, and so what to "
+            "throw.",
+            "Clear water (two feet of visibility or more): natural, prey-coloured or flashy "
+            "lures \u2014 spoons, spinners, jerkbaits, lipless crankbaits, willow-blade spinnerbaits, "
+            "soft plastics.",
+            "Stained water (a few inches of visibility): bright colours, such as chartreuse soft "
+            "plastics, bright lipless crankbaits, and gold or copper blades.",
+            "Muddy water (an inch or two): dark colours and vibration \u2014 bladed swim jigs, "
+            "rattling crankbaits, Colorado-blade spinnerbaits, soft plastic stickbaits.",
+        ),
+        source_ids=("indnr-when",),
+    ),
+    HandbookTopic(
+        id="cond-wind",
+        category="conditions",
+        title="Wind",
+        body=(
+            "Fish the windblown shoreline. Wind pushes warm surface water and the food in it "
+            "against the bank, and the fish follow.",
+            "If the wind makes casting hard, use a heavier lure, and watch for snags.",
+            "An easterly wind usually means a high-pressure system has moved in, which is the "
+            "old saying \"wind from the east, fish bite least\" \u2014 and there is something to it.",
+        ),
+        source_ids=("indnr-when", "kyfw-weather"),
+    ),
+    HandbookTopic(
+        id="cond-fronts",
+        category="conditions",
+        title="Fronts and pressure",
+        body=(
+            "Weather matters more than most beginners expect, and barometric pressure is the part "
+            "that matters most.",
+            "Fish feed hard ahead of a storm, as a low-pressure system moves in.",
+            "After it passes, a bright high-pressure \"bluebird\" day is the hardest fishing of "
+            "all: fish hold tight to cover, go lethargic and sit on the bottom, especially in "
+            "clear lakes in late winter and early spring.",
+            "In those seasons the best days come on the third or fourth day of stable weather, "
+            "whatever the temperature. Plan a trip for the day before a front, or three to four "
+            "days after one.",
+        ),
+        source_ids=("kyfw-weather", "indnr-when"),
+    ),
+    HandbookTopic(
+        id="cond-light",
+        category="conditions",
+        title="Cloud, rain and sun",
+        body=(
+            "Cloud and rain cut the light getting into the water, which lets predators ambush "
+            "prey, and fish roam further to find food. Rain also washes insects in.",
+            "On a bright, sunny day fish deeper, in shade, or later in the day once the shallows "
+            "have warmed.",
+            "A bright spring day is good on a shallow, stained lake, where the shallows warm fast "
+            "and draw fish in, and poor on a deep, clear one, where the fish are more "
+            "light-sensitive and the water warms slowly.",
+            "In cold water, slow down: small lures, light line, a slow retrieve near the bottom.",
+        ),
+        source_ids=("indnr-when", "kyfw-weather"),
+    ),
+    # ---------------------------------------------------------------- safety
+    HandbookTopic(
+        id="safe-lifejacket",
+        category="safety",
+        title="Life jackets",
+        body=(
+            "In Texas every child under 13 must wear a US Coast Guard-approved life jacket on a "
+            "boat under 26 feet while it is under way, which includes drifting but not at anchor. "
+            "Adults must have one aboard that fits and is easy to reach.",
+            "Of the people who died in recreational boating accidents in 2019, drowning was the "
+            "reported cause for 79 percent, and 86 percent of those who drowned were not wearing "
+            "a life jacket.",
+            "Check the fit: do it up, raise your arms over your head and have someone pull up on "
+            "the shoulders. If it rides up over your chin or face it is too big. A child's jacket "
+            "does not work for an adult, and do not buy one for a child to grow into.",
+        ),
+        source_ids=("tpwd-lifejacket",),
+    ),
+    HandbookTopic(
+        id="safe-handling",
+        category="safety",
+        title="Handling a fish without getting hurt",
+        body=(
+            "Catfish have stiff, barbed spines in the dorsal and both pectoral fins, and they are "
+            "the usual reason someone goes home early. Hold a catfish from behind, with your hand "
+            "over its back and behind those fins, or use pliers and a grip.",
+            "Use long-nosed pliers or a hook-out to take hooks from any fish, rather than fingers.",
+            "A fish that is going back wants wet hands and as little time out of the water as "
+            "possible; a fish you are keeping goes on ice straight away.",
+        ),
+        source_ids=("utah-clean-cat", "tpwd-cr", "lsu-handling"),
+    ),
+    # ----------------------------------------------------------------- rules
+    HandbookTopic(
+        id="rule-license",
+        category="rules",
+        title="Do I need a fishing licence?",
+        body=(
+            "In Texas, residents and non-residents need a fishing licence to fish public water, "
+            "and a resident taking fish, mussels, clams or crayfish needs a freshwater or "
+            "saltwater endorsement with it.",
+            "No licence is needed for anyone under 17, resident or not; for Texas residents born "
+            "before 1 January 1931; and for certain people with intellectual disabilities under "
+            "the conditions TPWD sets out.",
+            "You can also fish without one in Texas state parks.",
+            "A Lake Texoma licence covers both the Texas and Oklahoma water of that lake and "
+            "nothing else. Licence terms and fees change: TPWD's licence page is the authority.",
+        ),
+        source_ids=("tpwd-license", "tpwd-beginners"),
+    ),
+    HandbookTopic(
+        id="rule-clean-drain-dry",
+        category="rules",
+        title="Clean, drain and dry",
+        body=(
+            "Zebra mussels and other invasive species travel between Texas lakes on boats, "
+            "trailers and in water, so the law asks three things of anyone leaving the water.",
+            "Clean: remove all plants, animals and mud from the boat and trailer, and wash them "
+            "thoroughly.",
+            "Drain: drain all water before leaving the area \u2014 livewells, bilge, ballast and "
+            "engine cooling water. Pull the plug.",
+            "Dry: let everything dry completely before launching somewhere else, ideally for a "
+            "week or more.",
+            "A boat kept on infested water, or with mussels attached, needs TPWD's advice and "
+            "often professional hot-water cleaning before it is moved to another lake.",
+        ),
+        source_ids=("tpwd-cdd",),
+    ),
+    HandbookTopic(
+        id="rule-line-disposal",
+        category="rules",
+        title="Old fishing line",
+        body=(
+            "Discarded line tangles birds and other animals and does not break down in a "
+            "landfill. It never belongs on the bank or in the water.",
+            "Monofilament and fluorocarbon can be recycled, in colour or clear, at a collection "
+            "bin \u2014 at tackle shops, ramps, piers and access points \u2014 but not in household "
+            "recycling. Take the hooks and lures off first, and leave out line with weed or "
+            "growth on it. Keep a coffee can in the tackle box until you have enough to drop off.",
+            "Braided and fused line cannot be recycled: cut it into pieces shorter than a foot "
+            "and put it in a covered bin so animals cannot reach it.",
+        ),
+        source_ids=("tmf-line-recycle",),
+    ),
+    # ------------------------------------------------------- care (cooking)
+    HandbookTopic(
+        id="cook-methods",
+        category="care",
+        title="Cooking a fish you caught",
+        body=(
+            "The ten-minute rule covers most methods: ten minutes of cooking per inch of "
+            "thickness, turning once. A piece under half an inch thick needs less and no turning. "
+            "It does not apply to deep frying or the microwave.",
+            "Bake at 400\u00b0F with a little liquid \u2014 broth or lemon juice \u2014 about five minutes a "
+            "side for an inch-thick piece. Broil four to five inches from the heat. Grill with a "
+            "baste, turning halfway. Saut\u00e9 over medium heat in a non-stick pan.",
+            "It is done when the flesh is opaque and flakes easily with a fork, and the inside "
+            "has reached 145\u00b0F. Colour alone does not tell you.",
+            "Catfish is mild and sweet, close to any other white fish, and takes whatever "
+            "seasoning you like \u2014 lemon and butter, cajun, paprika and oregano.",
+        ),
+        source_ids=("tamu-catfish-cook", "umn-fish"),
+    ),
+    HandbookTopic(
+        id="cook-storage",
+        category="care",
+        title="Keeping and thawing fish at home",
+        body=(
+            "Raw fish keeps one to two days in the refrigerator. Cooked fish should be cooled "
+            "below 41\u00b0F within two hours, and reheated to 165\u00b0F.",
+            "Thaw in the refrigerator, which is the best way, allowing up to 24 hours per pound; "
+            "open vacuum packaging before thawing. Cold running water in a sealed bag is the fast "
+            "way. Never thaw on the counter, in standing water or in hot water.",
+        ),
+        source_ids=("umn-fish", "uaf-freezing", "tamu-catfish-cook"),
+    ),
+    HandbookTopic(
+        id="cook-freezing",
+        category="care",
+        title="Freezing your catch",
+        body=(
+            "Freezing keeps quality, it does not add any: a fish that was poorly handled on the "
+            "water will be a poor fish out of the freezer. Gut and chill it quickly, and do not "
+            "freeze fish with soft flesh or blood clots in it.",
+            "Cut it down to fillets or steaks first: small packages freeze faster.",
+            "Vacuum packaging is best. Failing that, double-wrap in plastic, or use heavy freezer "
+            "bags with the air pressed out \u2014 do not add water. A glaze of ice works but has to be "
+            "renewed every few months. Label each package with the fish and the date.",
+            "Freeze fast, on the coldest setting, without packing the freezer full: it should be "
+            "frozen solid within 24 hours.",
+            "Fatty fish such as trout keep in excellent condition about three months, lean fish "
+            "roughly twice that. Raw fish is safe for three to eight months. Freezer burn is "
+            "moisture escaping through imperfect wrapping; rancid fat and ice-crystal damage come "
+            "from long storage and a freezer that keeps changing temperature.",
+        ),
+        source_ids=("uaf-freezing", "umn-fish"),
     ),
 )
 

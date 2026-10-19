@@ -209,6 +209,19 @@ describe("AskChat", () => {
     expect(await screen.findByText(label)).toBeInTheDocument();
   });
 
+  it.each([
+    ["off_topic", "Not a fishing question"],
+    ["unguided_fish", "No guide for that fish"],
+    ["no_match", "Not in the guides"],
+  ])("says which kind of empty answer it is (%s)", async (outcome, label) => {
+    // Three different admissions, from the trace's outcome (backend ADR 0026).
+    const base = response({ answer_source: "no_match", citations: [] });
+    mockedAsk.mockResolvedValue({ ...base, trace: { ...base.trace, outcome } });
+    render(<AskChat suggestions={SUGGESTIONS} />);
+    await askVia("anything at all");
+    expect(await screen.findByText(label)).toBeInTheDocument();
+  });
+
   it("labels the no-key mock provider as a demo model, not as AI", async () => {
     const base = response();
     mockedAsk.mockResolvedValue({ ...base, trace: { ...base.trace, provider: "mock" } });

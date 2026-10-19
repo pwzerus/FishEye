@@ -8,6 +8,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+# Keyword search only: the suite must not depend on a 470 MB model being
+# downloaded. Semantic retrieval has its own tests (tests/test_hybrid.py).
+os.environ.setdefault("RAG_SEMANTIC", "off")
 
 from app.api.deps import get_db  # noqa: E402
 from app.db.session import Base, enforce_sqlite_foreign_keys  # noqa: E402

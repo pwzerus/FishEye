@@ -118,6 +118,10 @@ NOT_COVERED: tuple[str, ...] = (
     "how do I smoke a carp",
     "what is the lifespan of a white crappie in an aquarium",
     "is the bluegill the state fish of illinois",
+    # Fish with no guide whose names contain a guided fish's name.
+    "how do I catch smallmouth bass",
+    "what bait for red drum",
+    "best lures for speckled trout",
 )
 
 CASES: tuple[RagCase, ...] = (
@@ -248,4 +252,350 @@ CASES: tuple[RagCase, ...] = (
     _c("redear-setup", "what setup for redear sunfish", "redear-sunfish#setup-1", "redear-sunfish#setup-2"),
     _c("trout-where", "where can I catch rainbow trout in texas", "rainbow-trout#where_and_when", "rainbow-trout#habitat"),
     _c("flathead-rig", "what rig for flathead catfish", "flathead-catfish#setup-1", "flathead-catfish#setup-2"),
+    # --- a bare "bass" means the black basses (a user report: this used to
+    # return the shad bait lists, which say "striped bass" repeatedly) ---
+    _c("bass-bait", "how to catch bass, what kind of bait should i use",
+       "largemouth-bass#live_baits", "largemouth-bass#why_these_baits",
+       "spotted-bass#why_these_baits", "guadalupe-bass#why_these_baits"),
+    _c("bass-lure", "best lure for bass", "largemouth-bass#lures", "spotted-bass#lures", "guadalupe-bass#lures"),
+    _c("smallmouth-vs-lmb", "smallmouth vs largemouth", "all-fish#id-black-bass", "largemouth-bass#identification"),
+)
+
+
+# ===== semantic retrieval (docs/adr/0025) =====
+# Questions keyword search can't answer by construction: Chinese ones (BM25
+# only sees English words) and English ones written to avoid the words the
+# guides use. Kept apart from CASES so each retriever's numbers on the old
+# set stay comparable with the history in ADRs 0014 and 0024.
+ZH_CASES: tuple[RagCase, ...] = (
+    _c("zh-bass-bait", "鲈鱼用什么饵", "largemouth-bass#live_baits", "largemouth-bass#why_these_baits",
+       "spotted-bass#why_these_baits", "guadalupe-bass#why_these_baits"),
+    _c("zh-kill", "怎么杀鱼最人道", "all-fish#care-dispatch-bleed"),
+    _c("zh-bleed", "钓上来的鱼要放血吗", "all-fish#care-dispatch-bleed"),
+    _c("zh-clean-crappie", "莓鲈怎么处理干净", "all-fish#clean-fillet-panfish", "all-fish#clean-scaling",
+       "white-crappie#eating", "black-crappie#eating"),
+    _c("zh-skin-cat", "鲶鱼怎么剥皮", "all-fish#clean-catfish", "channel-catfish#eating",
+       "blue-catfish#eating", "flathead-catfish#eating"),
+    _c("zh-keep-fresh", "怎么让钓到的鱼保鲜带回家", "all-fish#care-keeping"),
+    _c("zh-release", "怎么放流才不会伤到鱼", "all-fish#care-release"),
+    _c("zh-safe-eat", "湖里钓的鱼吃了安全吗", "all-fish#care-eating-safely"),
+    _c("zh-drum-eat", "淡水鼓鱼好吃吗", "freshwater-drum#eating"),
+    _c("zh-cat-compare", "扁头鮰和斑点叉尾鮰有什么区别", "flathead-catfish#identification",
+       "channel-catfish#identification", "all-fish#id-catfish"),
+    _c("zh-crappie-compare", "白莓鲈和黑莓鲈怎么区分", "white-crappie#identification",
+       "black-crappie#identification", "all-fish#id-panfish"),
+    _c("zh-whiskers", "我钓到一条有胡须、尾巴是方的鱼，是什么鱼", "all-fish#id-catfish",
+       "flathead-catfish#identification"),
+    _c("zh-carp-bait", "鲤鱼用什么饵", "common-carp#live_baits", "common-carp#why_these_baits"),
+    _c("zh-why-minnow", "为什么钓莓鲈要用小活鱼", "white-crappie#why_these_baits",
+       "black-crappie#why_these_baits", "all-fish#bait-minnows"),
+    _c("zh-worm-pros", "用蚯蚓做饵有什么好处", "all-fish#bait-worms"),
+    _c("zh-hook-minnow", "活小鱼怎么挂到钩上", "all-fish#bait-minnows"),
+    _c("zh-palomar", "帕洛马结怎么打", "all-fish#knot-palomar"),
+    _c("zh-line", "编织线和尼龙线哪个好", "all-fish#tackle-line"),
+    _c("zh-reel-kid", "小孩钓鱼用什么渔轮", "all-fish#tackle-reels"),
+    _c("zh-circle", "圈钩怎么用", "all-fish#tackle-circle-hooks"),
+    _c("zh-bobber", "浮漂有什么用", "all-fish#tackle-bobbers"),
+    _c("zh-flathead-live", "扁头鮰生活在什么地方", "flathead-catfish#habitat"),
+    _c("zh-crappie-school", "莓鲈是成群活动的吗", "white-crappie#habits", "black-crappie#habits"),
+    _c("zh-time", "一天中什么时候钓鱼最好", "all-fish#timing-day"),
+    _c("zh-trout-stock", "德州什么时候放养虹鳟", "rainbow-trout#where_and_when"),
+    _c("zh-gdb-lure", "瓜达鲁佩鲈用什么拟饵", "guadalupe-bass#lures"),
+    _c("zh-bluegill-look", "蓝鳃太阳鱼长什么样", "bluegill#identification"),
+    _c("zh-spinnerbait", "复合亮片怎么用", "all-fish#lure-spinnerbaits"),
+)
+
+PARAPHRASE_CASES: tuple[RagCase, ...] = (
+    _c("para-bass-hook", "what should I put on my hook to get a largemouth to bite",
+       "largemouth-bass#live_baits", "largemouth-bass#why_these_baits", "largemouth-bass#lures"),
+    _c("para-kill", "what's the quickest way to put a fish out of its misery", "all-fish#care-dispatch-bleed"),
+    _c("para-keep", "how do I stop my catch from going bad on a hot day", "all-fish#care-keeping"),
+    _c("para-release", "I want to let the fish go, how do I make sure it survives", "all-fish#care-release"),
+    _c("para-cat-skin", "how do I get the skin off a channel cat", "all-fish#clean-catfish",
+       "channel-catfish#eating"),
+    _c("para-flathead-look", "it has whiskers and a wide flat head, what is it",
+       "flathead-catfish#identification", "all-fish#id-catfish"),
+    _c("para-morning", "is early morning or the middle of the day better for getting bites", "all-fish#timing-day"),
+    # cast-spinning counts: it is the passage that says a spincast reel's
+    # enclosed housing is what stops it tangling (docs/adr/0026).
+    _c("para-kid-reel", "my six year old wants to try, which reel is least likely to tangle",
+       "all-fish#tackle-reels", "all-fish#cast-spinning"),
+    _c("para-braid-knot", "which knot holds best on braided line", "all-fish#knot-palomar"),
+    _c("para-invisible-line", "which line is hardest for fish to see", "all-fish#tackle-line"),
+    _c("para-grasshopper", "how do I put a grasshopper on", "all-fish#bait-insects"),
+    _c("para-carp-eat", "are carp worth cooking", "common-carp#eating"),
+    _c("para-crappie-hide", "where do crappie hide during the day", "white-crappie#where_and_when",
+       "white-crappie#habitat", "black-crappie#where_and_when", "black-crappie#habitat"),
+    _c("para-trout-winter", "where can I find stocked rainbows when it gets cold",
+       "rainbow-trout#where_and_when"),
+    _c("para-why-stink", "what makes smelly baits attract catfish", "channel-catfish#why_these_baits",
+       "all-fish#bait-stink"),
+)
+
+ZH_OFF_TOPIC: tuple[str, ...] = (
+    "红烧肉怎么做",
+    "鱼香肉丝怎么做",
+    "金鱼怎么养",
+    "今天天气怎么样",
+    "怎么修自行车",
+    "推荐一部好看的电影",
+    "低音贝斯怎么调音",
+    "股票怎么买",
+    "怎么挂窗帘",
+    "厨房怎么清洁",
+)
+
+ZH_NOT_COVERED: tuple[str, ...] = (
+    "小口黑鲈怎么钓",
+    "红鼓鱼用什么饵",
+)
+
+
+# ===== rephrasings of CASES, and the "wrong fish" check (docs/adr/0025) =====
+# Each is an existing question said another way: other words, a nickname
+# anglers use, a typo-free but looser phrasing. `fish` is every species an
+# answer may quote besides the shared handbook; a returned passage about any
+# other fish is a "wrong fish" answer, the failure behind "what bait for
+# bass" returning the shad bait lists.
+_BASSES = ("largemouth-bass", "spotted-bass", "guadalupe-bass")
+_CATS = ("channel-catfish", "blue-catfish", "flathead-catfish")
+_CRAPPIE = ("white-crappie", "black-crappie")
+
+
+@dataclass(frozen=True)
+class StressCase:
+    id: str
+    question: str
+    relevant: frozenset[str]
+    fish: frozenset[str]
+
+
+def _s(id: str, question: str, relevant: tuple[str, ...], fish: tuple[str, ...]) -> StressCase:
+    return StressCase(id, question, frozenset(relevant), frozenset(fish))
+
+
+STRESS_CASES: tuple[StressCase, ...] = (
+    _s("s-crappie-bait", "what do crappie bite on", ("white-crappie#live_baits", "black-crappie#live_baits",
+       "white-crappie#why_these_baits", "black-crappie#why_these_baits"), _CRAPPIE),
+    _s("s-slab-bait", "best bait for slabs", ("white-crappie#live_baits", "black-crappie#live_baits",
+       "white-crappie#why_these_baits", "black-crappie#why_these_baits"), _CRAPPIE),
+    _s("s-lmb-lure", "top lures for bucketmouth", ("largemouth-bass#lures",), ("largemouth-bass",)),
+    _s("s-lmb-lure2", "which artificial bait catches the most largemouth", ("largemouth-bass#lures",),
+       ("largemouth-bass",)),
+    _s("s-bass-bait", "what do bass like to eat off a hook", ("largemouth-bass#live_baits",
+       "largemouth-bass#why_these_baits", "spotted-bass#why_these_baits", "guadalupe-bass#why_these_baits"),
+       _BASSES),
+    _s("s-bass-how", "how can i fish a bass", ("largemouth-bass#live_baits", "largemouth-bass#lures"), _BASSES),
+    _s("s-bass-start", "how do I start bass fishing", ("largemouth-bass#live_baits", "largemouth-bass#lures"),
+       _BASSES),
+    _s("s-bass-when", "when is the best time to go after bass", ("largemouth-bass#where_and_when",
+       "spotted-bass#where_and_when", "guadalupe-bass#where_and_when"), _BASSES),
+    _s("s-sunny-bait", "what bait do sunnies go for", ("bluegill#live_baits", "redear-sunfish#live_baits",
+       "bluegill#why_these_baits", "redear-sunfish#why_these_baits"), ("bluegill", "redear-sunfish")),
+    _s("s-bream-bait", "what do I use for brim", ("bluegill#live_baits", "bluegill#why_these_baits"), ("bluegill",)),
+    _s("s-cat-bait", "good bait for whiskerfish", ("channel-catfish#live_baits", "channel-catfish#why_these_baits",
+       "blue-catfish#live_baits", "flathead-catfish#live_baits", "flathead-catfish#why_these_baits",
+       "blue-catfish#why_these_baits"), _CATS),
+    _s("s-channel-bait", "what will a channel cat bite", ("channel-catfish#live_baits",
+       "channel-catfish#why_these_baits"), ("channel-catfish",)),
+    _s("s-blue-bait", "how do people catch huge blues", ("blue-catfish#live_baits", "blue-catfish#overview",
+       "blue-catfish#why_these_baits", "blue-catfish#setup-1", "blue-catfish#setup-2"), ("blue-catfish",)),
+    _s("s-sandbass-lure", "what lures for sandies", ("white-bass#lures",), ("white-bass",)),
+    _s("s-whitebass-run", "what month do white bass spawn upriver", ("white-bass#where_and_when",
+       "white-bass#habits"), ("white-bass",)),
+    _s("s-striper-bait", "what live bait do linesides want", ("striped-bass#live_baits",
+       "striped-bass#setup-2", "striped-bass#why_these_baits"), ("striped-bass",)),
+    _s("s-striper-rod", "what kind of pole do I need for striped bass", ("striped-bass#setup-1",
+       "striped-bass#setup-2", "striped-bass#setup-3"), ("striped-bass",)),
+    _s("s-bluegill-hook", "how big a hook for bluegills", ("bluegill#setup-1", "bluegill#setup-2",
+       "bluegill#setup-3", "all-fish#tackle-hooks"), ("bluegill",)),
+    _s("s-cat-gear", "what setup should I buy for catfishing", ("blue-catfish#setup-1", "blue-catfish#setup-2",
+       "channel-catfish#setup-1", "channel-catfish#setup-2", "flathead-catfish#setup-1"), _CATS),
+    _s("s-crappie-depth", "how far under the float should my minnow be for crappie",
+       ("white-crappie#setup-1", "black-crappie#setup-1"), _CRAPPIE),
+    _s("s-texas-rig", "how do I set up a texas rigged plastic worm", ("largemouth-bass#setup-2",),
+       ("largemouth-bass",)),
+    _s("s-kid", "best rig for a little kid's first time fishing", ("bluegill#setup-1", "bluegill#setup-2",
+       "all-fish#tackle-reels"), ()),
+    _s("s-bluegill-summer", "where are bluegill in hot weather", ("bluegill#where_and_when", "bluegill#habitat"),
+       ("bluegill",)),
+    _s("s-lmb-cover", "where do largemouth like to hang out", ("largemouth-bass#overview",
+       "largemouth-bass#where_and_when", "largemouth-bass#habitat"), ("largemouth-bass",)),
+    _s("s-whitebass-eat", "what's on a sand bass's menu", ("white-bass#diet", "white-bass#why_these_baits"),
+       ("white-bass",)),
+    _s("s-shad-id", "gizzard vs threadfin shad", ("gizzard-shad#identification", "threadfin-shad#identification",
+       "all-fish#id-shad"), ("gizzard-shad", "threadfin-shad")),
+    _s("s-wb-hybrid", "is this a white bass or a wiper", ("white-bass#identification",
+       "hybrid-striped-bass#identification", "all-fish#id-temperate-bass"),
+       ("white-bass", "hybrid-striped-bass")),
+    _s("s-lmb-spb", "largemouth or kentucky bass, how to know", ("largemouth-bass#identification",
+       "spotted-bass#identification", "all-fish#id-black-bass"), ("largemouth-bass", "spotted-bass")),
+    _s("s-crappie-id", "how to know if a crappie is white or black", ("white-crappie#identification",
+       "black-crappie#identification", "all-fish#id-panfish"), _CRAPPIE),
+    _s("s-cat-id", "difference between blue cats and channel cats", ("blue-catfish#identification",
+       "channel-catfish#identification", "all-fish#id-catfish"), ("blue-catfish", "channel-catfish")),
+    _s("s-get-shad", "where do I get shad for bait", ("gizzard-shad#how_to_get", "threadfin-shad#how_to_get",
+       "gizzard-shad#why_these_baits", "threadfin-shad#why_these_baits"), ("gizzard-shad", "threadfin-shad")),
+    _s("s-move-bait", "am I allowed to take my bait minnows to another lake", ("all-fish#bait_rules",), ()),
+    _s("s-clean-crappie", "how do you prepare crappie to eat", ("all-fish#clean-fillet-panfish",
+       "all-fish#clean-scaling", "white-crappie#eating", "black-crappie#eating"), _CRAPPIE),
+    _s("s-skin-cat", "what's the best way to get the skin off a catfish", ("all-fish#clean-catfish",
+       "channel-catfish#eating", "blue-catfish#eating", "flathead-catfish#eating"), _CATS),
+    _s("s-fillet-striper", "how do you cut fillets off a striped bass", ("all-fish#clean-fillet",
+       "striped-bass#eating"), ("striped-bass",)),
+    _s("s-kill", "how do I kill a fish quickly", ("all-fish#care-dispatch-bleed",), ()),
+    _s("s-release", "tips for letting fish go alive", ("all-fish#care-release",), ()),
+    _s("s-advisory", "can I eat what I catch in texas lakes", ("all-fish#care-eating-safely",), ()),
+    _s("s-drum-eat", "do people eat gaspergou", ("freshwater-drum#eating",), ("freshwater-drum",)),
+    _s("s-carp-eat", "is carp edible", ("common-carp#eating",), ("common-carp",)),
+    _s("s-flathead-id", "how is a flathead different from other catfish", ("flathead-catfish#identification",
+       "all-fish#id-catfish"), _CATS),
+    _s("s-gdb-id", "how to spot a guadalupe bass", ("guadalupe-bass#identification", "all-fish#id-black-bass"),
+       ("guadalupe-bass",)),
+    _s("s-redear-id", "shellcracker or bluegill, how can I tell", ("redear-sunfish#identification",
+       "bluegill#identification", "all-fish#id-panfish"), ("redear-sunfish", "bluegill")),
+    _s("s-trout-bait", "what do stocked rainbows bite", ("rainbow-trout#live_baits",
+       "rainbow-trout#why_these_baits"), ("rainbow-trout",)),
+    _s("s-carp-bait", "what do carp go for", ("common-carp#live_baits", "common-carp#why_these_baits"),
+       ("common-carp",)),
+    _s("s-drum-how", "how to catch a drum", ("freshwater-drum#live_baits", "freshwater-drum#setup-1",
+       "freshwater-drum#setup-2", "freshwater-drum#where_and_when"), ("freshwater-drum",)),
+    _s("s-flathead-bait", "what do flatheads eat on a hook", ("flathead-catfish#live_baits",
+       "flathead-catfish#why_these_baits"), ("flathead-catfish",)),
+    _s("s-palomar", "how is a palomar tied", ("all-fish#knot-palomar",), ()),
+    _s("s-circle", "circle hooks, how do they work", ("all-fish#tackle-circle-hooks",), ()),
+    _s("s-line", "mono vs braid", ("all-fish#tackle-line",), ()),
+)
+
+
+# Written after the fixes above and run once, untuned: the honest estimate
+# of how rephrasing holds up (docs/adr/0025 reports both sets).
+HOLDOUT_CASES: tuple[StressCase, ...] = (
+    _s("h-bass-plastic", "which soft plastics work for largemouth", ("largemouth-bass#lures",), ("largemouth-bass",)),
+    _s("h-bass-how2", "teach me to catch a bass", ("largemouth-bass#live_baits", "largemouth-bass#lures"), _BASSES),
+    _s("h-bass-season", "what time of year are bass easiest to catch", ("largemouth-bass#where_and_when",
+       "spotted-bass#where_and_when", "guadalupe-bass#where_and_when", "all-fish#timing-season"), _BASSES),
+    _s("h-crappie-jig", "what color jig for crappie", ("white-crappie#lures", "black-crappie#lures"), _CRAPPIE),
+    _s("h-crappie-night", "can you catch crappie at night", ("white-crappie#where_and_when",
+       "black-crappie#where_and_when", "white-crappie#habits", "black-crappie#habits"), _CRAPPIE),
+    _s("h-cat-pond", "fishing for catfish in a small pond, what bait", ("channel-catfish#live_baits",
+       "channel-catfish#why_these_baits", "channel-catfish#setup-1"), _CATS),
+    _s("h-cat-night", "do catfish bite better after dark", ("channel-catfish#habits", "channel-catfish#where_and_when",
+       "blue-catfish#where_and_when", "flathead-catfish#habits", "flathead-catfish#where_and_when"), _CATS),
+    _s("h-flathead-size", "how big do yellow cats get", ("flathead-catfish#overview",), ("flathead-catfish",)),
+    _s("h-blue-where", "where do blue catfish live", ("blue-catfish#habitat", "blue-catfish#where_and_when"),
+       ("blue-catfish",)),
+    _s("h-bluegill-bed", "when do bream bed", ("bluegill#habits", "bluegill#where_and_when"), ("bluegill",)),
+    _s("h-bluegill-worm", "can I use worms for bluegill", ("bluegill#live_baits", "bluegill#why_these_baits",
+       "all-fish#bait-worms"), ("bluegill",)),
+    _s("h-white-bass-where", "where do sand bass school up", ("white-bass#where_and_when", "white-bass#habits"),
+       ("white-bass",)),
+    _s("h-striper-depth", "how deep are stripers in summer", ("striped-bass#where_and_when", "striped-bass#habitat"),
+       ("striped-bass",)),
+    _s("h-hybrid-lure", "best lures for hybrids", ("hybrid-striped-bass#lures",), ("hybrid-striped-bass",)),
+    _s("h-trout-power", "does powerbait work for trout", ("rainbow-trout#live_baits", "rainbow-trout#why_these_baits",
+       "all-fish#bait-dough-corn"), ("rainbow-trout",)),
+    _s("h-carp-corn", "is corn good for carp", ("common-carp#live_baits", "common-carp#why_these_baits",
+       "all-fish#bait-dough-corn"), ("common-carp",)),
+    _s("h-drum-sound", "why do drum make a grunting noise", ("freshwater-drum#overview",
+       "freshwater-drum#identification", "freshwater-drum#habits"), ("freshwater-drum",)),
+    _s("h-redear-food", "what do shellcrackers feed on", ("redear-sunfish#diet",), ("redear-sunfish",)),
+    _s("h-gdb-where", "which rivers have guadalupe bass", ("guadalupe-bass#habitat", "guadalupe-bass#where_and_when",
+       "guadalupe-bass#overview"), ("guadalupe-bass",)),
+    _s("h-spotted-where", "where do spots live", ("spotted-bass#habitat", "spotted-bass#where_and_when"),
+       ("spotted-bass",)),
+    _s("h-shad-catch", "how do I net shad", ("gizzard-shad#how_to_get", "threadfin-shad#how_to_get"),
+       ("gizzard-shad", "threadfin-shad")),
+    _s("h-ice", "should I put my fish on ice right away", ("all-fish#care-keeping",), ()),
+    _s("h-scale", "how to remove scales from a fish", ("all-fish#clean-scaling",), ()),
+    _s("h-fillet", "how do I fillet a fish", ("all-fish#clean-fillet", "all-fish#clean-fillet-panfish"), ()),
+    _s("h-hook-size", "what size hook should a beginner use", ("all-fish#tackle-hooks",), ()),
+    _s("h-sinker", "what kind of weight should I use", ("all-fish#tackle-sinkers", "all-fish#tackle-split-shot"), ()),
+    _s("h-knot", "easiest fishing knot", ("all-fish#knot-improved-clinch", "all-fish#knot-palomar"), ()),
+    _s("h-topwater", "when should I throw a topwater", ("all-fish#lure-topwater",), ()),
+    _s("h-crank", "how deep does a crankbait run", ("all-fish#lure-crankbaits",), ()),
+    _s("h-cloudy", "is fishing better on cloudy days", ("all-fish#timing-day",), ()),
+)
+
+
+# ===== names that are also everyday words (docs/adr/0026) =====
+# Each question uses an AMBIGUOUS_ALIASES name in one sense or the other.
+# `fish` is the species it must route to, or empty for the everyday sense,
+# where the right answer is to route nowhere (and usually to answer "that
+# doesn't look like a fishing question").
+AMBIGUOUS_CASES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
+    ("amb-bass-bait", "what bait for bass", _BASSES),
+    ("amb-bass-how", "how can i fish a bass", _BASSES),
+    ("amb-bass-lure", "best lure for bass in a farm pond", _BASSES),
+    ("amb-bass-guitar", "what bass guitar strings should I buy", ()),
+    ("amb-bass-speaker", "how do I turn down the bass on my speakers", ()),
+    ("amb-bass-band", "I play bass in a band, any tips for beginners", ()),
+    ("amb-drum-catch", "how do I catch drum", ("freshwater-drum",)),
+    ("amb-drum-eat", "is drum good to eat", ("freshwater-drum",)),
+    ("amb-drum-snare", "how do I tune a snare drum", ()),
+    ("amb-drum-kit", "best drum kit for a beginner", ()),
+    ("amb-drum-oil", "how much does an empty oil drum weigh", ()),
+    ("amb-hybrid-lure", "best lures for hybrids", ("hybrid-striped-bass",)),
+    ("amb-hybrid-car", "is a hybrid car worth the extra money", ()),
+    ("amb-hybrid-work", "how do I plan a hybrid working week", ()),
+    ("amb-slab-bait", "best bait for slabs", _CRAPPIE),
+    ("amb-slab-catch", "where do I find slabs in the spring", _CRAPPIE),
+    ("amb-slab-concrete", "how much does a concrete slab cost", ()),
+    ("amb-slab-foundation", "my slab foundation has a crack in it", ()),
+    ("amb-whites-run", "when do the whites run up the river", ("white-bass",)),
+    ("amb-whites-wash", "how do I keep my whites from going grey in the wash", ()),
+    ("amb-yellows-bait", "what bait for yellows at night", ("flathead-catfish",)),
+    ("amb-yellows-paint", "what shades of yellow paint go with grey", ()),
+    ("amb-blues-catch", "how do people catch huge blues", ("blue-catfish",)),
+    ("amb-blues-bait", "what bait for blues in winter", ("blue-catfish",)),
+    ("amb-blues-guitar", "teach me a blues guitar riff", ()),
+    ("amb-blues-sad", "I've had the blues all week", ()),
+    ("amb-spots-lure", "what lure for spots in a creek", ("spotted-bass",)),
+    ("amb-spots-parking", "where are the free parking spots downtown", ()),
+    ("amb-spots-shirt", "how do I get a spot off my shirt", ()),
+    ("amb-cats-bait", "what bait for cats", _CATS),
+    ("amb-cats-night", "how do I catch cats at night", _CATS),
+    ("amb-cats-pet", "my cats keep scratching the sofa", ()),
+    ("amb-cat-vet", "how often should a cat go to the vet", ()),
+)
+
+
+# ===== the topics added with docs/adr/0026 =====
+NEW_TOPIC_CASES: tuple[RagCase, ...] = (
+    _c("cast-how", "how do I cast a spinning reel", "all-fish#cast-spinning"),
+    _c("cast-button", "how do I cast a spincast reel", "all-fish#cast-spinning", "all-fish#tackle-reels"),
+    _c("backlash", "why does my baitcaster keep backlashing", "all-fish#cast-baitcast"),
+    _c("cast-lure-hang", "how far should the lure hang below the rod tip when I cast",
+       "all-fish#cast-spinning", "all-fish#cast-baitcast"),
+    _c("drag-set", "how do I set the drag on my reel", "all-fish#technique-drag"),
+    _c("drag-what", "what does the drag on a reel do", "all-fish#technique-drag"),
+    _c("drag-break", "my line keeps breaking when a fish runs", "all-fish#technique-drag"),
+    _c("measure", "how do I measure a fish", "all-fish#technique-measure"),
+    _c("bank", "how do I fish from the bank without a boat", "all-fish#technique-shore"),
+    _c("bank-where", "where should I cast from shore on a pond", "all-fish#technique-shore", "all-fish#cond-cover"),
+    _c("first-trip", "I have never been fishing, how do I start in texas", "all-fish#start-first-trip"),
+    _c("cover", "where do fish hide in a lake", "all-fish#cond-cover", "all-fish#cond-points"),
+    _c("docks", "is it worth fishing around docks", "all-fish#cond-cover"),
+    _c("points", "what is a point and why fish it", "all-fish#cond-points"),
+    _c("clarity", "what colour lure should I use in muddy water", "all-fish#cond-clarity"),
+    _c("clear-water", "what lures work in clear water", "all-fish#cond-clarity"),
+    _c("wind", "should I fish the windy side of the lake", "all-fish#cond-wind"),
+    _c("front", "how does a cold front affect fishing", "all-fish#cond-fronts"),
+    _c("bluebird", "why is fishing bad on a bright sunny day after a storm",
+       "all-fish#cond-fronts", "all-fish#cond-light"),
+    _c("cloudy", "is fishing better when it is cloudy", "all-fish#cond-light", "all-fish#timing-day"),
+    _c("lifejacket", "do kids have to wear a life jacket in a boat", "all-fish#safe-lifejacket"),
+    _c("spines", "how do I hold a catfish without getting stabbed", "all-fish#safe-handling"),
+    _c("license", "do I need a fishing licence in texas", "all-fish#rule-license"),
+    _c("license-kid", "does my 10 year old need a fishing license", "all-fish#rule-license"),
+    _c("cdd", "what do I have to do with my boat before I leave the lake", "all-fish#rule-clean-drain-dry"),
+    _c("zebra", "how do I stop spreading zebra mussels", "all-fish#rule-clean-drain-dry"),
+    _c("old-line", "what should I do with my old fishing line", "all-fish#rule-line-disposal"),
+    _c("cook-how", "how long do I cook a fillet", "all-fish#cook-methods"),
+    _c("bake", "what temperature do I bake fish at", "all-fish#cook-methods"),
+    _c("fridge", "how long does raw fish keep in the fridge", "all-fish#cook-storage"),
+    _c("thaw", "how should I thaw frozen fish", "all-fish#cook-storage", "all-fish#cook-freezing"),
+    _c("freeze", "how do I freeze the fish I caught", "all-fish#cook-freezing"),
+    _c("freezer-burn", "what causes freezer burn on fish", "all-fish#cook-freezing"),
+    _c("keep-hot-day", "how do I stop my catch from going bad on a hot day", "all-fish#care-keeping"),
 )

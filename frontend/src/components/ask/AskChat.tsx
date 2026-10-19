@@ -53,7 +53,14 @@ function SourceBadge({ r }: { r: AskResponse }) {
     return <span className="badge badge-ok">From the guides</span>;
   }
   if (r.answer_source === "no_match") {
-    return <span className="badge badge-muted">Not in the guides</span>;
+    // Three different reasons for an empty answer (backend ADR 0026).
+    const label =
+      r.trace.outcome === "off_topic"
+        ? "Not a fishing question"
+        : r.trace.outcome === "unguided_fish"
+          ? "No guide for that fish"
+          : "Not in the guides";
+    return <span className="badge badge-muted">{label}</span>;
   }
   if (r.answer_source === "fallback") {
     return (
@@ -75,12 +82,21 @@ function SourceBadge({ r }: { r: AskResponse }) {
 const OUTCOME_TEXT: Record<string, string> = {
   ok: "Passed every check",
   no_match: "Nothing in the guides matched, so no model was called",
+  off_topic: "Not read as a fishing question, so it was never searched and no model was called",
+  unguided_fish: "A fish FishEye has no guide for, so there was nothing to quote",
   invalid_json: "Model reply was malformed, so the guide text is shown",
   ungrounded_citation: "Model cited a passage it wasn't given, so its answer was discarded",
   ungrounded_species: "Model named a fish the passages don't mention, so its answer was discarded",
   ungrounded_number: "Model used a number the passages don't give, so its answer was discarded",
   url_in_answer: "Model wrote a link, so its answer was discarded",
   provider_unavailable: "Model unavailable, so the guide text is shown",
+};
+
+// Hybrid scores are reciprocal-rank-fusion sums (~0.01–0.03), hence the
+// extra decimal place below (backend services/rag/hybrid.py).
+const RETRIEVER_LABELS: Record<string, string> = {
+  bm25: "Keyword search (BM25)",
+  hybrid: "Keyword (BM25) + semantic (multilingual-e5-small) search",
 };
 
 function Trace({ r }: { r: AskResponse }) {
@@ -95,7 +111,7 @@ function Trace({ r }: { r: AskResponse }) {
         <li>
           <span className="trace-step-title">1 · Retrieve</span>
           <span className="muted">
-            {t.retriever.toUpperCase()} over the fish guides
+            {RETRIEVER_LABELS[t.retriever] ?? t.retriever.toUpperCase()} over the fish guides
             {t.routed_species.length > 0 && <> · routed to {t.routed_species.join(", ")}</>}
           </span>
           {t.retrieved.length > 0 ? (
@@ -106,7 +122,7 @@ function Trace({ r }: { r: AskResponse }) {
                   <span className="score-bar" aria-hidden="true">
                     <span style={{ width: `${Math.max(6, (h.score / max) * 100)}%` }} />
                   </span>
-                  <span className="score">{h.score.toFixed(2)}</span>
+                  <span className="score">{h.score.toFixed(t.retriever === "hybrid" ? 3 : 2)}</span>
                   <span className="cited">{cited.has(h.id) ? "cited" : ""}</span>
                 </li>
               ))}

@@ -137,6 +137,23 @@ SOURCES: dict[str, Source] = {
         Source("texasmonthly-gdb", "Texas Monthly: How to catch Guadalupe bass", "https://www.texasmonthly.com/travel/how-to-catch-guadalupe-bass/", "publication"),
         Source("tpwmag-trout-2005", "Texas Parks & Wildlife magazine: winter trout (2005)", "https://tpwmagazine.com/archive/2005/jan/scout2/", "publication"),
         Source("torwicks-gdb", "Torwick's Guiding Service: Catching the Guadalupe bass", "https://www.torwicksguidingservice.com/single-post/how-to-target-and-catch-the-state-fish-of-texas-the-guadalupe-bass", "guide"),
+        # Added with docs/adr/0026: casting, playing a fish, conditions,
+        # safety, the licence and Texas rules, and cooking a catch.
+        Source("tpwd-measure", "TPWD Outdoor Annual: measurement tips", "https://tpwd.texas.gov/regulations/outdoor-annual/fishing/measurement-tips", "agency"),
+        Source("tpwd-license", "TPWD Outdoor Annual: fishing licenses and packages", "https://tpwd.texas.gov/regulations/outdoor-annual/licenses/fishing-licenses-stamps-tags-packages/fishing-licenses-and-packages", "agency"),
+        Source("tpwd-beginners", "TPWD: Fishing for beginners", "https://tpwd.texas.gov/fishboat/fish/fishing-for-beginners/", "agency"),
+        Source("tpwd-cdd", "TPWD: Protect our waters \u2014 clean, drain and dry", "https://tpwd.texas.gov/fishboat/boat/protect_water", "agency"),
+        Source("tpwd-lifejacket", "TPWD Boater Education: life jackets", "https://tpwd.texas.gov/education/boater-education/lifejacket", "agency"),
+        Source("nydec-where", "New York DEC: where to fish in lakes and ponds", "https://dec.ny.gov/things-to-do/freshwater-fishing/learn-to-fish/tips-skills/where-to-fish-lakes-ponds", "agency"),
+        Source("indnr-when", "Indiana DNR: fishing tips \u2014 when and where", "https://www.in.gov/dnr/fish-and-wildlife/education-programs/learn-to-fish/fishing-tips-and-videos/fishing-tips-when-and-where/", "agency"),
+        Source("kyfw-weather", "Kentucky Fish & Wildlife: best weather trends for spring fishing", "https://fw.ky.gov/Fish/Pages/Best-Weather-Trends-for-Spring-Fishing.aspx", "agency"),
+        Source("umn-fish", "University of Minnesota Extension: safely choose, cook and store fish", "https://extension.umn.edu/preserving-and-preparing/safely-choose-cook-and-store-fish", "university"),
+        Source("uaf-freezing", "University of Alaska Fairbanks Extension: home freezing of fish", "https://www.uaf.edu/ces/publications/database/food/freezing-fish.php", "university"),
+        Source("tamu-catfish-cook", "Texas A&M AgriLife Extension / SRAC: You can do catfish", "https://extension.rwfm.tamu.edu/wp-content/uploads/sites/9/2010/04/6_You_Can_Do_Catfish.pdf", "university"),
+        Source("tmf-cast", "Take Me Fishing: how to cast", "https://www.takemefishing.org/how-to-fish/how-to-catch-fish/how-to-cast/", "publication"),
+        Source("tmf-drag", "Take Me Fishing: how to set the drag", "https://www.takemefishing.org/how-to-fish/how-to-catch-fish/how-to-set-the-drag/", "publication"),
+        Source("tmf-shore", "Take Me Fishing: shore fishing", "https://takemefishing.org/how-to-fish/types-of-fishing/shore-fishing", "publication"),
+        Source("tmf-line-recycle", "Take Me Fishing: recycling old fishing line", "https://www.takemefishing.org/how-to-fish/fishing-and-conservation/recycling-old-fishing-line/", "publication"),
     ]
 }
 

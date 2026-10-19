@@ -22,9 +22,9 @@ export function Handbook({ topics }: { topics: HandbookTopic[] }) {
     <section id="handbook" className="handbook" aria-labelledby="handbook-title">
       <h2 id="handbook-title">The angler&apos;s handbook</h2>
       <p className="muted">
-        What applies to every fish: baits and why they work, lures, tackle, knots, releasing and
-        cleaning a catch, telling look-alike fish apart, and when fish bite. Each card names its
-        sources.
+        What applies to every fish: baits and why they work, lures, tackle, knots, casting and
+        playing a fish, weather and water, staying safe, the licence, and releasing, cleaning and
+        cooking a catch. Each card names its sources.
       </p>
       <nav className="chip-row handbook-nav" aria-label="Handbook sections">
         {groups.map((g) => (

@@ -1,0 +1,16 @@
+# Semantic retrieval for Ask (docs/adr/0025). Optional, like
+# requirements-postgres.txt: without these (or without the model files)
+# the app runs keyword search only, exactly as before.
+#
+#   pip install -r requirements.txt -r requirements-semantic.txt
+#   python -m app.cli.fetch_embedding_model
+#
+# onnxruntime runs the model on the CPU; no PyTorch, no GPU.
+onnxruntime==1.20.1
+tokenizers==0.21.0
+numpy==2.2.1
+# Only the download command uses these; the app never calls Hugging Face.
+huggingface_hub==0.27.0
+# Compresses the model to int8 after download (118 MB instead of 470 MB,
+# about half the memory, same eval results; docs/adr/0025).
+onnx==1.18.0

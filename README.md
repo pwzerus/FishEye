@@ -46,8 +46,8 @@ Coverage today is Texas; the data model and importers are per-state (see
 | Page | |
 |---|---|
 | **Map** (`/map`) | Locate me / search; lakes in view, with verified lakes always kept and the rest ranked by size when a view is crowded; a lake panel with TPWD's profile and fishing ratings, species with their evidence, public boat ramps, weather, bite windows and an AI explanation of the ranking. |
-| **Fish guides** (`/fish`) | Eighteen species: how to recognise each one (look-alikes compared on the same features), habitat and habits, where and when, bait and why it works, lures, beginner tackle setups, cleaning and eating. Plus a 44-topic angler's handbook: baits, lures, tackle, knots, releasing and cleaning a catch, telling fish families apart, timing. Every section cites its sources. |
-| **Ask** (`/ask`) | Free-text questions ("how do I tell white bass from hybrid striped bass?") answered with the matching guide passages and their sources, free and with no account; "not covered" when the guides don't say. Signed in, an AI summary of those passages, 3 a day. |
+| **Fish guides** (`/fish`) | Eighteen species: how to recognise each one (look-alikes compared on the same features), habitat and habits, where and when, bait and why it works, lures, beginner tackle setups, cleaning and eating. Plus a 64-topic angler's handbook: baits, lures, tackle, knots, casting and playing a fish, weather and water, staying safe, the licence, telling fish families apart, timing, and releasing, cleaning and cooking a catch. Every section cites its sources. |
+| **Ask** (`/ask`) | Free-text questions, in English or Chinese ("how do I tell white bass from hybrid striped bass?", "鲈鱼怎么钓") answered with the matching guide passages and their sources, free and with no account. An empty answer says which kind it is: not a fishing question, a fish with no guide, or a fishing question the guides don't answer. Signed in, an AI summary of those passages, 3 a day. |
 | **Community** (`/community`) | Accounts and catch pins with photos, with moderation tools for admins. |
 
 ## Architecture
@@ -117,13 +117,20 @@ a production frontend build, and a Docker build with smoke tests on every push.
   URL, may not name a fish its sources don't mention, and may not contain a
   number (hook size, line weight) that isn't in its sources. Failures retry
   once, then fall back to quoting the guide verbatim, labelled as such.
-- **Retrieval measured, not assumed.** Guide Q&A uses BM25 with species
-  routing rather than embeddings, chosen on an eval set of beginner-phrased
-  questions, now 95 of them (hit@4 99%, MRR 0.85). The same eval caught the on-topic gate letting 14 of
-  21 deliberately tricky off-topic questions through ("how to tie a tie");
-  rebuilt, it lets 1 through and still admits 14 of 15 fishing questions
-  that name no fish (now 1 of 30 and 20 of 21, with bait, lure and tackle
-  names added). The eval runs in the test suite, so a regression fails CI.
+- **Retrieval measured, not assumed.** Guide Q&A is BM25 with species
+  routing, plus an optional local embedding model (multilingual-e5-small,
+  int8, CPU) that only re-ranks: measured on this corpus, its similarity
+  scores can't tell fishing from off-topic questions, so rules keep that
+  decision — but *which of two things* a question is closer to is something
+  the model answers well, and that is how "bass" the fish is told from
+  "bass" the guitar (ADR 0026). Judged on 98 beginner questions (hit@4 99%,
+  MRR 0.88), 28 in Chinese, 34 on the newest topics, 80 rephrasings (30
+  written after the tuning, 90%) and 33 questions using a fish name in its
+  everyday sense, with a "wrong fish" check. The same eval caught the
+  on-topic gate letting 14 of 21 deliberately tricky off-topic questions
+  through ("how to tie a tie"); rebuilt, it lets 1 of 30 through and admits
+  every fishing question that names no fish. The eval runs in the test
+  suite, so a regression fails CI.
 - **The model is optional.** Every question is answered by search alone,
   with sources and no model call. A written AI summary is an extra step for
   signed-in accounts, 3 a day, reserved atomically before the call and given
@@ -146,7 +153,7 @@ a production frontend build, and a Docker build with smoke tests on every push.
   keyless weather (NWS) and OpenStreetMap tiles mean a clean clone works
   with `docker compose up`, and the failure paths are tested, not just the
   happy path.
-- **Decisions written down.** 24 architecture decision records in
+- **Decisions written down.** 26 architecture decision records in
   [`docs/adr/`](docs/adr/), each with the alternatives considered and the
   trade-off taken.
 
@@ -210,8 +217,8 @@ docker-compose.prod.yml   single-server production layer (with Caddyfile)
 **AI**
 - Turn on a real model behind a per-day spend cap, judged by the same eval
   set as the mock.
-- Hybrid retrieval (BM25 + embeddings with reciprocal-rank fusion) once the
-  eval shows paraphrase misses worth fixing.
+- Ship the embedding model in the Docker image (hybrid retrieval runs
+  locally today; a deployment without the model is keyword-only).
 
 **Coverage**
 - Beyond Texas: the OSM and GBIF importers already take a state, and the

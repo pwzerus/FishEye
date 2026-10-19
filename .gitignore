@@ -33,6 +33,7 @@ npm-debug.log*
 backend/tx_osm.json
 backend/gbif_tx_raw.json
 backend/gbif_tx_report.json
+backend/tpwd_cache/
 
 # Community photo uploads (MEDIA_ROOT): user content, never committed
 backend/media/
@@ -41,3 +42,5 @@ media/
 # Private notes kept next to the code but never published
 docs/commercialization.md
 docs/private/
+# Embedding model files (~470 MB): fetched by app.cli.fetch_embedding_model
+backend/models/

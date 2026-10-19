@@ -127,10 +127,24 @@ Try a failure path on demand: `LLM_MOCK_FAILURE_MODE=invented_number`
 (or `hallucinated_species`, `hallucinated_source`, `invalid_json`,
 `unavailable`) with the mock provider.
 
+Semantic search (optional, docs/adr/0025): Ask works without it, keyword
+search only. With it, rephrased questions are found more often. A local
+model (multilingual-e5-small, MIT, 118 MB after compression) runs on the
+CPU; nothing is sent anywhere.
+
+```bash
+pip install -r requirements-semantic.txt
+python -m app.cli.fetch_embedding_model   # once; into backend/models/ (gitignored)
+# RAG_SEMANTIC=auto (default: use it if installed) | off | on (refuse to start without it)
+```
+
 Retrieval and grounding eval:
 
 ```bash
-python -m app.eval.rag_runner      # hit@4, MRR, off-topic rejection, failures caught
+python -m app.eval.rag_runner             # hit@4, MRR, off-topic, wrong-fish answers, failures caught
+                                          # plus Chinese, paraphrases, the newest topics and
+                                          # names that are also everyday words (ADR 0026)
+python -m app.eval.rag_runner --compare   # keyword-only vs hybrid, side by side
 python -m app.eval.runner          # the advisor's eval (ADR 0008)
 ```
 

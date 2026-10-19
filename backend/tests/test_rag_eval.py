@@ -42,9 +42,43 @@ def test_every_injected_model_failure_is_caught():
 
 
 def test_eval_case_ids_are_unique_and_labels_point_at_real_passages():
+    from app.eval.rag_cases import (
+        HOLDOUT_CASES,
+        NEW_TOPIC_CASES,
+        PARAPHRASE_CASES,
+        STRESS_CASES,
+        ZH_CASES,
+    )
     from app.services.rag.chunking import build_passages
 
     ids = {p.id for p in build_passages()}
-    assert len({c.id for c in CASES}) == len(CASES)
-    for case in CASES:
+    every = (*CASES, *ZH_CASES, *PARAPHRASE_CASES, *NEW_TOPIC_CASES, *STRESS_CASES, *HOLDOUT_CASES)
+    assert len({c.id for c in every}) == len(every)
+    for case in every:
         assert case.relevant <= ids, case.id
+
+
+def test_keyword_search_answers_chinese_questions_through_the_glossary():
+    # Keyword search alone, no model (docs/adr/0025): measured 100%.
+    assert run().chinese.hit_at_k >= 0.9
+
+
+def test_the_topics_added_with_adr_0026_are_reachable():
+    report = run()
+    assert report.new_topics.hit_at_k >= 0.8, report.new_topics.misses
+
+
+def test_a_name_that_is_also_an_everyday_word_is_read_the_right_way():
+    # bass/drum/blues/cats/slabs/spots in both senses. Keyword search alone
+    # manages all but a couple; with the model it is all of them (ADR 0026).
+    report = run()
+    assert report.ambiguous_resolved >= 0.9, report.ambiguous_wrong
+
+
+def test_rephrased_questions_still_find_their_passage_and_never_another_fish():
+    # Measured with keyword search: 45/50 rephrased, 24/30 untuned, and one
+    # wrong-fish answer (a texas-rig question that names no fish).
+    report = run()
+    assert report.stress.hit_at_k >= 0.85, report.stress.misses
+    assert report.holdout.hit_at_k >= 0.75, report.holdout.misses
+    assert len(report.wrong_fish) <= 1, report.wrong_fish

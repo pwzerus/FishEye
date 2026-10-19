@@ -26,6 +26,7 @@ from app.services.rag.retriever import (
     BM25Retriever,
     default_retriever,
     detect_species,
+    resolve_species,
     split_species,
     stem,
 )
@@ -115,6 +116,59 @@ def test_a_question_about_a_fish_family_gets_passages_for_each_member():
     # "catfish" means channel, blue and (since docs/adr/0024) flathead.
     hits = default_retriever().search("what gear do I need for catfish", k=4)
     assert {h.passage.species_slug for h in hits} == {"channel-catfish", "blue-catfish", "flathead-catfish"}
+
+
+def test_a_bare_bass_means_the_black_basses_not_the_shad_bait_lists():
+    hits = default_retriever().search("how to catch bass ,what kind of bait should i use", k=4)
+    slugs = {h.passage.species_slug for h in hits}
+    assert slugs <= {"largemouth-bass", "spotted-bass", "guadalupe-bass", SHARED_SLUG}
+    assert "largemouth-bass" in slugs
+
+
+def test_a_longer_bass_name_still_wins_over_the_bare_word():
+    assert split_species("white bass bait")[0] == ("white-bass",)
+    assert split_species("striped bass vs hybrid")[0][0] == "striped-bass"
+
+
+def test_fish_without_a_guide_are_not_read_as_the_guided_fish_in_their_name():
+    assert split_species("red drum bait")[0] == ()
+    assert split_species("speckled trout")[0] == ()
+    assert split_species("smallmouth bass")[0] == ()
+    assert split_species("yellow perch")[0] == ()
+    assert default_retriever().search("how do I catch smallmouth bass") == []
+    # Named alongside a guided fish, the guided one is still answered.
+    assert split_species("red drum or freshwater drum")[0] == ("freshwater-drum",)
+
+
+def test_nicknames_anglers_use_route_to_the_right_fish():
+    assert split_species("top lures for bucketmouth")[0] == ("largemouth-bass",)
+    assert split_species("what live bait do linesides want")[0] == ("striped-bass",)
+    assert split_species("good bait for whiskerfish")[0][0] == "channel-catfish"
+    assert split_species("barfish on a jig")[0] == ("white-bass",)
+    assert split_species("chinquapin bed")[0] == ("redear-sunfish",)
+
+
+def test_a_name_that_is_also_an_everyday_word_needs_the_question_to_be_about_fishing():
+    # resolve_species, not split_species: these are only a fish in context
+    # (docs/adr/0026). Without the model, the rule on AmbiguousName decides.
+    assert resolve_species("best bait for slabs")[0] == ("white-crappie", "black-crappie")
+    assert resolve_species("how much does a concrete slab cost")[0] == ()
+    assert resolve_species("what bait for bass")[0] == ("largemouth-bass", "spotted-bass", "guadalupe-bass")
+    assert resolve_species("what bass guitar strings should I buy")[0] == ()
+    assert resolve_species("how do I catch drum")[0] == ("freshwater-drum",)
+    assert resolve_species("how do I tune a snare drum")[0] == ()
+    assert resolve_species("my cats keep scratching the sofa")[0] == ()
+
+
+def test_an_ambiguous_name_inside_an_unguided_fishs_name_is_not_that_fish():
+    # "smallmouth bass" must not route on its "bass".
+    assert resolve_species("how do I catch smallmouth bass")[0] == ()
+    assert default_retriever().search("how do I catch smallmouth bass") == []
+
+
+def test_two_fish_and_or_is_an_identification_question():
+    ids = [h.passage.id for h in default_retriever().search("is this a white bass or a wiper")]
+    assert {"white-bass#identification", "hybrid-striped-bass#identification"} & set(ids)
 
 
 def test_a_question_about_two_named_fish_gets_passages_for_both():
@@ -256,8 +310,32 @@ def test_happy_path_answers_from_the_model_with_validated_citations():
 def test_nothing_retrieved_short_circuits_without_calling_the_model():
     result = rag.ask("what is the capital of france", provider=_NeverCalled())
     assert result.answer_source == rag.ANSWER_NO_MATCH
-    assert result.trace.outcome == rag.OUTCOME_NO_MATCH
+    assert result.trace.outcome == rag.OUTCOME_OFF_TOPIC
     assert result.citations == []
+
+
+def test_the_three_empty_answers_say_which_situation_it_is():
+    """"Not a fishing question", "no guide for that fish" and "the guides
+    don't answer that" are different admissions (docs/adr/0026)."""
+    off = rag.search_guides("how do I bake sourdough bread")
+    assert off.trace.outcome == rag.OUTCOME_OFF_TOPIC
+    assert "fishing question" in off.answer
+
+    unguided = rag.search_guides("how do I catch smallmouth bass")
+    assert unguided.trace.outcome == rag.OUTCOME_UNGUIDED_FISH
+    assert "smallmouth bass" in unguided.answer  # names the fish it means
+
+    covered = rag.search_guides("what is the world record bluegill")
+    assert covered.trace.outcome == rag.OUTCOME_NO_MATCH
+    assert "don't cover that" in covered.answer
+    for result in (off, unguided, covered):
+        assert result.answer_source == rag.ANSWER_NO_MATCH
+        assert result.citations == []
+
+
+def test_a_chinese_question_that_is_not_about_fishing_is_told_so():
+    result = rag.search_guides("红烧肉怎么做")
+    assert result.trace.outcome == rag.OUTCOME_OFF_TOPIC
 
 
 def test_a_named_fish_question_its_guide_cannot_answer_is_not_covered():

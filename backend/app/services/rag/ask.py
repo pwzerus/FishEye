@@ -35,7 +35,16 @@ from typing import Any
 from app.knowledge.species_guides import GUIDES
 from app.services.llm import LLMProvider, LLMUnavailable, get_provider
 from app.services.rag.chunking import Passage
-from app.services.rag.retriever import Retriever, ScoredPassage, default_retriever, split_species
+from app.services.rag.retriever import (
+    EMPTY_NOT_COVERED,
+    EMPTY_OFF_TOPIC,
+    EMPTY_UNGUIDED_FISH,
+    Retriever,
+    ScoredPassage,
+    default_retriever,
+    split_species,
+    unguided_fish_named,
+)
 
 DEFAULT_K = 4
 MAX_ATTEMPTS = 2
@@ -44,6 +53,10 @@ CACHE_TTL_SECONDS = 60 * 60  # the guides only change with a deploy
 
 OUTCOME_OK = "ok"
 OUTCOME_NO_MATCH = "no_match"
+# Why nothing was retrieved (retriever.EMPTY_*, docs/adr/0026). The trace
+# says which, so the reason the person is given is the one the retriever had.
+OUTCOME_OFF_TOPIC = "off_topic"
+OUTCOME_UNGUIDED_FISH = "unguided_fish"
 OUTCOME_INVALID_JSON = "invalid_json"
 OUTCOME_UNGROUNDED_CITATION = "ungrounded_citation"
 OUTCOME_UNGROUNDED_SPECIES = "ungrounded_species"
@@ -58,12 +71,26 @@ ANSWER_NO_MATCH = "no_match"
 # (search_guides below). A written answer is a separate, metered step.
 ANSWER_PASSAGES = "passages"
 
-NO_MATCH_ANSWER = (
-    "The FishEye fish guides don't cover that yet. They cover eighteen Texas freshwater "
-    "fish (what each one eats, where it lives, which baits work and why, rod-and-reel "
-    "setups, and how to clean it) plus a handbook on baits, tackle, knots, telling fish "
-    "apart and caring for your catch. Try asking about one of those."
+COVERAGE = (
+    "FishEye covers eighteen Texas freshwater fish (what each one eats, where it lives, "
+    "which baits work and why, rod-and-reel setups, and how to clean and cook it) plus a "
+    "handbook on baits, lures, tackle, knots, casting, weather and water, safety and "
+    "caring for your catch."
 )
+# Three different admissions, because they are three different situations
+# and one "not covered" for all of them was misleading (docs/adr/0026).
+NO_MATCH_ANSWER = f"The FishEye guides don't cover that yet. {COVERAGE} Try asking about one of those."
+OFF_TOPIC_ANSWER = (
+    "That doesn't look like a fishing question to me — or I didn't understand it. "
+    f"{COVERAGE} Try naming a fish, a bait or a piece of tackle, in English or Chinese."
+)
+
+
+def unguided_fish_answer(name: str) -> str:
+    return (
+        f"FishEye has no guide for {name} yet, so anything it told you about that fish would "
+        f"be guesswork. {COVERAGE}"
+    )
 
 SPECIES_VOCABULARY = tuple(sorted((g.common_name.lower() for g in GUIDES), key=len, reverse=True))
 
@@ -277,14 +304,30 @@ def search_guides(
     named, _ = split_species(question)
     trace = AskTrace(
         trace_id=str(uuid.uuid4()),
+        retriever=getattr(retr, "name", "bm25"),
         routed_species=list(named or context or ()),
         retrieved=[{"id": h.passage.id, "score": round(h.score, 3)} for h in hits],
     )
     if not hits:
-        trace.outcome = OUTCOME_NO_MATCH
-        return AskResult(question, NO_MATCH_ANSWER, ANSWER_NO_MATCH, [], trace)
+        return _empty(question, context, retr, trace)
     passages = [h.passage for h in hits]
     return AskResult(question, "Here's what the FishEye guides say:", ANSWER_PASSAGES, passages, trace)
+
+
+def _empty(question: str, context: tuple[str, ...] | None, retr: Retriever, trace: AskTrace) -> AskResult:
+    """The answer when nothing was retrieved: which of the three depends on
+    why the retriever came back empty (docs/adr/0026)."""
+    why = retr.why_empty(question, context) if hasattr(retr, "why_empty") else EMPTY_NOT_COVERED
+    if why == EMPTY_OFF_TOPIC:
+        trace.outcome = OUTCOME_OFF_TOPIC
+        answer = OFF_TOPIC_ANSWER
+    elif why == EMPTY_UNGUIDED_FISH:
+        trace.outcome = OUTCOME_UNGUIDED_FISH
+        answer = unguided_fish_answer(unguided_fish_named(question) or "that fish")
+    else:
+        trace.outcome = OUTCOME_NO_MATCH
+        answer = NO_MATCH_ANSWER
+    return AskResult(question, answer, ANSWER_NO_MATCH, [], trace)
 
 
 def ask(
@@ -303,14 +346,14 @@ def ask(
     named, _ = split_species(question)
     trace = AskTrace(
         trace_id=str(uuid.uuid4()),
+        retriever=getattr(retr, "name", "bm25"),
         routed_species=list(named or context or ()),
         retrieved=[{"id": h.passage.id, "score": round(h.score, 3)} for h in hits],
     )
     passages = [h.passage for h in hits]
 
     if not passages:
-        trace.outcome = OUTCOME_NO_MATCH
-        return AskResult(question, NO_MATCH_ANSWER, ANSWER_NO_MATCH, [], trace)
+        return _empty(question, context, retr, trace)
 
     key = _cache_key(question, passages)
     with _cache_lock:

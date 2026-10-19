@@ -100,3 +100,26 @@ lands in the top four.
   to the new guides yet.
 - The next retrieval step is still hybrid search (ADR 0023's roadmap), now
   with a larger eval set to judge it.
+
+## Addendum: a bare "bass"
+
+Reported after release: "how to catch bass, what kind of bait should I use"
+answered with the gizzard and threadfin shad bait lists. "Bass" alone was
+not a recognised name, so the question searched every passage, and the shad
+passages repeat "striped bass and hybrid striped bass". Now:
+
+- A bare "bass" (or "black bass") routes to the three black basses, as in
+  TPWD's usage. Longer names ("white bass", "striped bass") still match
+  first, and "bass" followed by an instrument word ("bass guitar") is not
+  a fish.
+- Fish without a guide whose names contain a guided fish's name
+  (`UNGUIDED_FISH`: "smallmouth bass", "red drum", "speckled trout",
+  "yellow perch", ...) are blanked out before names are matched, and a
+  question naming only those gets "not covered" rather than whatever
+  passages share the word.
+- A routed question that asks whether something is legal leads with the
+  best shared passage, because statewide rules live there ("is it legal to
+  use a small bass as bait").
+
+Three questions were added to the eval and three to not-covered (98 in
+all): hit@4 99%, MRR 0.85, unchanged on the previous 95.
