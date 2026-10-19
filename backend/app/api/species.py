@@ -69,6 +69,7 @@ def to_out(guide: SpeciesGuide) -> SpeciesGuideOut:
         how_to_get=list(guide.how_to_get),
         bait_for=list(guide.bait_for),
         legal_notes=list(guide.legal_notes),
+        legal_notes_region="TX",
         limits_url=TPWD_LIMITS_URL,
         sources=_sources(guide.source_ids),
     )
@@ -102,6 +103,7 @@ def list_handbook() -> list[HandbookTopicOut]:
             category_label=CATEGORIES[t.category],
             title=t.title,
             body=list(t.body),
+            region=t.region,
             sources=_sources(t.source_ids),
         )
         for _, t in ranked

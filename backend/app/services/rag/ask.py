@@ -32,6 +32,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+from app.knowledge import jurisdictions
 from app.knowledge.species_guides import GUIDES
 from app.services.llm import LLMProvider, LLMUnavailable, get_provider
 from app.services.rag.chunking import Passage
@@ -57,6 +58,8 @@ OUTCOME_NO_MATCH = "no_match"
 # says which, so the reason the person is given is the one the retriever had.
 OUTCOME_OFF_TOPIC = "off_topic"
 OUTCOME_UNGUIDED_FISH = "unguided_fish"
+# The only passages that answer are another state's rules (docs/adr/0027).
+OUTCOME_OTHER_STATE = "other_state"
 OUTCOME_INVALID_JSON = "invalid_json"
 OUTCOME_UNGROUNDED_CITATION = "ungrounded_citation"
 OUTCOME_UNGROUNDED_SPECIES = "ungrounded_species"
@@ -72,10 +75,11 @@ ANSWER_NO_MATCH = "no_match"
 ANSWER_PASSAGES = "passages"
 
 COVERAGE = (
-    "FishEye covers eighteen Texas freshwater fish (what each one eats, where it lives, "
-    "which baits work and why, rod-and-reel setups, and how to clean and cook it) plus a "
-    "handbook on baits, lures, tackle, knots, casting, weather and water, safety and "
-    "caring for your catch."
+    "FishEye covers eighteen freshwater fish, most of them found across the U.S. (what each one "
+    "eats, where it lives, which baits work and why, rod-and-reel setups, and how to clean and "
+    "cook it) plus a handbook on baits, lures, tackle, knots, casting, weather and water, safety "
+    "and caring for your catch. The rules, and many of the examples of where fish live, are "
+    "Texas's so far; both differ by state."
 )
 # Three different admissions, because they are three different situations
 # and one "not covered" for all of them was misleading (docs/adr/0026).
@@ -286,11 +290,30 @@ def _cache_key(question: str, passages: list[Passage]) -> str:
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
+def _search(
+    retr: Retriever, question: str, k: int, context: tuple[str, ...] | None, state: str | None
+) -> tuple[list[ScoredPassage], bool]:
+    """Retrieval for someone in `state`: other states' rule passages are
+    taken out (docs/adr/0027). If the best match is another state's rule,
+    the question is about that rule and nothing is shown: what ranks below it
+    is filler, and filler under a rules question reads as an answer. The
+    flag says that something was removed, which is what tells "nothing in
+    the guides" from "only another state's rules"."""
+    if state is None:
+        return retr.search(question, k=k, species=context), False
+    hits = retr.search(question, k=k + 4, species=context)
+    if hits and not jurisdictions.applies(hits[0].passage.region, state):
+        return [], True
+    kept = [h for h in hits if jurisdictions.applies(h.passage.region, state)]
+    return kept[:k], len(kept) < len(hits)
+
+
 def search_guides(
     question: str,
     species_slug: str | None = None,
     k: int = DEFAULT_K,
     retriever: Retriever | None = None,
+    state: str | None = None,
 ) -> AskResult:
     """The retrieval half of `ask`, on its own: the passages that answer the
     question, best first, and no model call. An empty result is the same
@@ -300,7 +323,8 @@ def search_guides(
     question = " ".join(question.split())
     retr = retriever or default_retriever()
     context = (species_slug,) if species_slug else None
-    hits = retr.search(question, k=k, species=context)
+    state = jurisdictions.normalize(state)
+    hits, dropped = _search(retr, question, k, context, state)
     named, _ = split_species(question)
     trace = AskTrace(
         trace_id=str(uuid.uuid4()),
@@ -309,14 +333,24 @@ def search_guides(
         retrieved=[{"id": h.passage.id, "score": round(h.score, 3)} for h in hits],
     )
     if not hits:
-        return _empty(question, context, retr, trace)
+        return _empty(question, context, retr, trace, state if dropped else None)
     passages = [h.passage for h in hits]
     return AskResult(question, "Here's what the FishEye guides say:", ANSWER_PASSAGES, passages, trace)
 
 
-def _empty(question: str, context: tuple[str, ...] | None, retr: Retriever, trace: AskTrace) -> AskResult:
-    """The answer when nothing was retrieved: which of the three depends on
-    why the retriever came back empty (docs/adr/0026)."""
+def _empty(
+    question: str,
+    context: tuple[str, ...] | None,
+    retr: Retriever,
+    trace: AskTrace,
+    other_state: str | None = None,
+) -> AskResult:
+    """The answer when nothing was retrieved: which of the kinds depends on
+    why the retriever came back empty (docs/adr/0026), or on every hit
+    having been another state's rules (docs/adr/0027)."""
+    if other_state:
+        trace.outcome = OUTCOME_OTHER_STATE
+        return AskResult(question, jurisdictions.other_state_answer(other_state), ANSWER_NO_MATCH, [], trace)
     why = retr.why_empty(question, context) if hasattr(retr, "why_empty") else EMPTY_NOT_COVERED
     if why == EMPTY_OFF_TOPIC:
         trace.outcome = OUTCOME_OFF_TOPIC
@@ -336,12 +370,14 @@ def ask(
     k: int = DEFAULT_K,
     provider: LLMProvider | None = None,
     retriever: Retriever | None = None,
+    state: str | None = None,
 ) -> AskResult:
     """Never raises on model failure — falls back."""
     question = " ".join(question.split())
     retr = retriever or default_retriever()
     context = (species_slug,) if species_slug else None
-    hits: list[ScoredPassage] = retr.search(question, k=k, species=context)
+    state = jurisdictions.normalize(state)
+    hits, dropped = _search(retr, question, k, context, state)
 
     named, _ = split_species(question)
     trace = AskTrace(
@@ -353,7 +389,7 @@ def ask(
     passages = [h.passage for h in hits]
 
     if not passages:
-        return _empty(question, context, retr, trace)
+        return _empty(question, context, retr, trace, state if dropped else None)
 
     key = _cache_key(question, passages)
     with _cache_lock:

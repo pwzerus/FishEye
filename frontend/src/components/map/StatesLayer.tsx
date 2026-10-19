@@ -41,7 +41,7 @@ export function StatesLayer({
   onEnter,
 }: {
   covered: Set<string> | null;
-  onEnter: (bounds: L.LatLngBounds) => void;
+  onEnter: (bounds: L.LatLngBounds, code: string) => void;
 }) {
   const map = useMap();
   const [data, setData] = useState<StatesFile | null>(null);
@@ -74,7 +74,7 @@ export function StatesLayer({
     layer.on("click", (e: L.LeafletMouseEvent) => {
       if (open) {
         layer.closeTooltip();
-        onEnter((layer as L.Polygon).getBounds());
+        onEnter((layer as L.Polygon).getBounds(), code);
         return;
       }
       // The hover tooltip says the same thing; don't leave it under the popup.

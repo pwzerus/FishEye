@@ -8,6 +8,7 @@ import { Tag } from "@/components/fish/FishGrid";
 import { HeroPhoto } from "@/components/fish/PhotoCard";
 import { SectionTabs, type SectionLink } from "@/components/fish/SectionTabs";
 import { PageTransition, VT } from "@/components/motion/Transition";
+import { LimitsNote, OtherStateRules, RegionGate } from "@/components/rules/RegionGate";
 import { DietTypeTag, groupSetups } from "@/components/species/SpeciesGuideBody";
 import { ApiError, getSpeciesGuide, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
 import { waterFor } from "@/lib/fishArt";
@@ -268,23 +269,19 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
             )}
 
             {isForage && guide.legal_notes.length > 0 && (
-              <section id="bait_rules" className="guide-block rules-card">
-                <h2>Bait rules</h2>
-                <ul className="nice-list">
-                  {guide.legal_notes.map((n) => (
-                    <li key={n}>{n}</li>
-                  ))}
-                </ul>
-              </section>
+              <RegionGate region={guide.legal_notes_region} fallback={<OtherStateRules subject="Bait rules" />}>
+                <section id="bait_rules" className="guide-block rules-card">
+                  <h2>Texas bait rules</h2>
+                  <ul className="nice-list">
+                    {guide.legal_notes.map((n) => (
+                      <li key={n}>{n}</li>
+                    ))}
+                  </ul>
+                </section>
+              </RegionGate>
             )}
 
-            <p className="limits-note">
-              Size and bag limits vary by species and lake.{" "}
-              <a href={guide.limits_url} target="_blank" rel="noreferrer">
-                Check TPWD&apos;s current limits
-              </a>{" "}
-              before you keep a fish.
-            </p>
+            <LimitsNote className="limits-note" texasUrl={guide.limits_url} />
 
             <section id="sources" className="guide-block">
               <h2>Sources</h2>

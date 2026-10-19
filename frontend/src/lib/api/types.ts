@@ -413,6 +413,8 @@ export interface SpeciesGuide {
   how_to_get: string[];
   bait_for: string[];
   legal_notes: string[];
+  /** The state whose rules `legal_notes` and `limits_url` state ("TX"). */
+  legal_notes_region: string;
   limits_url: string;
   sources: GuideSource[];
 }
@@ -436,6 +438,9 @@ export type SpeciesPhotos = Record<string, SpeciesPhoto | null>;
 export interface AskRequest {
   question: string;
   species_slug?: string | null;
+  /** Two-letter code of the state the person is fishing in; other states'
+   * rule passages are left out of the answer (backend ADR 0027). */
+  state?: string | null;
 }
 
 export interface AskCitation {
@@ -445,6 +450,8 @@ export interface AskCitation {
   section: string; // "diet", "live_baits", "setup-2", ...
   title: string;
   excerpt: string;
+  /** A state code for a passage stating that state's rules, else "all". */
+  region: string;
   sources: GuideSource[];
 }
 
@@ -629,5 +636,20 @@ export interface HandbookTopic {
   category_label: string;
   title: string;
   body: string[];
+  /** A state code for a topic stating that state's rules, else "all". */
+  region: string;
   sources: GuideSource[];
+}
+
+/** A state and who runs its fishing rules (backend app/knowledge/jurisdictions.py).
+ * `covered`: FishEye has reviewed rule passages for it; the links are null
+ * where it doesn't. */
+export interface Jurisdiction {
+  code: string;
+  name: string;
+  covered: boolean;
+  agency: string | null;
+  agency_short: string | null;
+  limits_url: string | null;
+  license_url: string | null;
 }

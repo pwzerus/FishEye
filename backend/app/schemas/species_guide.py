@@ -40,6 +40,9 @@ class SpeciesGuideOut(BaseModel):
     how_to_get: list[str]
     bait_for: list[str]
     legal_notes: list[str]
+    # The state whose rules `legal_notes` and `limits_url` state ("TX");
+    # shown only to someone in that state (docs/adr/0027).
+    legal_notes_region: str
     limits_url: str
     sources: list[GuideSourceOut]
 
@@ -53,6 +56,7 @@ class HandbookTopicOut(BaseModel):
     category_label: str
     title: str
     body: list[str]
+    region: str  # a state code for a topic stating that state's rules, else "all"
     sources: list[GuideSourceOut]
 
 

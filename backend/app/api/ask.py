@@ -18,6 +18,7 @@ from app.api import rate_limits
 from app.api.auth_deps import optional_user, require_user, same_origin
 from app.api.deps import get_db
 from app.api.species import source_out
+from app.knowledge import jurisdictions
 from app.knowledge.species_guides import get_guide, sources_for
 from app.models.community import User
 from app.schemas.ask import (
@@ -48,6 +49,15 @@ def _slug(payload: AskRequest) -> str | None:
     return guide.slug
 
 
+def _state(payload: AskRequest) -> str | None:
+    if payload.state is None:
+        return None
+    code = jurisdictions.normalize(payload.state)
+    if code is None:
+        raise HTTPException(status_code=422, detail=f"unknown state {payload.state!r}")
+    return code
+
+
 def _allowance_out(db: Session, user: User | None) -> AiAllowanceOut:
     if user is None:
         return AiAllowanceOut(signed_in=False, limit=None, remaining=None)
@@ -69,6 +79,7 @@ def _response(result: rag_ask.AskResult, ai: AiAllowanceOut) -> AskResponse:
                 section=p.section,
                 title=p.title,
                 excerpt=rag_ask.body_of(p),
+                region=p.region,
                 sources=[source_out(s) for s in sources_for(p.source_ids)],
             )
             for p in result.citations
@@ -98,7 +109,7 @@ def search_guides(
     db: Session = Depends(get_db),
     user: User | None = Depends(optional_user),
 ) -> AskResponse:
-    result = rag_ask.search_guides(payload.question, species_slug=_slug(payload))
+    result = rag_ask.search_guides(payload.question, species_slug=_slug(payload), state=_state(payload))
     return _response(result, _allowance_out(db, user))
 
 
@@ -129,8 +140,8 @@ def summarize(
 
     Like /advisor/explain, a model failure is not an error: the response is
     still 200, with `answer_source` "fallback" saying so."""
-    slug = _slug(payload)
-    if not rag_ask.search_guides(payload.question, species_slug=slug).citations:
+    slug, state = _slug(payload), _state(payload)
+    if not rag_ask.search_guides(payload.question, species_slug=slug, state=state).citations:
         raise HTTPException(status_code=422, detail=NOT_A_FISHING_QUESTION)
 
     day = ai_quota.today()
@@ -144,7 +155,7 @@ def summarize(
             ),
         )
 
-    result = rag_ask.ask(payload.question, species_slug=slug)
+    result = rag_ask.ask(payload.question, species_slug=slug, state=state)
     if result.answer_source != rag_ask.ANSWER_LLM or result.trace.cache_hit:
         ai_quota.give_back(db, user, day)
     return _response(result, _allowance_out(db, user))

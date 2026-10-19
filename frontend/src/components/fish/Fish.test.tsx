@@ -30,6 +30,7 @@ function guide(slug: string, name: string, extra: Partial<SpeciesGuide> = {}): S
     how_to_get: [],
     bait_for: [],
     legal_notes: [],
+    legal_notes_region: "TX",
     limits_url: "https://tpwd.texas.gov/limits",
     sources: [],
     ...extra,

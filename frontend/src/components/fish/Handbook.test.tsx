@@ -1,13 +1,13 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import type { HandbookTopic } from "@/lib/api/types";
 import { Handbook } from "./Handbook";
 
 const source = { label: "TPWD: catch and release tips", url: "https://tpwd.texas.gov/cr", kind: "agency" as const };
 
-function topic(id: string, category: string, label: string, title: string): HandbookTopic {
-  return { id, category, category_label: label, title, body: [`${title} body.`], sources: [source] };
+function topic(id: string, category: string, label: string, title: string, region = "all"): HandbookTopic {
+  return { id, category, category_label: label, title, body: [`${title} body.`], region, sources: [source] };
 }
 
 describe("Handbook", () => {
@@ -43,5 +43,28 @@ describe("Handbook", () => {
   it("renders nothing without topics", () => {
     const { container } = render(<Handbook topics={[]} />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  describe("a topic that states one state's rules", () => {
+    const withRules = [
+      ...topics,
+      topic("rule-license", "rules", "Licence, and rules that follow you home", "Do I need a fishing licence?", "TX"),
+    ];
+    afterEach(() => window.localStorage.clear());
+
+    it("shows to someone who hasn't said where they are, and to someone in that state", () => {
+      const first = render(<Handbook topics={withRules} />);
+      expect(first.container.querySelector("#rule-license")).not.toBeNull();
+      first.unmount();
+      window.localStorage.setItem("fisheye.state", "TX");
+      expect(render(<Handbook topics={withRules} />).container.querySelector("#rule-license")).not.toBeNull();
+    });
+
+    it("is left out for someone in another state; every other topic stays", () => {
+      window.localStorage.setItem("fisheye.state", "CO");
+      const { container } = render(<Handbook topics={withRules} />);
+      expect(container.querySelector("#rule-license")).toBeNull();
+      expect(container.querySelector("#bait-worms")).not.toBeNull();
+    });
   });
 });

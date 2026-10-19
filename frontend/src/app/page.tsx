@@ -53,7 +53,7 @@ export default async function Home() {
         <section className="hero">
           <div className="hero-copy">
             <p className="eyebrow reveal" style={{ "--i": 0 } as React.CSSProperties}>
-              A fishing buddy for beginners · Texas for now
+              A fishing buddy for beginners · Texas lakes first, built for every state
             </p>
             <h1 className="reveal" style={{ "--i": 1 } as React.CSSProperties}>
               New place, no idea where to fish?
@@ -194,8 +194,9 @@ export default async function Home() {
         <footer className="site-footer">
           <p>
             Data: Texas Parks and Wildlife, OpenStreetMap contributors, GBIF, National Weather
-            Service. Fish photos from Wikimedia Commons, credited on each fish&apos;s page. Always
-            check current TPWD regulations before you keep a fish.
+            Service. Fish photos from Wikimedia Commons, credited on each fish&apos;s page. Fishing rules
+            are set by each state: always check your state agency&apos;s current regulations before you
+            keep a fish (Texas: TPWD).
           </p>
         </footer>
       </main>

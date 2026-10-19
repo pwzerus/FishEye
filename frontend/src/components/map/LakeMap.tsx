@@ -283,7 +283,7 @@ export default function LakeMap({
   coveredStates?: Set<string> | null;
   // National (states only, zoom locked) or exploring — zoomPolicy.ts.
   mode?: MapMode;
-  onEnterState?: (bounds: L.LatLngBounds) => void;
+  onEnterState?: (bounds: L.LatLngBounds, code: string) => void;
   // A state the person just picked, to fit the map to.
   focusBounds?: L.LatLngBounds | null;
   // Shown (exploring mode, not placing a pin) when given.

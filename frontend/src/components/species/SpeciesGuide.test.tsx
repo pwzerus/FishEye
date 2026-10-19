@@ -55,6 +55,7 @@ const bass: SpeciesGuide = {
   how_to_get: [],
   bait_for: [],
   legal_notes: ["It is unlawful to use any game fish as bait."],
+  legal_notes_region: "TX",
   limits_url: "https://tpwd.texas.gov/limits",
   sources: [{ label: "TPWD", url: "https://tpwd.texas.gov/x", kind: "agency" }],
 };

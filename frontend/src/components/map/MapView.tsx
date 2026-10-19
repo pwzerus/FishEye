@@ -10,6 +10,7 @@ import { PinForm } from "@/components/community/PinForm";
 import { useToast } from "@/components/ui/Toast";
 import { ApiError, listStates, listWaterbodies } from "@/lib/api/client";
 import { listPins } from "@/lib/api/session";
+import { rememberState } from "@/lib/jurisdiction";
 import type { PinDetail, PinSummary, WaterbodyListItem } from "@/lib/api/types";
 import { WaterbodyPanel } from "@/components/waterbody/WaterbodyPanel";
 import type L from "leaflet";
@@ -185,9 +186,12 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   }
 
   const enterState = useCallback(
-    (bounds: L.LatLngBounds) => {
+    (bounds: L.LatLngBounds, code: string) => {
       setMode("exploring");
       setFocusBounds(bounds);
+      // Ask, the handbook and the guides show this state's rules from now on
+      // (lib/jurisdiction.ts); the picker on those pages can change it.
+      rememberState(code);
     },
     [setMode],
   );

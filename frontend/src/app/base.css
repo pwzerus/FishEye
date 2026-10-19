@@ -1504,6 +1504,31 @@ h3 {
   display: grid;
   gap: 16px;
 }
+/* "Fishing in [state]": whose rules Ask, the handbook and the guides show
+   (backend docs/adr/0027). */
+.state-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.state-picker select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+.state-picker-ask {
+  justify-self: start;
+}
+.citation-region {
+  margin-left: 8px;
+  vertical-align: 1px;
+}
+
 .ask-empty {
   display: grid;
   gap: 12px;

@@ -8,6 +8,8 @@ import { FishArt } from "@/components/fish/FishArt";
 import { ApiError, postAsk } from "@/lib/api/client";
 import { postAskSummary } from "@/lib/api/session";
 import { waterFor } from "@/lib/fishArt";
+import { useJurisdictions, useSelectedState } from "@/lib/jurisdiction";
+import { StatePicker } from "@/components/ui/StatePicker";
 import type { AiAllowance, AskCitation, AskResponse } from "@/lib/api/types";
 
 /**
@@ -59,7 +61,9 @@ function SourceBadge({ r }: { r: AskResponse }) {
         ? "Not a fishing question"
         : r.trace.outcome === "unguided_fish"
           ? "No guide for that fish"
-          : "Not in the guides";
+          : r.trace.outcome === "other_state"
+            ? "Rules not written for your state"
+            : "Not in the guides";
     return <span className="badge badge-muted">{label}</span>;
   }
   if (r.answer_source === "fallback") {
@@ -84,6 +88,7 @@ const OUTCOME_TEXT: Record<string, string> = {
   no_match: "Nothing in the guides matched, so no model was called",
   off_topic: "Not read as a fishing question, so it was never searched and no model was called",
   unguided_fish: "A fish FishEye has no guide for, so there was nothing to quote",
+  other_state: "The only match was another state's rules, so nothing was shown as yours",
   invalid_json: "Model reply was malformed, so the guide text is shown",
   ungrounded_citation: "Model cited a passage it wasn't given, so its answer was discarded",
   ungrounded_species: "Model named a fish the passages don't mention, so its answer was discarded",
@@ -160,6 +165,7 @@ function Trace({ r }: { r: AskResponse }) {
 }
 
 function Citations({ items, compact }: { items: AskCitation[]; compact: boolean }) {
+  const states = useJurisdictions();
   if (items.length === 0) return null;
   return (
     <div className="citations">
@@ -182,6 +188,11 @@ function Citations({ items, compact }: { items: AskCitation[]; compact: boolean 
                   <span className="citation-title">
                     {c.species_name ? `${c.species_name} · ` : ""}
                     {c.title}
+                    {c.region !== "all" && (
+                      <span className="badge badge-muted citation-region">
+                        {states?.find((j) => j.code === c.region)?.name ?? c.region} rules
+                      </span>
+                    )}
                   </span>
                   <span className="citation-excerpt">{c.excerpt}</span>
                   {c.sources[0] && <span className="citation-source">{c.sources[0].label}</span>}
@@ -302,6 +313,7 @@ export function AskChat({
   // How many AI summaries are left, as the server last said (every reply
   // carries it). Null until the first reply.
   const [ai, setAi] = useState<AiAllowance | null>(null);
+  const state = useSelectedState();
   const pathname = usePathname();
   const loginHref = `/login?next=${encodeURIComponent(pathname ?? "/ask")}`;
   const nextId = useRef(1);
@@ -317,7 +329,7 @@ export function AskChat({
       setInput("");
       setBusy(true);
       try {
-        const response = await postAsk({ question: q, species_slug: speciesSlug ?? null });
+        const response = await postAsk({ question: q, species_slug: speciesSlug ?? null, state });
         setAi(response.ai);
         setTurns((t) => [...t, { id: nextId.current++, role: "assistant", response }]);
       } catch (e) {
@@ -329,7 +341,7 @@ export function AskChat({
         setBusy(false);
       }
     },
-    [busy, speciesSlug],
+    [busy, speciesSlug, state],
   );
 
   const summarize = useCallback(
@@ -338,7 +350,7 @@ export function AskChat({
         setTurns((ts) => ts.map((t) => (t.id === turnId && t.role === "assistant" ? { ...t, summary } : t)));
       setSummary({ status: "loading" });
       try {
-        const response = await postAskSummary({ question, species_slug: speciesSlug ?? null });
+        const response = await postAskSummary({ question, species_slug: speciesSlug ?? null, state });
         setAi(response.ai);
         setSummary({ status: "done", response });
       } catch (e) {
@@ -348,7 +360,7 @@ export function AskChat({
         setSummary({ status: "error", message });
       }
     },
-    [speciesSlug],
+    [speciesSlug, state],
   );
 
   useEffect(() => {
@@ -464,6 +476,7 @@ export function AskChat({
         <div ref={endRef} />
       </div>
 
+      {!compact && <StatePicker className="state-picker state-picker-ask" />}
       <form
         className="ask-form"
         onSubmit={(e) => {

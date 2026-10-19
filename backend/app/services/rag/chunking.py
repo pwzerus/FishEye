@@ -39,6 +39,9 @@ class Passage:
     title: str  # human name: "Live bait", "Setup: Minnow under a bobber"
     text: str  # header + body; what gets retrieved and what the model reads
     source_ids: tuple[str, ...]
+    # A state code for a passage that states that state's rules, else "all"
+    # (knowledge/jurisdictions.py, docs/adr/0027).
+    region: str = "all"
 
 
 def _bullets(items: tuple[str, ...]) -> str:
@@ -128,6 +131,7 @@ def handbook_passage(topic: HandbookTopic) -> Passage:
         title=topic.title,
         text=f"{topic.title} ({CATEGORIES[topic.category]}): {' '.join(topic.body)}",
         source_ids=topic.source_ids,
+        region=topic.region,
     )
 
 
@@ -144,6 +148,7 @@ def shared_passages() -> list[Passage]:
             title="Texas bait rules",
             text="Texas bait rules (all fish): " + " ".join(BAIT_RULES),
             source_ids=("tpwd-regs-general",),
+            region="TX",
         )
     ] + [handbook_passage(t) for t in TOPICS]
 

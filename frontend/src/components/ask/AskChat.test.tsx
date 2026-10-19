@@ -33,6 +33,7 @@ function response(overrides: Partial<AskResponse> = {}): AskResponse {
         section: "live_baits",
         title: "Live and natural bait",
         excerpt: "1½–2½ in minnows.",
+        region: "all",
         sources: [{ label: "TPWD: White Crappie", url: "https://tpwd.texas.gov/x", kind: "agency" }],
       },
       {
@@ -42,6 +43,7 @@ function response(overrides: Partial<AskResponse> = {}): AskResponse {
         section: "bait_rules",
         title: "Texas bait rules",
         excerpt: "It is unlawful to use any game fish as bait.",
+        region: "TX",
         sources: [],
       },
     ],
@@ -128,7 +130,11 @@ describe("AskChat", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /Summarize with AI/ })[1]);
     expect(await screen.findByText("Use small live minnows.")).toBeInTheDocument();
     expect(screen.getByText("AI answer · checked")).toBeInTheDocument();
-    expect(mockedSummary).toHaveBeenCalledWith({ question: "what bait for crappie", species_slug: "white-crappie" });
+    expect(mockedSummary).toHaveBeenCalledWith({
+      question: "what bait for crappie",
+      species_slug: "white-crappie",
+      state: null,
+    });
 
     // The earlier answer's button now shows what the server says is left.
     expect(screen.getByRole("button", { name: "Summarize with AI (2 left today)" })).toBeInTheDocument();
@@ -178,7 +184,7 @@ describe("AskChat", () => {
     expect(screen.getByText("what bait for crappie")).toBeInTheDocument();
     expect(await screen.findByText("Use small live minnows.")).toBeInTheDocument();
     expect(screen.getByText("AI answer · checked")).toBeInTheDocument();
-    expect(mockedAsk).toHaveBeenCalledWith({ question: "what bait for crappie", species_slug: null });
+    expect(mockedAsk).toHaveBeenCalledWith({ question: "what bait for crappie", species_slug: null, state: null });
 
     const fishLink = screen.getByText(/White Crappie · Live and natural bait/).closest("a");
     expect(fishLink).toHaveAttribute("href", "/fish/white-crappie#live_baits");
@@ -262,7 +268,7 @@ describe("AskChat", () => {
     render(<AskChat suggestions={SUGGESTIONS} />);
     fireEvent.click(screen.getByText("When do white bass run?"));
     await screen.findByText("Use small live minnows.");
-    expect(mockedAsk).toHaveBeenCalledWith({ question: "When do white bass run?", species_slug: null });
+    expect(mockedAsk).toHaveBeenCalledWith({ question: "When do white bass run?", species_slug: null, state: null });
     expect(screen.queryByText("What bait for crappie?")).not.toBeInTheDocument();
   });
 
@@ -271,7 +277,7 @@ describe("AskChat", () => {
     render(<AskChat initialQuestion="what do they eat" speciesSlug="blue-catfish" suggestions={SUGGESTIONS} />);
     await screen.findByText("Use small live minnows.");
     expect(mockedAsk).toHaveBeenCalledTimes(1);
-    expect(mockedAsk).toHaveBeenCalledWith({ question: "what do they eat", species_slug: "blue-catfish" });
+    expect(mockedAsk).toHaveBeenCalledWith({ question: "what do they eat", species_slug: "blue-catfish", state: null });
   });
 
   it("ignores questions shorter than the API accepts", async () => {
@@ -279,5 +285,41 @@ describe("AskChat", () => {
     await askVia("hi");
     await waitFor(() => expect(mockedAsk).not.toHaveBeenCalled());
     expect(screen.getByLabelText("Send")).toBeDisabled();
+  });
+  describe("states (backend ADR 0027)", () => {
+    beforeEach(() => window.localStorage.clear());
+
+    it("sends the remembered state with the question", async () => {
+      window.localStorage.setItem("fisheye.state", "CO");
+      mockedAsk.mockResolvedValue(searchResult());
+      render(<AskChat suggestions={SUGGESTIONS} />);
+      await askVia("what bait for crappie");
+      await screen.findByText("From the guides");
+      expect(mockedAsk).toHaveBeenCalledWith({ question: "what bait for crappie", species_slug: null, state: "CO" });
+    });
+
+    it("marks a passage that states one state's rules", async () => {
+      mockedAsk.mockResolvedValue(searchResult());
+      render(<AskChat suggestions={SUGGESTIONS} />);
+      await askVia("can I use live bait");
+      expect(await screen.findByText("TX rules")).toBeInTheDocument();
+      // ... and only that one: the crappie passage is for every state.
+      expect(document.querySelectorAll(".citation-region")).toHaveLength(1);
+    });
+
+    it("says the rules aren't written for the person's state, not that the question is bad", async () => {
+      mockedAsk.mockResolvedValue(
+        searchResult({
+          answer: "That's a question about Colorado's fishing rules, and FishEye hasn't written those yet.",
+          answer_source: "no_match",
+          citations: [],
+          trace: { ...searchResult().trace, outcome: "other_state" },
+        }),
+      );
+      render(<AskChat suggestions={SUGGESTIONS} />);
+      await askVia("do I need a licence");
+      expect(await screen.findByText("Rules not written for your state")).toBeInTheDocument();
+      expect(screen.getByText(/Colorado's fishing rules/)).toBeInTheDocument();
+    });
   });
 });

@@ -38,8 +38,8 @@ FishEye pulls those sources into one place, organised around **where you are**:
    the National Weather Service forecast, reviewed guides for eighteen species and an angler's handbook,
    and a Q&A over those guides that answers in plain language and cites them.
 
-Coverage today is Texas; the data model and importers are per-state (see
-[Roadmap](#roadmap)).
+Lake data and fishing rules are Texas's today; the data model, importers,
+guides and Ask are per-state (see [Roadmap](#roadmap) and ADR 0027).
 
 ## What it does
 
@@ -131,6 +131,12 @@ a production frontend build, and a Docker build with smoke tests on every push.
   through ("how to tie a tie"); rebuilt, it lets 1 of 30 through and admits
   every fishing question that names no fish. The eval runs in the test
   suite, so a regression fails CI.
+- **Rules belong to a state.** How to catch a fish is the same everywhere; a
+  licence, a limit or a bait rule is a state's. Passages that state a rule are
+  tagged with their state and shown only there (Texas so far); anyone in
+  another state is told the rules aren't written yet and pointed to their
+  own agency, instead of being given Texas's as if they were theirs
+  (ADR 0027).
 - **The model is optional.** Every question is answered by search alone,
   with sources and no model call. A written AI summary is an extra step for
   signed-in accounts, 3 a day, reserved atomically before the call and given
@@ -223,7 +229,9 @@ docker-compose.prod.yml   single-server production layer (with Caddyfile)
 **Coverage**
 - Beyond Texas: the OSM and GBIF importers already take a state, and the
   agency-profile table is keyed by agency; each new state needs its own
-  agency's lake data, ramps and regulations, surveyed first.
+  agency's lake data, ramps and regulations, surveyed first. The guides and
+  Ask are already state-aware (ADR 0027): a state is a `Jurisdiction` in
+  `knowledge/jurisdictions.py` plus rule passages tagged with its code.
 - Texas lakes TPWD covers but the import couldn't place (15 of 175).
 - More species guides; curated photos for the six added in ADR 0024; a
   casting topic in the handbook.

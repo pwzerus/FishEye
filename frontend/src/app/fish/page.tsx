@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { FishGrid } from "@/components/fish/FishGrid";
 import { Handbook } from "@/components/fish/Handbook";
 import { PageTransition } from "@/components/motion/Transition";
+import { LimitsNote, OtherStateRules, RegionGate } from "@/components/rules/RegionGate";
+import { StatePicker } from "@/components/ui/StatePicker";
 import { listHandbook, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
 import type { HandbookTopic, SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
 
@@ -16,7 +18,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Fish guide · FishEye",
   description:
-    "How to catch Texas freshwater fish: what they eat, where they live, baits and why they work, tackle, knots, and cleaning your catch.",
+    "How to catch freshwater fish: what they eat, where they live, baits and why they work, tackle, knots, and cleaning your catch.",
 };
 
 export default async function FishGuidePage() {
@@ -47,11 +49,13 @@ export default async function FishGuidePage() {
             Meet the fish
           </h1>
           <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
-            {guides.length > 0 ? `${guides.length} Texas freshwater fish` : "Texas freshwater fish"}: what
-            each one eats, where it lives, which bait works and why, and rod-and-reel setups from a
-            first cane pole up, plus a handbook for everything else. Every setup names its source,
-            mostly Texas Parks and Wildlife and other state agencies.
+            {guides.length > 0 ? `${guides.length} freshwater fish` : "Freshwater fish"}, most of them
+            found across the U.S.: what each one eats, where it lives, which bait works and why, and
+            rod-and-reel setups from a first cane pole up, plus a handbook for everything else. Every
+            setup names its source, mostly state wildlife agencies. How to catch a fish is the same
+            everywhere; the rules are a state&apos;s, and so far FishEye has written Texas&apos;s.
           </p>
+          <StatePicker />
         </section>
 
         {backendError ? (
@@ -63,21 +67,17 @@ export default async function FishGuidePage() {
         {!backendError && <Handbook topics={handbook} />}
 
         {baitRules.length > 0 && (
-          <section id="bait_rules" className="rules-card reveal" style={{ "--i": 6 } as React.CSSProperties}>
-            <h2>Texas bait rules, for every fish</h2>
-            <ul>
-              {baitRules.map((rule) => (
-                <li key={rule}>{rule}</li>
-              ))}
-            </ul>
-            <p className="muted">
-              Size and bag limits change and vary by lake.{" "}
-              <a href={guides[0]?.limits_url} target="_blank" rel="noreferrer">
-                Check TPWD&apos;s current limits
-              </a>{" "}
-              before you keep a fish.
-            </p>
-          </section>
+          <RegionGate region={guides[0]?.legal_notes_region ?? "TX"} fallback={<OtherStateRules subject="Bait rules" />}>
+            <section id="bait_rules" className="rules-card reveal" style={{ "--i": 6 } as React.CSSProperties}>
+              <h2>Texas bait rules, for every fish</h2>
+              <ul>
+                {baitRules.map((rule) => (
+                  <li key={rule}>{rule}</li>
+                ))}
+              </ul>
+              <LimitsNote className="muted" texasUrl={guides[0]?.limits_url ?? ""} />
+            </section>
+          </RegionGate>
         )}
       </main>
     </PageTransition>

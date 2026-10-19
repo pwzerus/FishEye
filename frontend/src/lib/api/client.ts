@@ -6,6 +6,7 @@ import type {
   SpeciesPhotos,
   GeocodeResult,
   HandbookTopic,
+  Jurisdiction,
   RecommendationRequest,
   SpeciesGuide,
   StateCoverage,
@@ -168,6 +169,10 @@ export function listSpeciesGuides(): Promise<SpeciesGuide[]> {
 
 export function listHandbook(): Promise<HandbookTopic[]> {
   return apiFetch<HandbookTopic[]>("/api/species/handbook");
+}
+
+export function listJurisdictions(): Promise<Jurisdiction[]> {
+  return apiFetch<Jurisdiction[]>("/api/jurisdictions");
 }
 
 export function getSpeciesGuide(slug: string): Promise<SpeciesGuide> {

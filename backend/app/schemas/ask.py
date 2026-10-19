@@ -21,6 +21,10 @@ class AskRequest(BaseModel):
     # The fish page the question was asked from, if any. Fish named in the
     # question itself take precedence (see retriever.py).
     species_slug: str | None = None
+    # Two-letter code of the state the person is fishing in. Rule passages of
+    # other states are left out of the answer (docs/adr/0027); without it,
+    # nothing is left out.
+    state: str | None = Field(default=None, min_length=2, max_length=2)
 
 
 class AskCitationOut(BaseModel):
@@ -30,6 +34,7 @@ class AskCitationOut(BaseModel):
     section: str
     title: str
     excerpt: str
+    region: str  # a state code for a passage stating that state's rules, else "all"
     sources: list[GuideSourceOut]
 
 
@@ -50,7 +55,8 @@ class AskTraceOut(BaseModel):
     completion_tokens: int
     estimated_cost_usd: float
     validation_attempts: int
-    # "ok" | "no_match" | "invalid_json" | "ungrounded_citation"
+    # "ok" | "no_match" | "off_topic" | "unguided_fish" | "other_state"
+    #   | "invalid_json" | "ungrounded_citation"
     #   | "ungrounded_species" | "ungrounded_number" | "url_in_answer"
     #   | "provider_unavailable"
     outcome: str

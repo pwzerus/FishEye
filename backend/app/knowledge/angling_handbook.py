@@ -10,7 +10,9 @@ cite exactly the card it used (docs/adr/0024).
 
 Regulations stay out, as in the guides, except where a rule changes how a
 beginner handles the fish in front of them (not wasting it, when it may be
-filleted, eating advisories); those are paraphrased closely and link TPWD.
+filleted, eating advisories); those are paraphrased closely and link the agency
+that sets them. A topic that states one state's rule is tagged with that state
+(`region`), so it is shown only there (docs/adr/0027).
 """
 from __future__ import annotations
 
@@ -26,6 +28,9 @@ class HandbookTopic:
     title: str
     body: tuple[str, ...]  # sentences, read in order
     source_ids: tuple[str, ...]
+    # A state code when the topic states that state's rules; shown only there
+    # (knowledge/jurisdictions.py, docs/adr/0027). "all" otherwise.
+    region: str = "all"
 
 
 # Order is the page's order.
@@ -545,6 +550,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "stringer, in a cooler, livewell or bucket do, and must meet length and bag limits.",
         ),
         source_ids=("tpwd-regs-general",),
+        region="TX",
     ),
     HandbookTopic(
         id="care-eating-safely",
@@ -553,12 +559,12 @@ TOPICS: tuple[HandbookTopic, ...] = (
         body=(
             "Cook fish to an internal temperature of 145°F, or until the flesh is no longer "
             "translucent and flakes easily with a fork.",
-            "Is fish from a Texas lake safe to eat? The Texas Department of State Health Services "
-            "tests fish for contaminants. A "
+            "Is fish from this lake safe to eat? State health and wildlife agencies test fish for "
+            "contaminants (in Texas, the Department of State Health Services). A "
             "consumption ban means you may not keep fish from that area (catch and release is still "
             "legal); an advisory recommends limiting how much you eat, often by species and size.",
             "Advisories are strictest for pregnant or nursing women, women who may become pregnant, "
-            "and children under 12. Check DSHS's current list before eating fish from a lake.",
+            "and children under 12. Check your state's current list before eating fish from a lake.",
             "A carp's flavor depends on the water it came from; freshwater drum are best from cool "
             "water.",
         ),
@@ -755,7 +761,8 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "Squeeze a soft tail fin together, or turn a hard tail, to get the longest overall "
             "measurement.",
             "Length limits are set on that measurement and they vary by water body, so check "
-            "TPWD's rules for the lake you are on before you keep a fish.",
+            "your state agency's rules for the lake you are on before you keep a fish (in Texas, "
+            "TPWD's).",
         ),
         source_ids=("tpwd-measure", "tpwd-cr"),
     ),
@@ -791,6 +798,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "beginner's kit. Some state parks lend tackle.",
         ),
         source_ids=("tpwd-beginners",),
+        region="TX",
     ),
     # ------------------------------------------------------------ conditions
     HandbookTopic(
@@ -906,6 +914,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "does not work for an adult, and do not buy one for a child to grow into.",
         ),
         source_ids=("tpwd-lifejacket",),
+        region="TX",
     ),
     HandbookTopic(
         id="safe-handling",
@@ -938,6 +947,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "nothing else. Licence terms and fees change: TPWD's licence page is the authority.",
         ),
         source_ids=("tpwd-license", "tpwd-beginners"),
+        region="TX",
     ),
     HandbookTopic(
         id="rule-clean-drain-dry",
@@ -956,6 +966,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "often professional hot-water cleaning before it is moved to another lake.",
         ),
         source_ids=("tpwd-cdd",),
+        region="TX",
     ),
     HandbookTopic(
         id="rule-line-disposal",

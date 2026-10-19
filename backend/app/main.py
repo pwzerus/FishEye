@@ -12,6 +12,7 @@ from app.api import (
     ask,
     auth,
     geocode,
+    jurisdictions,
     pins,
     recommendations,
     species,
@@ -105,6 +106,7 @@ app.include_router(recommendations.router, prefix=settings.api_prefix)
 app.include_router(advisor.router, prefix=settings.api_prefix)
 app.include_router(geocode.router, prefix=settings.api_prefix)
 app.include_router(species.router, prefix=settings.api_prefix)
+app.include_router(jurisdictions.router, prefix=settings.api_prefix)
 app.include_router(ask.router, prefix=settings.api_prefix)
 app.include_router(auth.router, prefix=settings.api_prefix)
 app.include_router(pins.router, prefix=settings.api_prefix)

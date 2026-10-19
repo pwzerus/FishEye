@@ -1,3 +1,4 @@
+import { RegionGate } from "@/components/rules/RegionGate";
 import type { HandbookTopic } from "@/lib/api/types";
 
 /**
@@ -7,7 +8,9 @@ import type { HandbookTopic } from "@/lib/api/types";
  * Every topic is a card under its own id, because that id is where an Ask
  * answer citing it links (`/fish#<id>`, AskChat's citationHref). A category
  * gets its own id too, for links like "the handbook's cleaning steps".
- * Server-rendered; no state.
+ * Server-rendered. A topic that states one state's rules is wrapped in a
+ * RegionGate, so it shows only to someone in that state or who hasn't said
+ * where they are (backend docs/adr/0027).
  */
 export function Handbook({ topics }: { topics: HandbookTopic[] }) {
   if (topics.length === 0) return null;
@@ -23,8 +26,9 @@ export function Handbook({ topics }: { topics: HandbookTopic[] }) {
       <h2 id="handbook-title">The angler&apos;s handbook</h2>
       <p className="muted">
         What applies to every fish: baits and why they work, lures, tackle, knots, casting and
-        playing a fish, weather and water, staying safe, the licence, and releasing, cleaning and
-        cooking a catch. Each card names its sources.
+        playing a fish, weather and water, staying safe, and releasing, cleaning and cooking a
+        catch. Cards about licences, limits and other rules are for one state, and say which.
+        Each card names its sources.
       </p>
       <nav className="chip-row handbook-nav" aria-label="Handbook sections">
         {groups.map((g) => (
@@ -37,24 +41,33 @@ export function Handbook({ topics }: { topics: HandbookTopic[] }) {
         <div key={g.category} id={g.category} className="handbook-group">
           <h3>{g.label}</h3>
           <div className="handbook-grid">
-            {g.topics.map((t) => (
-              <article key={t.id} id={t.id} className="handbook-card">
-                <h4>{t.title}</h4>
-                {t.body.map((sentence) => (
-                  <p key={sentence}>{sentence}</p>
-                ))}
-                <p className="handbook-sources">
-                  {t.sources.map((s, i) => (
-                    <span key={s.url}>
-                      {i > 0 && " · "}
-                      <a href={s.url} target="_blank" rel="noreferrer">
-                        {s.label}
-                      </a>
-                    </span>
+            {g.topics.map((t) => {
+              const card = (
+                <article key={t.id} id={t.id} className="handbook-card">
+                  <h4>{t.title}</h4>
+                  {t.body.map((sentence) => (
+                    <p key={sentence}>{sentence}</p>
                   ))}
-                </p>
-              </article>
-            ))}
+                  <p className="handbook-sources">
+                    {t.sources.map((s, i) => (
+                      <span key={s.url}>
+                        {i > 0 && " · "}
+                        <a href={s.url} target="_blank" rel="noreferrer">
+                          {s.label}
+                        </a>
+                      </span>
+                    ))}
+                  </p>
+                </article>
+              );
+              return t.region === "all" ? (
+                card
+              ) : (
+                <RegionGate key={t.id} region={t.region}>
+                  {card}
+                </RegionGate>
+              );
+            })}
           </div>
         </div>
       ))}
