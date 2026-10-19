@@ -121,3 +121,15 @@ def test_the_real_model_answers_a_chinese_question():
     r = HybridRetriever(bm25_retriever(), embedder)
     assert "all-fish#care-dispatch-bleed" in _ids(r.search("怎么杀鱼最人道"))
     assert r.search("红烧肉怎么做") == []
+
+
+def test_a_states_view_of_the_hybrid_index_reuses_the_vectors():
+    from app.services.rag import regional
+
+    r = _hybrid({"is it legal to use a small bass as live bait": "all-fish#bait_rules-ga"})
+    view = regional.for_state(r, "GA")
+    assert isinstance(view, HybridRetriever)
+    assert len(view.passages) == len(view._vecs) < len(r.passages)
+    assert {p.region for p in view.passages} == {"all", "GA"}
+    ids = _ids(view.search("is it legal to use a small bass as live bait"))
+    assert "all-fish#bait_rules-ga" in ids and "all-fish#bait_rules" not in ids

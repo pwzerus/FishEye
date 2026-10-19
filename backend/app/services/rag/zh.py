@@ -134,6 +134,13 @@ GLOSSARY: dict[str, str] = {
     "小孩": "kid kids",
     "孩子": "kid kids",
     "德州": "texas",
+    "德克萨斯": "texas",
+    "佐治亚": "georgia",
+    "乔治亚": "georgia",
+    "钓鱼证": "fishing licence license",
+    "执照": "licence license",
+    "许可证": "licence license",
+    "救生衣": "life jacket",
 }
 _GLOSSARY = sorted(GLOSSARY.items(), key=lambda kv: -len(kv[0]))
 

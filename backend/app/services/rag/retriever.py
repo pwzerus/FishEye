@@ -146,6 +146,9 @@ SYNONYMS: dict[str, tuple[str, ...]] = {
     "backlashing": ("backlash", "spool", "thumb"),
     "tangle": ("backlash", "tangle"),
     "licence": ("license",),
+    # The guides spell it "licence"; most people asking type "license".
+    "license": ("licence",),
+    "licenses": ("licence",),
     "permit": ("license",),
     "muddy": ("muddy", "stain", "clarity"),
     "murky": ("muddy", "stain", "clarity"),

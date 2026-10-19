@@ -652,4 +652,7 @@ export interface Jurisdiction {
   agency_short: string | null;
   limits_url: string | null;
   license_url: string | null;
+  /** What may go on the hook and where; empty where FishEye hasn't written them. */
+  bait_rules: string[];
+  bait_rules_sources: GuideSource[];
 }

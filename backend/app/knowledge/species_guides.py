@@ -154,6 +154,20 @@ SOURCES: dict[str, Source] = {
         Source("tmf-drag", "Take Me Fishing: how to set the drag", "https://www.takemefishing.org/how-to-fish/how-to-catch-fish/how-to-set-the-drag/", "publication"),
         Source("tmf-shore", "Take Me Fishing: shore fishing", "https://takemefishing.org/how-to-fish/types-of-fishing/shore-fishing", "publication"),
         Source("tmf-line-recycle", "Take Me Fishing: recycling old fishing line", "https://www.takemefishing.org/how-to-fish/fishing-and-conservation/recycling-old-fishing-line/", "publication"),
+        # Georgia (docs/adr/0028). The DNR's Wildlife Resources Division,
+        # and the online edition of its 2026 regulations guide (the guide
+        # carries the DNR Commissioner's message; WRD's own copy is a
+        # flip-book that can't be cited by page).
+        Source("gawrd-license", "Georgia WRD: what license do I need?", "https://georgiawildlife.com/licenses-permits-passes/choose", "agency"),
+        Source("gawrd-angler", "Georgia WRD: fishing in Georgia", "https://georgiawildlife.com/fishing/angler-resources", "agency"),
+        Source("gawrd-parkfishing", "Georgia State Parks: fishing and the tackle loaner program", "https://georgiawildlife.com/ParkFishing", "agency"),
+        Source("gawrd-equipment", "Georgia WRD: required boating equipment", "https://georgiawildlife.com/required-equipment", "agency"),
+        Source("gawrd-cdd", "Georgia WRD: practice Clean, Drain, Dry", "https://georgiawildlife.com/how-can-you-prevent-ans-practice-clean-drain-dry", "agency"),
+        Source("garegs-license", "Georgia Fishing Regulations 2026: license requirements", "https://www.eregulations.com/georgia/fishing/license-requirements", "agency"),
+        Source("garegs-general", "Georgia Fishing Regulations 2026: general freshwater regulations", "https://www.eregulations.com/georgia/fishing/general-regulations", "agency"),
+        Source("garegs-methods", "Georgia Fishing Regulations 2026: fishing methods", "https://www.eregulations.com/georgia/fishing/fishing-methods", "agency"),
+        Source("garegs-boating", "Georgia Fishing Regulations 2026: boating", "https://www.eregulations.com/georgia/fishing/boating", "agency"),
+        Source("garegs-bordering", "Georgia Fishing Regulations 2026: agreements with bordering states", "https://www.eregulations.com/georgia/fishing/agreements-with-bordering-states", "agency"),
     ]
 }
 

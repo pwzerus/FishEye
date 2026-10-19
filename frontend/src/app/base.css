@@ -969,6 +969,10 @@ h3 {
   color: var(--muted);
 }
 
+.rules-stack {
+  display: grid;
+  gap: 16px;
+}
 .rules-card {
   margin-top: 32px;
   padding: 22px 24px;

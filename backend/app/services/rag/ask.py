@@ -35,6 +35,7 @@ from typing import Any
 from app.knowledge import jurisdictions
 from app.knowledge.species_guides import GUIDES
 from app.services.llm import LLMProvider, LLMUnavailable, get_provider
+from app.services.rag import regional
 from app.services.rag.chunking import Passage
 from app.services.rag.retriever import (
     EMPTY_NOT_COVERED,
@@ -78,8 +79,8 @@ COVERAGE = (
     "FishEye covers eighteen freshwater fish, most of them found across the U.S. (what each one "
     "eats, where it lives, which baits work and why, rod-and-reel setups, and how to clean and "
     "cook it) plus a handbook on baits, lures, tackle, knots, casting, weather and water, safety "
-    "and caring for your catch. The rules, and many of the examples of where fish live, are "
-    "Texas's so far; both differ by state."
+    f"and caring for your catch. Fishing rules are written for {jurisdictions.covered_names()} so "
+    "far, and many examples of where fish live are Texas's; both differ by state."
 )
 # Three different admissions, because they are three different situations
 # and one "not covered" for all of them was misleading (docs/adr/0026).
@@ -293,19 +294,30 @@ def _cache_key(question: str, passages: list[Passage]) -> str:
 def _search(
     retr: Retriever, question: str, k: int, context: tuple[str, ...] | None, state: str | None
 ) -> tuple[list[ScoredPassage], bool]:
-    """Retrieval for someone in `state`: other states' rule passages are
-    taken out (docs/adr/0027). If the best match is another state's rule,
-    the question is about that rule and nothing is shown: what ranks below it
-    is filler, and filler under a rules question reads as an answer. The
-    flag says that something was removed, which is what tells "nothing in
+    """Retrieval for someone in `state` (docs/adr/0027, 0028): searched in
+    that state's own index, which has no other state's rules in it.
+
+    The full index is searched as well, for one decision: if its best match
+    is another state's rule, the question is about a rule, and it is
+    answered only if this state's own version of that rule turned up.
+    Otherwise nothing is shown, because what ranks below is filler, and
+    filler under a rules question reads as an answer. The flag says the
+    full index had other states' passages, which is what tells "nothing in
     the guides" from "only another state's rules"."""
     if state is None:
         return retr.search(question, k=k, species=context), False
-    hits = retr.search(question, k=k + 4, species=context)
-    if hits and not jurisdictions.applies(hits[0].passage.region, state):
-        return [], True
-    kept = [h for h in hits if jurisdictions.applies(h.passage.region, state)]
-    return kept[:k], len(kept) < len(hits)
+    full = retr.search(question, k=k, species=context)
+    foreign = any(not jurisdictions.applies(h.passage.region, state) for h in full)
+    view = regional.for_state(retr, state)
+    if view is None:  # a retriever regional.py can't restrict: filter instead
+        local = [h for h in retr.search(question, k=k + 4, species=context)
+                 if jurisdictions.applies(h.passage.region, state)][:k]
+    else:
+        local = view.search(question, k=k, species=context)
+    if full and not jurisdictions.applies(full[0].passage.region, state):
+        if not any(h.passage.region == state for h in local):
+            return [], True
+    return local, foreign and not local
 
 
 def search_guides(

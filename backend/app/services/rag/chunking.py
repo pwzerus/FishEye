@@ -25,7 +25,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.knowledge.angling_handbook import CATEGORIES, TOPICS, HandbookTopic
-from app.knowledge.species_guides import BAIT_RULES, GUIDES, SpeciesGuide
+from app.knowledge.species_guides import GUIDES, SpeciesGuide
 
 SHARED_SLUG = "all-fish"  # passages that apply to every species
 
@@ -138,19 +138,27 @@ def handbook_passage(topic: HandbookTopic) -> Passage:
 def shared_passages() -> list[Passage]:
     """Content that several guides repeat verbatim (the bait rules) is
     indexed once. Indexed per species, the same three sentences would fill
-    every slot of a "can I use live bait" answer with duplicates."""
-    return [
+    every slot of a "can I use live bait" answer with duplicates.
+
+    Bait rules are a state's (knowledge/jurisdictions.py, docs/adr/0027):
+    one passage per state FishEye has written rules for, tagged with it."""
+    from app.knowledge import jurisdictions  # imports species_guides; kept local
+
+    bait = [
         Passage(
-            id=f"{SHARED_SLUG}#bait_rules",
+            id=f"{SHARED_SLUG}#{jurisdictions.bait_rules_section(j.code)}",
             species_slug=SHARED_SLUG,
             species_name="",
-            section="bait_rules",
-            title="Texas bait rules",
-            text="Texas bait rules (all fish): " + " ".join(BAIT_RULES),
-            source_ids=("tpwd-regs-general",),
-            region="TX",
+            section=jurisdictions.bait_rules_section(j.code),
+            title=f"{j.name} bait rules",
+            text=f"{j.name} bait rules (all fish): " + " ".join(j.bait_rules),
+            source_ids=j.bait_rules_source_ids,
+            region=j.code,
         )
-    ] + [handbook_passage(t) for t in TOPICS]
+        for j in jurisdictions.covered()
+        if j.bait_rules
+    ]
+    return bait + [handbook_passage(t) for t in TOPICS]
 
 
 def build_passages(guides: tuple[SpeciesGuide, ...] = GUIDES) -> list[Passage]:

@@ -553,6 +553,21 @@ TOPICS: tuple[HandbookTopic, ...] = (
         region="TX",
     ),
     HandbookTopic(
+        id="care-possession-ga",
+        category="care",
+        title="Keeping fish within the limit (Georgia)",
+        body=(
+            "In Georgia daily and possession limits are per person, and no one may hold more than "
+            "the limit for any species, so each angler should keep their fish on a separate stringer "
+            "or in a separate creel.",
+            "Lengths are total length, and any fish shorter than the minimum for its species must "
+            "go back. Limits differ on some lakes and on waters shared with South Carolina: check "
+            "the regulations guide for the water you are on.",
+        ),
+        source_ids=("garegs-general",),
+        region="GA",
+    ),
+    HandbookTopic(
         id="care-eating-safely",
         category="care",
         title="Eating your catch safely",
@@ -800,6 +815,25 @@ TOPICS: tuple[HandbookTopic, ...] = (
         source_ids=("tpwd-beginners",),
         region="TX",
     ),
+    HandbookTopic(
+        id="start-first-trip-ga",
+        category="technique",
+        title="Your first trip in Georgia",
+        body=(
+            "Three things to sort out first: somewhere to go, a licence if you need one, and the "
+            "rules for that water.",
+            "Georgia WRD has an interactive map of places to fish, including Public Fishing Areas, "
+            "Wildlife Management Areas and state parks, and publishes fishing forecasts for the "
+            "state's lakes and rivers. Check its closures page before you drive to a ramp.",
+            "Fish-n-Learn programs are for children 8 to 15 with an adult, and free fishing days "
+            "are listed on WRD's site.",
+            "You can borrow a rod, reel and tackle box for the day from the office at participating "
+            "state parks. The regulations guide is free online, and in print at WRD offices and "
+            "licence sellers.",
+        ),
+        source_ids=("gawrd-angler", "gawrd-parkfishing"),
+        region="GA",
+    ),
     # ------------------------------------------------------------ conditions
     HandbookTopic(
         id="cond-cover",
@@ -903,9 +937,8 @@ TOPICS: tuple[HandbookTopic, ...] = (
         category="safety",
         title="Life jackets",
         body=(
-            "In Texas every child under 13 must wear a US Coast Guard-approved life jacket on a "
-            "boat under 26 feet while it is under way, which includes drifting but not at anchor. "
-            "Adults must have one aboard that fits and is easy to reach.",
+            "Who must wear one, and when, is set by each state; the law for your state is on its "
+            "own card.",
             "Of the people who died in recreational boating accidents in 2019, drowning was the "
             "reported cause for 79 percent, and 86 percent of those who drowned were not wearing "
             "a life jacket.",
@@ -914,7 +947,32 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "does not work for an adult, and do not buy one for a child to grow into.",
         ),
         source_ids=("tpwd-lifejacket",),
+    ),
+    HandbookTopic(
+        id="safe-lifejacket-tx",
+        category="safety",
+        title="Life jacket law (Texas)",
+        body=(
+            "In Texas every child under 13 must wear a US Coast Guard-approved life jacket on a "
+            "boat under 26 feet while it is under way, which includes drifting but not at anchor. "
+            "Adults must have one aboard that fits and is easy to reach.",
+        ),
+        source_ids=("tpwd-lifejacket",),
         region="TX",
+    ),
+    HandbookTopic(
+        id="safe-lifejacket-ga",
+        category="safety",
+        title="Life jacket law (Georgia)",
+        body=(
+            "In Georgia every child under 13 must wear a life jacket while the boat is under way, "
+            "unless the child is inside a fully enclosed cabin.",
+            "Every boat must carry a wearable life jacket for each person aboard, and boats from "
+            "16 feet up to 26 feet also need a throwable one.",
+            "Anyone on a personal watercraft must wear a life jacket at all times.",
+        ),
+        source_ids=("garegs-boating", "gawrd-equipment"),
+        region="GA",
     ),
     HandbookTopic(
         id="safe-handling",
@@ -934,7 +992,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
     HandbookTopic(
         id="rule-license",
         category="rules",
-        title="Do I need a fishing licence?",
+        title="Do I need a fishing licence? (Texas)",
         body=(
             "In Texas, residents and non-residents need a fishing licence to fish public water, "
             "and a resident taking fish, mussels, clams or crayfish needs a freshwater or "
@@ -952,7 +1010,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
     HandbookTopic(
         id="rule-clean-drain-dry",
         category="rules",
-        title="Clean, drain and dry",
+        title="Clean, drain and dry (Texas)",
         body=(
             "Zebra mussels and other invasive species travel between Texas lakes on boats, "
             "trailers and in water, so the law asks three things of anyone leaving the water.",
@@ -967,6 +1025,45 @@ TOPICS: tuple[HandbookTopic, ...] = (
         ),
         source_ids=("tpwd-cdd",),
         region="TX",
+    ),
+    HandbookTopic(
+        id="rule-license-ga",
+        category="rules",
+        title="Do I need a fishing licence? (Georgia)",
+        body=(
+            "In Georgia, anglers 16 and older need a current Georgia fishing licence with them, in "
+            "fresh or salt water. Anyone helping an angler, for example by netting a fish, must be "
+            "licensed too.",
+            "Nobody 15 or younger needs a fishing or trout licence; Georgia residents that age can "
+            "buy an optional youth licence that includes trout privileges.",
+            "No licence is needed to fish a private pond, or for a resident and their immediate "
+            "family fishing on their own land. A pond owned by a government is not private.",
+            "From 16, fishing designated trout waters or keeping mountain trout also needs a trout "
+            "licence; in a state park's impounded waters you need one only to keep trout. Saltwater "
+            "anglers 16 and older also need a free Saltwater Information Program (SIP) permit.",
+            "On the lakes and rivers Georgia shares with Alabama and South Carolina, such as West "
+            "Point, Walter F. George, Hartwell and Clarks Hill, either state's licence is valid. "
+            "Licence terms and fees change: Georgia WRD's licence page is the authority.",
+        ),
+        source_ids=("gawrd-license", "garegs-license", "garegs-bordering"),
+        region="GA",
+    ),
+    HandbookTopic(
+        id="rule-clean-drain-dry-ga",
+        category="rules",
+        title="Clean, drain and dry (Georgia)",
+        body=(
+            "Georgia WRD asks everyone leaving the water to stop the spread of aquatic nuisance "
+            "species, such as zebra mussel larvae too small to see.",
+            "Clean: inspect the boat, trailer and gear, remove plants and mud, and wash everything "
+            "with a high-pressure hose or hot water of at least 120\u00b0F.",
+            "Drain: drain all water from inside the boat \u2014 bilge, motor and livewell \u2014 "
+            "and pull the plug, away from the ramp.",
+            "Dry: let everything air-dry, preferably for at least five days, or towel it dry before "
+            "going to another lake. Never move bait from one waterway to another.",
+        ),
+        source_ids=("gawrd-cdd", "garegs-general"),
+        region="GA",
     ),
     HandbookTopic(
         id="rule-line-disposal",

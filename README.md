@@ -38,8 +38,9 @@ FishEye pulls those sources into one place, organised around **where you are**:
    the National Weather Service forecast, reviewed guides for eighteen species and an angler's handbook,
    and a Q&A over those guides that answers in plain language and cites them.
 
-Lake data and fishing rules are Texas's today; the data model, importers,
-guides and Ask are per-state (see [Roadmap](#roadmap) and ADR 0027).
+Lake data is Texas's today, and fishing rules are written for Texas and
+Georgia; the data model, importers, guides and Ask are per-state (see
+[Roadmap](#roadmap) and ADRs 0027–0028).
 
 ## What it does
 
@@ -133,10 +134,11 @@ a production frontend build, and a Docker build with smoke tests on every push.
   suite, so a regression fails CI.
 - **Rules belong to a state.** How to catch a fish is the same everywhere; a
   licence, a limit or a bait rule is a state's. Passages that state a rule are
-  tagged with their state and shown only there (Texas so far); anyone in
+  tagged with their state and shown only there (Texas and Georgia so far),
+  each state searching its own index; anyone in
   another state is told the rules aren't written yet and pointed to their
-  own agency, instead of being given Texas's as if they were theirs
-  (ADR 0027).
+  own agency, instead of being given another state's as if they were theirs
+  (ADRs 0027, 0028).
 - **The model is optional.** Every question is answered by search alone,
   with sources and no model call. A written AI summary is an extra step for
   signed-in accounts, 3 a day, reserved atomically before the call and given
