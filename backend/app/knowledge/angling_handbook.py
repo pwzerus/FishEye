@@ -1,0 +1,706 @@
+"""The angler's handbook: what applies to every fish, not one species.
+
+Baits and why they work, lures, tackle, knots, caring for and cleaning a
+catch, telling look-alike fish apart, and when fish bite. Same rules as the
+species guides (species_guides.py, docs/adr/0011): reviewed text, every
+topic names the pages it came from, and no number that isn't in one of
+them. Each topic becomes one retrievable passage (services/rag/chunking.py)
+and one card on the fish guide page, under its own anchor, so an answer can
+cite exactly the card it used (docs/adr/0024).
+
+Regulations stay out, as in the guides, except where a rule changes how a
+beginner handles the fish in front of them (not wasting it, when it may be
+filleted, eating advisories); those are paraphrased closely and link TPWD.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from app.knowledge.species_guides import SOURCES
+
+
+@dataclass(frozen=True)
+class HandbookTopic:
+    id: str  # anchor and passage section, e.g. "bait-nightcrawlers"
+    category: str  # one of CATEGORIES
+    title: str
+    body: tuple[str, ...]  # sentences, read in order
+    source_ids: tuple[str, ...]
+
+
+# Order is the page's order.
+CATEGORIES: dict[str, str] = {
+    "baits": "Live and natural bait",
+    "lures": "Lures",
+    "tackle": "Rods, reels, line and terminal tackle",
+    "knots": "Knots",
+    "care": "Releasing, keeping and cleaning fish",
+    "identify": "Telling fish apart",
+    "timing": "When fish bite",
+}
+
+TOPICS: tuple[HandbookTopic, ...] = (
+    # ------------------------------------------------------------------ baits
+    HandbookTopic(
+        id="bait-worms",
+        category="baits",
+        title="Worms and nightcrawlers",
+        body=(
+            "The best all-around bait: nearly every freshwater game fish eats worms.",
+            "Large worms and nightcrawlers suit bass and catfish; a small worm or a piece of one "
+            "suits bluegill, sunfish, crappie and trout. Redworms are a favorite for redear "
+            "sunfish, and worms catch more freshwater drum than any other bait.",
+            "Why use them: cheap, easy to find (dig them, or look under boards and rocks after "
+            "rain) and easy to keep alive; kept cool they last up to a month.",
+            "How to hook: run the hook through the worm, slide it up the shank and thread it "
+            "through three to five more times. On a small hook use pieces, with the point pushed "
+            "into the end so the bait doesn't slide off. On a large hook leave the tail free to "
+            "wiggle.",
+        ),
+        source_ids=("mdc-bait-lures", "tmf-live-bait", "tamu-baits", "tamu-hook-bait", "kyfw-redear", "agfc-drum"),
+    ),
+    HandbookTopic(
+        id="bait-minnows",
+        category="baits",
+        title="Minnows and shiners",
+        body=(
+            "Live baitfish for predators. Size picks the fish: small minnows for crappie, medium ones "
+            "for bass and larger trout, large shiners for big bass.",
+            "Why use them: crappie and bass eat small fish, and a live minnow moves like the real "
+            "thing because it is.",
+            "How to hook: for casting or trolling, through both lips, point up, so it swims "
+            "naturally. Under a float, through the back without touching the spine, which would "
+            "paralyze it. Fished free with no weight, through the tail.",
+            "Keep them in a minnow bucket in the water they came from and use them soon. Never "
+            "dump unused bait into a lake: it can bring in unwanted animals.",
+        ),
+        source_ids=("tmf-live-bait", "tamu-hook-bait", "tamu-baits", "mdc-bait-lures", "tpwd-wcp", "tpwd-lmb"),
+    ),
+    HandbookTopic(
+        id="bait-insects",
+        category="baits",
+        title="Crickets, grasshoppers and other insects",
+        body=(
+            "Panfish, sunfish and trout eat insects: crickets, grasshoppers, beetles, ants, "
+            "caterpillars.",
+            "Why use them: a lively cricket is hard for a hungry bluegill to resist, especially big "
+            "bluegill in summer and late fall. Grasshoppers falling from the bank are a summer "
+            "staple for river bass.",
+            "How to hook a cricket: push the point slowly into the area just behind the head, not "
+            "deep (Take Me Fishing). Or thread the hook through the rear of the body: a hook "
+            "through the front kills an insect quickly (Texas A&M AgriLife).",
+        ),
+        source_ids=("tamu-baits", "tmf-live-bait", "tamu-hook-bait", "flyfisherman-gdb"),
+    ),
+    HandbookTopic(
+        id="bait-grubs",
+        category="baits",
+        title="Mealworms, wax worms and grubs",
+        body=(
+            "Small larvae sold at bait shops, used for panfish, sunfish and trout. Wax worms are "
+            "also used to tip small jigs for redear sunfish.",
+            "Why use them: small enough for a sunfish's small mouth, and easy to buy.",
+            "How to hook: thread the hook lengthwise through the body, or through the side. Use "
+            "several to hide the hook.",
+        ),
+        source_ids=("tamu-baits", "tamu-hook-bait", "kyfw-redear"),
+    ),
+    HandbookTopic(
+        id="bait-crayfish",
+        category="baits",
+        title="Crayfish (crawfish)",
+        body=(
+            "A main food of bass and catfish, and of freshwater drum, which root along the bottom "
+            "for them.",
+            "Why use them: fish already eat them; hooked well, a crayfish keeps moving naturally.",
+            "How to hook: shallowly through the back or the meaty part of the tail, away from vital "
+            "organs, or about ½ in from the end of the tail. A cut-off tail can also hide the hook.",
+            "Catch them in rocky spots with a fine-mesh net, or a trap baited with chicken liver; "
+            "keep them in damp rags or moss.",
+        ),
+        source_ids=("tamu-baits", "tmf-live-bait", "tamu-hook-bait", "tpwd-fwd"),
+    ),
+    HandbookTopic(
+        id="bait-shad-cut",
+        category="baits",
+        title="Shad and cut bait",
+        body=(
+            "Gizzard and threadfin shad, live or cut into pieces, are the top bait for blue catfish, "
+            "stripers and hybrids, because shad is their main food. Use it fresh when you can.",
+            "How to hook: cut chunks with the skin on and run the hook through the skin, which holds "
+            "it on. Hook the chunk shallowly so the point stays exposed.",
+            "Shad are nongame fish and legal bait; game fish are not (see Texas bait rules).",
+        ),
+        source_ids=("tpwd-gsh", "odwc-catfish", "mdc-striper-fg", "mdc-hybrid-fg", "mdc-bigcat", "tamu-hook-bait", "catfishedge-shad", "tpwd-regs-general"),
+    ),
+    HandbookTopic(
+        id="bait-liver-soft",
+        category="baits",
+        title="Chicken liver, hot dogs, cheese and other soft baits",
+        body=(
+            "Food-store baits for channel catfish: chicken liver, hot dogs, cheese.",
+            "Why they work: a catfish finds food mostly by taste and smell, not sight, and channel "
+            "catfish take non-living baits far more readily than flathead or blue catfish.",
+            "Drawback: soft baits tear off the hook. Let liver or clams firm up briefly in the sun, "
+            "run the hook through several times, or use a small treble hook, which holds soft "
+            "baits better.",
+        ),
+        source_ids=("tpwd-ccf", "odwc-catfish", "tamu-hook-bait", "mdc-bigcat"),
+    ),
+    HandbookTopic(
+        id="bait-stink",
+        category="baits",
+        title="Stink bait, punch bait and dip bait",
+        body=(
+            "Prepared catfish baits. Stink bait is a fermented mix of things like cheese, chicken "
+            "liver, blood and flour; dip bait is smeared onto a ribbed plastic worm.",
+            "Why they work: channel catfish find food mostly by taste and smell, and take prepared "
+            "baits more readily than other catfish.",
+            "Fish them on the bottom or a few feet under a bobber.",
+        ),
+        source_ids=("mdc-bait-lures", "odwc-catfish", "mdc-bigcat"),
+    ),
+    HandbookTopic(
+        id="bait-dough-corn",
+        category="baits",
+        title="Dough baits, PowerBait and corn",
+        body=(
+            "Dough baits catch carp, catfish, trout and panfish. Carp also take canned or frozen "
+            "corn, boiled field corn and bread; stocked trout take dough baits such as PowerBait.",
+            "Why they work: scent. Carp rarely hit lures, so a bait they find by smell on the bottom "
+            "is the way to catch them.",
+            "How to use: mold the dough so it completely hides the hook. Homemade dough is flour or "
+            "cornmeal mixed with hot water and a flavor such as garlic or anise; kept in the fridge.",
+        ),
+        source_ids=("tamu-baits", "tamu-hook-bait", "nydec-carp", "odwc-trout", "mdc-bait-lures"),
+    ),
+    HandbookTopic(
+        id="bait-shrimp",
+        category="baits",
+        title="Shrimp",
+        body=(
+            "Used for catfish and freshwater drum.",
+            "Pulling off a shell section or two releases scent that draws fish.",
+            "How to hook: lightly through the body or the meaty tail; for tail pieces, thread the "
+            "hook into the meat to hide it.",
+        ),
+        source_ids=("tamu-hook-bait", "tpwd-ccf", "agfc-drum"),
+    ),
+    # ------------------------------------------------------------------ lures
+    HandbookTopic(
+        id="lure-soft-plastics",
+        category="lures",
+        title="Soft plastics and jigs",
+        body=(
+            "A jig is a weighted head on a hook; a soft-plastic worm, grub or crawfish slides over "
+            "it to look like prey.",
+            "How to fish it: cast, let it sink, then lift the rod tip slowly and let it fall again. "
+            "Changing the plastic's color or shape changes how it moves.",
+            "Which fish: plastic worms for bass; small jigs for crappie and bluegill.",
+        ),
+        source_ids=("tmf-lures", "mdc-bait-lures"),
+    ),
+    HandbookTopic(
+        id="lure-crankbaits",
+        category="lures",
+        title="Crankbaits and plugs",
+        body=(
+            "Hard plastic lures shaped and painted like baitfish. A plastic lip makes most of them "
+            "dive; some float and are worked on top.",
+            "How to fish them: sharp twitch-and-stop retrieves work well. Bumping a crankbait off "
+            "rocks triggers strikes from bass.",
+            "Which fish: bass, small crappie, sometimes catfish.",
+            "The most straightforward lures for a beginner.",
+        ),
+        source_ids=("tmf-lures", "mdc-bait-lures", "torwicks-gdb"),
+    ),
+    HandbookTopic(
+        id="lure-spinnerbaits",
+        category="lures",
+        title="Spinnerbaits and inline spinners",
+        body=(
+            "A spinnerbait has a bright skirt over the hook and a metal blade that spins, flashes "
+            "and vibrates; it's a bass lure. Small inline spinners suit trout, crappie and small "
+            "bluegill.",
+            "How to fish them: a steady, even retrieve.",
+            "Why they work: color, flash and vibration draw the fish in.",
+        ),
+        source_ids=("tmf-lures", "mdc-bait-lures", "odwc-trout"),
+    ),
+    HandbookTopic(
+        id="lure-spoons",
+        category="lures",
+        title="Spoons and slabs",
+        body=(
+            "Curved metal lures that wobble like an injured baitfish, reflect light and vibrate.",
+            "How to fish them: cast and retrieve steadily through the depth the fish are at.",
+            "Which fish: once a white bass school is found, anglers often fish spoons near the "
+            "surface; small spoons catch stocked trout.",
+        ),
+        source_ids=("tmf-lures", "tpwd-wtb", "odwc-trout"),
+    ),
+    HandbookTopic(
+        id="lure-topwater",
+        category="lures",
+        title="Topwater lures",
+        body=(
+            "Floating lures that make noise and movement on the surface: poppers, pencil poppers, "
+            "buzzbaits.",
+            "When: early morning and toward dark for bass; topwaters near the bank for hybrids "
+            "early in the day.",
+            "Why: they draw aggressive fish, and an inactive bass may strike one out of annoyance.",
+        ),
+        source_ids=("tmf-lures", "mn-lmb", "fwc-bass", "tpwmag-hybrid-2014"),
+    ),
+    # ------------------------------------------------------------------ tackle
+    HandbookTopic(
+        id="tackle-reels",
+        category="tackle",
+        title="Reels: spincast, spinning, baitcasting and fly",
+        body=(
+            "Spincast: the line sits on an enclosed spool. Easy to learn and forgiving; a good "
+            "starter reel for beginners and kids.",
+            "Spinning: the most versatile; one medium outfit handles a wide range of lures and "
+            "weights, and it suits light line and finesse baits.",
+            "Baitcasting: works best with heavier lures and line. Gives more control, but needs a "
+            "practiced thumb and brake adjustments when lures change.",
+            "Fly reel: you strip line off by hand and the rod casts the line's weight, not the "
+            "lure's.",
+        ),
+        source_ids=("tmf-reels",),
+    ),
+    HandbookTopic(
+        id="tackle-rods",
+        category="tackle",
+        title="Rod power and action",
+        body=(
+            "Power is how much force it takes to bend the rod: ultralight, light, medium-light, "
+            "medium, medium-heavy, heavy, extra heavy. Ultralight suits light lures and small trout "
+            "and panfish; heavy suits big fish and heavy baits.",
+            "The rod's label gives its lure weight range: roughly up to ⅜ oz for ultralight, ¼–¾ oz "
+            "for medium, ⅜–1 oz for heavy.",
+            "Action is where it bends: fast rods bend mostly in the top third and snap back quickly, "
+            "for accuracy and hard hooksets; slow rods bend down toward the handle and absorb "
+            "shock.",
+        ),
+        source_ids=("meateater-rods",),
+    ),
+    HandbookTopic(
+        id="tackle-line",
+        category="tackle",
+        title="Fishing line: monofilament, fluorocarbon and braid",
+        body=(
+            "Monofilament: the cheapest and the standard. Stretchy, which can weaken a long-distance "
+            "hookset, and holds up to rock and wood. Cheap mono keeps coils from the spool "
+            "(\"memory\").",
+            "Fluorocarbon: nearly invisible underwater, strong and abrasion resistant, so popular in "
+            "clear water and as a leader. Stiffer and more expensive.",
+            "Braid: much thinner than mono for its strength, no stretch, so bites and hooksets are "
+            "felt at once. Less abrasion resistant, and needs a mono or fluorocarbon leader. Its "
+            "thin diameter drags less in current.",
+        ),
+        source_ids=("fs-line", "agfc-drum"),
+    ),
+    HandbookTopic(
+        id="tackle-hooks",
+        category="tackle",
+        title="Hooks: sizes, J hooks and circle hooks",
+        body=(
+            "Plain numbers get smaller as they get bigger: a No. 12 is far smaller than a No. 2. "
+            "\"Aught\" sizes go the other way: a 12/0 is far bigger than a 2/0.",
+            "Typical sizes: bluegill No. 4–8, crappie No. 2–6, bass No. 2 to 4/0, catfish No. 1 to "
+            "6/0 by fish size. When in doubt, go smaller so the fish can take it.",
+            "Thin wire for small fish and light hooksets (crappie, bluegill, trout); heavier wire "
+            "for catfish and big fish, which can straighten a thin hook.",
+            "The J hook (Aberdeen, round bend) is the most widely used.",
+        ),
+        source_ids=("agfc-hooks", "tpwd-sunfish-id"),
+    ),
+    HandbookTopic(
+        id="tackle-circle-hooks",
+        category="tackle",
+        title="How to use a circle hook",
+        body=(
+            "A circle hook sets itself: once the fish has the bait in its mouth, a steady, slow "
+            "pull turns the hook into the corner of the jaw.",
+            "Don't jerk or sweep the rod. Reel down on the fish.",
+            "It takes practice to trust one. Big-river catfish anglers mostly use 6/0–8/0 circle "
+            "hooks.",
+        ),
+        source_ids=("agfc-hooks", "odwc-catfish", "mdc-bigcat"),
+    ),
+    HandbookTopic(
+        id="tackle-split-shot",
+        category="tackle",
+        title="Split shot",
+        body=(
+            "Split shot are small weights, some as small as a BB, with a groove cut in the middle. "
+            "Slide the line into the groove and pinch it shut.",
+            "Often a single split shot is all the weight a bait needs to sink. It's easy to add, "
+            "move or take off.",
+        ),
+        source_ids=("tmf-weights",),
+    ),
+    HandbookTopic(
+        id="tackle-sinkers",
+        category="tackle",
+        title="Sinkers: egg, bullet, cone and pyramid",
+        body=(
+            "Sinkers range from as small as a BB to a few ounces. Most are lead; tungsten is nearly "
+            "indestructible but costs more.",
+            "Egg (inline) sinkers: the line runs through them. In a bottom rig the sinker slides "
+            "on the main line above a barrel swivel, with the leader and hook below.",
+            "Cone sinkers rig a worm Carolina-style; a bullet sinker goes ahead of a Texas-rigged "
+            "worm. Pyramid sinkers are heavy weights for surf fishing.",
+            "Use only enough weight to hold the bottom.",
+        ),
+        source_ids=("tmf-weights", "agfc-drum", "mn-lmb", "mdc-bigcat"),
+    ),
+    HandbookTopic(
+        id="tackle-bobbers",
+        category="tackle",
+        title="Bobbers (floats)",
+        body=(
+            "A bobber holds the bait at a set depth and shows the bite.",
+            "A slip bobber slides up and down the line and suits a lot of situations. Slender floats "
+            "are more sensitive.",
+            "Use the smallest bobber that floats your bait: you'll see more bites.",
+        ),
+        source_ids=("tmf-weights", "tmf-bluegill"),
+    ),
+    HandbookTopic(
+        id="tackle-leaders",
+        category="tackle",
+        title="Leaders and swivels",
+        body=(
+            "A leader is a short length of line between the main line and the hook.",
+            "Braid needs a mono or fluorocarbon leader. A leader a little weaker than the main line "
+            "breaks first when snagged, so you lose only the hook.",
+            "A barrel swivel joins the main line to the leader and stops a sliding sinker.",
+        ),
+        source_ids=("fs-line", "mdc-bigcat", "nydec-carp", "agfc-drum"),
+    ),
+    # ------------------------------------------------------------------ knots
+    HandbookTopic(
+        id="knot-improved-clinch",
+        category="knots",
+        title="Improved clinch knot",
+        body=(
+            "The go-to knot for tying a hook or lure to monofilament.",
+            "Pass 5–6 in of line through the hook eye and wrap the tag end around the main line 5–6 "
+            "times. Bring the tag end back through the small loop by the eye, then through the big "
+            "loop you just made.",
+            "Wet the knot, pull it snug and trim the tag end.",
+        ),
+        source_ids=("zebco-knots",),
+    ),
+    HandbookTopic(
+        id="knot-palomar",
+        category="knots",
+        title="Palomar knot",
+        body=(
+            "A strong knot for braid and mono, and many anglers find it easier than the clinch.",
+            "Double 4–6 in of line into a loop and push the loop through the hook eye. Tie a loose "
+            "overhand knot with the doubled line, then pass the hook through the loop.",
+            "Wet it, pull both ends tight and trim.",
+        ),
+        source_ids=("zebco-knots",),
+    ),
+    HandbookTopic(
+        id="knot-arbor",
+        category="knots",
+        title="Arbor knot (line to reel)",
+        body=(
+            "Ties new line onto the reel spool.",
+            "Wrap the line around the spool, tie an overhand knot with the tag end around the main "
+            "line, then a second overhand knot at the tip of the tag end as a stopper. Pull the "
+            "main line to slide the knot tight against the spool.",
+        ),
+        source_ids=("zebco-knots",),
+    ),
+    # ------------------------------------------------------------------ care
+    HandbookTopic(
+        id="care-release",
+        category="care",
+        title="Catch and release: handling a fish you'll let go",
+        body=(
+            "To release a fish unharmed, land it quickly: a fish played to exhaustion can be "
+            "harmed. Set the hook quickly too, so it doesn't swallow the bait.",
+            "Wet your hands (or use a wet rag or glove) and don't rub off the slime, which protects "
+            "it from infection. Keep it out of the water no longer than you can hold your breath.",
+            "Hold a small fish (under 5 lb) by the lower jaw; support a big one horizontally with "
+            "two hands. Keep fingers out of the eyes and gills.",
+            "Back the hook out with pliers, hemostats or a hook remover, ideally with the fish in "
+            "the water. Don't jerk the line to break it off.",
+            "Revive a tired fish facing into the current, supporting its middle and tail until it "
+            "swims away.",
+            "From deep water, bring it up slowly so it can adjust to the pressure change.",
+        ),
+        source_ids=("tpwd-cr",),
+    ),
+    HandbookTopic(
+        id="care-keeping",
+        category="care",
+        title="Keeping your catch fresh",
+        body=(
+            "Ice is the key to good-tasting fish, especially in summer. Get it into a cooler with "
+            "plenty of ice soon after it's caught.",
+            "A slush of ice and water chills fish 4–5 times faster than ice alone. A fisheries "
+            "handling guide recommends about 2 lb of ice per pound of fish, packed around the fish "
+            "and into the belly cavity once it's gutted.",
+            "Gutting removes a source of bacteria and lets the fish chill faster.",
+            "A fish on a stringer counts as kept. It's illegal to leave edible fish or bait fish "
+            "from public waters to die without intending to eat them or use them as bait.",
+        ),
+        source_ids=("utah-clean-cat", "lsu-handling", "tpwd-regs-general"),
+    ),
+    HandbookTopic(
+        id="care-dispatch-bleed",
+        category="care",
+        title="Killing a fish quickly and bleeding it",
+        body=(
+            "For a fish you'll keep, a quick kill avoids bruising the meat: a sharp blow to the head "
+            "stuns it, and a spike pushed into the skull just above the eyes kills it and slows "
+            "spoilage.",
+            "Then bleed it while the heart still pumps: cut through the gills (or rip them with "
+            "pliers), or cut the artery at the tail. Leave it in water for about 5–10 minutes, until "
+            "the blood stops, then put it on ice.",
+            "Why bleed: better-looking, better-tasting meat that chills faster. It's optional.",
+        ),
+        source_ids=("lsu-handling", "utah-clean-cat"),
+    ),
+    HandbookTopic(
+        id="clean-scaling",
+        category="care",
+        title="Scaling panfish to cook whole",
+        body=(
+            "For crappie and bluegill: scrape the scales off both sides (a spoon or scaling tool "
+            "works), then dip the fish in clean water to rinse off loose scales and slime.",
+            "Leaving the skin on helps the fish hold together, fry crisper and taste better.",
+        ),
+        source_ids=("ks-cleaning",),
+    ),
+    HandbookTopic(
+        id="clean-fillet",
+        category="care",
+        title="Filleting bass and other larger fish",
+        body=(
+            "Lay the fish on its side. Cut just behind the gill cover from the top of the back to "
+            "the belly, down to the backbone.",
+            "Turn the knife flat and run it along the backbone toward the tail, cutting through the "
+            "ribs, and lift the fillet off before you reach the tail.",
+            "Skin it: hold the knife flat against the board and slice between skin and meat. Then "
+            "cut the rib bones out of the fillet. Repeat on the other side.",
+            "Freshwater drum fillet the same way and have no small bones in the fillet; trim the "
+            "dark red meat just under the skin.",
+        ),
+        source_ids=("ks-cleaning", "agfc-drum"),
+    ),
+    HandbookTopic(
+        id="clean-fillet-panfish",
+        category="care",
+        title="Filleting crappie and bluegill",
+        body=(
+            "Put a small fillet knife in at the back of the neck and run it along the top of the "
+            "ribs toward the belly, coming out at the front of the anal fin, then cut back to the "
+            "tail.",
+            "Cut down just behind the gill cover and slice the fillet off the ribs; separate it "
+            "from the belly. Repeat on the other side.",
+            "Cutting along the outside of the ribs saves a little more of the belly meat.",
+        ),
+        source_ids=("ks-cleaning",),
+    ),
+    HandbookTopic(
+        id="clean-catfish",
+        category="care",
+        title="Cleaning a catfish (skinning)",
+        body=(
+            "Catfish are skinned, not scaled. Watch the barbed spines in the side and back fins: "
+            "they lock in place. Break the side fins off with pliers and grip the fish with a glove "
+            "or rag.",
+            "Score the skin around the head and along the back, clamp the head, and pull the skin "
+            "toward the tail with catfish skinning pliers.",
+            "Fillet along the spine from tail to head and work the fillet off the ribs, or gut it "
+            "and cut off the head and tail to cook it whole.",
+            "Trim the dark lateral line, fat and connective tissue from the fillet: contaminants "
+            "tend to collect there. Soaking fillets in milk or buttermilk for 30 minutes to an hour "
+            "takes away a fishy taste.",
+        ),
+        source_ids=("utah-clean-cat", "ks-cleaning"),
+    ),
+    HandbookTopic(
+        id="care-filleting-rule",
+        category="care",
+        title="When you may fillet a fish (Texas)",
+        body=(
+            "A fish that has a length limit may not have its head or tail removed, and may not be "
+            "filleted, until you finally land your catch, so its length and species can be checked. "
+            "Read TPWD's general fishing rules for the details.",
+            "Fish you catch and release right away don't count as in your possession; fish on a "
+            "stringer, in a cooler, livewell or bucket do, and must meet length and bag limits.",
+        ),
+        source_ids=("tpwd-regs-general",),
+    ),
+    HandbookTopic(
+        id="care-eating-safely",
+        category="care",
+        title="Eating your catch safely",
+        body=(
+            "Cook fish to an internal temperature of 145°F, or until the flesh is no longer "
+            "translucent and flakes easily with a fork.",
+            "Is fish from a Texas lake safe to eat? The Texas Department of State Health Services "
+            "tests fish for contaminants. A "
+            "consumption ban means you may not keep fish from that area (catch and release is still "
+            "legal); an advisory recommends limiting how much you eat, often by species and size.",
+            "Advisories are strictest for pregnant or nursing women, women who may become pregnant, "
+            "and children under 12. Check DSHS's current list before eating fish from a lake.",
+            "A carp's flavor depends on the water it came from; freshwater drum are best from cool "
+            "water.",
+        ),
+        source_ids=("foodsafety-temps", "tpwd-consumption", "tpwd-crp", "agfc-drum"),
+    ),
+    # ------------------------------------------------------------------ identify
+    HandbookTopic(
+        id="id-catfish",
+        category="identify",
+        title="Which catfish is it? Channel, blue or flathead",
+        body=(
+            "All three have whiskers (barbels) and smooth, scaleless skin.",
+            "Look at the tail first. Deeply forked: channel or blue catfish. Almost square, only "
+            "slightly notched: flathead.",
+            "Look at the jaw. Flathead: broad flat head, lower jaw sticking out past the upper. "
+            "Channel and blue: upper jaw longer.",
+            "Channel vs blue: a channel catfish usually has dark spots and a rounded anal fin with "
+            "24–29 rays; a blue catfish has no spots (outside the Rio Grande) and a straight-edged "
+            "anal fin with 30 or more rays.",
+            "Color: flathead is yellow to brown and mottled; blue is slate blue on the back.",
+        ),
+        source_ids=("tpwd-ccf", "tpwd-blc", "tpwd-flc", "tpwd-cat-id"),
+    ),
+    HandbookTopic(
+        id="id-black-bass",
+        category="identify",
+        title="Which bass is it? Largemouth, spotted or Guadalupe",
+        body=(
+            "Close the fish's mouth and look at the jaw. Reaches well past the back of the eye: "
+            "largemouth. Ends at the back of the eye or before it: spotted or Guadalupe bass.",
+            "Largemouth: one dark stripe of blotches along each side; most have no tooth patch on "
+            "the tongue.",
+            "Spotted: a more broken side stripe, rows of dark spots on a whitish belly, and a tooth "
+            "patch on the tongue.",
+            "Guadalupe: green with a black diamond pattern along the sides, the markings reaching "
+            "lower on the body than a spotted bass's; lives in flowing Hill Country streams.",
+            "Smallmouth bass have vertical bars, which Guadalupe bass lack.",
+        ),
+        source_ids=("tpwd-bass-id", "tpwd-lmb", "tpwd-spb", "tpwd-gdb", "tamu-gdb"),
+    ),
+    HandbookTopic(
+        id="id-temperate-bass",
+        category="identify",
+        title="White bass, striped bass or hybrid?",
+        body=(
+            "Stripes. Striped bass: strong, dark, unbroken stripes, several reaching the tail. "
+            "Hybrid: distinct but usually broken stripes. White bass: faint stripes, only one "
+            "reaching the tail.",
+            "Body shape. Striped bass are slender (body depth less than a third of the length); "
+            "white bass and hybrids are deeper-bodied.",
+            "Tongue. White bass: one tooth patch. Striped bass: two distinct parallel patches. "
+            "Hybrid: two patches close together, or a single one.",
+            "Size. A white bass rarely gets big; a hybrid can exceed 5 lb.",
+        ),
+        source_ids=("tpwd-wtb", "mdc-striper-fg", "mdc-hybrid-fg", "tpwd-bass-id"),
+    ),
+    HandbookTopic(
+        id="id-panfish",
+        category="identify",
+        title="Crappie, bluegill, redear or another sunfish?",
+        body=(
+            "Crappie: silvery and deep-bodied. White crappie have vertical bars and 5–6 dorsal "
+            "spines; black crappie have irregular black blotches and 7–8 spines.",
+            "Bluegill: a black spot at the back of the dorsal fin, vertical bars, a small mouth and "
+            "a flexible black ear flap.",
+            "Redear sunfish: a red (male) or orange (female) edge on a short ear flap, and long "
+            "pointed pectoral fins.",
+            "Green sunfish: a large mouth and turquoise spots. Warmouth: a large mouth and dark "
+            "lines radiating from the eye. Longear: a long black ear flap edged in white.",
+        ),
+        source_ids=("tpwd-wcp", "tpwd-bcp", "tpwd-bgl", "tpwd-rsf", "tpwd-sunfish-id"),
+    ),
+    HandbookTopic(
+        id="id-shad",
+        category="identify",
+        title="Gizzard shad or threadfin shad?",
+        body=(
+            "Upper jaw sticks out well past the lower: gizzard shad. It doesn't: threadfin shad.",
+            "Threadfin shad have yellowish fins and rarely pass 6 in; gizzard shad are commonly "
+            "9–14 in.",
+            "The anal fin has 29–35 rays on a gizzard shad and 20–25 on a threadfin.",
+        ),
+        source_ids=("tpwd-gsh", "tpwd-tfs"),
+    ),
+    HandbookTopic(
+        id="id-others",
+        category="identify",
+        title="Carp, drum or trout?",
+        body=(
+            "Common carp: heavy body, brassy to golden, whiskers on the upper jaw and a long dorsal "
+            "fin with a toothed spine.",
+            "Freshwater drum: silvery, deep-bodied, a long dorsal fin split in two, and it grunts. "
+            "Its saltwater relative, the red drum, has a spot on the tail.",
+            "Rainbow trout: slim, speckled all over, a pink to red stripe along the side and a "
+            "spotted tail; in Texas mostly in stocked winter lakes.",
+        ),
+        source_ids=("tpwd-crp", "tpwd-fwd", "tpwd-rbt"),
+    ),
+    # ------------------------------------------------------------------ timing
+    HandbookTopic(
+        id="timing-day",
+        category="timing",
+        title="Best time of day",
+        body=(
+            "Low light is prime time for many fish. Catfish are most active at dawn, dusk and "
+            "overnight, and big flatheads feed mostly at night.",
+            "Bass take topwater lures best early in the morning and toward dark.",
+            "White bass and hybrids are most active at dawn and dusk; hybrids are near the bank "
+            "early and move deeper as the day goes on.",
+            "Guadalupe bass go deeper on hot, sunny days.",
+        ),
+        source_ids=("odwc-catfish", "mdc-flathead", "mn-lmb", "odwc-whitebass", "tamu-hsb", "tpwmag-hybrid-2014", "torwicks-gdb"),
+    ),
+    HandbookTopic(
+        id="timing-season",
+        category="timing",
+        title="Best time of year",
+        body=(
+            "Spring spawning gathers fish in the shallows: largemouth at about 60°F, crappie at "
+            "60–70°F, bluegill from about 70°F, redear when the water reaches the 70s, channel "
+            "catfish at 75°F.",
+            "White bass run up rivers to spawn in early spring.",
+            "Winter is prime for blue catfish in Texas, and the season for stocked rainbow trout, "
+            "which stay active when bass and crappie slow down.",
+            "Flathead catfish feed little while spawning but heavily before and after it.",
+        ),
+        source_ids=("tpwd-lmb", "tpwd-wcp", "tpwd-bgl", "kyfw-redear", "tpwd-ccf", "odwc-whitebass", "tpwmag-bluecat-2020", "odwc-trout", "mdc-flathead"),
+    ),
+)
+
+_BY_ID = {t.id: t for t in TOPICS}
+
+
+def get_topic(topic_id: str) -> HandbookTopic | None:
+    return _BY_ID.get(topic_id)
+
+
+def _check() -> None:
+    ids = [t.id for t in TOPICS]
+    if len(ids) != len(set(ids)):
+        raise ValueError("duplicate handbook topic ids")
+    for t in TOPICS:
+        if t.category not in CATEGORIES:
+            raise ValueError(f"{t.id}: unknown category {t.category!r}")
+        missing = [i for i in t.source_ids if i not in SOURCES]
+        if missing:
+            raise ValueError(f"{t.id}: unknown sources {missing}")
+
+
+_check()

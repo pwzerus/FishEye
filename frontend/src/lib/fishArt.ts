@@ -250,6 +250,107 @@ export const FISH_SPECS: Record<string, FishSpec> = {
     shoulderSpot: true,
     water: OPEN_WATER,
   },
+  // Added with the knowledge-base expansion (docs/adr/0024). Same approach:
+  // the field marks the guide uses to tell each one apart, a little
+  // exaggerated.
+  "flathead-catfish": {
+    // Broad flat head with the lower jaw out front, mottled yellow-brown,
+    // an almost square tail.
+    length: 182,
+    depthTop: 27,
+    depthBottom: 24,
+    peak: 0.34,
+    peduncle: 10,
+    flatHead: true,
+    mouth: "cat",
+    eye: { r: 4.5, x: 0.11, y: 0.22, iris: "#5a4a2a" },
+    colors: { back: "#6b5a2e", side: "#c2a865", belly: "#f3ead0", fin: "#9a8550", mark: "#3a2f17" },
+    dorsal: "cat",
+    tail: "notched",
+    patterns: [{ kind: "speckles" }],
+    barbels: true,
+    water: MUDDY_WATER,
+  },
+  "guadalupe-bass": {
+    // Green, a diamond-blotched side band, spots in rows on the belly; the
+    // jaw stops at the eye.
+    length: 158,
+    depthTop: 33,
+    depthBottom: 30,
+    peak: 0.42,
+    peduncle: 10,
+    mouth: "big",
+    eye: { r: 7, x: 0.1, y: 0.32, iris: "#c0392b" },
+    colors: { back: "#3f5f2c", side: "#93a96a", belly: "#eef0d8", fin: "#91a46a", mark: "#26381a" },
+    dorsal: "bass",
+    tail: "notched",
+    patterns: [{ kind: "lateral-band", blotchy: true }, { kind: "spots-below" }],
+    water: BASS_WATER,
+  },
+  "redear-sunfish": {
+    // A bluegill's shape with yellow-green sides, a pale belly and a short
+    // ear flap; no dark spot on the dorsal fin.
+    length: 142,
+    depthTop: 48,
+    depthBottom: 45,
+    peak: 0.45,
+    peduncle: 10,
+    mouth: "small",
+    eye: { r: 8, x: 0.11, y: 0.26, iris: "#3a3a32" },
+    colors: { back: "#4a5f33", side: "#b8c172", belly: "#f6f2dc", breast: "#f0d98a", fin: "#8f9a62", mark: "#2f3b20" },
+    dorsal: "sunfish",
+    tail: "notched",
+    patterns: [{ kind: "bars", count: 6, opacity: 0.15 }],
+    earFlap: true,
+    water: WEED_WATER,
+  },
+  "rainbow-trout": {
+    // Slim, speckled all over, with a pink flush along the side.
+    length: 172,
+    depthTop: 29,
+    depthBottom: 27,
+    peak: 0.45,
+    peduncle: 10,
+    mouth: "big",
+    eye: { r: 6, x: 0.09, y: 0.3, iris: "#c9c2a0" },
+    colors: { back: "#5d6b45", side: "#e0b3b5", belly: "#f6f3ee", fin: "#b9a98f", mark: "#2f3524" },
+    dorsal: "cat",
+    tail: "notched",
+    patterns: [{ kind: "speckles" }],
+    water: OPEN_WATER,
+  },
+  "freshwater-drum": {
+    // Deep, arched, silvery, with a long dorsal fin split in two.
+    length: 160,
+    depthTop: 46,
+    depthBottom: 30,
+    peak: 0.36,
+    peduncle: 10,
+    hump: true,
+    mouth: "small",
+    eye: { r: 7, x: 0.1, y: 0.3, iris: "#cfd3d4" },
+    colors: { back: "#7d8a8f", side: "#d6dcde", belly: "#f6f8f8", fin: "#b5bfc2", mark: "#4a5559" },
+    dorsal: "split",
+    tail: "notched",
+    patterns: [],
+    water: OPEN_WATER,
+  },
+  "common-carp": {
+    // Heavy, golden, with whiskers on the upper jaw.
+    length: 172,
+    depthTop: 40,
+    depthBottom: 33,
+    peak: 0.4,
+    peduncle: 11,
+    mouth: "small",
+    eye: { r: 6, x: 0.09, y: 0.3, iris: "#d8b24a" },
+    colors: { back: "#6e5a24", side: "#c9a34a", belly: "#f3e3b0", fin: "#a5833d", mark: "#4a3a14" },
+    dorsal: "crappie",
+    tail: "forked",
+    patterns: [{ kind: "dots" }],
+    barbels: true,
+    water: MUDDY_WATER,
+  },
 };
 
 export function specFor(slug: string): FishSpec {

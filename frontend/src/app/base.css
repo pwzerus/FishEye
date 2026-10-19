@@ -997,6 +997,69 @@ h3 {
   text-decoration-color: color-mix(in srgb, var(--brand) 40%, transparent);
 }
 
+/* The angler's handbook on /fish (components/fish/Handbook.tsx, ADR 0024).
+   Each card is an Ask citation target, so a card reached by its anchor is
+   briefly highlighted. */
+.handbook {
+  margin-top: 40px;
+  display: grid;
+  gap: 14px;
+}
+.handbook h2 {
+  font-size: 24px;
+}
+.handbook-nav .chip {
+  text-decoration: none;
+}
+.handbook-group {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+  scroll-margin-top: calc(var(--header-h) + 16px);
+}
+.handbook-group h3 {
+  font-size: 18px;
+}
+.handbook-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.handbook-card {
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ink-2);
+  scroll-margin-top: calc(var(--header-h) + 16px);
+}
+.handbook-card h4 {
+  font-size: 15px;
+  color: var(--ink);
+}
+.handbook-card p {
+  margin: 0;
+}
+.handbook-card:target {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+.handbook-sources {
+  font-size: 12px;
+  color: var(--muted);
+}
+.handbook-sources a {
+  color: var(--brand-strong);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: color-mix(in srgb, var(--brand) 40%, transparent);
+}
+
 /* --------------------------------------------------------- fish detail */
 
 .back-link {
@@ -1646,6 +1709,27 @@ h3 {
   color: var(--brand-strong);
 }
 
+/* The AI-summary spot under a guide search (AskChat.tsx, ADR 0023): a
+   button or a note until asked, then the summary itself, set apart from the
+   guide's own words above it. */
+.ai-summary {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+.ai-summary-cta {
+  justify-items: start;
+  font-size: 14px;
+}
+.ai-summary-cta p {
+  margin: 0;
+}
+.ai-summary-error {
+  color: var(--danger);
+}
 .trace {
   font-size: 13px;
   border-top: 1px dashed var(--line);

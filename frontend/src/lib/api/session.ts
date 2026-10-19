@@ -6,6 +6,9 @@
 // The cookie itself is httpOnly: this code never sees or stores the token.
 import { ApiError } from "./client";
 import type {
+  AiAllowance,
+  AskRequest,
+  AskResponse,
   AdminPin,
   AdminReportGroup,
   AdminStats,
@@ -64,6 +67,14 @@ const json = (method: string, data?: unknown): RequestInit => ({
   headers: { "Content-Type": "application/json" },
   body: data === undefined ? undefined : JSON.stringify(data),
 });
+
+// ------------------------------------------------------------------ AI summaries
+
+/** Have the model write an answer from the guide passages (docs/adr/0023).
+ * Needs an account; a few per day. Refused with the server's own message:
+ * 401 signed out, 422 not a question the guides cover, 429 none left today. */
+export const postAskSummary = (payload: AskRequest) => sfetch<AskResponse>("/api/ask/summary", json("POST", payload));
+export const getAskAllowance = () => sfetch<AiAllowance>("/api/ask/allowance");
 
 // ------------------------------------------------------------------ auth
 

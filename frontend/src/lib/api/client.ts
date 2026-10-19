@@ -5,6 +5,7 @@ import type {
   AskResponse,
   SpeciesPhotos,
   GeocodeResult,
+  HandbookTopic,
   RecommendationRequest,
   SpeciesGuide,
   StateCoverage,
@@ -165,6 +166,10 @@ export function listSpeciesGuides(): Promise<SpeciesGuide[]> {
   return apiFetch<SpeciesGuide[]>("/api/species/guides");
 }
 
+export function listHandbook(): Promise<HandbookTopic[]> {
+  return apiFetch<HandbookTopic[]>("/api/species/handbook");
+}
+
 export function getSpeciesGuide(slug: string): Promise<SpeciesGuide> {
   return apiFetch<SpeciesGuide>(`/api/species/guides/${encodeURIComponent(slug)}`);
 }
@@ -182,13 +187,16 @@ export async function listSpeciesPhotos(): Promise<SpeciesPhotos> {
 }
 
 export function postAsk(payload: AskRequest): Promise<AskResponse> {
-  // Not cached here: the backend caches accepted answers keyed on the
-  // question and the passages it was grounded in.
+  // Searching the guides: no model call, open to everyone. The session
+  // cookie goes along only so the reply can say how many AI summaries the
+  // signed-in person has left (`ai`); the AI summary itself is
+  // postAskSummary in session.ts.
   return apiFetch<AskResponse>("/api/ask", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
     cache: "no-store",
+    credentials: "include",
   });
 }
 

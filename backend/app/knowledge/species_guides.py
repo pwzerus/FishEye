@@ -21,7 +21,7 @@ every species the TPWD scraper can create has a guide.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 TPWD_LIMITS_URL = (
     "https://tpwd.texas.gov/regulations/outdoor-annual/fishing/freshwater-fishing/bag-length-limits"
@@ -94,6 +94,49 @@ SOURCES: dict[str, Source] = {
         Source("buckley-striper", "Buckley's Striper Guide: Live bait on Lake Texoma", "https://buckleystriperguide.com/complete-guide-to-live-bait-fishing-for-striped-bass-on-lake-texoma/", "guide"),
         Source("catfishedge-shad", "Catfish Edge: Shad as catfish bait", "https://www.catfishedge.com/shad-catfish-bait/", "guide"),
         Source("tacklevillage-shad", "Tackle Village: How to catch shad", "https://tacklevillage.com/how-to-catch-shad/", "guide"),
+        # Added with the knowledge-base expansion (docs/adr/0024). Every page
+        # below was opened and read; the facts taken from each are the ones
+        # the guides and the handbook state.
+        Source("tpwd-flc", "TPWD: Flathead Catfish", "https://tpwd.texas.gov/huntwild/wild/species/catfish", "agency"),
+        Source("tpwd-gdb", "TPWD: Guadalupe Bass", "https://tpwd.texas.gov/huntwild/wild/species/gdb", "agency"),
+        Source("tpwd-rsf", "TPWD: Redear Sunfish", "https://tpwd.texas.gov/huntwild/wild/species/sunfish/", "agency"),
+        Source("tpwd-rbt", "TPWD: Rainbow Trout", "https://tpwd.texas.gov/huntwild/wild/species/rbt", "agency"),
+        Source("tpwd-fwd", "TPWD: Freshwater Drum", "https://tpwd.texas.gov/huntwild/wild/species/fwd/", "agency"),
+        Source("tpwd-crp", "TPWD: Common Carp", "https://tpwd.texas.gov/huntwild/wild/species/crp/", "agency"),
+        Source("tpwd-sunfish-id", "TPWD: Texas sunfish identification sheet (2015)", "https://tpwd.texas.gov/publications/pwdpubs/media/pwd_lf_k0700_0692a.pdf", "agency"),
+        Source("tpwd-trout-2025", "TPWD news release: rainbow trout stocking (Nov. 2025)", "https://tpwd.texas.gov/newsmedia/releases/?req=20251120b", "agency"),
+        Source("tpwd-cr", "TPWD Outdoor Annual: catch and release tips", "https://tpwd.texas.gov/regulations/outdoor-annual/fishing/catch-release-tips", "agency"),
+        Source("tpwd-consumption", "TPWD Outdoor Annual: fish consumption bans and advisories", "https://tpwd.texas.gov/regulations/outdoor-annual/fishing/general-rules-regulations/fish-consumption-bans-and-advisories", "agency"),
+        Source("tamu-rsf", "Texas A&M Fisheries: Redear Sunfish", "https://fisheries.tamu.edu/pond-management/species/redear-sunfish", "agency"),
+        Source("tamu-gdb", "Texas A&M AgriLife Extension: The state fish of Texas, Guadalupe bass", "https://extension.rwfm.tamu.edu/wp-content/uploads/sites/8/2013/09/The-State-Fish-of-Texas-Guadalupe-Bass.pdf", "agency"),
+        Source("tamu-baits", "Take Me Fishing, via Texas A&M AgriLife Extension: Basic freshwater baits", "https://extension.rwfm.tamu.edu/wp-content/uploads/sites/8/2019/02/tmf_basic_freshwater_baits.pdf", "agency"),
+        Source("tamu-hook-bait", "Texas A&M AgriLife Extension: How to hook bait", "https://extension.rwfm.tamu.edu/wp-content/uploads/sites/8/2013/09/How-to-Hook-Bait.pdf", "agency"),
+        Source("mdc-bait-lures", "Missouri Dept. of Conservation: Bait and lures", "https://mdc.mo.gov/fishing/get-started-fishing/bait-lures", "agency"),
+        Source("mdc-flathead", "Missouri Conservationist: Hunting flathead catfish (1997)", "https://mdc.mo.gov/magazines/conservationist/1997-05/hunting-flathead-catfish", "agency"),
+        Source("mdc-trout", "Missouri Dept. of Conservation: Trout fishing tips", "https://mdc.mo.gov/index%2Ephp/fishing/species/trout/trout-fishing-tips", "agency"),
+        Source("mdc-striper-fg", "Missouri Dept. of Conservation field guide: Striped Bass", "https://mdc.mo.gov/discover-nature/field-guide/striped-bass", "agency"),
+        Source("mdc-hybrid-fg", "Missouri Dept. of Conservation field guide: Hybrid Striped Bass", "https://mdc.mo.gov/discover-nature/field-guide/hybrid-striped-bass-wiper-whiterock-bass", "agency"),
+        Source("odwc-catfish", "Oklahoma Dept. of Wildlife Conservation: Catfish angler guide", "https://www.wildlifedepartment.com/outdoorok/ooj/catfish-angler-guide-top-tips-area-highlights", "agency"),
+        Source("odwc-trout", "Oklahoma Dept. of Wildlife Conservation: How to catch trout", "https://wildlifedepartment.com/ooj/how-catch-trout", "agency"),
+        Source("agfc-drum", "Arkansas Game & Fish: Drumming up spring fishing excitement", "https://www.agfc.com/news/drumming-up-spring-fishing-excitement/", "agency"),
+        Source("kyfw-redear", "Kentucky Fish & Wildlife: May is a great time for redear sunfish (2021)", "https://fw.ky.gov/Fish/Pages/May-is-a-Great-Time-for-Redear-Sunfish.aspx", "agency"),
+        Source("nydec-carp", "New York DEC: Carp fishing", "https://dec.ny.gov/things-to-do/freshwater-fishing/places-to-fish/statewide-opportunities/carp", "agency"),
+        Source("ks-cleaning", "Kansas Dept. of Wildlife & Parks: Cleaning and preparing fish", "https://ksoutdoors.gov/Fishing/Special-Fishing-Programs-for-You/Pond-Management-Program/Producing-Fish-and-Wildlife-in-Kansas-Ponds/Fishing-the-Pond/Cleaning-and-Preparing-Fish", "agency"),
+        Source("utah-clean-cat", "Utah DWR: How to clean and prepare catfish (2024)", "https://wildlife.utah.gov/blog/2024/05/03/how-to-clean-and-prepare-catfish", "agency"),
+        Source("lsu-handling", "Louisiana Sea Grant: Handling offshore catch on board", "https://www.seagrantfish.lsu.edu/pdfs/factsheets/handling_offshorecatch.pdf", "agency"),
+        Source("foodsafety-temps", "Hawaii Dept. of Health, from FoodSafety.gov: safe cooking temperatures", "https://www.health.hawaii.gov/food-drug/files/2024/02/Food-Safety-Control-Temperature-Updated.pdf", "agency"),
+        Source("tmf-live-bait", "Take Me Fishing: What is good bait for freshwater fishing (2022)", "https://www.takemefishing.org/blog/december-2022/what-is-good-bait-for-freshwater-fishing/", "publication"),
+        Source("tmf-lures", "Take Me Fishing: Lures every beginner should have (2019)", "https://www.takemefishing.org/blog/april-2019/lure-fishing-for-beginners-lures-every-angler-should-have/", "publication"),
+        Source("tmf-reels", "Take Me Fishing: A brief guide to fishing reels (2022)", "https://www.takemefishing.org/blog/march-2022/a-brief-guide-to-fishing-reels/", "publication"),
+        Source("tmf-weights", "Take Me Fishing: Fishing weights and bobbers", "https://www.takemefishing.org/how-to-fish/fishing-gear-and-tackle/fishing-weights-bobbers/", "publication"),
+        Source("tmf-drum", "Take Me Fishing: Can you beat a drum? (2015)", "https://www.takemefishing.org/blog/june-2015/can-you-beat-a-drum/", "publication"),
+        Source("fs-line", "Field & Stream: Fishing line types", "https://www.fieldandstream.com/gear/fishing-line-types/", "publication"),
+        Source("meateater-rods", "MeatEater: Rod action and power explained", "https://themeateater.com/fish/general/conventional-fishing-rod-action-and-power-explained", "publication"),
+        Source("zebco-knots", "Zebco Academy: Simple knots", "https://core-prod.zebco.com/en/academy/getting-started/simple-knots", "publication"),
+        Source("flyfisherman-gdb", "Fly Fisherman: Hill Country bass", "https://www.flyfisherman.com/editorial/hill-country-bass/151717", "publication"),
+        Source("texasmonthly-gdb", "Texas Monthly: How to catch Guadalupe bass", "https://www.texasmonthly.com/travel/how-to-catch-guadalupe-bass/", "publication"),
+        Source("tpwmag-trout-2005", "Texas Parks & Wildlife magazine: winter trout (2005)", "https://tpwmagazine.com/archive/2005/jan/scout2/", "publication"),
+        Source("torwicks-gdb", "Torwick's Guiding Service: Catching the Guadalupe bass", "https://www.torwicksguidingservice.com/single-post/how-to-target-and-catch-the-state-fish-of-texas-the-guadalupe-bass", "guide"),
     ]
 }
 
@@ -143,6 +186,18 @@ class SpeciesGuide:
     # stripes, dorsal spines, anal fin) so a question about two fish can be
     # answered by setting their passages side by side.
     identification: tuple[str, ...] = ()
+    # Where it lives (water type, depth, bottom, temperature) and how it
+    # behaves (schooling, feeding times, seasonal moves, spawning), mostly
+    # from TPWD's own species pages. Kept apart from where_and_when, which is
+    # angler advice on where to look.
+    habitat: tuple[str, ...] = ()
+    habits: tuple[str, ...] = ()
+    # Why the baits above work for this fish: each reason ties a bait to
+    # something a source says about what the fish eats or how it feeds.
+    why_these_baits: tuple[str, ...] = ()
+    # Cleaning and eating, where a source says something specific to this
+    # fish. General cleaning steps are in the handbook (angling_handbook.py).
+    eating: tuple[str, ...] = ()
     # Forage fish only: how anglers get them, and what they're bait for.
     how_to_get: tuple[str, ...] = ()
     bait_for: tuple[str, ...] = ()
@@ -211,7 +266,7 @@ _CRAPPIE_SETUPS = (
     ),
 )
 
-GUIDES: tuple[SpeciesGuide, ...] = (
+_BASE_GUIDES: tuple[SpeciesGuide, ...] = (
     SpeciesGuide(
         common_name="Largemouth Bass",
         scientific_name="Micropterus salmoides",
@@ -984,6 +1039,821 @@ GUIDES: tuple[SpeciesGuide, ...] = (
         ),
     ),
 )
+
+# --------------------------------------------------------------------------
+# Habitat, habits, why the baits work, and eating (docs/adr/0024)
+# --------------------------------------------------------------------------
+# Added to the twelve original guides after the fact, so they're kept here
+# rather than spliced into each literal above. Mostly from TPWD's own species
+# pages; every source named in `sources` was opened and read, and is added to
+# that guide's source list so the page shows it.
+
+_DETAILS: dict[str, dict[str, tuple[str, ...]]] = {
+    "largemouth-bass": dict(
+        habitat=(
+            "Seeks cover: logs, rock ledges, vegetation and man-made structures.",
+            "Prefers clear, quiet water but tolerates a wide range of habitats.",
+            "Native to many Texas rivers and lakes. The Florida largemouth, a subspecies, has been "
+            "stocked into many Texas lakes.",
+        ),
+        habits=(
+            "Young bass school; adults are usually solitary. Several adults may share a small area "
+            "without interacting.",
+            "An ambush hunter: it hides among plants, roots or limbs and strikes prey that comes past.",
+            "Becomes a predator at about 2 in long; larger bass eat smaller bass.",
+            "The male builds the nest in 2–8 ft of water, on any bottom but soft mud, and guards the "
+            "eggs. The fry hatch in 5–10 days and stay in a group near the nest under his watch.",
+            "Grows to 4–6 in in its first year, 8–12 in by two and about 16 in by three. Average "
+            "lifespan is 16 years.",
+        ),
+        why_these_baits=(
+            "Adults eat almost nothing but fish and crayfish, so the baits that work look like one: "
+            "live shiners, soft-plastic crayfish, crankbaits and swimbaits.",
+            "It ambushes from cover, so a bait has to pass close to the log, weed edge or dock it's "
+            "hiding in.",
+            "Lures work best when they resemble fish, crayfish, worms, insects or frogs (Missouri "
+            "Dept. of Conservation).",
+        ),
+        eating=(
+            "Fillet it: cut behind the gill cover down to the backbone, run the knife along the "
+            "backbone to the tail, then skin the fillet and cut out the ribs.",
+        ),
+        sources=("mdc-bait-lures", "ks-cleaning"),
+    ),
+    "spotted-bass": dict(
+        habitat=(
+            "Likes more current than largemouth bass, and tolerates warmer, murkier, slower water "
+            "than smallmouth bass.",
+            "Native to East Texas from the Guadalupe River to the Red River, but not the Edwards "
+            "Plateau.",
+        ),
+        habits=(
+            "Diet changes with size: zooplankton when young, then insects, then fish and crayfish.",
+            "Spawns over rock or gravel at 57–74°F. Females lay 1,150 to 47,000 eggs, and the male "
+            "guards them, and the young for up to four weeks after they hatch.",
+            "Much smaller than a largemouth: the largest known in Texas is just over 5.5 lb. Still "
+            "an excellent fighter for its size.",
+        ),
+        why_these_baits=(
+            "Adults eat fish and crayfish, which is why small soft plastics in natural colors "
+            "(green pumpkin, watermelon) dragged along the bottom work.",
+        ),
+        sources=(),
+    ),
+    "white-bass": dict(
+        habitat=(
+            "Native in Texas only to the Red River drainage.",
+            "Spawns in running water over gravel or rock.",
+        ),
+        habits=(
+            "Travels in schools and feeds near the surface.",
+            "Males run upstream to the spawning areas as much as a month before the females.",
+            "Builds no nest: several males gather around a female near the surface or in midwater. "
+            "The eggs sink, stick to rocks and hatch in 2–3 days.",
+            "Grows fast, 8–9 in in its first year, and rarely lives past four.",
+        ),
+        why_these_baits=(
+            "Gizzard and threadfin shad are its preferred prey, so the best lures are shad-shaped "
+            "and shiny: slabs, spoons, inline spinners and white grubs.",
+            "Schools feed at the surface, so once a school is found, spoons or spinners worked near "
+            "the top catch fish one after another.",
+            "Bottom fishing with live bait at night also works.",
+        ),
+        eating=("Superb table fare (TPWD).",),
+        sources=(),
+    ),
+    "striped-bass": dict(
+        habitat=(
+            "A saltwater fish by origin, stocked into many Texas rivers and reservoirs, where it "
+            "does well without salt water.",
+            "Needs cool, well-oxygenated water and can't tolerate poor water quality. From fall "
+            "through spring it spreads through the reservoir; in summer it gathers in cool, deep "
+            "water near the thermocline.",
+        ),
+        habits=(
+            "Lives in open water in schools that keep moving.",
+            "Runs up flowing tributaries to spawn in spring. Its spawning needs are specific, so few "
+            "reservoirs have self-sustaining populations; most are kept up by stocking.",
+            "Grows fast, often 24 in by its fourth year, and is believed to live up to 30 years.",
+        ),
+        why_these_baits=(
+            "Gizzard and threadfin shad are its main prey, and it's big enough to eat gizzard shad "
+            "too large for most other fish. That's why live shad and big shad-colored slabs, "
+            "swimbaits and pencil poppers are the standard baits.",
+        ),
+        eating=("Prized for its flavorful flesh (Missouri Dept. of Conservation).",),
+        sources=("mdc-striper-fg",),
+    ),
+    "hybrid-striped-bass": dict(
+        habitat=(
+            "A hatchery-made cross of striped bass and white bass, stocked into reservoirs. It is "
+            "sterile, so every population depends on stocking.",
+            "An open-water fish that doesn't stay near weeds, stumps or other structure.",
+            "Gathers by the fastest current: below dams while water is being released, at springs, "
+            "and at creek mouths after heavy rain.",
+        ),
+        habits=(
+            "Roams in schools like \"mini wolf packs\", slashing into balls of baitfish. Diving birds "
+            "join in.",
+            "Early in the day it is in shallow water near the bank; later it moves deeper with the "
+            "baitfish.",
+            "In spring it runs up tributaries with the white bass, though it can't reproduce.",
+            "Typically 7–10 lb, seldom 20.",
+        ),
+        why_these_baits=(
+            "Gizzard and threadfin shad are a major food, so shad-like lures and live shad work. "
+            "Once a school is feeding it bites almost anything.",
+            "It hits hard and can break light line or wreck lures, so use heavier tackle than for "
+            "white bass.",
+        ),
+        eating=("Considered excellent eating (Missouri Dept. of Conservation).",),
+        sources=("mdc-hybrid-fg",),
+    ),
+    "channel-catfish": dict(
+        habitat=(
+            "Most abundant in large streams with low or moderate current; found throughout Texas.",
+        ),
+        habits=(
+            "Spawns in late spring or early summer once the water reaches 75°F. The male picks a "
+            "dark, hidden nest site, such as a hole in a drift pile, a log, an undercut bank or rocks, "
+            "and guards the eggs and fry.",
+            "Eggs hatch in about a week; the fry stay in the nest about another week.",
+            "Matures in 3–6 years in Texas. Fish over 36 lb have been landed in Texas waters.",
+            "Like other catfish, more active in low light and overnight, but catchable any time.",
+        ),
+        why_these_baits=(
+            "A catfish finds food mostly by taste and touch, not sight, so strong-smelling baits work: "
+            "stink bait, punch bait, chicken liver, cut bait.",
+            "Channel catfish are much more likely than flathead or blue catfish to take baits that "
+            "aren't live or natural, which is why prepared baits and hot dogs catch them.",
+            "Adults eat almost anything (insects, snails, crayfish, fish and some plants), so worms "
+            "and shrimp work too.",
+        ),
+        eating=(
+            "Prized for its flavor. Catfish are skinned rather than scaled: see the catfish "
+            "cleaning steps in the handbook.",
+        ),
+        sources=("odwc-catfish", "utah-clean-cat"),
+    ),
+    "blue-catfish": dict(
+        habitat=(
+            "Mainly large rivers: main channels, tributaries and the reservoirs built on major river "
+            "systems. In Texas, absent from the northwest, including the Panhandle.",
+        ),
+        habits=(
+            "Moves upstream in summer to find cooler water and downstream in winter for warmer water.",
+            "Starts eating fish at about 4 in long. Typically 20–40 lb; Texas's largest freshwater "
+            "sport fish. The Texas rod-and-reel record is 121.5 lb.",
+            "Early spring, from March through May, is often best for big blues, and some of the "
+            "largest are caught in midwinter.",
+        ),
+        why_these_baits=(
+            "Shad is its preferred food, so fresh cut shad (or skipjack herring) on a circle hook is "
+            "the standard bait.",
+        ),
+        eating=("An excellent food fish (TPWD). Skin it like other catfish.",),
+        sources=("odwc-catfish",),
+    ),
+    "white-crappie": dict(
+        habitat=(
+            "Native to the eastern two-thirds of Texas and now statewide, except the upper Rio "
+            "Grande and Pecos drainages.",
+            "Gathers around submerged trees, boat docks and other structure.",
+        ),
+        habits=(
+            "Adults form schools, sometimes large ones; young fingerlings school in the middle of "
+            "lakes.",
+            "Builds nests in large beds, spawning at 65–70°F (as low as 56°F has been seen). Fry "
+            "hatch in 3–5 days.",
+            "Grows to 3–5 in in its first year and 7–8 in in its second. Fish over 4.5 lb have been "
+            "landed in Texas.",
+            "Can overpopulate and stay small (\"stunt\") in small lakes.",
+        ),
+        why_these_baits=(
+            "Adults eat small fish and insects, so a small live minnow is the preferred bait; small "
+            "jigs imitate the same minnows.",
+        ),
+        eating=(
+            "Scale it and cook it whole, or fillet it with the panfish method in the handbook.",
+        ),
+        sources=("ks-cleaning",),
+    ),
+    "black-crappie": dict(
+        habitat=(
+            "Most abundant in the clear, acidic waters of East Texas. Native to central Texas, "
+            "except the Edwards Plateau.",
+        ),
+        habits=(
+            "Builds nests and spawns in spring, generally at about 60°F.",
+            "Stockier than a white crappie, which grows faster in length. Fish over 3.5 lb have "
+            "been caught in Texas public waters.",
+        ),
+        why_these_baits=(
+            "Eats fewer fish and more insects and crustaceans than white crappie, so small jigs and "
+            "insect-sized baits work alongside minnows.",
+        ),
+        eating=(
+            "Scale it and cook it whole, or fillet it with the panfish method in the handbook.",
+        ),
+        sources=("ks-cleaning",),
+    ),
+    "bluegill": dict(
+        identification=(
+            "A dark spot at the base (rear) of the soft dorsal fin, and vertical bars on the sides.",
+            "A small mouth.",
+            "A flexible black ear flap, and deep blue on the underside of the gill cover.",
+            "Usually 10 spines in the spiny dorsal fin and 3 in the anal fin.",
+            "Dark olive back; sides lavender, brown, copper or orange; belly reddish-orange or "
+            "yellow. Breeding males are brighter.",
+        ),
+        habitat=(
+            "Found throughout Texas: three subspecies live here.",
+            "Vegetation and sunken trees in shallow backwaters of rivers, lakes and ponds.",
+        ),
+        habits=(
+            "Builds nests 1–2 ft deep, preferring gravel; 50 or more nests may cluster in one "
+            "small spawning bed. The males guard them.",
+            "Its long spawning season lets it overpopulate where few predators or anglers thin it out.",
+            "Texas public waters have produced bluegill approaching 2 lb.",
+        ),
+        why_these_baits=(
+            "Young bluegill eat plankton; adults eat aquatic insects and larvae, so small baits win: "
+            "a piece of worm, a cricket, a mealworm, a tiny jig.",
+            "A lively cricket is hard for a hungry bluegill to resist, especially big bluegill in "
+            "summer and late fall.",
+            "Its small mouth is why the hook and bait must be small: TPWD suggests hooks size 6–14 "
+            "for sunfish.",
+        ),
+        eating=(
+            "Scale it and cook it whole, or fillet it with the panfish method in the handbook.",
+        ),
+        sources=("tpwd-sunfish-id", "tmf-live-bait", "ks-cleaning"),
+    ),
+    "gizzard-shad": dict(
+        habitat=(
+            "Most abundant in large rivers and reservoirs; found in all major Texas streams and "
+            "reservoirs. Avoids steep, fast streams.",
+        ),
+        habits=(
+            "Usually in large schools. Called \"skipjack\" for leaping out of the water or skipping "
+            "along the surface on its side.",
+            "Spawns in late spring in shallow, protected water; the sticky eggs hatch in about "
+            "4 days.",
+            "Commonly 9–14 in; some exceed 20 in.",
+        ),
+        why_these_baits=(
+            "It filters food from the water with long, close-set gill rakers, which is why it "
+            "almost never bites a hook and is caught with a cast net instead.",
+            "It's food for most game fish, which is why it makes good bait, often as cut bait.",
+        ),
+        eating=("Generally considered worthless as food (TPWD).",),
+        sources=(),
+    ),
+    "threadfin-shad": dict(
+        habitat=(
+            "Usually in the top 5 ft of water, more often where there's a noticeable current. "
+            "Common in East Texas streams and stocked statewide as forage in many reservoirs.",
+        ),
+        habits=(
+            "Spawns from spring, at about 70°F, into summer.",
+            "Very sensitive to cold: die-offs happen below 45°F.",
+        ),
+        why_these_baits=(
+            "Rarely bites a hook, so it's netted. It's what stripers, hybrids and white bass are "
+            "chasing, which makes it top live bait for them.",
+        ),
+        sources=(),
+    ),
+}
+
+
+def _with_details(guide: SpeciesGuide) -> SpeciesGuide:
+    extra = _DETAILS.get(guide.slug)
+    if not extra:
+        return guide
+    sources = tuple(extra.get("sources", ()))
+    fields = {k: v for k, v in extra.items() if k != "sources"}
+    if "identification" in fields and guide.identification:
+        raise ValueError(f"{guide.slug}: identification is already set in the guide")
+    return replace(
+        guide,
+        **fields,
+        source_ids=guide.source_ids + tuple(s for s in sources if s not in guide.source_ids),
+    )
+
+
+# --------------------------------------------------------------------------
+# Six more fish a Texas beginner is likely to catch (docs/adr/0024)
+# --------------------------------------------------------------------------
+
+_NEW_GUIDES: tuple[SpeciesGuide, ...] = (
+    SpeciesGuide(
+        common_name="Flathead Catfish",
+        scientific_name="Pylodictis olivaris",
+        role="sport",
+        difficulty="advanced",
+        summary=(
+            "Texas's second-largest sport fish after the blue catfish, and the one catfish that "
+            "wants live fish. Fish a live sunfish next to heavy wood cover, at dusk or after dark."
+        ),
+        diet=(
+            "Live fish. Young fish eat worms, insects and crayfish; from about 10 in long the diet "
+            "is entirely fish, including shad, carp, sunfish, bass and other catfish."
+        ),
+        diet_type="carnivore",
+        identification=(
+            "A broad, flat head with the lower jaw sticking out past the upper jaw. Channel and "
+            "blue catfish have the upper jaw longer.",
+            "Tail only slightly notched, almost square, not deeply forked like a channel or blue "
+            "catfish's.",
+            "Pale yellow to light brown, heavily mottled with black or brown; cream or pale yellow "
+            "belly. Young fish can be nearly black.",
+            "Other names: yellow cat, Opelousas cat, mud cat, shovelhead.",
+        ),
+        habitat=(
+            "Deep pools of streams, rivers, canals, lakes and reservoirs with murky water and slow "
+            "current.",
+            "Stays near heavy cover: log jams, brush piles, hollow logs, undercut banks, bluffs and "
+            "large rocks.",
+        ),
+        habits=(
+            "Usually alone. Adults move into shallow water at night to feed.",
+            "Spawns from late May through August at 75–80°F. The male picks a hollow log, a cave or "
+            "a hole under a bank, and guards the eggs aggressively.",
+            "Typically lives 12–14 years. Can exceed 100 lb; 50 lb fish aren't unusual in Texas "
+            "where mature populations exist.",
+        ),
+        where_and_when=(
+            "Woody cover in coves and backwaters, deep holes near cover, and below reservoir dams.",
+            "Most active at low light and overnight; larger fish feed more at night. Work cover "
+            "near sunrise and sunset.",
+            "It feeds little while spawning but heavily before and after.",
+        ),
+        live_baits=(
+            "Live sunfish, such as bluegill (the go-to bait)",
+            "Live shad",
+            "Large live minnows, goldfish or bullheads",
+        ),
+        why_these_baits=(
+            "Unlike most catfish, it eats only live fish, so it consistently takes only live bait.",
+            "Bigger bait tends to catch bigger fish, because small fish can't take it.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Live sunfish in cover",
+                use_when="Casting a live bait into woody cover and waiting for a take.",
+                method="bait",
+                rod="Medium to extra-heavy rod",
+                reel="Spinning, spincasting or baitcasting reel",
+                line="10–80 lb test, with a 30–80 lb leader",
+                terminal=(
+                    "A sturdy 6/0–10/0 circle hook through the lips, or between the dorsal fin and "
+                    "the tail, of a live bluegill. A ½–1 oz weight on the main line above a barrel "
+                    "swivel. Don't sweep-set a circle hook: reel down on the fish."
+                ),
+                source_ids=("odwc-catfish",),
+            ),
+            TackleSetup(
+                name="Big-river tight line",
+                use_when="Deep pools, cut banks and log jams in a large river.",
+                method="bait",
+                rod="7–10 ft medium-heavy or heavy rod",
+                reel="Heavy-duty baitcasting or spinning reel",
+                line="30–50 lb monofilament, with about 18 in of 50 lb leader below the swivel",
+                terminal=(
+                    "A 6/0–8/0 circle hook with a live sunfish or large minnow hooked through the "
+                    "back below the dorsal fin, or through both lips. A 3–8 oz slip sinker above a "
+                    "two-way swivel, just heavy enough to hold the bottom."
+                ),
+                source_ids=("mdc-bigcat",),
+            ),
+        ),
+        tips=(
+            "Keep live bait cool: an insulated cooler with a frozen jug of ice.",
+            "No bite in 30 minutes? Move. Approach cover quietly.",
+            "Below dams, the current can be dangerous.",
+        ),
+        eating=("The belly meat is especially good eating (Oklahoma Dept. of Wildlife Conservation).",),
+        source_ids=("tpwd-flc", "odwc-catfish", "mdc-bigcat", "mdc-flathead", "tpwd-cat-id"),
+    ),
+    SpeciesGuide(
+        common_name="Guadalupe Bass",
+        scientific_name="Micropterus treculii",
+        role="sport",
+        difficulty="intermediate",
+        summary=(
+            "The official state fish of Texas, found only in Texas. A small, hard-fighting bass of "
+            "Hill Country streams; cast to every rock, root and eddy along the current."
+        ),
+        diet=(
+            "Fish, crayfish and insect larvae. The very young and older adults eat more invertebrates "
+            "than largemouth bass do; in hot weather the biggest feed on grasshoppers."
+        ),
+        diet_type="carnivore",
+        identification=(
+            "Generally green, with a black, diamond-shaped pattern along the sides and rows of spots "
+            "forming stripes on the belly.",
+            "With the mouth closed, the jaw doesn't reach past the eye, as it does on a largemouth.",
+            "No vertical bars, unlike a smallmouth bass; the markings reach lower on the body than a "
+            "spotted bass's.",
+            "A red-rimmed eye.",
+        ),
+        habitat=(
+            "Flowing water: streams of the northern and eastern Edwards Plateau, including the "
+            "headwaters of the San Antonio and Guadalupe rivers, the Colorado above Austin, and parts "
+            "of the Brazos drainage. Largemouth bass, by contrast, live in quiet water.",
+            "In lakes without current, such as Lake Travis, it sticks to rock: rocky banks, bluff "
+            "walls, ledges and points.",
+        ),
+        habits=(
+            "Matures at one year old. Spawns from as early as March through May and June, on gravel "
+            "nests in shallow water, often in faster flow than largemouth use.",
+            "Doesn't grow large: fish over 3.5 lb have been landed, and most are under a foot long.",
+            "Its biggest threat is interbreeding with introduced smallmouth bass.",
+            "Ambushes from shoreline structure. On hot, sunny days it goes deeper.",
+        ),
+        where_and_when=(
+            "Swirling pools below current, calm backwaters off the main flow, and every run, riffle, "
+            "rock, root wad and fallen tree along a shady bank.",
+            "The bite peaks from late April into May. For surface fishing, March–June and "
+            "September–October are best.",
+            "Hill Country streams are fishable all year: their main springs run about 70°F.",
+        ),
+        lures=(
+            "Ned rig (a short soft-plastic stick on a small jighead) bounced along the bottom",
+            "Small jigs and soft-plastic crawfish",
+            "Drop-shot finesse worms",
+            "Small paddle-tail swimbaits that look like threadfin shad",
+            "Crawfish-colored crankbaits bumped along rocky banks",
+            "Poppers and other topwaters near downed trees and lily pads",
+        ),
+        why_these_baits=(
+            "It feeds heavily on crawfish, so crawfish-colored plastics and crankbaits are the "
+            "starting point.",
+            "It's aggressive and needs no delicate presentation; a fast, \"mean\" lure draws "
+            "explosive strikes.",
+            "Grasshoppers and other insects falling from the bank are a summer staple, which is why "
+            "hopper-style flies and poppers work.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Finesse drop shot or Ned rig",
+                use_when="Rocky ledges and bluff walls, or the bottom of a river pool.",
+                method="lure",
+                rod="Spinning rod",
+                reel="Spinning reel",
+                line="Light line for finesse baits (no pound test given by the sources)",
+                terminal=(
+                    "Drop shot: a 1/0 hook with a green pumpkin straight-tail worm above a ¼ oz "
+                    "weight, fished slowly. Or a Ned rig: a short stickbait on a small jighead."
+                ),
+                source_ids=("torwicks-gdb", "texasmonthly-gdb"),
+            ),
+            TackleSetup(
+                name="Fly rod on a Hill Country stream",
+                use_when="Wading or paddling a river, casting to the bank.",
+                method="lure",
+                rod="7–8½ ft, 5- or 6-weight, medium-fast",
+                reel="Fly reel with a floating bass-taper line (or a short 5 ft sinking tip)",
+                line="1X–3X leader with fluorocarbon tippet, 7–9 ft",
+                terminal=(
+                    "Snag-resistant flies, sizes 4–10, worked slowly: Clousers, Woolly Buggers, "
+                    "crayfish patterns, poppers, and grasshopper or cricket patterns in sizes 4–8."
+                ),
+                source_ids=("flyfisherman-gdb",),
+            ),
+        ),
+        tips=(
+            "Make short, accurate casts tight to the bank: that's where it waits.",
+            "Strikes are explosive. Don't hesitate to set the hook.",
+            "Many anglers practice catch and release with Guadalupe bass.",
+        ),
+        source_ids=("tpwd-gdb", "tamu-gdb", "flyfisherman-gdb", "texasmonthly-gdb", "torwicks-gdb", "tpwd-bass-id"),
+    ),
+    SpeciesGuide(
+        common_name="Redear Sunfish",
+        scientific_name="Lepomis microlophus",
+        role="sport",
+        difficulty="beginner",
+        summary=(
+            "The \"shellcracker\": a big sunfish that eats snails on the bottom. Fish a worm on or "
+            "near the bottom, a little deeper than the bluegill beds."
+        ),
+        diet=(
+            "Snails are a major food, which is where the name shellcracker comes from; also insect "
+            "larvae and small crustaceans."
+        ),
+        diet_type="carnivore",
+        identification=(
+            "A red edge on the ear (gill) flap of males, orange on females; the flap is never long.",
+            "Dark olive back, yellow to green sides, nearly white belly; a small mouth.",
+            "Long, pointed pectoral fins.",
+            "Other names: shellcracker, Georgia bream, cherry gill, sun perch.",
+        ),
+        habitat=(
+            "Near the bottom in warm, clear, quiet water with little current and plenty of aquatic "
+            "vegetation.",
+            "Native to the eastern two-thirds of Texas and widely stocked elsewhere.",
+        ),
+        habits=(
+            "Spawns in late spring and early summer, in deeper water than most sunfish, in beds of "
+            "saucer-shaped nests set so close they nearly touch.",
+            "Rarely rises to the surface to feed.",
+            "Grows to about 12 in and 2 lb; few live past six summers.",
+        ),
+        where_and_when=(
+            "Look past the bluegill beds along a bank, in slightly deeper water. Catching bluegill "
+            "instead? Move a little deeper.",
+            "Backs of bays with gravel bottoms and vegetation, and around logs and brush.",
+            "Spawning starts when the water reaches the 70s°F; that's when they're concentrated and "
+            "easiest to catch. Once you catch one, keep fishing the spot.",
+        ),
+        live_baits=("Redworms or other earthworms", "Wax worms", "Mealworms", "Crickets"),
+        lures=("Small black or brown jigs that look like a snail or insect", "Soft-plastic \"bluegill bugs\" tipped with a wax worm"),
+        why_these_baits=(
+            "It feeds on the bottom on snails and larvae, so baits fished on or near the bottom "
+            "work, and topwater baits rarely do.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Worm under a bobber, near the bottom",
+                use_when="Just beyond the bluegill beds in spring and early summer.",
+                method="bait",
+                rod="Ultralight spinning rod",
+                reel="Ultralight spinning reel",
+                line="4–6 lb monofilament",
+                terminal="A redworm, wax worm or cricket set under a bobber so it rides close to or on the bottom.",
+                source_ids=("kyfw-redear",),
+            ),
+            TackleSetup(
+                name="Drop shot along the bottom",
+                use_when="Searching deeper water slowly until you find the fish.",
+                method="either",
+                rod="Ultralight spinning rod",
+                reel="Ultralight spinning reel",
+                line="4–6 lb monofilament",
+                terminal="A hook tied a few inches above a 3/16 oz weight, baited with a worm or a small jig, moved slowly along the bottom.",
+                source_ids=("kyfw-redear",),
+            ),
+        ),
+        eating=("Scale it and cook it whole, or fillet it with the panfish method in the handbook.",),
+        source_ids=("tpwd-rsf", "tamu-rsf", "kyfw-redear", "tpwd-sunfish-id", "ks-cleaning"),
+    ),
+    SpeciesGuide(
+        common_name="Rainbow Trout",
+        scientific_name="Oncorhynchus mykiss",
+        role="sport",
+        difficulty="beginner",
+        summary=(
+            "A cold-water fish TPWD stocks into community lakes every winter. It bites almost as "
+            "soon as it's stocked, on light tackle and small baits."
+        ),
+        diet="Insects, crustaceans, mollusks and fish: a carnivore, but not only a fish-eater.",
+        diet_type="carnivore",
+        identification=(
+            "A salmon-like body with a slightly forked tail covered in dark spots.",
+            "Dark olive back, silvery white below, heavily speckled, with a pink to red stripe along "
+            "each side.",
+        ),
+        habitat=(
+            "Needs water below about 70°F. Texas summers are too warm for it to breed or, usually, "
+            "survive, so most Texas trout are stocked for winter fishing.",
+            "Exceptions: the Guadalupe River below Canyon Lake, which often stays cool enough "
+            "year-round, and a small wild population in McKittrick Canyon in the Guadalupe "
+            "Mountains.",
+        ),
+        habits=(
+            "Stays active in winter, when bass and crappie slow down.",
+            "Often nibbles rather than taking a bait in one bite.",
+            "The Texas record is 8.24 lb, from the Canyon Reservoir tailrace.",
+        ),
+        where_and_when=(
+            "TPWD stocks several hundred thousand into community fishing lakes each winter; for "
+            "2025–26 it planned 335,048 fish from Nov. 26 to March 6, in Neighborhood Fishin' lakes "
+            "and dozens of city and county park ponds.",
+            "Check TPWD's trout stocking schedule before going: dates and places change.",
+            "Arrive early on stocking day; trout bite almost immediately after they're released.",
+            "In a Texas state park you can fish without a license from the bank, a dock or a pier.",
+        ),
+        live_baits=(
+            "Dough baits such as PowerBait, molded to cover the hook",
+            "Corn",
+            "Small pieces of worm",
+            "Salmon eggs",
+        ),
+        lures=(
+            "Small inline spinners, 1/16–1/8 oz (olive, brown, black or white)",
+            "Small spoons in gold or silver",
+            "Small marabou jigs",
+            "Flies: small nymphs and bead-head Woolly Buggers",
+        ),
+        why_these_baits=(
+            "Its diet is insects and crustaceans, so small lures and flies that look like them work.",
+            "Scented dough baits sit on the bottom where a cruising trout finds them; it often "
+            "nibbles, so wait for steady pressure before setting the hook.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Dough bait on the bottom",
+                use_when="Stocked ponds and lakes; still or slow water.",
+                method="bait",
+                rod="6–7 ft medium-light rod",
+                reel="Spinning reel",
+                line="6–8 lb monofilament",
+                terminal=(
+                    "A size 6, 8 or 10 snelled bait-holder hook covered with PowerBait, a snap "
+                    "swivel, and a ¼ oz sinker in still water (½ oz in current)."
+                ),
+                source_ids=("odwc-trout",),
+            ),
+            TackleSetup(
+                name="Small spinner",
+                use_when="Casting and slowly retrieving along the bank.",
+                method="lure",
+                rod="6–7 ft medium-light rod",
+                reel="Spinning reel",
+                line="6–8 lb monofilament",
+                terminal="A 1/16–1/8 oz inline spinner or small spoon, retrieved slowly.",
+                source_ids=("odwc-trout",),
+            ),
+            TackleSetup(
+                name="Ultralight with a light leader",
+                use_when="Clear water, or wary fish.",
+                method="either",
+                rod="6–6½ ft rod",
+                reel="Ultralight spinning reel with 4 lb line",
+                line="4 lb main line; a 2 ft leader of 2 lb line on a snap swivel",
+                terminal=(
+                    "Treble hooks size 16–18 for cheese and dough baits, or single hooks size 10–16 "
+                    "for salmon eggs; a BB-size split shot 12–24 in above the hook."
+                ),
+                source_ids=("mdc-trout",),
+            ),
+        ),
+        tips=(
+            "Set the hook with a medium pull, not a hard jerk.",
+            "Land trout with a net: they can break the line when lifted out of the water.",
+        ),
+        eating=("Bring ice and get the fish on it soon after catching (TPWD).",),
+        source_ids=("tpwd-rbt", "tpwd-trout-2025", "odwc-trout", "mdc-trout", "tpwmag-trout-2005", "tamu-baits"),
+    ),
+    SpeciesGuide(
+        common_name="Freshwater Drum",
+        scientific_name="Aplodinotus grunniens",
+        role="sport",
+        difficulty="beginner",
+        summary=(
+            "A silvery bottom feeder that makes a grunting sound, common in rivers and big lakes "
+            "statewide. Worms on the bottom catch more drum than anything else."
+        ),
+        diet=(
+            "Fish, crayfish and immature insects. It roots through the bottom and moves rocks to "
+            "find prey, and heavy throat teeth let it crush some mollusks."
+        ),
+        diet_type="carnivore",
+        identification=(
+            "Deep-bodied and silvery, with a long dorsal fin split into two sections.",
+            "No spot on the tail, unlike its saltwater relative, the red drum.",
+            "Grunts: a sound you can hear or feel when you hold one.",
+            "Other names: gaspergou, gou, drum fish.",
+        ),
+        habitat=(
+            "Found throughout Texas except the Panhandle, in a wide range of waters. Spends most of "
+            "its time on or near the bottom.",
+            "Often in deeper water with current: current breaks, eddies, drop-offs, below dams and "
+            "around structure.",
+        ),
+        habits=(
+            "Spawns in open water in April or May in Texas; the eggs float until they hatch.",
+            "Travels in schools: after one, keep fishing that area.",
+            "Usually 1–4 lb; the Texas rod-and-reel record is over 30 lb.",
+        ),
+        where_and_when=(
+            "Rocky rivers and large reservoirs, especially below dams. Good for bank anglers.",
+        ),
+        live_baits=("Worms and nightcrawlers", "Crawdad tails", "Pieces of cooked shrimp", "Minnows"),
+        lures=("Small grubs and jigs fished near the bottom", "Spoons", "Small swimbaits"),
+        why_these_baits=(
+            "It feeds on the bottom on crayfish, insects and small fish, and isn't picky, so natural "
+            "baits on the bottom work best; drum \"aggressively inhale bait.\"",
+            "It has a small mouth, so use a small hook.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Sliding sinker on the bottom",
+                use_when="Current breaks, eddies and drop-offs; from the bank or anchored above a spot.",
+                method="bait",
+                rod="Any rod; a basic spincasting outfit handles most drum",
+                reel="Spincasting, spinning or baitcasting reel",
+                line="15–20 lb monofilament, or better, 20–30 lb braid (its thin diameter drags less in current)",
+                terminal=(
+                    "A ½ oz or heavier egg sinker sliding on the main line above a barrel swivel, "
+                    "then about 12 in of mono leader and a size 2 or 4 bait-holder hook, or a light "
+                    "wire size 1 circle hook (just tighten the line, don't jerk)."
+                ),
+                source_ids=("agfc-drum",),
+            ),
+            TackleSetup(
+                name="Jig near the bottom",
+                use_when="Covering water below dams and along rocky drops.",
+                method="lure",
+                rod="Any rod; a basic spincasting outfit handles most drum",
+                reel="Spincasting, spinning or baitcasting reel",
+                line="15–20 lb monofilament or 20–30 lb braid",
+                terminal="A small grub, swimbait or jig, or a spoon, worked slowly near the bottom.",
+                source_ids=("agfc-drum", "tmf-drum"),
+            ),
+        ),
+        eating=(
+            "Good eating when caught from cool water. Ice it as soon as possible, fillet it like a "
+            "bass or crappie (it has no small bones in the fillet), and trim the dark red meat just "
+            "under the skin.",
+            "Fried in a seasoned cornmeal coating at 350°F for about six minutes, or cubed and "
+            "boiled 5–7 minutes in crab-boil seasoning (\"poor man's lobster\").",
+        ),
+        source_ids=("tpwd-fwd", "agfc-drum", "tmf-drum"),
+    ),
+    SpeciesGuide(
+        common_name="Common Carp",
+        scientific_name="Cyprinus carpio",
+        role="sport",
+        difficulty="intermediate",
+        summary=(
+            "A big, hard-fighting fish found in nearly every Texas water. It rarely takes a lure: "
+            "fish corn or dough on the bottom over a spot you've baited."
+        ),
+        diet="An omnivore: it eats a broad mix of plants and animals.",
+        diet_type="omnivore",
+        identification=(
+            "Heavy-bodied, with barbels (whiskers) on both sides of the upper jaw.",
+            "Brassy green or yellow to golden brown or silvery, with a yellowish-white belly.",
+            "A dorsal fin of 17–21 rays, and a heavy toothed spine at the front of the dorsal and "
+            "anal fins.",
+            "Other names: German carp, European carp.",
+        ),
+        habitat=(
+            "Ponds, lakes, streams and rivers; tolerates a wide range of conditions. Not native: "
+            "it comes from Europe and Asia and is now everywhere in Texas.",
+        ),
+        habits=(
+            "Grows fast and lives long, over 47 years. Commonly 12–25 in and up to 8–10 lb; the "
+            "Texas rod-and-reel record is 43.13 lb.",
+            "Can spawn several times a season, from March to September.",
+            "Fights hard and makes long runs.",
+        ),
+        where_and_when=(
+            "Almost any pond, lake or river. Carp find a baited (chummed) area fairly quickly.",
+        ),
+        live_baits=(
+            "Canned or frozen sweet corn",
+            "Boiled field corn",
+            "Dough balls and oatmeal-based pack baits",
+            "Bread",
+        ),
+        why_these_baits=(
+            "It's an omnivore and usually won't strike a lure, so baits like corn and dough fished "
+            "on the bottom work best.",
+            "Scattering a few handfuls of corn draws carp to your spot and keeps them there.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Hair rig over chum",
+                use_when="Bottom fishing a spot baited with corn.",
+                method="bait",
+                rod="Medium action, at least 6 ft (8½–12 ft is better for big fish)",
+                reel="Spinning or spincast reel with a good drag and 100+ yd of line",
+                line="10–15 lb mono or braid; a slightly lighter mono or fluorocarbon leader",
+                terminal=(
+                    "A size 4–8 hook with a short \"hair\" loop off the bend; the bait is threaded on "
+                    "the hair so the hook point stays bare. Egg sinker and barrel swivel above the "
+                    "leader."
+                ),
+                source_ids=("nydec-carp",),
+            ),
+            TackleSetup(
+                name="Simple bottom rig",
+                use_when="Your first carp, with standard tackle.",
+                method="bait",
+                rod="Medium action, at least 6 ft",
+                reel="Spinning or spincast reel with a good drag",
+                line="10–15 lb mono",
+                terminal="An egg sinker, a barrel swivel, a short leader and a size 4–8 bait hook covered with corn or dough.",
+                source_ids=("nydec-carp",),
+            ),
+        ),
+        tips=(
+            "Chum with a few handfuls of corn, and add more every half hour to an hour.",
+            "Leave the bail open (or the button pushed) with the rod in a holder, so a carp can run "
+            "with the bait.",
+            "Set the drag properly and take your time: carp make long runs. Land it with a net.",
+            "A hair rig also makes release easier, because the fish isn't hooked deeply.",
+        ),
+        eating=("Flavor depends on the water it came from (TPWD).",),
+        source_ids=("tpwd-crp", "nydec-carp", "mdc-bait-lures"),
+    ),
+)
+
+GUIDES: tuple[SpeciesGuide, ...] = tuple(_with_details(g) for g in _BASE_GUIDES) + _NEW_GUIDES
 
 _BY_SLUG = {g.slug: g for g in GUIDES}
 _BY_NAME = {g.common_name.lower(): g for g in GUIDES}

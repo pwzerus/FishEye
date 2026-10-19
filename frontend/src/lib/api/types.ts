@@ -406,6 +406,10 @@ export interface SpeciesGuide {
   setups: TackleSetup[];
   tips: string[];
   identification: string[];
+  habitat: string[];
+  habits: string[];
+  why_these_baits: string[];
+  eating: string[];
   how_to_get: string[];
   bait_for: string[];
   legal_notes: string[];
@@ -444,7 +448,17 @@ export interface AskCitation {
   sources: GuideSource[];
 }
 
-export type AskAnswerSource = "llm" | "fallback" | "no_match";
+// "passages": the search alone, no model call (POST /api/ask). The other
+// three come from an AI summary (POST /api/ask/summary), except "no_match",
+// which either can return. See docs/adr/0023.
+export type AskAnswerSource = "passages" | "llm" | "fallback" | "no_match";
+
+/** Today's AI summaries for whoever is asking (backend services/ai_quota.py). */
+export interface AiAllowance {
+  signed_in: boolean;
+  limit: number | null; // null: signed out, or unlimited (admins)
+  remaining: number | null;
+}
 
 export interface AskTrace {
   trace_id: string;
@@ -468,6 +482,7 @@ export interface AskResponse {
   answer_source: AskAnswerSource;
   citations: AskCitation[];
   trace: AskTrace;
+  ai: AiAllowance;
 }
 
 // ---------------------------------------------------------------------------
@@ -604,4 +619,15 @@ export interface Paged<T> {
   page: number;
   page_size: number;
   items: T[];
+}
+
+/** One topic of the angler's handbook (backend app/knowledge/angling_handbook.py).
+ * `id` is its anchor on /fish, where Ask citations of shared passages link. */
+export interface HandbookTopic {
+  id: string;
+  category: string;
+  category_label: string;
+  title: string;
+  body: string[];
+  sources: GuideSource[];
 }

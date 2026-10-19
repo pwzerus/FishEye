@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.knowledge.angling_handbook import CATEGORIES, TOPICS, HandbookTopic
 from app.knowledge.species_guides import BAIT_RULES, GUIDES, SpeciesGuide
 
 SHARED_SLUG = "all-fish"  # passages that apply to every species
@@ -77,6 +78,12 @@ def passages_for(guide: SpeciesGuide) -> list[Passage]:
         out.append(
             _passage(guide, "identification", "How to recognise it", _bullets(guide.identification), src)
         )
+    if guide.habitat:
+        out.append(_passage(guide, "habitat", "Habitat: where it lives", _bullets(guide.habitat), src))
+    if guide.habits:
+        out.append(
+            _passage(guide, "habits", "Habits: behavior, spawning and growth", _bullets(guide.habits), src)
+        )
     if guide.where_and_when:
         out.append(
             _passage(guide, "where_and_when", "Where and when to find it", _bullets(guide.where_and_when), src)
@@ -85,6 +92,10 @@ def passages_for(guide: SpeciesGuide) -> list[Passage]:
         out.append(_passage(guide, "live_baits", "Live and natural bait", _bullets(guide.live_baits), src))
     if guide.lures:
         out.append(_passage(guide, "lures", "Lures", _bullets(guide.lures), src))
+    if guide.why_these_baits:
+        out.append(
+            _passage(guide, "why_these_baits", "Why these baits work", _bullets(guide.why_these_baits), src)
+        )
     for i, setup in enumerate(guide.setups, start=1):
         body = (
             f"{setup.use_when} Rod: {setup.rod}. Reel: {setup.reel}. Line: {setup.line}. "
@@ -99,7 +110,25 @@ def passages_for(guide: SpeciesGuide) -> list[Passage]:
         out.append(_passage(guide, "bait_for", "Use it as bait for", _bullets(guide.bait_for), src))
     if guide.tips:
         out.append(_passage(guide, "tips", "Tips", _bullets(guide.tips), src))
+    if guide.eating:
+        out.append(_passage(guide, "eating", "On the table: cleaning and cooking it", _bullets(guide.eating), src))
     return out
+
+
+def handbook_passage(topic: HandbookTopic) -> Passage:
+    """One per handbook topic (app/knowledge/angling_handbook.py). Shared,
+    like the bait rules: a topic is about fishing in general, so it may
+    answer a question about any fish, and fills slots a routed question's
+    own fish left empty (retriever._interleave)."""
+    return Passage(
+        id=f"{SHARED_SLUG}#{topic.id}",
+        species_slug=SHARED_SLUG,
+        species_name="",
+        section=topic.id,
+        title=topic.title,
+        text=f"{topic.title} ({CATEGORIES[topic.category]}): {' '.join(topic.body)}",
+        source_ids=topic.source_ids,
+    )
 
 
 def shared_passages() -> list[Passage]:
@@ -116,7 +145,7 @@ def shared_passages() -> list[Passage]:
             text="Texas bait rules (all fish): " + " ".join(BAIT_RULES),
             source_ids=("tpwd-regs-general",),
         )
-    ]
+    ] + [handbook_passage(t) for t in TOPICS]
 
 
 def build_passages(guides: tuple[SpeciesGuide, ...] = GUIDES) -> list[Passage]:

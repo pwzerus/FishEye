@@ -8,6 +8,7 @@ from app.core import security
 from app.core.config import get_settings
 from app.main import app
 from app.services import geocoding
+from tests.conftest import make_admin, signup
 
 QUESTION = {"question": "what bait for crappie"}
 
@@ -26,8 +27,9 @@ def as_client(monkeypatch):
     return headers
 
 
-def test_guide_questions_are_limited_per_client(client, as_client):
-    for _ in range(10):
+def test_guide_searches_are_limited_per_client(client, as_client, monkeypatch):
+    monkeypatch.setattr(rate_limits.SEARCH.per_client[0], "limit", 3)
+    for _ in range(3):
         assert client.post("/api/ask", json=QUESTION, headers=as_client("a")).status_code == 200
 
     refused = client.post("/api/ask", json=QUESTION, headers=as_client("a"))
@@ -39,19 +41,34 @@ def test_guide_questions_are_limited_per_client(client, as_client):
     assert client.post("/api/ask", json=QUESTION, headers=as_client("b")).status_code == 200
 
 
-def test_the_advisor_spends_the_same_allowance_as_guide_questions(client, as_client):
-    for _ in range(10):
+def test_searching_the_guides_does_not_spend_the_ai_allowance(client, as_client):
+    for _ in range(20):
         client.post("/api/ask", json=QUESTION, headers=as_client("a"))
     resp = client.post("/api/advisor/explain", json={"waterbody_id": 99999}, headers=as_client("a"))
-    assert resp.status_code == 429
+    assert resp.status_code == 404  # past the limiter, to the missing lake
+
+
+def explain(client, headers):
+    """The advisor's model endpoint, asked about a lake that doesn't exist:
+    404 means the request got past the limiter, 429 that it didn't."""
+    return client.post("/api/advisor/explain", json={"waterbody_id": 99999}, headers=headers).status_code
+
+
+def test_ai_summaries_and_the_advisor_share_one_allowance(make_client, as_client, db_session):
+    c = make_client()
+    signup(c, email="owner@example.com")
+    make_admin(db_session, "owner@example.com")  # admins have no daily summary limit
+    for _ in range(10):
+        assert c.post("/api/ask/summary", json=QUESTION, headers=as_client("a")).status_code == 200
+    assert explain(c, as_client("a")) == 429
 
 
 def test_the_shared_daily_cap_stops_everyone_with_its_own_message(client, as_client, monkeypatch):
     monkeypatch.setattr(rate_limits.LLM.everyone[0], "limit", 3)
     for ip in ("a", "b", "c"):
-        assert client.post("/api/ask", json=QUESTION, headers=as_client(ip)).status_code == 200
+        assert explain(client, as_client(ip)) == 404
 
-    refused = client.post("/api/ask", json=QUESTION, headers=as_client("d"))
+    refused = client.post("/api/advisor/explain", json={"waterbody_id": 99999}, headers=as_client("d"))
     assert refused.status_code == 429
     assert "limit for everyone" in refused.json()["detail"]
 
@@ -59,10 +76,10 @@ def test_the_shared_daily_cap_stops_everyone_with_its_own_message(client, as_cli
 def test_refused_requests_do_not_use_up_the_shared_cap(client, as_client, monkeypatch):
     monkeypatch.setattr(rate_limits.LLM.everyone[0], "limit", 11)
     # 10 accepted, then 5 refused for being over the client's own limit.
-    statuses = [client.post("/api/ask", json=QUESTION, headers=as_client("a")).status_code for _ in range(15)]
-    assert statuses == [200] * 10 + [429] * 5
+    statuses = [explain(client, as_client("a")) for _ in range(15)]
+    assert statuses == [404] * 10 + [429] * 5
     # The refusals counted for nothing, so the 11th slot is still free.
-    assert client.post("/api/ask", json=QUESTION, headers=as_client("b")).status_code == 200
+    assert explain(client, as_client("b")) == 404
 
 
 def test_location_search_is_limited(client, as_client, monkeypatch):
@@ -96,7 +113,7 @@ def test_health_and_guides_are_never_limited(client, as_client):
 
 def test_limits_can_be_switched_off(client, as_client, monkeypatch):
     monkeypatch.setattr(get_settings(), "rate_limits_enabled", False)
-    for _ in range(15):
+    for _ in range(35):
         assert client.post("/api/ask", json=QUESTION, headers=as_client("a")).status_code == 200
 
 
@@ -109,7 +126,7 @@ def test_behind_a_trusted_proxy_each_visitor_gets_their_own_allowance(client):
     def ask(visitor: str) -> int:
         return behind_proxy.post("/api/ask", json=QUESTION, headers={"x-forwarded-for": visitor}).status_code
 
-    for _ in range(10):
+    for _ in range(30):
         assert ask("203.0.113.7") == 200
     assert ask("203.0.113.7") == 429
     assert ask("203.0.113.8") == 200

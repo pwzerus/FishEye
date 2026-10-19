@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 
 import { FishGrid } from "@/components/fish/FishGrid";
+import { Handbook } from "@/components/fish/Handbook";
 import { PageTransition } from "@/components/motion/Transition";
-import { listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
-import type { SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
+import { listHandbook, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
+import type { HandbookTopic, SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
 
 // Render on each request, not once during `next build`. A build made
 // without the API running (a Docker image, CI) would otherwise bake in the
@@ -14,15 +15,21 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Fish guide · FishEye",
-  description: "How to catch Texas freshwater fish: what they eat, where to look, baits and tackle setups.",
+  description:
+    "How to catch Texas freshwater fish: what they eat, where they live, baits and why they work, tackle, knots, and cleaning your catch.",
 };
 
 export default async function FishGuidePage() {
   let guides: SpeciesGuide[] = [];
   let photos: SpeciesPhotos = {};
+  let handbook: HandbookTopic[] = [];
   let backendError: string | null = null;
   try {
-    [guides, photos] = await Promise.all([listSpeciesGuides(), listSpeciesPhotos()]);
+    [guides, photos, handbook] = await Promise.all([
+      listSpeciesGuides(),
+      listSpeciesPhotos(),
+      listHandbook().catch(() => []),
+    ]);
   } catch {
     backendError = "Could not reach the backend API. Is it running? See backend/README.md.";
   }
@@ -40,9 +47,10 @@ export default async function FishGuidePage() {
             Meet the fish
           </h1>
           <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
-            Twelve Texas freshwater fish: what each one eats, where to look, which bait works, and
-            rod-and-reel setups from a first cane pole up. Every setup names its source, mostly
-            Texas Parks and Wildlife and other state agencies.
+            {guides.length > 0 ? `${guides.length} Texas freshwater fish` : "Texas freshwater fish"}: what
+            each one eats, where it lives, which bait works and why, and rod-and-reel setups from a
+            first cane pole up, plus a handbook for everything else. Every setup names its source,
+            mostly Texas Parks and Wildlife and other state agencies.
           </p>
         </section>
 
@@ -51,6 +59,8 @@ export default async function FishGuidePage() {
         ) : (
           <FishGrid guides={guides} photos={photos} />
         )}
+
+        {!backendError && <Handbook topics={handbook} />}
 
         {baitRules.length > 0 && (
           <section id="bait_rules" className="rules-card reveal" style={{ "--i": 6 } as React.CSSProperties}>

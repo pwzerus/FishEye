@@ -1,4 +1,5 @@
 from app.models.community import (  # noqa: F401
+    AiUsage,
     AuditLog,
     CatchPin,
     PinPhoto,
@@ -34,4 +35,5 @@ __all__ = [
     "PinPhoto",
     "PinReport",
     "AuditLog",
+    "AiUsage",
 ]

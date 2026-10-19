@@ -40,9 +40,9 @@ B = 0.75
 STOPWORDS = frozenset(
     """a an and are as at be but by can do does for from go good how i if in
     into is it its me my of on or should so some that the their them then there
-    these they this to use using up was we what which who why will with you
+    these they this to use using up was we what which who will with you
     your best catch fish fishing texas about me know info information more
-    anything""".split()
+    anything much many""".split()
 )
 # "tell me about X" asks for an overview; a bare "tell" ("tell them apart")
 # asks how to recognise a fish. The phrase is removed before tokenising so
@@ -52,6 +52,12 @@ _QUERY_NOISE_RE = re.compile(r"\btell me\b")
 # rewritten: a bare "look" usually means where to search ("where should I
 # look for crappie"), so it can't be a single-word synonym.
 _LOOK_LIKE_RE = re.compile(r"\blooks? like\b")
+# "What do sand bass eat" asks about the diet; "are sand bass good to eat"
+# asks about the table. Only the second phrasing is rewritten, to the words
+# the guides' cooking passages use ("On the table: cleaning and cooking it").
+_TABLE_RE = re.compile(r"\b(?:good|safe|ok|okay|fit)\s+to\s+eat\b|\beat(?:ing)?\s+(?:it|them|one)\b|\btable\s+fare\b")
+# "why" is not a stopword: "why use minnows for crappie" should find the
+# "Why these baits work" passage, whose title says so (docs/adr/0024).
 # "fish", "catch", "fishing", "texas", "best" appear in nearly every question
 # and carry no signal about which passage answers it. They are still matched
 # inside passages through species names like "catfish" and "bait fish".
@@ -93,19 +99,108 @@ SYNONYMS: dict[str, tuple[str, ...]] = {
     "deep": ("deep", "ft"),  # depths in the guides are written "5 ft", "10 ft deep"
     "depth": ("deep", "ft"),
     "shallow": ("deep", "ft"),
+    # Cleaning, keeping and eating a catch (handbook, docs/adr/0024)
+    "clean": ("clean", "fillet", "skin", "scale"),
+    "gut": ("gut", "clean"),
+    "kill": ("kill", "bleed", "stun"),
+    "dispatch": ("kill", "bleed", "stun"),
+    "cook": ("cook", "eat"),
+    "cooked": ("cook", "eat"),
+    "hurt": ("harm", "hurt"),
+    "harm": ("harm",),
+    "taste": ("taste", "flavor", "eat"),
+    "fresh": ("fresh", "ice"),
+    # Telling fish apart
+    "whisker": ("whisker", "barbel"),
+    "vs": ("recognise",),
+    "versus": ("recognise",),
+    "compare": ("recognise",),
+    "differ": ("recognise",),
+    # Habitat and habits
+    "habitat": ("habitat", "live"),
+    "behavior": ("habit", "behavior"),
+    "behave": ("habit", "behavior"),
+    "habit": ("habit", "behavior"),
+    # Why a bait works
+    "reason": ("why",),
+    "advantage": ("why",),
+    "benefit": ("why",),
 }
 
-# A question that names no fish must use at least one fishing word to be
+# A question that names no fish must read as a fishing question to be
 # searched at all. Without this gate, "recommend a good pizza place" matches
 # "the easiest place to start" and gets a confident answer about catfish.
-DOMAIN_TERMS = frozenset(
-    """bait lure hook rod reel line setup bobber float slip jig rig sinker weight
-    leader swivel net cast worm minnow shad cricket nightcrawler liver shrimp
-    lake pond river reservoir creek dock brush cover deep ft depth shallow spawn
-    spawning school legal rule unlawful regulation eat recognise beginner where
-    when spring summer fall winter topwater crankbait spinner spinnerbait grub
-    slab troll drift boat bank shore panfish gamefish game""".split()
+#
+# Two lists, because many fishing words are everyday words too. One FISHING
+# word is enough ("where can I fish near Austin", "what rod for a
+# beginner"). AMBIGUOUS words count only in pairs: "line" alone is line
+# dancing, "boat" alone is a boat motor, "tie" alone is a necktie ("how to
+# tie a tie" outscored a real knot question), but "hook and line" or
+# "worms off the bank" is fishing. Question words ("where", "when",
+# "easy", "legal") never count: they used to, and "where is the nearest
+# hospital" was searched as a fishing question.
+#
+# The gate reads the raw question, not the query tokens: "fish", "fishing"
+# and "catch" are stopwords for ranking (they are in nearly every question)
+# but they are exactly the words that say a question is about fishing.
+FISHING_TERMS = frozenset(
+    # Fishing itself
+    """fish fishing fished fisherman fishermen angler angling spawn spawning
+    """
+    # Baits (a fish named in SPECIES_ALIASES is routed before the gate runs)
+    """bait baitfish nightcrawler crawler redworm mealworm waxworm leech minnow
+    shiner crawfish crayfish crawdad grasshopper stinkbait powerbait boilie
+    """
+    # Lures
+    """lure jig jighead crankbait spinnerbait buzzbait jerkbait swimbait
+    topwater
+    """
+    # Tackle and knots
+    """rod reel tackle hook bobber sinker spincast baitcaster baitcasting
+    monofilament fluorocarbon livewell palomar
+    """
+    # Other fish people catch that have no guide yet: the gate admits the
+    # question, and retrieval says honestly what the guides don't cover.
+    """panfish gamefish walleye sauger gar pike muskie muskellunge smallmouth
+    warmouth longear bowfin bullhead""".split()
 )
+AMBIGUOUS_TERMS = frozenset(
+    """line tie knot clinch arbor net cast rig boat bank shore dock pier lake
+    pond river reservoir creek troll drift worm cricket shrimp liver corn
+    cheese dough chum eat feed food diet deep shallow depth cover brush
+    school slab spoon plug popper grub spinner gear pole equipment float slip
+    leader swivel braid mono shot weight catch caught bite water pound lb
+    release stringer cooler clean fillet gut scale skin bleed cook""".split()
+)
+# Two everyday words that together name a piece of tackle or a practice.
+FISHING_PHRASES = (
+    "split shot",
+    "slip bobber",
+    "circle hook",
+    "treble hook",
+    "cast net",
+    "catch and release",
+    "texas rig",
+    "carolina rig",
+    "drop shot",
+    "ned rig",
+    "punch bait",
+    "dip bait",
+    "cut bait",
+)
+_GATE_WORD_RE = re.compile(r"[a-z]+")
+
+
+def is_on_topic(question: str) -> bool:
+    lowered = question.lower()
+    if any(phrase in lowered for phrase in FISHING_PHRASES):
+        return True
+    words = {stem(w) for w in _GATE_WORD_RE.findall(lowered)}
+    words |= {w for w in _GATE_WORD_RE.findall(lowered)}
+    if words & FISHING_TERMS:
+        return True
+    return len(words & AMBIGUOUS_TERMS) >= 2
+
 
 # Phrase -> species slugs. Longest phrases are matched first and consumed,
 # so "white crappie" never also counts as a bare "crappie".
@@ -134,7 +229,7 @@ SPECIES_ALIASES: dict[str, tuple[str, ...]] = {
     "blue catfish": ("blue-catfish",),
     "blue cats": ("blue-catfish",),
     "blue cat": ("blue-catfish",),
-    "catfish": ("channel-catfish", "blue-catfish"),
+    "catfish": ("channel-catfish", "blue-catfish", "flathead-catfish"),
     "white crappie": ("white-crappie",),
     "black crappie": ("black-crappie",),
     "crappies": ("white-crappie", "black-crappie"),
@@ -145,13 +240,39 @@ SPECIES_ALIASES: dict[str, tuple[str, ...]] = {
     "bluegill": ("bluegill",),
     "bream": ("bluegill",),
     "brim": ("bluegill",),
-    "sunfish": ("bluegill",),
+    "sunfish": ("bluegill", "redear-sunfish"),
     "perch": ("bluegill",),
     "gizzard shad": ("gizzard-shad",),
     "threadfin shad": ("threadfin-shad",),
     "threadfin": ("threadfin-shad",),
     "yellowtails": ("threadfin-shad",),
     "shad": ("gizzard-shad", "threadfin-shad"),
+    # Added with the expansion (docs/adr/0024). Other names are TPWD's.
+    "flathead catfish": ("flathead-catfish",),
+    "flatheads": ("flathead-catfish",),
+    "flathead": ("flathead-catfish",),
+    "yellow cats": ("flathead-catfish",),
+    "yellow cat": ("flathead-catfish",),
+    "opelousas": ("flathead-catfish",),
+    "mud cat": ("flathead-catfish",),
+    "shovelhead": ("flathead-catfish",),
+    "guadalupe bass": ("guadalupe-bass",),
+    "guadalupe spotted bass": ("guadalupe-bass",),
+    "guads": ("guadalupe-bass",),
+    "state fish": ("guadalupe-bass",),
+    "redear sunfish": ("redear-sunfish",),
+    "redears": ("redear-sunfish",),
+    "redear": ("redear-sunfish",),
+    "shellcrackers": ("redear-sunfish",),
+    "shellcracker": ("redear-sunfish",),
+    "rainbow trout": ("rainbow-trout",),
+    "rainbows": ("rainbow-trout",),
+    "trout": ("rainbow-trout",),
+    "freshwater drum": ("freshwater-drum",),
+    "gaspergou": ("freshwater-drum",),
+    "drum": ("freshwater-drum",),
+    "common carp": ("common-carp",),
+    "carp": ("common-carp",),
 }
 _ALIAS_PATTERNS = [
     (re.compile(rf"\b{re.escape(alias)}\b"), slugs)
@@ -182,16 +303,20 @@ def stem(word: str) -> str:
 
 
 def tokenize(text: str) -> list[str]:
-    return [stem(t) for t in _TOKEN_RE.findall(text.lower()) if t not in STOPWORDS]
+    # Single letters are dropped: "what's" splits into "what" and "s", and a
+    # lone "s" matched every possessive in the guides ("catfish's"), ranking
+    # unrelated passages up. Digits are kept ("5 ft").
+    return [
+        stem(t)
+        for t in _TOKEN_RE.findall(text.lower())
+        if t not in STOPWORDS and (len(t) > 1 or t.isdigit())
+    ]
 
 
 def tokenize_query(text: str) -> list[str]:
     text = _QUERY_NOISE_RE.sub(" ", text.lower())
+    text = _TABLE_RE.sub(lambda m: f" {m.group(0)} table cook ", text)
     return tokenize(_LOOK_LIKE_RE.sub(" recognise ", text))
-
-
-def is_on_topic(tokens: list[str]) -> bool:
-    return any(t in DOMAIN_TERMS or t in SYNONYMS for t in tokens)
 
 
 def expand_query(tokens: list[str]) -> list[str]:
@@ -232,9 +357,13 @@ SECTION_ORDER = (
     "lures",
     "setup",
     "identification",
+    "habitat",
+    "habits",
+    "why_these_baits",
     "how_to_get",
     "bait_for",
     "tips",
+    "eating",
     "bait_rules",
 )
 
@@ -337,9 +466,9 @@ class BM25Retriever:
             hits = self._rank(query, allowed)
             return _interleave(hits, k) if hits else []
 
-        tokens = tokenize_query(question)
-        if not is_on_topic(tokens):
+        if not is_on_topic(question):
             return []
+        tokens = tokenize_query(question)
         query = expand_query(tokens)
         return self._rank(query, None)[:k] if query else []
 

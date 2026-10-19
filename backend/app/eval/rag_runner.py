@@ -8,7 +8,10 @@ Reports, for the retriever:
     (K = ask.DEFAULT_K, what the model actually sees);
   - MRR: mean reciprocal rank of the first relevant passage (0 when missed);
   - off-topic rejection: share of off-topic questions that retrieve nothing,
-    which is what lets ask.py answer "not covered" instead of improvising;
+    which is what lets ask.py answer "not covered" instead of improvising,
+    and what keeps an off-topic question from spending an AI summary;
+  - fishing admitted: share of fishing questions that name no fish which the
+    on-topic gate still lets through (the other side of the same gate);
 and, for the answer pipeline, how many of the mock's injected failures the
 validator caught (every one should be).
 """
@@ -29,7 +32,7 @@ from app.services.llm.mock import (
 from app.services.rag import ask as rag
 from app.services.rag.retriever import Retriever, default_retriever
 
-from .rag_cases import CASES, NOT_COVERED, OFF_TOPIC
+from .rag_cases import CASES, NOT_COVERED, OFF_TOPIC, UNNAMED_FISHING
 
 ADVERSARIAL_MODES = (
     FAILURE_HALLUCINATED_SOURCE,
@@ -55,6 +58,9 @@ class RagReport:
     hit_at_k: float
     mrr: float
     off_topic_rejection: float
+    off_topic_leaks: list[str]
+    fishing_admitted: float  # share of UNNAMED_FISHING the gate searches
+    gate_misses: list[str]
     not_covered_rejection: float
     adversarial_caught: float
     misses: list[str]
@@ -70,7 +76,8 @@ def run(retriever: Retriever | None = None, k: int = rag.DEFAULT_K) -> RagReport
         rank = next((i + 1 for i, pid in enumerate(ids) if pid in case.relevant), None)
         results.append(RagCaseResult(case.id, case.question, rank is not None, rank, ids))
 
-    off_topic_ok = sum(1 for q in OFF_TOPIC if not retr.search(q, k=k))
+    off_topic_leaks = [q for q in OFF_TOPIC if retr.search(q, k=k)]
+    gate_misses = [q for q in UNNAMED_FISHING if not retr.search(q, k=k)]
     not_covered_ok = sum(1 for q in NOT_COVERED if not retr.search(q, k=k))
 
     caught = 0
@@ -86,7 +93,10 @@ def run(retriever: Retriever | None = None, k: int = rag.DEFAULT_K) -> RagReport
         cases=n,
         hit_at_k=sum(r.hit for r in results) / n,
         mrr=sum(1 / r.rank for r in results if r.rank) / n,
-        off_topic_rejection=off_topic_ok / len(OFF_TOPIC),
+        off_topic_rejection=1 - len(off_topic_leaks) / len(OFF_TOPIC),
+        off_topic_leaks=off_topic_leaks,
+        fishing_admitted=1 - len(gate_misses) / len(UNNAMED_FISHING),
+        gate_misses=gate_misses,
         not_covered_rejection=not_covered_ok / len(NOT_COVERED),
         adversarial_caught=caught / len(ADVERSARIAL_MODES),
         misses=[r.id for r in results if not r.hit],
@@ -108,7 +118,12 @@ def main(argv: list[str] | None = None) -> int:
     print()
     print(f"hit@{report.k}:              {report.hit_at_k:.0%}  ({report.cases} questions)")
     print(f"MRR:                {report.mrr:.2f}")
-    print(f"off-topic rejected: {report.off_topic_rejection:.0%}")
+    print(f"off-topic rejected: {report.off_topic_rejection:.0%}  ({len(OFF_TOPIC)} questions)")
+    for q in report.off_topic_leaks:
+        print(f"    searched anyway: {q}")
+    print(f"fishing admitted:   {report.fishing_admitted:.0%}  ({len(UNNAMED_FISHING)} questions naming no fish)")
+    for q in report.gate_misses:
+        print(f"    turned away:     {q}")
     print(f"not-covered rejected: {report.not_covered_rejection:.0%}")
     print(f"adversarial caught: {report.adversarial_caught:.0%}")
     if report.misses:

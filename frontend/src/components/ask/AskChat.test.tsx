@@ -8,8 +8,17 @@ vi.mock("@/lib/api/client", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api/client")>("@/lib/api/client");
   return { ...actual, postAsk: vi.fn() };
 });
+vi.mock("@/lib/api/session", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/api/session")>("@/lib/api/session");
+  return { ...actual, postAskSummary: vi.fn() };
+});
+vi.mock("next/navigation", () => ({ usePathname: () => "/ask" }));
 const { ApiError, postAsk } = await import("@/lib/api/client");
+const { postAskSummary } = await import("@/lib/api/session");
 const mockedAsk = vi.mocked(postAsk);
+const mockedSummary = vi.mocked(postAskSummary);
+
+const SIGNED_OUT = { signed_in: false, limit: null, remaining: null };
 
 function response(overrides: Partial<AskResponse> = {}): AskResponse {
   return {
@@ -55,6 +64,19 @@ function response(overrides: Partial<AskResponse> = {}): AskResponse {
       outcome: "ok",
       cache_hit: false,
     },
+    ai: SIGNED_OUT,
+    ...overrides,
+  };
+}
+
+/** What POST /api/ask returns now: the guide passages, no model. */
+function searchResult(overrides: Partial<AskResponse> = {}): AskResponse {
+  const base = response();
+  return {
+    ...base,
+    answer: "Here's what the FishEye guides say:",
+    answer_source: "passages",
+    trace: { ...base.trace, provider: "none", model: "none", prompt_tokens: 0, completion_tokens: 0, estimated_cost_usd: 0 },
     ...overrides,
   };
 }
@@ -70,6 +92,81 @@ async function askVia(text: string) {
 describe("AskChat", () => {
   beforeEach(() => {
     mockedAsk.mockReset();
+    mockedSummary.mockReset();
+  });
+
+  it("shows the guide's passages first, saying no model was involved", async () => {
+    mockedAsk.mockResolvedValue(searchResult());
+    render(<AskChat suggestions={SUGGESTIONS} />);
+    await askVia("what bait for crappie");
+
+    expect(await screen.findByText("From the guides")).toBeInTheDocument();
+    expect(screen.getByText(/White Crappie · Live and natural bait/)).toBeInTheDocument();
+    expect(screen.getByText("No model: these are the guide's own words")).toBeInTheDocument();
+    expect(mockedSummary).not.toHaveBeenCalled();
+  });
+
+  it("tells a signed-out visitor how to get an AI summary", async () => {
+    mockedAsk.mockResolvedValue(searchResult());
+    render(<AskChat suggestions={SUGGESTIONS} />);
+    await askVia("what bait for crappie");
+
+    const signIn = await screen.findByRole("link", { name: "Sign in" });
+    expect(signIn).toHaveAttribute("href", "/login?next=%2Fask");
+    expect(screen.queryByRole("button", { name: /Summarize with AI/ })).not.toBeInTheDocument();
+  });
+
+  it("writes an AI summary on request for a signed-in person and updates what's left", async () => {
+    mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: 3, remaining: 3 } }));
+    mockedSummary.mockResolvedValue(response({ ai: { signed_in: true, limit: 3, remaining: 2 } }));
+    render(<AskChat suggestions={SUGGESTIONS} speciesSlug="white-crappie" />);
+    await askVia("what bait for crappie");
+    await screen.findByRole("button", { name: "Summarize with AI (3 left today)" });
+    await askVia("what bait for crappie");
+    await waitFor(() => expect(screen.getAllByRole("button", { name: "Summarize with AI (3 left today)" })).toHaveLength(2));
+
+    fireEvent.click(screen.getAllByRole("button", { name: /Summarize with AI/ })[1]);
+    expect(await screen.findByText("Use small live minnows.")).toBeInTheDocument();
+    expect(screen.getByText("AI answer · checked")).toBeInTheDocument();
+    expect(mockedSummary).toHaveBeenCalledWith({ question: "what bait for crappie", species_slug: "white-crappie" });
+
+    // The earlier answer's button now shows what the server says is left.
+    expect(screen.getByRole("button", { name: "Summarize with AI (2 left today)" })).toBeInTheDocument();
+  });
+
+  it("says when today's summaries are used up instead of offering the button", async () => {
+    mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: 3, remaining: 0 } }));
+    render(<AskChat suggestions={SUGGESTIONS} />);
+    await askVia("what bait for crappie");
+    expect(await screen.findByText(/used today's AI summaries/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Summarize with AI/ })).not.toBeInTheDocument();
+  });
+
+  it("shows the server's reason when a summary is refused", async () => {
+    mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: 3, remaining: 1 } }));
+    mockedSummary.mockRejectedValue(new ApiError("You've used today's 3 AI summaries.", 429));
+    render(<AskChat suggestions={SUGGESTIONS} />);
+    await askVia("what bait for crappie");
+    fireEvent.click(await screen.findByRole("button", { name: /Summarize with AI/ }));
+    expect(await screen.findByText("You've used today's 3 AI summaries.")).toBeInTheDocument();
+    expect(screen.getByText(/Searching the guides stays free/)).toBeInTheDocument();
+  });
+
+  it("offers no AI summary for a question the guides don't cover", async () => {
+    mockedAsk.mockResolvedValue(
+      searchResult({ answer_source: "no_match", citations: [], ai: { signed_in: true, limit: 3, remaining: 3 } }),
+    );
+    render(<AskChat suggestions={SUGGESTIONS} />);
+    await askVia("how to tie a tie");
+    expect(await screen.findByText("Not in the guides")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Summarize with AI/ })).not.toBeInTheDocument();
+  });
+
+  it("shows unlimited summaries without a count (admins)", async () => {
+    mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: null, remaining: null } }));
+    render(<AskChat suggestions={SUGGESTIONS} />);
+    await askVia("what bait for crappie");
+    expect(await screen.findByRole("button", { name: "Summarize with AI" })).toBeInTheDocument();
   });
 
   it("shows the question, then a checked answer with citations that link into the guide", async () => {

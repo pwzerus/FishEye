@@ -1,5 +1,10 @@
 """API contract for guide Q&A (services/rag/ask.py).
 
+Two steps (docs/adr/0023): POST /api/ask searches the guides and returns
+the passages, free and open to everyone; POST /api/ask/summary has the
+model write an answer from those passages, for signed-in accounts within a
+daily allowance. Both return this same shape.
+
 As with the advisor, the model authors exactly one field — `answer` — and
 everything around it is the server's: which passages were cited (validated
 ids, expanded here into titles, excerpts and source links the model never
@@ -52,9 +57,19 @@ class AskTraceOut(BaseModel):
     cache_hit: bool
 
 
+class AiAllowanceOut(BaseModel):
+    """Today's AI summaries for whoever is asking (services/ai_quota.py)."""
+
+    signed_in: bool
+    limit: int | None  # None when signed out, or unlimited (admins)
+    remaining: int | None
+
+
 class AskResponse(BaseModel):
     question: str
     answer: str
-    answer_source: str  # "llm" | "fallback" | "no_match"
+    # "passages" (search only) | "llm" | "fallback" | "no_match"
+    answer_source: str
     citations: list[AskCitationOut]
     trace: AskTraceOut
+    ai: AiAllowanceOut

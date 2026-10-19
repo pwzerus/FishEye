@@ -426,6 +426,75 @@ TACKLE: dict[str, Tackle] = {
         ),
         bait_fallback=((BLUEGILL_WORM, "The easiest bite in the lake. Fish it under a bobber near the bank."),),
     ),
+    # The six fish added in docs/adr/0024. Every reason restates something
+    # that fish's guide says, with its source.
+    "Flathead Catfish": Tackle(
+        baits=(
+            Rule(
+                lambda c: c.low_light,
+                "Live sunfish, such as bluegill (the go-to bait)",
+                lambda c: f"Flatheads move shallow to feed at {c.light_word} and after dark. Put a live sunfish next to wood cover.",
+            ),
+        ),
+        bait_fallback=(
+            ("Live sunfish, such as bluegill (the go-to bait)", "A flathead eats only live fish. Fish a live sunfish tight to heavy wood cover."),
+            ("Large live minnows, goldfish or bullheads", "Bigger live bait tends to catch bigger flatheads."),
+        ),
+        lure_note="Flatheads consistently take only live bait. No lure needed.",
+    ),
+    "Guadalupe Bass": Tackle(
+        lures=(
+            Rule(
+                lambda c: c.low_light and not c.too_windy,
+                "Poppers and other topwaters near downed trees and lily pads",
+                lambda c: f"At {c.light_word}, work a popper along shady banks, downed trees and lily pads.",
+            ),
+            Rule(
+                lambda c: c.bright,
+                "Drop-shot finesse worms",
+                "On hot, sunny days Guadalupe bass go deeper. Fish a finesse worm slowly near rock.",
+            ),
+        ),
+        lure_fallback=(
+            ("Small jigs and soft-plastic crawfish", "Guadalupe bass feed heavily on crawfish."),
+            ("Ned rig (a short soft-plastic stick on a small jighead) bounced along the bottom", "A popular, simple way to fish a river pool."),
+        ),
+    ),
+    "Redear Sunfish": Tackle(
+        lure_fallback=(
+            ("Small black or brown jigs that look like a snail or insect", "Redear feed on snails on the bottom. Fish it slowly there."),
+        ),
+        bait_fallback=(
+            ("Redworms or other earthworms", "Fish it on or just off the bottom, a little deeper than the bluegill beds."),
+            ("Wax worms", "A small bait for a small mouth; fish it near the bottom."),
+        ),
+    ),
+    "Rainbow Trout": Tackle(
+        lure_fallback=(
+            ("Small inline spinners, 1/16–1/8 oz (olive, brown, black or white)", "Cast and retrieve slowly along the bank."),
+            ("Small spoons in gold or silver", "A small spoon catches stocked trout too."),
+        ),
+        bait_fallback=(
+            ("Dough baits such as PowerBait, molded to cover the hook", "Fish it on the bottom and wait for steady pressure: trout often nibble first."),
+            ("Small pieces of worm", "A small piece of worm on a small hook works for trout."),
+        ),
+    ),
+    "Freshwater Drum": Tackle(
+        lure_fallback=(
+            ("Small grubs and jigs fished near the bottom", "Drum feed on the bottom. Work it slowly near current breaks."),
+        ),
+        bait_fallback=(
+            ("Worms and nightcrawlers", "Worms catch more drum than any other bait. Fish them on the bottom."),
+            ("Crawdad tails", "Drum root along the bottom for crayfish."),
+        ),
+    ),
+    "Common Carp": Tackle(
+        bait_fallback=(
+            ("Canned or frozen sweet corn", "Chum a few handfuls of corn, then fish corn on the bottom over it."),
+            ("Dough balls and oatmeal-based pack baits", "Carp find a scented bait on the bottom; mold it to hide the hook."),
+        ),
+        lure_note="Carp rarely strike lures. Fish bait on the bottom.",
+    ),
 }
 
 

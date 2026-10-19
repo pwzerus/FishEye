@@ -33,10 +33,26 @@ class SpeciesGuideOut(BaseModel):
     setups: list[TackleSetupOut]
     tips: list[str]
     identification: list[str]
+    habitat: list[str]
+    habits: list[str]
+    why_these_baits: list[str]
+    eating: list[str]
     how_to_get: list[str]
     bait_for: list[str]
     legal_notes: list[str]
     limits_url: str
+    sources: list[GuideSourceOut]
+
+
+class HandbookTopicOut(BaseModel):
+    """One topic of the angler's handbook (app/knowledge/angling_handbook.py).
+    `id` is the anchor on the fish guide page that answers cite."""
+
+    id: str
+    category: str
+    category_label: str
+    title: str
+    body: list[str]
     sources: list[GuideSourceOut]
 
 

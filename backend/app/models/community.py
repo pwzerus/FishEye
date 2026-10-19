@@ -64,6 +64,7 @@ class User(Base):
     pins: Mapped[list[CatchPin]] = relationship(
         back_populates="user", cascade="all, delete-orphan", foreign_keys="CatchPin.user_id"
     )
+    ai_usage: Mapped[list[AiUsage]] = relationship(cascade="all, delete-orphan")
 
     @property
     def is_admin(self) -> bool:
@@ -206,3 +207,17 @@ class AuditLog(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
 
     actor: Mapped[User | None] = relationship(foreign_keys=[actor_id])
+
+
+class AiUsage(Base):
+    """AI summaries an account has used on one day (UTC), for the daily
+    allowance in services/ai_quota.py (docs/adr/0023). One row per account
+    per day that used any; a missing row means none used."""
+
+    __tablename__ = "ai_usage"
+    __table_args__ = (UniqueConstraint("user_id", "day", name="uq_ai_usage_user_day"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    day: Mapped[date] = mapped_column(Date)
+    used: Mapped[int] = mapped_column(Integer, default=0)

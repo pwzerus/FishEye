@@ -1,15 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { FishArt } from "@/components/fish/FishArt";
 import { ApiError, postAsk } from "@/lib/api/client";
+import { postAskSummary } from "@/lib/api/session";
 import { waterFor } from "@/lib/fishArt";
-import type { AskCitation, AskResponse } from "@/lib/api/types";
+import type { AiAllowance, AskCitation, AskResponse } from "@/lib/api/types";
 
 /**
- * Q&A over the fish guides (backend services/rag/ask.py).
+ * Q&A over the fish guides (backend services/rag/ask.py), in two steps
+ * (docs/adr/0023):
+ *
+ * 1. Every question searches the guides and shows the passages that answer
+ *    it, with their sources. No model, no account, no cost.
+ * 2. Under that, a signed-in person can ask for an AI summary of those
+ *    passages, a few times a day. Signed out, the same spot says how to get
+ *    them. A question the guides don't cover never offers one.
  *
  * The UI's job is to make the answer's provenance obvious at a glance:
  * - a badge says whether this is a model's answer, a quote of the guides
@@ -22,9 +31,14 @@ import type { AskCitation, AskResponse } from "@/lib/api/types";
  * work, not something to persist.
  */
 
+type Summary =
+  | { status: "loading" }
+  | { status: "done"; response: AskResponse }
+  | { status: "error"; message: string };
+
 type Turn =
   | { id: number; role: "user"; text: string }
-  | { id: number; role: "assistant"; response: AskResponse }
+  | { id: number; role: "assistant"; response: AskResponse; summary?: Summary }
   | { id: number; role: "error"; question: string; message?: string };
 
 const MAX_LEN = 300;
@@ -35,6 +49,9 @@ function citationHref(c: AskCitation): string {
 }
 
 function SourceBadge({ r }: { r: AskResponse }) {
+  if (r.answer_source === "passages") {
+    return <span className="badge badge-ok">From the guides</span>;
+  }
   if (r.answer_source === "no_match") {
     return <span className="badge badge-muted">Not in the guides</span>;
   }
@@ -68,6 +85,7 @@ const OUTCOME_TEXT: Record<string, string> = {
 
 function Trace({ r }: { r: AskResponse }) {
   const t = r.trace;
+  const searchOnly = r.answer_source === "passages";
   const max = Math.max(0.001, ...t.retrieved.map((x) => x.score));
   const cited = new Set(r.citations.map((c) => c.id));
   return (
@@ -100,7 +118,9 @@ function Trace({ r }: { r: AskResponse }) {
         <li>
           <span className="trace-step-title">2 · Explain</span>
           <span className="muted">
-            {t.provider === "none"
+            {searchOnly
+              ? "No model: these are the guide's own words"
+              : t.provider === "none"
               ? "Skipped"
               : `${t.provider} · ${t.model} · ${t.prompt_tokens + t.completion_tokens} tokens · ${t.latency_ms.toFixed(0)} ms · ~$${t.estimated_cost_usd.toFixed(5)}`}
             {t.cache_hit && " · cached"}
@@ -108,9 +128,13 @@ function Trace({ r }: { r: AskResponse }) {
         </li>
         <li>
           <span className="trace-step-title">3 · Check</span>
-          <span className={t.outcome === "ok" ? "check-ok" : "check-warn"}>
-            {OUTCOME_TEXT[t.outcome] ?? t.outcome}
-          </span>
+          {searchOnly ? (
+            <span className="muted">Nothing to check: no model wrote anything</span>
+          ) : (
+            <span className={t.outcome === "ok" ? "check-ok" : "check-warn"}>
+              {OUTCOME_TEXT[t.outcome] ?? t.outcome}
+            </span>
+          )}
           {t.validation_attempts > 1 && <span className="muted"> ({t.validation_attempts} attempts)</span>}
         </li>
       </ol>
@@ -155,6 +179,74 @@ function Citations({ items, compact }: { items: AskCitation[]; compact: boolean 
   );
 }
 
+/** The AI-summary spot under a search result: a button, a sign-in prompt,
+ * an "all used today" note, or the summary itself. */
+function AiSummary({
+  summary,
+  ai,
+  onRequest,
+  loginHref,
+  disabled,
+}: {
+  summary?: Summary;
+  ai: AiAllowance | null;
+  onRequest: () => void;
+  loginHref: string;
+  disabled: boolean;
+}) {
+  if (summary?.status === "done") {
+    const r = summary.response;
+    return (
+      <div className="ai-summary">
+        <div className="bubble-meta">
+          <SourceBadge r={r} />
+        </div>
+        <div className="answer-text">
+          {r.answer.split("\n\n").map((para, i) => (
+            <p key={i}>{para}</p>
+          ))}
+        </div>
+        <Trace r={r} />
+      </div>
+    );
+  }
+  if (summary?.status === "loading") {
+    return (
+      <div className="ai-summary ai-summary-cta" aria-live="polite">
+        <span className="muted">Writing a summary of these passages…</span>
+      </div>
+    );
+  }
+  const error = summary?.status === "error" ? <p className="ai-summary-error">{summary.message}</p> : null;
+  if (ai && !ai.signed_in) {
+    return (
+      <div className="ai-summary ai-summary-cta">
+        {error}
+        <p className="muted">
+          Want these in a few plain sentences? <Link href={loginHref}>Sign in</Link> for a few AI summaries a day.
+        </p>
+      </div>
+    );
+  }
+  if (ai && ai.remaining === 0) {
+    return (
+      <div className="ai-summary ai-summary-cta">
+        {error}
+        <p className="muted">You&apos;ve used today&apos;s AI summaries. Searching the guides stays free; summaries come back tomorrow.</p>
+      </div>
+    );
+  }
+  const left = ai?.remaining == null ? "" : ` (${ai.remaining} left today)`;
+  return (
+    <div className="ai-summary ai-summary-cta">
+      {error}
+      <button type="button" className="btn btn-ghost btn-sm" onClick={onRequest} disabled={disabled}>
+        Summarize with AI{left}
+      </button>
+    </div>
+  );
+}
+
 function Thinking() {
   return (
     <div className="msg msg-assistant msg-thinking" aria-live="polite">
@@ -191,6 +283,11 @@ export function AskChat({
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  // How many AI summaries are left, as the server last said (every reply
+  // carries it). Null until the first reply.
+  const [ai, setAi] = useState<AiAllowance | null>(null);
+  const pathname = usePathname();
+  const loginHref = `/login?next=${encodeURIComponent(pathname ?? "/ask")}`;
   const nextId = useRef(1);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -205,6 +302,7 @@ export function AskChat({
       setBusy(true);
       try {
         const response = await postAsk({ question: q, species_slug: speciesSlug ?? null });
+        setAi(response.ai);
         setTurns((t) => [...t, { id: nextId.current++, role: "assistant", response }]);
       } catch (e) {
         // A request limit has its own message; anything else means the
@@ -216,6 +314,25 @@ export function AskChat({
       }
     },
     [busy, speciesSlug],
+  );
+
+  const summarize = useCallback(
+    async (turnId: number, question: string) => {
+      const setSummary = (summary: Summary) =>
+        setTurns((ts) => ts.map((t) => (t.id === turnId && t.role === "assistant" ? { ...t, summary } : t)));
+      setSummary({ status: "loading" });
+      try {
+        const response = await postAskSummary({ question, species_slug: speciesSlug ?? null });
+        setAi(response.ai);
+        setSummary({ status: "done", response });
+      } catch (e) {
+        const message = e instanceof ApiError ? e.message : "Couldn't reach FishEye's server.";
+        if (e instanceof ApiError && e.status === 429) setAi((a) => (a ? { ...a, remaining: 0 } : a));
+        if (e instanceof ApiError && e.status === 401) setAi({ signed_in: false, limit: null, remaining: null });
+        setSummary({ status: "error", message });
+      }
+    },
+    [speciesSlug],
   );
 
   useEffect(() => {
@@ -313,6 +430,15 @@ export function AskChat({
                 </div>
                 <Citations items={r.citations} compact={compact} />
                 <Trace r={r} />
+                {r.answer_source === "passages" && (
+                  <AiSummary
+                    summary={turn.summary}
+                    ai={ai}
+                    loginHref={loginHref}
+                    disabled={turn.summary?.status === "loading"}
+                    onRequest={() => void summarize(turn.id, r.question)}
+                  />
+                )}
               </div>
             </div>
           );

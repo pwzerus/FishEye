@@ -256,16 +256,28 @@ def test_a_pinned_file_wins(monkeypatch):
 
 
 def test_every_guide_species_has_a_curated_photo_served_without_network(monkeypatch):
+    """Except the few listed as awaiting a hand check, which get the live
+    lookup (here it fails, so they come back as None and the page draws the
+    illustration). The list may only shrink: a new guide species either
+    gets a curated photo or is named there."""
     from app.knowledge.species_guides import GUIDES, slugify
 
     monkeypatch.setattr(sp, "CURATED_PHOTOS", CURATED)
     calls = _install(monkeypatch, fail=True)
     photos = sp.get_photos()
+    slugs = {slugify(g.common_name) for g in GUIDES}
+    assert set(photos) == slugs
+    assert sp.AWAITING_CURATION <= slugs
+    assert not (sp.AWAITING_CURATION & set(CURATED))
     for guide in GUIDES:
+        if slugify(guide.common_name) in sp.AWAITING_CURATION:
+            assert photos[slugify(guide.common_name)] is None
+            continue
         photo = photos[slugify(guide.common_name)]
         assert photo is not None, guide.common_name
         assert photo.url.startswith("https://upload.wikimedia.org/")
         assert photo.file_page.startswith("https://commons.wikimedia.org/wiki/File:")
         assert sp._FREE_LICENSE_RE.match(photo.license)
         assert photo.author
-    assert calls["n"] == 0 and calls["search"] == 0
+    # Only the species awaiting curation were looked up.
+    assert calls["search"] == 0

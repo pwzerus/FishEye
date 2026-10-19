@@ -1,9 +1,11 @@
 """GET /api/species/guides — how to catch each species (app/knowledge/species_guides.py).
+GET /api/species/handbook — what applies to every fish (app/knowledge/angling_handbook.py).
 GET /api/species/photos — a real photo per species, with credit (services/species_photos.py)."""
 from dataclasses import asdict
 
 from fastapi import APIRouter, HTTPException
 
+from app.knowledge.angling_handbook import CATEGORIES, TOPICS
 from app.knowledge.species_guides import (
     GUIDES,
     TPWD_LIMITS_URL,
@@ -14,6 +16,7 @@ from app.knowledge.species_guides import (
 )
 from app.schemas.species_guide import (
     GuideSourceOut,
+    HandbookTopicOut,
     SpeciesGuideOut,
     SpeciesPhotoOut,
     TackleSetupOut,
@@ -59,6 +62,10 @@ def to_out(guide: SpeciesGuide) -> SpeciesGuideOut:
         ],
         tips=list(guide.tips),
         identification=list(guide.identification),
+        habitat=list(guide.habitat),
+        habits=list(guide.habits),
+        why_these_baits=list(guide.why_these_baits),
+        eating=list(guide.eating),
         how_to_get=list(guide.how_to_get),
         bait_for=list(guide.bait_for),
         legal_notes=list(guide.legal_notes),
@@ -81,6 +88,24 @@ def get_species_guide(slug: str) -> SpeciesGuideOut:
     if guide is None:
         raise HTTPException(status_code=404, detail=f"no guide for {slug!r}")
     return to_out(guide)
+
+
+@router.get("/handbook", response_model=list[HandbookTopicOut])
+def list_handbook() -> list[HandbookTopicOut]:
+    """In page order: by category (CATEGORIES' order), then as written."""
+    order = {c: i for i, c in enumerate(CATEGORIES)}
+    ranked = sorted(enumerate(TOPICS), key=lambda pair: (order[pair[1].category], pair[0]))
+    return [
+        HandbookTopicOut(
+            id=t.id,
+            category=t.category,
+            category_label=CATEGORIES[t.category],
+            title=t.title,
+            body=list(t.body),
+            sources=_sources(t.source_ids),
+        )
+        for _, t in ranked
+    ]
 
 
 @router.get("/photos", response_model=dict[str, SpeciesPhotoOut | None])

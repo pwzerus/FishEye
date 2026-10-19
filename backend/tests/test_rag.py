@@ -111,9 +111,15 @@ def test_routing_keeps_other_species_out_of_the_answer():
     assert {h.passage.species_slug for h in hits} <= {"white-crappie", "black-crappie", SHARED_SLUG}
 
 
-def test_a_question_about_two_fish_gets_passages_for_both():
+def test_a_question_about_a_fish_family_gets_passages_for_each_member():
+    # "catfish" means channel, blue and (since docs/adr/0024) flathead.
     hits = default_retriever().search("what gear do I need for catfish", k=4)
-    assert {h.passage.species_slug for h in hits} == {"channel-catfish", "blue-catfish"}
+    assert {h.passage.species_slug for h in hits} == {"channel-catfish", "blue-catfish", "flathead-catfish"}
+
+
+def test_a_question_about_two_named_fish_gets_passages_for_both():
+    hits = default_retriever().search("redear vs bluegill", k=4)
+    assert {"redear-sunfish", "bluegill"} <= {h.passage.species_slug for h in hits}
 
 
 def test_shared_passages_only_fill_slots_the_fish_left_empty():
@@ -255,9 +261,11 @@ def test_nothing_retrieved_short_circuits_without_calling_the_model():
 
 
 def test_a_named_fish_question_its_guide_cannot_answer_is_not_covered():
-    result = rag.ask("how do I fillet a striper", provider=_NeverCalled())
+    # "How do I fillet a striper" used to be the example; the handbook now
+    # has filleting steps (docs/adr/0024), and that question is in the eval.
+    result = rag.ask("how do I smoke a carp", provider=_NeverCalled())
     assert result.answer_source == rag.ANSWER_NO_MATCH
-    assert result.trace.routed_species == ["striped-bass"]
+    assert result.trace.routed_species == ["common-carp"]
     assert result.citations == []
 
 
@@ -333,17 +341,20 @@ def test_accepted_answers_are_cached_and_fallbacks_are_not():
 # --------------------------------------------------------------------------
 
 
-def test_ask_endpoint_returns_answer_citations_and_trace(client):
+def test_ask_endpoint_returns_the_passages_without_calling_a_model(client):
     resp = client.post("/api/ask", json={"question": "what bait for crappie"})
     assert resp.status_code == 200
     body = resp.json()
-    assert body["answer_source"] == "llm"
+    assert body["answer_source"] == "passages"
+    assert body["trace"]["provider"] == "none"
+    assert body["trace"]["prompt_tokens"] == 0
     assert body["trace"]["retriever"] == "bm25"
     assert body["trace"]["routed_species"] == ["white-crappie", "black-crappie"]
     first = body["citations"][0]
     assert first["species_name"] in {"White Crappie", "Black Crappie"}
     assert not first["excerpt"].startswith(first["species_name"])  # header stripped
     assert first["sources"] and first["sources"][0]["url"].startswith("https://")
+    assert body["ai"] == {"signed_in": False, "limit": None, "remaining": None}
 
 
 def test_ask_endpoint_uses_the_page_species_as_context(client):
@@ -366,20 +377,65 @@ def test_ask_endpoint_reports_not_covered_honestly(client):
     assert body["trace"]["provider"] == "none"
 
 
-def test_provider_outage_still_returns_200(client, monkeypatch):
-    from app.services import llm
-
-    monkeypatch.setenv("LLM_MOCK_FAILURE_MODE", "unavailable")
-    llm.reset_provider_cache()
-    try:
-        body = client.post("/api/ask", json={"question": "what bait for bluegill"}).json()
-    finally:
-        monkeypatch.delenv("LLM_MOCK_FAILURE_MODE")
-        llm.reset_provider_cache()
-    assert body["answer_source"] == "fallback"
-    assert body["trace"]["outcome"] == "provider_unavailable"
-
-
 def test_llm_unavailable_is_importable_for_provider_authors():
     # Guards the public surface ask.py relies on.
     assert issubclass(LLMUnavailable, Exception)
+
+
+# --------------------------------------------------------------------------
+# The gate and routing after the expansion (docs/adr/0024)
+# --------------------------------------------------------------------------
+
+
+from app.services.rag.retriever import is_on_topic  # noqa: E402
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "what is split shot",  # two everyday words that together name tackle
+        "how do I tie a palomar knot",
+        "should I use fluorocarbon",
+        "how do I hook a nightcrawler",
+        "what is a jerkbait",
+        "catch and release tips",
+        "can I catch a walleye in texas",  # a fish with no guide: admitted, then "not covered"
+    ],
+)
+def test_the_gate_admits_bait_tackle_and_fish_names(question):
+    assert is_on_topic(question)
+
+
+@pytest.mark.parametrize(
+    "question",
+    ["best corn bread recipe", "how to skin a deer", "how do I clean my kitchen", "how long to cook chicken"],
+)
+def test_words_the_expansion_added_stay_ambiguous(question):
+    assert not is_on_topic(question)
+
+
+@pytest.mark.parametrize(
+    "nickname,slug",
+    [
+        ("shellcracker", "redear-sunfish"),
+        ("yellow cat", "flathead-catfish"),
+        ("gaspergou", "freshwater-drum"),
+        ("guads", "guadalupe-bass"),
+        ("rainbows", "rainbow-trout"),
+        ("carp", "common-carp"),
+    ],
+)
+def test_new_fish_route_by_their_other_names(nickname, slug):
+    assert split_species(f"where do {nickname} live")[0] == (slug,)
+
+
+def test_what_a_fish_eats_and_whether_it_is_good_to_eat_are_different_questions():
+    r = default_retriever()
+    assert r.search("what do sand bass eat", k=1)[0].passage.id == "white-bass#diet"
+    assert r.search("are sand bass good to eat", k=1)[0].passage.id == "white-bass#eating"
+
+
+def test_a_lone_letter_from_a_contraction_is_not_a_search_term():
+    from app.services.rag.retriever import tokenize_query
+
+    assert "s" not in tokenize_query("what's a good bait for channel cats")

@@ -106,12 +106,14 @@ function ListBlock({ id, title, items }: { id: string; title: string; items: str
 function sectionLinks(g: SpeciesGuide): SectionLink[] {
   const links: SectionLink[] = [{ id: "overview", label: "Overview" }];
   if (g.identification.length) links.push({ id: "identification", label: "Identify" });
+  if (g.habitat.length || g.habits.length) links.push({ id: "habitat", label: "Habitat & habits" });
   if (g.where_and_when.length) links.push({ id: "where_and_when", label: "Where & when" });
   if (g.live_baits.length || g.lures.length) links.push({ id: "bait", label: "Bait & lures" });
   if (g.how_to_get.length) links.push({ id: "how_to_get", label: "Get it" });
   if (g.bait_for.length) links.push({ id: "bait_for", label: "Bait for" });
   if (g.setups.length) links.push({ id: "setups", label: "Rod & reel" });
   if (g.tips.length) links.push({ id: "tips", label: "Tips" });
+  if (g.eating.length) links.push({ id: "eating", label: "On the table" });
   links.push({ id: "ask", label: "Ask" });
   return links;
 }
@@ -186,6 +188,8 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
         <div className="guide-columns">
           <div className="guide-main">
             <ListBlock id="identification" title="How to recognise it" items={guide.identification} />
+            <ListBlock id="habitat" title="Habitat: where it lives" items={guide.habitat} />
+            <ListBlock id="habits" title="Habits: behavior, spawning and growth" items={guide.habits} />
             <ListBlock id="where_and_when" title="Where and when" items={guide.where_and_when} />
 
             {(guide.live_baits.length > 0 || guide.lures.length > 0) && (
@@ -216,6 +220,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
               </section>
             )}
 
+            <ListBlock id="why_these_baits" title="Why these baits work" items={guide.why_these_baits} />
             <ListBlock id="how_to_get" title="How to get it for bait" items={guide.how_to_get} />
             <ListBlock id="bait_for" title="Use it as bait for" items={guide.bait_for} />
 
@@ -254,6 +259,13 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
               })()}
 
             <ListBlock id="tips" title="Tips" items={guide.tips} />
+            <ListBlock id="eating" title="On the table: cleaning and cooking" items={guide.eating} />
+            {guide.eating.length > 0 && (
+              <p className="muted">
+                Step-by-step cleaning, keeping fish fresh and eating safely are in the{" "}
+                <Link href="/fish#care">handbook</Link>.
+              </p>
+            )}
 
             {isForage && guide.legal_notes.length > 0 && (
               <section id="bait_rules" className="guide-block rules-card">

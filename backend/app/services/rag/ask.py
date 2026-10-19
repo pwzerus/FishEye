@@ -54,11 +54,15 @@ OUTCOME_PROVIDER_UNAVAILABLE = "provider_unavailable"
 ANSWER_LLM = "llm"
 ANSWER_FALLBACK = "fallback"
 ANSWER_NO_MATCH = "no_match"
+# The passages themselves, no model involved: what everyone gets first
+# (search_guides below). A written answer is a separate, metered step.
+ANSWER_PASSAGES = "passages"
 
 NO_MATCH_ANSWER = (
-    "The FishEye fish guides don't cover that yet. They cover twelve Texas freshwater "
-    "fish: what each one eats, where and when to find it, which bait and lures work, "
-    "and rod-and-reel setups. Try asking about one of those."
+    "The FishEye fish guides don't cover that yet. They cover eighteen Texas freshwater "
+    "fish (what each one eats, where it lives, which baits work and why, rod-and-reel "
+    "setups, and how to clean it) plus a handbook on baits, tackle, knots, telling fish "
+    "apart and caring for your catch. Try asking about one of those."
 )
 
 SPECIES_VOCABULARY = tuple(sorted((g.common_name.lower() for g in GUIDES), key=len, reverse=True))
@@ -91,7 +95,7 @@ class AskTrace:
 class AskResult:
     question: str
     answer: str
-    answer_source: str  # ANSWER_LLM | ANSWER_FALLBACK | ANSWER_NO_MATCH
+    answer_source: str  # ANSWER_LLM | ANSWER_FALLBACK | ANSWER_NO_MATCH | ANSWER_PASSAGES
     citations: list[Passage]
     trace: AskTrace
 
@@ -253,6 +257,34 @@ def _cache_key(question: str, passages: list[Passage]) -> str:
         [" ".join(question.lower().split()), [(p.id, p.text) for p in passages]]
     )
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def search_guides(
+    question: str,
+    species_slug: str | None = None,
+    k: int = DEFAULT_K,
+    retriever: Retriever | None = None,
+) -> AskResult:
+    """The retrieval half of `ask`, on its own: the passages that answer the
+    question, best first, and no model call. An empty result is the same
+    "not covered" answer `ask` gives, and is also what decides that a
+    question isn't a fishing question and may not spend an AI summary
+    (api/ask.py)."""
+    question = " ".join(question.split())
+    retr = retriever or default_retriever()
+    context = (species_slug,) if species_slug else None
+    hits = retr.search(question, k=k, species=context)
+    named, _ = split_species(question)
+    trace = AskTrace(
+        trace_id=str(uuid.uuid4()),
+        routed_species=list(named or context or ()),
+        retrieved=[{"id": h.passage.id, "score": round(h.score, 3)} for h in hits],
+    )
+    if not hits:
+        trace.outcome = OUTCOME_NO_MATCH
+        return AskResult(question, NO_MATCH_ANSWER, ANSWER_NO_MATCH, [], trace)
+    passages = [h.passage for h in hits]
+    return AskResult(question, "Here's what the FishEye guides say:", ANSWER_PASSAGES, passages, trace)
 
 
 def ask(

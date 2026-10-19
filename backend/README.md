@@ -107,8 +107,12 @@ isn't shown. Design and security notes: docs/adr/0016-accounts-and-community-pin
 
 ### Fish-guide Q&A (RAG) and the LLM
 
-`POST /api/ask` answers questions from the fish guides with citations
-(docs/adr/0014-rag-over-species-guides.md). It runs with no key: the mock
+`POST /api/ask` searches the fish guides and returns the matching passages
+with their sources: no model call, no account
+(docs/adr/0014-rag-over-species-guides.md). `POST /api/ask/summary` has the
+model write an answer from those passages, for signed-in accounts, 3 per
+account per UTC day; admins are not limited
+(docs/adr/0023-search-first-ai-summaries.md). Both run with no key: the mock
 provider answers by quoting the retrieved passages. For real generated
 answers, put these in the backend's `.env` (never the frontend's):
 
@@ -116,6 +120,7 @@ answers, put these in the backend's `.env` (never the frontend's):
 LLM_PROVIDER=anthropic
 LLM_API_KEY=sk-ant-...
 # LLM_MODEL=            # blank = claude-haiku-4-5
+# AI_SUMMARIES_PER_DAY=3
 ```
 
 Try a failure path on demand: `LLM_MOCK_FAILURE_MODE=invented_number`

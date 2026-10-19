@@ -78,9 +78,11 @@ class Budget:
 MINUTE = 60.0
 DAY = 24 * 60 * 60.0
 
-# Guide Q&A and the advisor: the endpoints that call a language model, so
-# the ones that will cost money once a real model is switched on. The daily
-# total across everyone bounds that cost whatever the number of clients.
+# AI summaries of guide answers and the advisor: the endpoints that call a
+# language model, so the ones that cost money. The daily total across
+# everyone bounds that cost whatever the number of clients. AI summaries
+# also need an account and have their own per-account allowance
+# (services/ai_quota.py); this budget is the backstop behind it.
 LLM = Budget(
     "llm",
     per_client=[RateLimiter(10, MINUTE), RateLimiter(100, DAY)],
@@ -90,6 +92,10 @@ LLM = Budget(
         "The fish guides and the map still work; please try again tomorrow."
     ),
 )
+
+# Searching the fish guides: no model call, only an in-memory index, so the
+# allowance is generous. It's here so one client can't keep the server busy.
+SEARCH = Budget("search", per_client=[RateLimiter(30, MINUTE)])
 
 # Location search. Nominatim allows this app one request a second in total,
 # and the service queues to respect that, so one client's flood would make
@@ -106,7 +112,7 @@ WEATHER = Budget("weather", per_client=[RateLimiter(60, MINUTE)])
 # can't keep the database busy for everyone.
 MAP = Budget("map", per_client=[RateLimiter(300, MINUTE)])
 
-ALL = (LLM, GEOCODE, WEATHER, MAP)
+ALL = (LLM, SEARCH, GEOCODE, WEATHER, MAP)
 
 
 def reset_all() -> None:

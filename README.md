@@ -35,7 +35,7 @@ FishEye pulls those sources into one place, organised around **where you are**:
    (GBIF) are shown as exactly that, and entrances from OpenStreetMap are
    labelled unverified.
 3. **Know when and how.** A spot score and morning/evening bite windows from
-   the National Weather Service forecast, reviewed guides for twelve species,
+   the National Weather Service forecast, reviewed guides for eighteen species and an angler's handbook,
    and a Q&A over those guides that answers in plain language and cites them.
 
 Coverage today is Texas; the data model and importers are per-state (see
@@ -46,8 +46,8 @@ Coverage today is Texas; the data model and importers are per-state (see
 | Page | |
 |---|---|
 | **Map** (`/map`) | Locate me / search; lakes in view, with verified lakes always kept and the rest ranked by size when a view is crowded; a lake panel with TPWD's profile and fishing ratings, species with their evidence, public boat ramps, weather, bite windows and an AI explanation of the ranking. |
-| **Fish guides** (`/fish`) | Twelve species: how to recognise each one (look-alikes compared on the same features), where and when, bait, lures, beginner tackle setups. Every section cites its sources. |
-| **Ask** (`/ask`) | Free-text questions ("how do I tell white bass from hybrid striped bass?") answered from the guides only, with citations; "not covered" when the guides don't say. |
+| **Fish guides** (`/fish`) | Eighteen species: how to recognise each one (look-alikes compared on the same features), habitat and habits, where and when, bait and why it works, lures, beginner tackle setups, cleaning and eating. Plus a 44-topic angler's handbook: baits, lures, tackle, knots, releasing and cleaning a catch, telling fish families apart, timing. Every section cites its sources. |
+| **Ask** (`/ask`) | Free-text questions ("how do I tell white bass from hybrid striped bass?") answered with the matching guide passages and their sources, free and with no account; "not covered" when the guides don't say. Signed in, an AI summary of those passages, 3 a day. |
 | **Community** (`/community`) | Accounts and catch pins with photos, with moderation tools for admins. |
 
 ## Architecture
@@ -118,9 +118,17 @@ a production frontend build, and a Docker build with smoke tests on every push.
   number (hook size, line weight) that isn't in its sources. Failures retry
   once, then fall back to quoting the guide verbatim, labelled as such.
 - **Retrieval measured, not assumed.** Guide Q&A uses BM25 with species
-  routing rather than embeddings, chosen on an eval set of 36 beginner-phrased
-  questions (hit@4 97%, off-topic and not-covered questions refused 100%).
-  The eval runs in the test suite, so a regression fails CI.
+  routing rather than embeddings, chosen on an eval set of beginner-phrased
+  questions, now 95 of them (hit@4 99%, MRR 0.85). The same eval caught the on-topic gate letting 14 of
+  21 deliberately tricky off-topic questions through ("how to tie a tie");
+  rebuilt, it lets 1 through and still admits 14 of 15 fishing questions
+  that name no fish (now 1 of 30 and 20 of 21, with bait, lure and tackle
+  names added). The eval runs in the test suite, so a regression fails CI.
+- **The model is optional.** Every question is answered by search alone,
+  with sources and no model call. A written AI summary is an extra step for
+  signed-in accounts, 3 a day, reserved atomically before the call and given
+  back if the model fails or the answer came from cache. Off-topic questions
+  never reach the model.
 - **Honest data.** Confirmed, reported and map-only lakes are separate tiers,
   enforced in the scoring engine and the AI checks, not just in the UI.
   Public access comes only from official sources (TPWD's ramp dataset, or
@@ -138,7 +146,7 @@ a production frontend build, and a Docker build with smoke tests on every push.
   keyless weather (NWS) and OpenStreetMap tiles mean a clean clone works
   with `docker compose up`, and the failure paths are tested, not just the
   happy path.
-- **Decisions written down.** 22 architecture decision records in
+- **Decisions written down.** 24 architecture decision records in
   [`docs/adr/`](docs/adr/), each with the alternatives considered and the
   trade-off taken.
 
@@ -210,7 +218,8 @@ docker-compose.prod.yml   single-server production layer (with Caddyfile)
   agency-profile table is keyed by agency; each new state needs its own
   agency's lake data, ramps and regulations, surveyed first.
 - Texas lakes TPWD covers but the import couldn't place (15 of 175).
-- More species guides, and identification sections for the remaining ones.
+- More species guides; curated photos for the six added in ADR 0024; a
+  casting topic in the handbook.
 - Mobile-friendly map and offline-tolerant lake pages for use at the water.
 
 ## Status

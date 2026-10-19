@@ -64,7 +64,21 @@ WIKIPEDIA_TITLES: dict[str, str] = {
     "bluegill": "Bluegill",
     "gizzard-shad": "Gizzard shad",
     "threadfin-shad": "Threadfin shad",
+    # Added with docs/adr/0024. Not in CURATED_PHOTOS yet: their photos come
+    # from the live lookup below (and the page shows the illustration when it
+    # finds none) until each is checked by hand like the others.
+    "flathead-catfish": "Flathead catfish",
+    "guadalupe-bass": "Guadalupe bass",
+    "redear-sunfish": "Redear sunfish",
+    "rainbow-trout": "Rainbow trout",
+    "freshwater-drum": "Freshwater drum",
+    "common-carp": "Common carp",
 }
+
+# Guide species whose photo hasn't been hand-checked yet (see above).
+AWAITING_CURATION: frozenset[str] = frozenset(
+    {"flathead-catfish", "guadalupe-bass", "redear-sunfish", "rainbow-trout", "freshwater-drum", "common-carp"}
+)
 
 # A file to use for a species instead of whatever the lookup finds — for when
 # the automatic pick turns out to be a poor photo. slug -> Commons file name.

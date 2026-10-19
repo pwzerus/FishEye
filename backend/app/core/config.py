@@ -77,6 +77,11 @@ class Settings(BaseSettings):
     # (app/api/rate_limits.py). Only for turning them off in a pinch.
     rate_limits_enabled: bool = True
 
+    # AI summaries of a guide answer, per signed-in account per UTC day
+    # (services/ai_quota.py, docs/adr/0023). Searching the guides is free and
+    # needs no account; only the model call is metered. Admins are exempt.
+    ai_summaries_per_day: int = 3
+
     # Feature flags
     use_seed_data_only: bool = True
     # GBIF species records carry their own licences; about 12% of Texas's are
