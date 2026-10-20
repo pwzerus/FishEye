@@ -22,10 +22,10 @@ def _ids(result):
 # ---------------------------------------------------------------- registry
 
 
-def test_every_state_is_listed_and_texas_and_georgia_are_covered():
+def test_every_state_is_listed_and_three_are_covered():
     assert len(j.JURISDICTIONS) == 51  # 50 states and DC
-    assert {c for c, v in j.JURISDICTIONS.items() if v.covered} == {"GA", "TX"}
-    assert j.covered_names() == "Georgia and Texas"
+    assert {c for c, v in j.JURISDICTIONS.items() if v.covered} == {"CA", "GA", "TX"}
+    assert j.covered_names() == "California, Georgia and Texas"
 
 
 def test_a_covered_state_names_its_agency_and_pages():
@@ -100,7 +100,7 @@ def test_the_georgia_rule_passages_are_all_tagged_and_cite_georgia():
 
 
 def test_a_states_passages_cite_only_that_states_agency():
-    prefixes = {"TX": ("tpwd-",), "GA": ("gawrd-", "garegs-")}
+    prefixes = {"TX": ("tpwd-",), "GA": ("gawrd-", "garegs-"), "CA": ("cdfw-", "cadbw-")}
     for p in build_passages():
         if p.region in prefixes:
             assert all(s.startswith(prefixes[p.region]) for s in p.source_ids), p.id
@@ -133,7 +133,7 @@ def test_a_rules_question_from_another_state_is_not_answered_with_texas_rules():
     result = rag_ask.search_guides(RULE_QUESTION, state="CO")
     assert result.citations == []
     assert result.trace.outcome == rag_ask.OUTCOME_OTHER_STATE
-    assert "Colorado" in result.answer and "Georgia and Texas" in result.answer
+    assert "Colorado" in result.answer and "California, Georgia and Texas" in result.answer
 
 
 def test_the_same_question_in_texas_or_without_a_state_gets_the_texas_rules():
@@ -187,18 +187,69 @@ def test_each_state_searches_its_own_index():
     assert regional.for_state(full, "GA") is ga  # built once
 
 
+def test_the_california_rule_passages_are_tagged_and_cite_california():
+    by_id = {p.id: p for p in build_passages()}
+    for pid in (
+        "all-fish#bait_rules-ca",
+        "all-fish#rule-license-ca",
+        "all-fish#safe-lifejacket-ca",
+        "all-fish#rule-clean-drain-dry-ca",
+        "all-fish#start-first-trip-ca",
+        "all-fish#care-keeping-ca",
+    ):
+        p = by_id[pid]
+        assert p.region == "CA" and "California" in p.text, pid
+
+
+@pytest.mark.parametrize(
+    ("question", "want"),
+    [
+        ("do I need a fishing license", "rule-license-ca"),
+        ("does my 14 year old need a license", "rule-license-ca"),
+        ("can I fish with two rods", "rule-license-ca"),
+        ("do I need a report card for sturgeon", "rule-license-ca"),
+        ("do kids have to wear a life jacket in a kayak", "safe-lifejacket-ca"),
+        ("can I use live minnows as bait", "bait_rules-ca"),
+        ("can I use dead sardines as bait", "bait_rules-ca"),
+        ("what is a mussel fee sticker", "rule-clean-drain-dry-ca"),
+        ("how long do I dry my boat for quagga mussels", "rule-clean-drain-dry-ca"),
+        ("how is a fish measured for the length limit", "care-keeping-ca"),
+        ("加州钓鱼要钓鱼证吗", "rule-license-ca"),
+    ],
+)
+def test_california_questions_find_californias_rules(question, want):
+    ids = _ids(rag_ask.search_guides(question, state="CA"))
+    assert f"all-fish#{want}" in ids, (question, ids)
+    assert all(not i.endswith(("-tx", "-ga")) for i in ids), ids
+
+
+def test_every_bait_question_in_california_shows_its_bait_rules():
+    # The guides recommend live minnows; California forbids fish as bait in
+    # most inland waters. Whatever ranks first, the rule is right under it.
+    for q in ("what bait for crappie", "best live bait for bass", "鲈鱼用什么饵"):
+        ids = _ids(rag_ask.search_guides(q, state="CA"))
+        assert ids[1] == "all-fish#bait_rules-ca", (q, ids)
+    # Not in states whose rules don't contradict the guides, and not for
+    # questions that aren't about bait.
+    assert "all-fish#bait_rules" not in _ids(rag_ask.search_guides("what bait for crappie", state="TX"))[:1]
+    assert "all-fish#bait_rules-ca" not in _ids(rag_ask.search_guides("how do I tie a palomar knot", state="CA"))
+
+
 def test_texas_never_sees_georgias_rules():
     for q in (RULE_QUESTION, "kids life jacket", "can I use live bait or a cast net", "zebra mussels boat"):
         for p in rag_ask.search_guides(q, state="TX").citations:
             assert p.region in (j.REGION_ALL, "TX"), (q, p.id)
 
 
-def test_how_to_questions_are_the_same_in_every_state():
+def test_how_to_questions_get_the_same_answer_in_every_state():
+    # Each state searches its own index (ADR 0028), whose word statistics
+    # differ a little, so the order below the top can shift; what is shown
+    # is the same guidance. California adds its bait rules (ADR 0030).
     q = "what bait works for crappie"
-    texas = _ids(rag_ask.search_guides(q, state="TX"))
-    colorado = _ids(rag_ask.search_guides(q, state="CO"))
-    georgia = _ids(rag_ask.search_guides(q, state="GA"))
-    assert colorado and colorado == texas == georgia
+    answers = {s: _ids(rag_ask.search_guides(q, state=s)) for s in ("TX", "CO", "GA")}
+    assert len({tuple(a[:2]) for a in answers.values()}) == 1
+    for a in answers.values():
+        assert all(i.split("#")[0] in ("white-crappie", "black-crappie") for i in a), a
 
 
 def test_what_ranks_below_another_states_rule_is_not_shown_as_an_answer():
@@ -216,7 +267,7 @@ def test_a_state_never_sees_passages_of_another_state():
 def test_the_other_state_answer_names_who_to_ask_and_what_is_covered():
     text = j.other_state_answer("OK")
     assert "Oklahoma's fish and wildlife agency" in text
-    assert "Georgia and Texas" in text
+    assert "California, Georgia and Texas" in text
 
 
 # ------------------------------------------------------------------- API
@@ -225,9 +276,9 @@ def test_the_other_state_answer_names_who_to_ask_and_what_is_covered():
 def test_jurisdictions_endpoint_lists_covered_states_first(client):
     body = client.get("/api/jurisdictions").json()
     assert len(body) == 51
-    assert [s["code"] for s in body[:2]] == ["GA", "TX"]
-    assert all(s["covered"] and s["bait_rules"] and s["bait_rules_sources"] for s in body[:2])
-    assert body[1]["agency_short"] == "TPWD"
+    assert [s["code"] for s in body[:3]] == ["CA", "GA", "TX"]
+    assert all(s["covered"] and s["bait_rules"] and s["bait_rules_sources"] for s in body[:3])
+    assert body[2]["agency_short"] == "TPWD"
     colorado = next(s for s in body if s["code"] == "CO")
     assert colorado["covered"] is False and colorado["limits_url"] is None
     assert colorado["bait_rules"] == []

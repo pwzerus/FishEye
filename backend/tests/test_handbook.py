@@ -55,7 +55,7 @@ def test_every_guide_has_habitat_habits_and_why_its_baits_work():
 
 def test_eighteen_guides_six_of_them_new():
     names = {g.common_name for g in GUIDES}
-    assert len(GUIDES) == 18
+    assert len(GUIDES) == 19
     assert {
         "Flathead Catfish",
         "Guadalupe Bass",

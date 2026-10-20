@@ -278,6 +278,27 @@
   font-size: 13px;
 }
 
+/* Water whose name points at private land (backend docs/adr/0032). */
+.private-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9a3412;
+  background: #ffedd5;
+  border-radius: 4px;
+  padding: 2px 6px;
+  text-transform: uppercase;
+}
+.private-warning {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .public-status.public-status-unverified {
   color: #92400e;
 }
@@ -1133,4 +1154,74 @@
   margin: 8px 12px;
   font-size: 13px;
   line-height: 1.4;
+}
+
+/* Phones (docs/adr/0031): the side panel is 360px wide and doesn't shrink,
+   which on a 390px screen left the map about 30px. Stacked instead: the map
+   on top, the panel below it, scrolling on its own. */
+@media (max-width: 760px) {
+  .map-view {
+    flex-direction: column;
+  }
+  .map-container {
+    flex: 0 0 auto;
+    height: 58dvh;
+  }
+  .side-panel {
+    width: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    border-left: none;
+    border-top: 1px solid #e5e7eb;
+    padding: 12px 16px 24px;
+  }
+}
+@media (max-width: 760px) {
+  /* Row 1 is the search bar, full width. Row 2: "Use my location" on the
+     left, the pin buttons on the right as icons (their names stay as
+     aria-labels). Status messages go below both rows. */
+  /* Scoped under .map-container: community.css, loaded after this file,
+     sets .map-fabs's desktop position. */
+  .map-container .map-fabs {
+    top: 62px;
+    flex-direction: row;
+    align-items: center;
+  }
+  .map-container .map-fabs .fab-label {
+    display: none;
+  }
+  .map-container .map-fabs .map-toggle,
+  .map-container .map-fabs .map-add {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 999px;
+  }
+  .map-status-stack {
+    top: 112px;
+  }
+  .map-legend {
+    bottom: 16px;
+    font-size: 10px;
+    padding: 4px 8px;
+    gap: 1px;
+    max-width: 62%;
+  }
+}
+@media (max-width: 760px) {
+  /* With a lake open, its details matter more than the map around it. */
+  .map-view.has-lake .map-container {
+    height: 40dvh;
+  }
+}
+
+/* Fish attractors under the access list (WaterbodyPanel, ADR 0033). */
+.attractor-note {
+  font-size: 13px;
+  color: #134e4a;
+  background: #f0fdfa;
+  border-left: 3px solid #14b8a6;
+  padding: 6px 10px;
+  border-radius: 4px;
 }

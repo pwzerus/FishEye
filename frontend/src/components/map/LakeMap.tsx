@@ -234,6 +234,7 @@ function LakeMarker({ lake, onSelect }: { lake: WaterbodyListItem; onSelect: (id
         <strong>{lake.name}</strong>
         {isOsm ? (
           <div style={{ fontSize: 12, color: "#6b7280" }}>
+            {lake.public_access_status === "likely_private" ? "Probably private · " : ""}
             {lake.water_type === "pond" ? "Pond · " : ""}Unverified · from OpenStreetMap
             {reported > 0 && (
               <div style={{ color: "#92400e" }}>

@@ -70,6 +70,7 @@ GBIF_API = "https://api.gbif.org/v1"
 STATE_BOUNDS: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {
     "TX": ((25.8, 36.6), (-106.7, -93.5)),
     "GA": ((30.3, 35.1), (-85.7, -80.7)),
+    "CA": ((32.4, 42.1), (-124.6, -114.0)),
 }
 PAGE_SIZE = 300
 # GBIF documents a 100,000-record paging depth, but users report errors past

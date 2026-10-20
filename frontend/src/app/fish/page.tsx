@@ -53,8 +53,8 @@ export default async function FishGuidePage() {
             found across the U.S.: what each one eats, where it lives, which bait works and why, and
             rod-and-reel setups from a first cane pole up, plus a handbook for everything else. Every
             setup names its source, mostly state wildlife agencies. How to catch a fish is the same
-            everywhere; the rules are a state&apos;s, and so far FishEye has written Texas&apos;s and
-            Georgia&apos;s.
+            everywhere; the rules are a state&apos;s, and so far FishEye has written Texas&apos;s,
+            Georgia&apos;s and California&apos;s.
           </p>
           <StatePicker />
         </section>

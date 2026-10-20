@@ -42,7 +42,7 @@ export type WaterType = "lake" | "reservoir" | "pond";
 //   Community-mapped, no species, entrances are "osm_reported" and never
 //   scored. See backend/app/models/waterbody.py and ADR 0010.
 export type DataTier = "verified" | "osm";
-export type PublicAccessStatus = "open" | "closed" | "unknown";
+export type PublicAccessStatus = "open" | "closed" | "unknown" | "likely_private";
 
 // Mirrors backend/app/schemas/geocoding.py.
 export interface GeocodeResult {
@@ -115,8 +115,22 @@ export interface AgencyProfile {
   impounded: string | null;
   predominant_species: string[];
   ratings: AgencyRating[];
-  // "ramps": plotted at the agency's boat ramps, with no outline.
+  // "ramps" / "sites": plotted at the agency's boat ramps or access sites,
+  // with no outline.
   placement: string;
+}
+
+// A fish attractor the state agency placed in this lake (brush pile, PVC
+// tree, stake bed...). Mirrors FishAttractorOut in backend/app/schemas.
+export interface FishAttractor {
+  id: number;
+  latitude: number;
+  longitude: number;
+  attractor_type: string;
+  units: number | null;
+  depth_ft: number | null;
+  placed_year: number | null;
+  source: string;
 }
 
 export interface WaterbodyDetail {
@@ -135,6 +149,7 @@ export interface WaterbodyDetail {
   species: SpeciesSummary[];
   reported_species: ReportedSpecies[];
   agency_profile?: AgencyProfile | null;
+  fish_attractors?: FishAttractor[];
 }
 
 // Mirrors backend/app/schemas/admin.py.
@@ -655,4 +670,7 @@ export interface Jurisdiction {
   /** What may go on the hook and where; empty where FishEye hasn't written them. */
   bait_rules: string[];
   bait_rules_sources: GuideSource[];
+  /** The bait rules contradict the guides' live-bait advice (California):
+   * the live-bait list carries a warning there. */
+  bait_rules_on_every_bait_question: boolean;
 }

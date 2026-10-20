@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { ApiError, getWaterbody } from "@/lib/api/client";
-import type { AccessPoint, WaterbodyDetail } from "@/lib/api/types";
+import type { AccessPoint, FishAttractor, WaterbodyDetail } from "@/lib/api/types";
 import { SpeciesHowTo } from "@/components/species/SpeciesHowTo";
 import { AgencyProfileCard } from "./AgencyProfileCard";
 import { ReportedSpeciesList } from "./ReportedSpeciesList";
@@ -26,6 +26,35 @@ function ConfidenceBadge({ confidence }: { confidence: string }) {
     >
       {confidence}
     </span>
+  );
+}
+
+const ATTRACTOR_SOURCES: Record<string, string> = { ga_wrd: "Georgia WRD" };
+
+/** Fish attractors the state agency sank in this lake: fixed places fish
+ * gather, drawn on the lake map. Says who placed them and when, because an
+ * old brush pile may have broken down. */
+function AttractorNote({ attractors }: { attractors: FishAttractor[] }) {
+  if (attractors.length === 0) return null;
+  const years = attractors.map((a) => a.placed_year).filter((y): y is number => y !== null);
+  const span =
+    years.length === 0
+      ? ""
+      : Math.min(...years) === Math.max(...years)
+        ? `, placed in ${years[0]}`
+        : `, placed ${Math.min(...years)}–${Math.max(...years)}`;
+  const n = attractors.length;
+  const by = ATTRACTOR_SOURCES[attractors[0].source] ?? "the state agency";
+  return (
+    <>
+      <h3>Fish attractors</h3>
+      <p className="attractor-note">
+        {n} fish attractor{n === 1 ? "" : "s"} (brush piles, PVC trees and the like) sunk by{" "}
+        {by}
+        {span}, shown on the lake map as teal dots. Fish gather around them, but
+        older ones may have broken down.
+      </p>
+    </>
   );
 }
 
@@ -107,6 +136,9 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
   // nothing more. See backend/app/models/waterbody.py (data_tier).
   const isOsm = detail.data_tier === "osm";
   const isPond = detail.water_type === "pond";
+  // Its name points at private land (a club, an estate, a ranch): the OSM
+  // import marks it so (backend docs/adr/0032).
+  const isLikelyPrivate = detail.public_access_status === "likely_private";
   // A verified lake whose agency lists no boat ramp keeps OpenStreetMap's
   // entrances, each labelled "reported, not verified"; the heading mustn't
   // call them confirmed.
@@ -119,6 +151,7 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
         {detail.field_tested && <span className="field-tested-tag">field-tested</span>}
         {isClosed && <span className="closed-tag">closed to the public</span>}
         {isOsm && <span className="unverified-tag">unverified</span>}
+        {isLikelyPrivate && <span className="private-tag">probably private</span>}
       </h2>
 
       {isOsm && (
@@ -129,7 +162,15 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
         </div>
       )}
 
-      {isOsm && isPond && (
+      {isLikelyPrivate && (
+        <div className="private-warning">
+          Its name suggests private land, such as a club, an estate or a ranch. Assume it&apos;s
+          private: only fish here if you know it&apos;s open to the public or you have the
+          owner&apos;s permission.
+        </div>
+      )}
+
+      {isOsm && isPond && !isLikelyPrivate && (
         // Ponds get their own, louder warning: in Texas many are on ranches,
         // in gated neighborhoods or on golf courses, and unlike a reservoir
         // there's rarely an official access page to check.
@@ -185,6 +226,8 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
             : "No access points on file yet."
         }
       />
+
+      {!isClosed && <AttractorNote attractors={detail.fish_attractors ?? []} />}
 
       {/* An unverified lake has no official species list, so only the
           records section is shown. A verified lake shows its official list,

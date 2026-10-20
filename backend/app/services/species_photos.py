@@ -54,6 +54,7 @@ CIRCUIT_COOLDOWN_SECONDS = 5 * 60
 WIKIPEDIA_TITLES: dict[str, str] = {
     "largemouth-bass": "Largemouth bass",
     "spotted-bass": "Spotted bass",
+    "smallmouth-bass": "Smallmouth bass",
     "white-bass": "White bass",
     "striped-bass": "Striped bass",
     "hybrid-striped-bass": "Hybrid striped bass",
@@ -77,7 +78,9 @@ WIKIPEDIA_TITLES: dict[str, str] = {
 
 # Guide species whose photo hasn't been hand-checked yet (see above).
 AWAITING_CURATION: frozenset[str] = frozenset(
-    {"flathead-catfish", "guadalupe-bass", "redear-sunfish", "rainbow-trout", "freshwater-drum", "common-carp"}
+    {"flathead-catfish", "guadalupe-bass", "redear-sunfish", "rainbow-trout", "freshwater-drum", "common-carp",
+     # Added with docs/adr/0030; Commons couldn't be reached to pick one by hand.
+     "smallmouth-bass"}
 )
 
 # A file to use for a species instead of whatever the lookup finds — for when

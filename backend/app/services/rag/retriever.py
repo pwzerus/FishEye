@@ -197,6 +197,9 @@ FISHING_TERMS = frozenset(
     livewell bilge trotline juglines jugline bowfishing creel tacklebox
     bluebird windblown
     """
+    # State rules (ADR 0030): words that only come up about fishing rules.
+    """quagga sturgeon steelhead kokanee
+    """
     # Baits (a fish named in SPECIES_ALIASES is routed before the gate runs)
     """bait baitfish nightcrawler crawler redworm mealworm waxworm leech minnow
     shiner crawfish crayfish crawdad grasshopper stinkbait powerbait boilie
@@ -211,7 +214,7 @@ FISHING_TERMS = frozenset(
     """
     # Other fish people catch that have no guide yet: the gate admits the
     # question, and retrieval says honestly what the guides don't cover.
-    """panfish gamefish walleye sauger gar pike muskie muskellunge smallmouth
+    """panfish gamefish walleye sauger gar pike muskie muskellunge
     warmouth longear bowfin bullhead""".split()
 )
 AMBIGUOUS_TERMS = frozenset(
@@ -239,6 +242,14 @@ FISHING_PHRASES = (
     "life jackets",
     "fishing license",
     "fishing licence",
+    # In a fishing app "do I need a license" is about a fishing licence; the
+    # answer card says so, so a driver's-licence reading can't mislead.
+    "need a license",
+    "need a licence",
+    "report card",
+    "report cards",
+    "mussel fee",
+    "golden mussel",
     "cold front",
     "drop off",
     "drop-off",
@@ -284,6 +295,14 @@ SPECIES_ALIASES: dict[str, tuple[str, ...]] = {
     "bigmouth": ("largemouth-bass",),
     "spotted bass": ("spotted-bass",),
     "kentucky bass": ("spotted-bass",),
+    # Guided since docs/adr/0030.
+    "smallmouth bass": ("smallmouth-bass",),
+    "smallmouths": ("smallmouth-bass",),
+    "smallmouth": ("smallmouth-bass",),
+    "smallies": ("smallmouth-bass",),
+    "smallie": ("smallmouth-bass",),
+    "bronzebacks": ("smallmouth-bass",),
+    "bronzeback": ("smallmouth-bass",),
     "white bass": ("white-bass",),
     "sand bass": ("white-bass",),
     "sandbass": ("white-bass",),
@@ -365,8 +384,8 @@ SPECIES_ALIASES: dict[str, tuple[str, ...]] = {
     # nowhere and the shad bait lists won, because they repeat "striped bass
     # and hybrid striped bass". Longer names ("white bass", "striped bass")
     # match first and are removed, so they never fall through to this.
-    "black basses": ("largemouth-bass", "spotted-bass", "guadalupe-bass"),
-    "black bass": ("largemouth-bass", "spotted-bass", "guadalupe-bass"),
+    "black basses": ("largemouth-bass", "spotted-bass", "guadalupe-bass", "smallmouth-bass"),
+    "black bass": ("largemouth-bass", "spotted-bass", "guadalupe-bass", "smallmouth-bass"),
 }
 
 # Fish people catch that have no guide, including ones whose names contain
@@ -381,7 +400,7 @@ UNGUIDED_FISH = (
     # "goggle-eye" a warmouth or rock bass).
     "specks", "speck", "sand trout", "gafftopsail", "gafftop", "hardhead catfish",
     "goggle-eye", "goggleye", "croaker", "bluefish", "snook", "tarpon", "grouper",
-    "smallmouth bass", "smallmouths", "smallmouth", "peacock bass", "sea bass",
+    "peacock bass", "sea bass",
     "rock bass", "yellow bass", "red drum", "black drum", "redfish",
     "speckled trout", "spotted seatrout", "seatrout", "sea trout", "brown trout",
     "brook trout", "cutthroat trout", "yellow perch", "white perch", "walleye",
@@ -402,6 +421,9 @@ ZH_SPECIES_ALIASES: dict[str, tuple[str, ...]] = {
     "加州鲈": ("largemouth-bass",),
     "斑点黑鲈": ("spotted-bass",),
     "斑点鲈": ("spotted-bass",),
+    "小口黑鲈": ("smallmouth-bass",),
+    "小嘴鲈": ("smallmouth-bass",),
+    "小口鲈": ("smallmouth-bass",),
     "瓜达鲁佩鲈": ("guadalupe-bass",),
     "瓜达卢佩鲈": ("guadalupe-bass",),
     "白鲈": ("white-bass",),
@@ -447,7 +469,7 @@ ZH_SPECIES_ALIASES: dict[str, tuple[str, ...]] = {
     "鲤鱼": ("common-carp",),
 }
 ZH_UNGUIDED_FISH = (
-    "小口黑鲈", "小嘴鲈", "红鼓鱼", "红鼓", "黑鼓", "海鳟", "斑点海鳟", "黄金鲈", "黄鲈",
+    "红鼓鱼", "红鼓", "黑鼓", "海鳟", "斑点海鳟", "黄金鲈", "黄鲈",
     "白梭吻鲈", "梭鱼", "狗鱼", "雀鳝", "弓鳍鱼", "罗非鱼", "鲑鱼", "三文鱼", "金枪鱼",
     "鲨鱼", "比目鱼", "鲈鲉", "海鲈",
 )
@@ -740,14 +762,14 @@ def split_species(question: str) -> tuple[tuple[str, ...], str]:
 # question that was never searched is not the same as one the guides have
 # nothing for, and saying so is more honest than one "not covered" for both.
 EMPTY_OFF_TOPIC = "off_topic"  # read as not a fishing question, or not understood
-EMPTY_UNGUIDED_FISH = "unguided_fish"  # a fish with no guide ("smallmouth", "红鼓鱼")
+EMPTY_UNGUIDED_FISH = "unguided_fish"  # a fish with no guide ("walleye", "红鼓鱼")
 EMPTY_NOT_COVERED = "not_covered"  # a fishing question the guides don't answer
 
 
 def mask_unguided(text: str) -> str:
     """`text` with the fish that have no guide blanked out, keeping offsets.
     Everything that matches a name afterwards is matching the real name, not
-    a piece of a longer one: the "bass" of "smallmouth bass" never counts."""
+    a piece of a longer one: the "bass" of "rock bass" never counts."""
     for pattern in _UNGUIDED_PATTERNS:
         text = pattern.sub(lambda m: "#" * len(m.group()), text)
     for name in _ZH_UNGUIDED:
@@ -806,7 +828,7 @@ def explain_empty(question: str, named: tuple[str, ...], species: tuple[str, ...
 
 def unguided_fish_named(question: str) -> str | None:
     """The first fish-with-no-guide named in the question, as written, so
-    Ask can say which one it means ("no guide for smallmouth bass yet")."""
+    Ask can say which one it means ("no guide for rock bass yet")."""
     text = question.lower()
     for pattern in _UNGUIDED_PATTERNS:
         match = pattern.search(text)

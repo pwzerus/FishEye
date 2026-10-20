@@ -104,6 +104,20 @@ class AgencyProfileOut(BaseModel):
     placement: str
 
 
+class FishAttractorOut(BaseModel):
+    """A fish attractor the state agency placed here (models.waterbody.FishAttractor)."""
+
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    latitude: float
+    longitude: float
+    attractor_type: str
+    units: int | None = None
+    depth_ft: float | None = None
+    placed_year: int | None = None
+    source: str
+
+
 class WaterbodyDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -121,6 +135,7 @@ class WaterbodyDetail(BaseModel):
     species: list[SpeciesSummaryOut]
     reported_species: list[ReportedSpeciesOut] = []
     agency_profile: AgencyProfileOut | None = None
+    fish_attractors: list[FishAttractorOut] = []
 
 
 class SpeciesConditionOut(BaseModel):

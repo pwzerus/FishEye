@@ -560,3 +560,72 @@ def test_texas_lakes_still_point_to_tpwd():
 
 def test_a_state_without_an_agency_on_file_gets_a_generic_pointer():
     assert "Colorado's fish and wildlife agency" in osm.osm_lake_summary("CO")
+
+
+# --- private water by name (docs/adr/0032) ----------------------------------
+
+
+def _pond(el_id, name, lat, lng, **extra):
+    return {**_lake(el_id, name, lat, lng), "tags": {"natural": "water", "water": "pond", "name": name, **extra}}
+
+
+NAMED_PAYLOAD = {
+    "elements": [
+        _pond(401, "Private Pond", 33.10, -84.10),
+        _pond(402, "Argo Lake (private)", 33.12, -84.12),
+        _lake(403, "Pinetree Country Club Lake", 33.14, -84.14),
+        _pond(404, "Rollins Ranch Lake", 33.16, -84.16),
+        _pond(405, "Taylor Farm Park Pond", 33.18, -84.18),
+        _pond(406, "County Farm Lake", 33.20, -84.20),
+        _lake(407, "Lake Clubb", 33.22, -84.22),
+        _ramp(501, 33.141, -84.141, name="Club ramp"),
+    ]
+}
+
+
+def test_water_named_private_is_left_out_like_an_access_tag(db_session, seeded_lake):
+    summary = osm.run("GA", NAMED_PAYLOAD, db_session)
+    names = set(db_session.scalars(select(Waterbody.name)).all())
+    assert "Private Pond" not in names and "Argo Lake (private)" not in names
+    assert summary.skipped.get("private_by_name") == 2
+
+
+def test_names_that_point_at_private_land_are_marked_likely_private(client, db_session, seeded_lake):
+    summary = osm.run("GA", NAMED_PAYLOAD, db_session)
+    db_session.commit()
+    status = dict(db_session.execute(select(Waterbody.name, Waterbody.public_access_status)).all())
+    assert status["Pinetree Country Club Lake"] == "likely_private"
+    assert status["Rollins Ranch Lake"] == "likely_private"
+    # A park, a county, and a word that merely contains "club" are not.
+    assert status["Taylor Farm Park Pond"] == "unknown"
+    assert status["County Farm Lake"] == "unknown"
+    assert status["Lake Clubb"] == "unknown"
+    assert summary.lakes_likely_private == 2
+    lake = db_session.scalar(select(Waterbody).where(Waterbody.name == "Pinetree Country Club Lake"))
+    assert client.get(f"/api/waterbodies/{lake.id}").json()["public_access_status"] == "likely_private"
+
+
+def test_a_lake_stored_earlier_is_removed_once_it_is_marked_private(db_session, seeded_lake):
+    before = {"elements": [_pond(601, "Hidden Pond", 33.3, -84.3), _ramp(701, 33.301, -84.301)]}
+    osm.run("GA", before, db_session)
+    db_session.commit()
+    assert db_session.scalar(select(Waterbody).where(Waterbody.name == "Hidden Pond")) is not None
+
+    # Someone tags it private on OSM; the next import must take it down,
+    # with the entrance it had.
+    after = {"elements": [_pond(601, "Hidden Pond", 33.3, -84.3, access="private"), _ramp(701, 33.301, -84.301)]}
+    summary = osm.run("GA", after, db_session)
+    db_session.commit()
+    assert summary.lakes_removed_private == 1
+    assert db_session.scalar(select(Waterbody).where(Waterbody.name == "Hidden Pond")) is None
+    assert db_session.scalar(select(AccessPoint).where(AccessPoint.osm_ref == "node/701")) is None
+
+
+def test_a_verified_lake_is_never_removed_by_an_osm_private_tag(db_session, seeded_lake):
+    osm.run("TX", PAYLOAD, db_session)
+    db_session.commit()
+    tagged = {"elements": [{**_lake(1, "Fork Lake", 32.80, -95.59, half_deg=0.1), "tags": {
+        "natural": "water", "water": "reservoir", "name": "Fork Lake", "access": "private"}}]}
+    osm.run("TX", tagged, db_session)
+    db_session.commit()
+    assert db_session.scalar(select(Waterbody).where(Waterbody.data_tier == "verified")) is not None

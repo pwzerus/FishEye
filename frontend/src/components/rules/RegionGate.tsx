@@ -164,3 +164,18 @@ export function BaitRules({
     </>
   );
 }
+
+/** Above a guide's live-bait list, for someone in a state whose bait rules
+ * contradict it (California: no fish as bait in most inland waters). The
+ * guides were written where live minnows are legal (backend ADR 0030). */
+export function LiveBaitWarning() {
+  const j = useSelectedJurisdiction();
+  if (!j?.bait_rules_on_every_bait_question) return null;
+  return (
+    <p className="bait-warning" role="note">
+      In {j.name}, check the{" "}
+      <a href={`/fish#${baitRulesAnchor(j.code)}`}>bait rules</a> before using anything here: {j.name} doesn&apos;t
+      allow fish as bait in most of its inland waters.
+    </p>
+  );
+}

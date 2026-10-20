@@ -146,6 +146,7 @@ def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> Waterbody
             selectinload(Waterbody.access_points),
             selectinload(Waterbody.species_links),
             selectinload(Waterbody.agency_profile),
+            selectinload(Waterbody.fish_attractors),
         ],
     )
     if wb is None:
@@ -178,6 +179,8 @@ def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> Waterbody
         species=species_out,
         reported_species=reported_species(db, wb.id, confirmed=(s.common_name for s in species_out)),
         agency_profile=AgencyProfileOut.model_validate(wb.agency_profile) if wb.agency_profile else None,
+        # A closed lake shows no places to fish, official or not (PRD §12).
+        fish_attractors=[] if wb.public_access_status == "closed" else list(wb.fish_attractors),
     )
 
 

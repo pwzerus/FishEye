@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Jurisdiction } from "@/lib/api/types";
 import { StatePicker } from "@/components/ui/StatePicker";
-import { BaitRules, LimitsNote, OtherStateRules, RegionGate } from "./RegionGate";
+import { BaitRules, LimitsNote, LiveBaitWarning, OtherStateRules, RegionGate } from "./RegionGate";
 
 const STATES: Jurisdiction[] = [
   {
@@ -16,6 +16,7 @@ const STATES: Jurisdiction[] = [
     license_url: "https://tpwd.texas.gov/license",
     bait_rules: ["Texas rule one."],
     bait_rules_sources: [],
+    bait_rules_on_every_bait_question: false,
   },
   {
     code: "GA",
@@ -27,6 +28,7 @@ const STATES: Jurisdiction[] = [
     license_url: "https://georgiawildlife.com/licenses-permits-passes/choose",
     bait_rules: ["Georgia rule one."],
     bait_rules_sources: [],
+    bait_rules_on_every_bait_question: false,
   },
   {
     code: "CO",
@@ -38,6 +40,19 @@ const STATES: Jurisdiction[] = [
     license_url: null,
     bait_rules: [],
     bait_rules_sources: [],
+    bait_rules_on_every_bait_question: false,
+  },
+  {
+    code: "CA",
+    name: "California",
+    covered: true,
+    agency: "California Department of Fish and Wildlife",
+    agency_short: "CDFW",
+    limits_url: "https://apps.wildlife.ca.gov/sportfishingregs/",
+    license_url: "https://wildlife.ca.gov/Licensing/Fishing",
+    bait_rules: ["California rule one."],
+    bait_rules_sources: [],
+    bait_rules_on_every_bait_question: true,
   },
 ];
 
@@ -164,6 +179,21 @@ describe("state-aware rules (backend ADR 0027)", () => {
       render(card);
       expect(await screen.findByRole("heading", { name: "Bait rules differ by state" })).toBeInTheDocument();
       expect(screen.queryByText("Texas rule one.")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("LiveBaitWarning", () => {
+    it("warns in California, linking its bait rules", async () => {
+      setState("CA");
+      render(<LiveBaitWarning />);
+      expect(await screen.findByRole("note")).toHaveTextContent("doesn't allow fish as bait");
+      expect(screen.getByRole("link", { name: "bait rules" })).toHaveAttribute("href", "/fish#bait_rules-ca");
+    });
+
+    it("stays silent in Texas and with no state", async () => {
+      setState("TX");
+      const { container } = render(<LiveBaitWarning />);
+      await waitFor(() => expect(container).toBeEmptyDOMElement());
     });
   });
 

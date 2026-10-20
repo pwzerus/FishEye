@@ -136,6 +136,8 @@ GLOSSARY: dict[str, str] = {
     "德州": "texas",
     "德克萨斯": "texas",
     "佐治亚": "georgia",
+    "加州": "california",
+    "加利福尼亚": "california",
     "乔治亚": "georgia",
     "钓鱼证": "fishing licence license",
     "执照": "licence license",

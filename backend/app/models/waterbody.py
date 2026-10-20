@@ -103,6 +103,9 @@ class Waterbody(Base):
     agency_profile: Mapped["AgencyLakeProfile | None"] = relationship(
         back_populates="waterbody", cascade="all, delete-orphan", uselist=False
     )
+    fish_attractors: Mapped[list["FishAttractor"]] = relationship(
+        back_populates="waterbody", cascade="all, delete-orphan"
+    )
 
     # The map's viewport query filters on lat/lng ranges; with a statewide
     # import this table goes from 7 rows to thousands.
@@ -240,6 +243,37 @@ class SpeciesOccurrence(Base):
     waterbody: Mapped["Waterbody"] = relationship(back_populates="occurrences")
 
     __table_args__ = (UniqueConstraint("source", "source_record_id", name="uq_occurrence_source_record"),)
+
+
+class FishAttractor(Base):
+    """A fish attractor a state agency placed in a lake: brush piles, PVC
+    trees, pallets, stake beds. Fish gather around them for years, so each
+    one is a fixed place worth casting at. Georgia WRD's attractor layer
+    today (docs/adr/0033-georgia-wrd-access-and-attractors.md).
+
+    A fact the agency publishes (what, where, when placed), stored as such;
+    shown on the lake map with its type and year, never as a promise that
+    fish are there now."""
+
+    __tablename__ = "fish_attractors"
+    __table_args__ = (UniqueConstraint("source", "source_record_id", name="uq_attractor_source_record"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    waterbody_id: Mapped[int] = mapped_column(ForeignKey("waterbodies.id"), index=True)
+    source: Mapped[str] = mapped_column(String(16))  # "ga_wrd"
+    source_record_id: Mapped[str] = mapped_column(String(64))  # the agency's global id
+    latitude: Mapped[float] = mapped_column(Float)
+    longitude: Mapped[float] = mapped_column(Float)
+    # The agency's own label, e.g. "Trees/Brush", "PVC Trees", "Stake Bed".
+    attractor_type: Mapped[str] = mapped_column(String(64))
+    units: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    depth_ft: Mapped[float | None] = mapped_column(Float, nullable=True)
+    placed_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # The lake name the agency filed it under, as written.
+    agency_waterbody: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    imported_at: Mapped[datetime] = mapped_column(DateTime)
+
+    waterbody: Mapped["Waterbody"] = relationship(back_populates="fish_attractors")
 
 
 class SpeciesCondition(Base):

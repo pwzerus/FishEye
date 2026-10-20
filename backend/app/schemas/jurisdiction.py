@@ -17,3 +17,5 @@ class JurisdictionOut(BaseModel):
     license_url: str | None
     bait_rules: list[str]  # empty where FishEye hasn't written them
     bait_rules_sources: list[GuideSourceOut]
+    # The bait rules contradict the guides' live-bait advice (California).
+    bait_rules_on_every_bait_question: bool

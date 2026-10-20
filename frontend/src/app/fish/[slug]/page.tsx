@@ -8,7 +8,7 @@ import { Tag } from "@/components/fish/FishGrid";
 import { HeroPhoto } from "@/components/fish/PhotoCard";
 import { SectionTabs, type SectionLink } from "@/components/fish/SectionTabs";
 import { PageTransition, VT } from "@/components/motion/Transition";
-import { BaitRules, LimitsNote } from "@/components/rules/RegionGate";
+import { BaitRules, LimitsNote, LiveBaitWarning } from "@/components/rules/RegionGate";
 import { DietTypeTag, groupSetups } from "@/components/species/SpeciesGuideBody";
 import { ApiError, getSpeciesGuide, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
 import { waterFor } from "@/lib/fishArt";
@@ -200,6 +200,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
                   {guide.live_baits.length > 0 && (
                     <div id="live_baits" className="bait-card">
                       <h3>Live and natural bait</h3>
+                      <LiveBaitWarning />
                       <ul className="nice-list">
                         {guide.live_baits.map((b) => (
                           <li key={b}>{b}</li>

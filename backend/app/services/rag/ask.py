@@ -76,7 +76,7 @@ ANSWER_NO_MATCH = "no_match"
 ANSWER_PASSAGES = "passages"
 
 COVERAGE = (
-    "FishEye covers eighteen freshwater fish, most of them found across the U.S. (what each one "
+    "FishEye covers nineteen freshwater fish, most of them found across the U.S. (what each one "
     "eats, where it lives, which baits work and why, rod-and-reel setups, and how to clean and "
     "cook it) plus a handbook on baits, lures, tackle, knots, casting, weather and water, safety "
     f"and caring for your catch. Fishing rules are written for {jurisdictions.covered_names()} so "
@@ -317,7 +317,34 @@ def _search(
     if full and not jurisdictions.applies(full[0].passage.region, state):
         if not any(h.passage.region == state for h in local):
             return [], True
+    if local:
+        local = _with_required_bait_rules(retr, local, question, state, k)
     return local, foreign and not local
+
+
+_BAIT_QUESTION_RE = re.compile(
+    r"\b(bait|baits|baitfish|minnows?|shiners?|shad|chum|live\s+fish)\b|饵|小鱼|活鱼", re.I
+)
+
+
+def _with_required_bait_rules(
+    retr: Retriever, hits: list[ScoredPassage], question: str, state: str, k: int
+) -> list[ScoredPassage]:
+    """A bait question in a state whose bait rules contradict the guides'
+    advice (California) always shows those rules, in second place: the top
+    hit stays the best match, and the rule sits right under it rather than
+    being ranked out of view by passages that recommend live minnows."""
+    j = jurisdictions.get(state)
+    if not (j and j.bait_rules_on_every_bait_question and _BAIT_QUESTION_RE.search(question)):
+        return hits
+    pid = f"all-fish#{jurisdictions.bait_rules_section(state)}"
+    if any(h.passage.id == pid for h in hits):
+        return hits
+    passage = next((p for p in getattr(retr, "passages", []) if p.id == pid), None)
+    if passage is None:
+        return hits
+    rule = ScoredPassage(passage, hits[0].score if hits else 0.0)
+    return (hits[:1] + [rule] + hits[1:])[:k]
 
 
 def search_guides(

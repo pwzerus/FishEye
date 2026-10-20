@@ -271,6 +271,22 @@ export const FISH_SPECS: Record<string, FishSpec> = {
     barbels: true,
     water: MUDDY_WATER,
   },
+  "smallmouth-bass": {
+    // Bronze-brown with faint mottling and vertical bars, no side band; the
+    // jaw reaches the back of the eye. Red-orange eye, like most photos show.
+    length: 160,
+    depthTop: 35,
+    depthBottom: 31,
+    peak: 0.42,
+    peduncle: 10,
+    mouth: "big",
+    eye: { r: 7.5, x: 0.1, y: 0.32, iris: "#c4421c" },
+    colors: { back: "#5c4a26", side: "#a98d55", belly: "#efe6c9", fin: "#a8905c", mark: "#3b2c14" },
+    dorsal: "bass",
+    tail: "notched",
+    patterns: [{ kind: "bars", count: 9, opacity: 0.35 }],
+    water: BASS_WATER,
+  },
   "guadalupe-bass": {
     // Green, a diamond-blotched side band, spots in rows on the belly; the
     // jaw stops at the eye.

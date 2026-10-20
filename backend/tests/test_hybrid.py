@@ -57,7 +57,8 @@ def test_chinese_fish_names_route_like_english_ones():
     assert split_species("淡水鼓鱼好吃吗")[0] == ("freshwater-drum",)
     # The longer unguided name is blanked first: red drum is not freshwater drum.
     assert split_species("红鼓鱼用什么饵")[0] == ()
-    assert split_species("小口黑鲈怎么钓")[0] == ()
+    assert split_species("黄金鲈怎么钓")[0] == ()
+    assert split_species("小口黑鲈怎么钓")[0] == ("smallmouth-bass",)
 
 
 def test_routing_still_keeps_other_fish_out_even_if_their_passage_is_closest():

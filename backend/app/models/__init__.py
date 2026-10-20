@@ -10,6 +10,7 @@ from app.models.community import (  # noqa: F401
 from app.models.waterbody import (  # noqa: F401
     AccessPoint,
     AgencyLakeProfile,
+    FishAttractor,
     SourceRecord,
     Species,
     SpeciesCondition,
@@ -24,6 +25,7 @@ __all__ = [
     "Waterbody",
     "AccessPoint",
     "AgencyLakeProfile",
+    "FishAttractor",
     "Species",
     "WaterbodySpecies",
     "SpeciesCondition",

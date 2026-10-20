@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { MapContainer, Marker, Popup, ZoomControl, useMap, useMapEvents } from "react-leaflet";
+import { CircleMarker, MapContainer, Marker, Popup, ZoomControl, useMap, useMapEvents } from "react-leaflet";
 import { useEffect, useRef, useState } from "react";
 
 import { ApiError, getWaterbody } from "@/lib/api/client";
@@ -29,6 +29,10 @@ const accessPointIcon = L.icon({
   ...lakeCenterIcon.options,
   className: "access-point-marker",
 });
+
+// Fish attractors: small teal dots, so they read as spots in the water and
+// not as more places to park.
+const ATTRACTOR_STYLE = { color: "#0f766e", fillColor: "#14b8a6", fillOpacity: 0.85, weight: 1 };
 
 const FIT_PADDING = 60;
 const SINGLE_POINT_ZOOM = 12;
@@ -208,6 +212,22 @@ export default function LakeDetailMap({
               )}
             </Popup>
           </Marker>
+        ))}
+      {!isClosed &&
+        (detail.fish_attractors ?? []).map((a) => (
+          <CircleMarker key={`att-${a.id}`} center={[a.latitude, a.longitude]} radius={5} pathOptions={ATTRACTOR_STYLE}>
+            <Popup>
+              <strong>Fish attractor</strong>
+              <div style={{ fontSize: 12, color: "#6b7280" }}>
+                {a.attractor_type}
+                {a.placed_year ? `, placed ${a.placed_year}` : ""}
+                {a.depth_ft ? `, about ${Math.round(a.depth_ft)} ft deep` : ""}
+              </div>
+              <div style={{ fontSize: 12, color: "#6b7280" }}>
+                Sunk by the state agency to hold fish. Older ones may have broken down.
+              </div>
+            </Popup>
+          </CircleMarker>
         ))}
     </MapContainer>
   );

@@ -133,9 +133,9 @@ def test_a_longer_bass_name_still_wins_over_the_bare_word():
 def test_fish_without_a_guide_are_not_read_as_the_guided_fish_in_their_name():
     assert split_species("red drum bait")[0] == ()
     assert split_species("speckled trout")[0] == ()
-    assert split_species("smallmouth bass")[0] == ()
+    assert split_species("rock bass")[0] == ()
     assert split_species("yellow perch")[0] == ()
-    assert default_retriever().search("how do I catch smallmouth bass") == []
+    assert default_retriever().search("how do I catch rock bass") == []
     # Named alongside a guided fish, the guided one is still answered.
     assert split_species("red drum or freshwater drum")[0] == ("freshwater-drum",)
 
@@ -161,9 +161,9 @@ def test_a_name_that_is_also_an_everyday_word_needs_the_question_to_be_about_fis
 
 
 def test_an_ambiguous_name_inside_an_unguided_fishs_name_is_not_that_fish():
-    # "smallmouth bass" must not route on its "bass".
-    assert resolve_species("how do I catch smallmouth bass")[0] == ()
-    assert default_retriever().search("how do I catch smallmouth bass") == []
+    # "rock bass" must not route on its "bass".
+    assert resolve_species("how do I catch rock bass")[0] == ()
+    assert default_retriever().search("how do I catch rock bass") == []
 
 
 def test_two_fish_and_or_is_an_identification_question():
@@ -321,9 +321,9 @@ def test_the_three_empty_answers_say_which_situation_it_is():
     assert off.trace.outcome == rag.OUTCOME_OFF_TOPIC
     assert "fishing question" in off.answer
 
-    unguided = rag.search_guides("how do I catch smallmouth bass")
+    unguided = rag.search_guides("how do I catch rock bass")
     assert unguided.trace.outcome == rag.OUTCOME_UNGUIDED_FISH
-    assert "smallmouth bass" in unguided.answer  # names the fish it means
+    assert "rock bass" in unguided.answer  # names the fish it means
 
     covered = rag.search_guides("what is the world record bluegill")
     assert covered.trace.outcome == rag.OUTCOME_NO_MATCH

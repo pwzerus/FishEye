@@ -527,4 +527,66 @@ describe("WaterbodyPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show all 12" }));
     expect(screen.getByText("Public boat ramp (TPWD #11)")).toBeInTheDocument();
   });
+  // --- Georgia WRD: access sites, forecast link, fish attractors ---
+
+  const georgia: WaterbodyDetail = {
+    ...mockDetail,
+    id: 21,
+    name: "Lake Lanier",
+    agency_profile: {
+      agency: "ga_wrd",
+      agency_name: "Lake Sidney Lanier",
+      page_url: "https://storymaps.arcgis.com/stories/bf90dbefc6d34795a96fdc0181e746d9",
+      access_page_url: "https://georgiawildlife.com/locations/fishing",
+      survey_report_url: null,
+      survey_year: null,
+      location: "Forsyth, Hall Counties",
+      surface_acres: 38000,
+      max_depth_ft: null,
+      impounded: null,
+      predominant_species: ["Largemouth bass", "Spotted bass", "Striped bass"],
+      ratings: [],
+      placement: "osm_name",
+    },
+    fish_attractors: [
+      { id: 1, latitude: 34.2, longitude: -83.9, attractor_type: "Trees/Brush", units: 1, depth_ft: 15, placed_year: 2017, source: "ga_wrd" },
+      { id: 2, latitude: 34.21, longitude: -83.91, attractor_type: "PVC Trees", units: 1, depth_ft: null, placed_year: 2023, source: "ga_wrd" },
+    ],
+  };
+
+  it("credits Georgia WRD and links its fishing forecast", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(georgia);
+    render(<WaterbodyPanel waterbodyId={21} />);
+    await waitFor(() => expect(screen.getByText("What Georgia WRD says")).toBeInTheDocument());
+    expect(screen.getByText("WRD fishing forecast").closest("a")).toHaveAttribute(
+      "href",
+      "https://storymaps.arcgis.com/stories/bf90dbefc6d34795a96fdc0181e746d9",
+    );
+    expect(screen.getByText("WRD fishing map").closest("a")).toHaveAttribute("href", "https://georgiawildlife.com/locations/fishing");
+    expect(screen.getByText(/Fish WRD lists at its access sites/)).toBeInTheDocument();
+  });
+
+  it("says how many fish attractors WRD sank and when", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(georgia);
+    render(<WaterbodyPanel waterbodyId={21} />);
+    await waitFor(() => expect(screen.getByText("Fish attractors")).toBeInTheDocument());
+    expect(screen.getByText(/2 fish attractors .* Georgia WRD, placed 2017–2023/)).toBeInTheDocument();
+  });
+
+  it("shows no attractor section on a lake without any, or on a closed lake", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue({ ...georgia, public_access_status: "closed" });
+    render(<WaterbodyPanel waterbodyId={21} />);
+    await waitFor(() => expect(screen.getByText("Lake Lanier")).toBeInTheDocument());
+    expect(screen.queryByText("Fish attractors")).not.toBeInTheDocument();
+  });
+
+  it("says when a lake is plotted at WRD's access sites", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue({
+      ...georgia,
+      agency_profile: { ...georgia.agency_profile!, placement: "sites", page_url: "https://georgiawildlife.com/locations/fishing", access_page_url: null },
+    });
+    render(<WaterbodyPanel waterbodyId={21} />);
+    await waitFor(() => expect(screen.getByText(/Georgia WRD's access sites: this lake has no outline/)).toBeInTheDocument());
+    expect(screen.getByText("WRD fishing map")).toBeInTheDocument();
+  });
 });

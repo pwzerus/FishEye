@@ -119,7 +119,7 @@ NOT_COVERED: tuple[str, ...] = (
     "what is the lifespan of a white crappie in an aquarium",
     "is the bluegill the state fish of illinois",
     # Fish with no guide whose names contain a guided fish's name.
-    "how do I catch smallmouth bass",
+    "how do I catch rock bass",
     "what bait for red drum",
     "best lures for speckled trout",
 )
@@ -258,7 +258,8 @@ CASES: tuple[RagCase, ...] = (
        "largemouth-bass#live_baits", "largemouth-bass#why_these_baits",
        "spotted-bass#why_these_baits", "guadalupe-bass#why_these_baits"),
     _c("bass-lure", "best lure for bass", "largemouth-bass#lures", "spotted-bass#lures", "guadalupe-bass#lures"),
-    _c("smallmouth-vs-lmb", "smallmouth vs largemouth", "all-fish#id-black-bass", "largemouth-bass#identification"),
+    _c("smallmouth-vs-lmb", "smallmouth vs largemouth", "all-fish#id-black-bass", "largemouth-bass#identification",
+       "smallmouth-bass#identification"),
 )
 
 
@@ -346,7 +347,7 @@ ZH_OFF_TOPIC: tuple[str, ...] = (
 )
 
 ZH_NOT_COVERED: tuple[str, ...] = (
-    "小口黑鲈怎么钓",
+    "黄金鲈怎么钓",
     "红鼓鱼用什么饵",
 )
 
@@ -562,6 +563,18 @@ AMBIGUOUS_CASES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
 
 # ===== the topics added with docs/adr/0026 =====
 NEW_TOPIC_CASES: tuple[RagCase, ...] = (
+    # The smallmouth bass guide (docs/adr/0030).
+    _c("smb-how", "how do I catch smallmouth bass", "smallmouth-bass#live_baits", "smallmouth-bass#lures",
+       "smallmouth-bass#setup-1", "smallmouth-bass#where_and_when"),
+    _c("smb-lure", "best lure for smallies", "smallmouth-bass#lures", "smallmouth-bass#why_these_baits"),
+    _c("smb-river", "where do smallmouth hold in a river", "smallmouth-bass#where_and_when", "smallmouth-bass#habitat"),
+    _c("smb-id", "how can I tell a smallmouth from a largemouth", "smallmouth-bass#identification",
+       "largemouth-bass#identification", "all-fish#id-black-bass"),
+    _c("smb-diet", "what do bronzebacks eat", "smallmouth-bass#diet", "smallmouth-bass#why_these_baits"),
+    _c("smb-tackle", "what rod and line for smallmouth", "smallmouth-bass#setup-1", "smallmouth-bass#setup-2"),
+    _c("smb-eat", "are smallmouth good to eat", "smallmouth-bass#eating"),
+    _c("smb-zh", "小口黑鲈用什么饵", "smallmouth-bass#live_baits", "smallmouth-bass#lures",
+       "smallmouth-bass#why_these_baits"),
     _c("cast-how", "how do I cast a spinning reel", "all-fish#cast-spinning"),
     _c("cast-button", "how do I cast a spincast reel", "all-fish#cast-spinning", "all-fish#tackle-reels"),
     _c("backlash", "why does my baitcaster keep backlashing", "all-fish#cast-baitcast"),

@@ -334,7 +334,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   }
 
   return (
-    <div className="map-view">
+    <div className={selectedId !== null ? "map-view has-lake" : "map-view"}>
       <div className="map-container">
         {selectedId === null ? (
           <>
@@ -394,20 +394,21 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
                 type="button"
                 className={showPins ? "map-toggle active" : "map-toggle"}
                 aria-pressed={showPins}
+                aria-label="Community pins"
                 onClick={() => {
                   const next = !showPins;
                   setShowPins(next);
                   if (next) loadPins(lastBbox.current);
                 }}
               >
-                <span className="legend-catch" aria-hidden="true" /> Community pins
+                <span className="legend-catch" aria-hidden="true" /> <span className="fab-label">Community pins</span>
               </button>
               {!placing && (
-                <button type="button" className="btn btn-primary btn-sm map-add" onClick={startPlacing}>
+                <button type="button" className="btn btn-primary btn-sm map-add" onClick={startPlacing} aria-label="Add a pin">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
                     <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                   </svg>
-                  Add a pin
+                  <span className="fab-label">Add a pin</span>
                 </button>
               )}
             </div>

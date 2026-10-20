@@ -196,7 +196,7 @@ export default async function Home() {
             Data: Texas Parks and Wildlife, OpenStreetMap contributors, GBIF, National Weather
             Service. Fish photos from Wikimedia Commons, credited on each fish&apos;s page. Fishing rules
             are set by each state: always check your state agency&apos;s current regulations before you
-            keep a fish (Texas: TPWD; Georgia: Wildlife Resources Division).
+            keep a fish (Texas: TPWD; Georgia: Wildlife Resources Division; California: CDFW).
           </p>
         </footer>
       </main>

@@ -18,7 +18,11 @@ WHAT IT WRITES
 WHAT IT DELIBERATELY LEAVES OUT
 -------------------------------
 - Anything tagged access=private/no/customers — PRD constraint 4: never
-  show private land as a public entrance.
+  show private land as a public entrance. Also water whose own name says
+  "private" ("Private Pond", "Argo Lake (private)"): OSM almost never tags
+  ponds' access (392 of 393 named Georgia ponds have no access tag), so the
+  name is often the only sign. A lake excluded either way is removed on a
+  re-import if an earlier run stored it (docs/adr/0032).
 - Unnamed water: overwhelmingly stock tanks, farm ponds and backyard/HOA
   ponds on private land. (Named ponds ARE imported — a city-park pond is
   often the best beginner spot there is — but stored with
@@ -61,7 +65,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -76,6 +80,7 @@ REQUEST_TIMEOUT_SECONDS = 400.0
 SUPPORTED_STATES: dict[str, tuple[str, str]] = {
     "TX": ("Texas", "https://tpwd.texas.gov"),
     "GA": ("Georgia", "https://georgiawildlife.com"),
+    "CA": ("California", "https://wildlife.ca.gov"),
 }
 
 MIN_LAKE_EXTENT_M = 200.0
@@ -91,6 +96,32 @@ ACCESS_MATCH_MARGIN_M = 300.0
 VERIFIED_MATCH_MARGIN_M = 5000.0
 
 EXCLUDED_ACCESS_VALUES = {"private", "no", "customers", "agricultural", "forestry", "delivery"}
+
+# Names (docs/adr/0032). "private" in the name excludes the water like an
+# access tag would. A name that points at private land (a country club, an
+# estate, a ranch) keeps the lake but marks it public_access_status=
+# "likely_private", which the lake panel turns into a warning — unless the
+# name also says it's a park or belongs to a city, county or state ("Taylor
+# Farm Park Pond", "County Farm Lake").
+PRIVATE_NAME_RE = re.compile(r"\bprivate\b", re.I)
+LIKELY_PRIVATE_NAME_RE = re.compile(
+    r"\b(country\s+club|golf|club|estates?|plantation|ranch|farm|hoa|homeowners?|"
+    r"subdivision|resort|gated)\b",
+    re.I,
+)
+PUBLIC_NAME_RE = re.compile(
+    r"\b(park|parks|state|county|city|town|public|national|community|municipal|"
+    r"wildlife|wma|pfa|refuge|recreation)\b",
+    re.I,
+)
+
+
+def private_by_name(name: str) -> bool:
+    return bool(PRIVATE_NAME_RE.search(name))
+
+
+def likely_private_by_name(name: str) -> bool:
+    return bool(LIKELY_PRIVATE_NAME_RE.search(name)) and not PUBLIC_NAME_RE.search(name)
 
 def osm_lake_summary(state_code: str) -> str:
     """Who to check with names the state's own agency (knowledge/jurisdictions.py,
@@ -171,6 +202,8 @@ class OsmLake:
     # Other elements of the same lake, merged into this one (merge_pieces).
     # This element is the largest; its ref is the lake's osm_ref.
     extra_refs: tuple[str, ...] = ()
+    # Its name points at private land (likely_private_by_name).
+    likely_private: bool = False
 
     @property
     def refs(self) -> tuple[str, ...]:
@@ -199,6 +232,9 @@ class ImportSummary:
     access_created: int = 0
     access_updated: int = 0
     access_unmatched: int = 0
+    # Stored by an earlier run, now excluded as private (tag or name).
+    lakes_removed_private: int = 0
+    lakes_likely_private: int = 0
     skipped: dict[str, int] = field(default_factory=dict)
 
 
@@ -275,7 +311,11 @@ def _access_type(tags: dict[str, str]) -> str:
     return "bank"
 
 
-def parse_elements(payload: dict[str, Any]) -> tuple[list[OsmLake], list[OsmAccess], dict[str, int]]:
+def parse_elements(
+    payload: dict[str, Any], private_refs: set[str] | None = None
+) -> tuple[list[OsmLake], list[OsmAccess], dict[str, int]]:
+    """`private_refs`, when given, collects the refs of named water left out
+    as private, so the import can remove rows an earlier run stored."""
     lakes: list[OsmLake] = []
     access: list[OsmAccess] = []
     skipped: dict[str, int] = {}
@@ -309,6 +349,13 @@ def parse_elements(payload: dict[str, Any]) -> tuple[list[OsmLake], list[OsmAcce
                 continue
             if _is_excluded_access(tags):
                 skip("private_lake")
+                if private_refs is not None:
+                    private_refs.add(ref)
+                continue
+            if private_by_name(name):
+                skip("private_by_name")
+                if private_refs is not None:
+                    private_refs.add(ref)
                 continue
             b = el.get("bounds")
             if not b:
@@ -322,7 +369,11 @@ def parse_elements(payload: dict[str, Any]) -> tuple[list[OsmLake], list[OsmAcce
                 skip("too_small")
                 continue
             lakes.append(
-                OsmLake(ref, name, pos[0], pos[1], bounds, water_type, (tags.get("wikidata") or "").strip() or None)
+                OsmLake(
+                    ref, name, pos[0], pos[1], bounds, water_type,
+                    (tags.get("wikidata") or "").strip() or None,
+                    likely_private=likely_private_by_name(name),
+                )
             )
         else:
             if _is_excluded_access(tags):
@@ -432,6 +483,7 @@ def merge_pieces(lakes: list[OsmLake]) -> list[OsmLake]:
                 longitude=main.longitude,
                 bounds=union,
                 water_type=main.water_type,
+                likely_private=main.likely_private,
                 wikidata=main.wikidata or next((m.wikidata for m in members if m.wikidata), None),
                 extra_refs=tuple(sorted(m.osm_ref for m in members if m is not main)),
             )
@@ -525,6 +577,7 @@ def upsert(
     lakes: list[OsmLake],
     access_by_lake: dict[str, list[OsmAccess]],
     now: datetime | None = None,
+    private_refs: set[str] | None = None,
 ) -> ImportSummary:
     now = now or datetime.now(timezone.utc)
     summary = ImportSummary()
@@ -625,7 +678,7 @@ def upsert(
                 source_url=f"https://www.openstreetmap.org/{lake.osm_ref}",
                 source_updated_at=now,
                 field_tested=False,
-                public_access_status="unknown",
+                public_access_status="likely_private" if lake.likely_private else "unknown",
                 data_tier="osm",
                 osm_ref=lake.osm_ref,
                 water_type=lake.water_type,
@@ -647,7 +700,11 @@ def upsert(
                 OSM_POND_SUMMARY if lake.water_type == "pond" else osm_lake_summary(state_code)
             )
             wb.source_updated_at = now
+            if wb.public_access_status in ("unknown", "likely_private"):
+                wb.public_access_status = "likely_private" if lake.likely_private else "unknown"
             summary.lakes_updated += 1
+        if lake.likely_private:
+            summary.lakes_likely_private += 1
 
         for point in access_by_lake.get(lake.osm_ref, []):
             label = {"boat_ramp": "Boat ramp", "pier": "Fishing pier", "bank": "Fishing spot"}[
@@ -678,15 +735,34 @@ def upsert(
                 ap.access_type = point.access_type
                 summary.access_updated += 1
 
+    # Water an earlier run stored that is now left out as private: remove
+    # it, with its OSM entrances and its species records. Only OSM-only rows;
+    # a verified lake's access comes from its agency, not from OSM tags.
+    for ref in sorted(private_refs or ()):
+        wb = existing_by_ref.get(ref)
+        if wb is None or wb.data_tier != "osm":
+            continue
+        for ap_ref, ap in list(access_by_ref.items()):
+            if ap.waterbody_id == wb.id:
+                db.delete(ap)
+                del access_by_ref[ap_ref]
+        db.execute(delete(SpeciesOccurrence).where(SpeciesOccurrence.waterbody_id == wb.id))
+        db.flush()
+        db.expire(wb, ["occurrences", "access_points"])
+        del existing_by_ref[ref]
+        db.delete(wb)
+        summary.lakes_removed_private += 1
+
     db.flush()
     return summary
 
 
 def run(state_code: str, payload: dict[str, Any], db: Session) -> ImportSummary:
-    elements, access, skipped = parse_elements(payload)
+    private_refs: set[str] = set()
+    elements, access, skipped = parse_elements(payload, private_refs)
     lakes = merge_pieces(elements)
     access_by_lake, unmatched = assign_access_to_lakes(lakes, access)
-    summary = upsert(db, state_code, lakes, access_by_lake)
+    summary = upsert(db, state_code, lakes, access_by_lake, private_refs=private_refs)
     summary.access_unmatched = unmatched
     summary.skipped = skipped
     summary.elements_merged = len(elements) - len(lakes)
@@ -743,6 +819,10 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"access points: {summary.access_created} created, {summary.access_updated} updated, "
         f"{summary.access_unmatched} not inside any imported lake (skipped)"
+    )
+    print(
+        f"private: {summary.lakes_likely_private} named like private land (marked likely_private), "
+        f"{summary.lakes_removed_private} stored by an earlier run and now removed as private"
     )
     if summary.skipped:
         print("filtered out: " + ", ".join(f"{k}={v}" for k, v in sorted(summary.skipped.items())))

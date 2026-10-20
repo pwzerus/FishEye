@@ -2,7 +2,15 @@ import type { AgencyProfile, AgencyRatingLevel } from "@/lib/api/types";
 
 const AGENCY_NAMES: Record<string, string> = {
   tpwd: "Texas Parks & Wildlife",
+  ga_wrd: "Georgia WRD",
 };
+
+// What the main link opens. TPWD has a page per lake; Georgia WRD has a
+// fishing forecast for its larger reservoirs and a statewide map otherwise.
+function pageLinkText(profile: AgencyProfile): string {
+  if (profile.agency !== "ga_wrd") return "Lake page";
+  return profile.page_url.includes("storymaps.arcgis.com") ? "WRD fishing forecast" : "WRD fishing map";
+}
 
 const LEVELS: AgencyRatingLevel[] = ["Poor", "Fair", "Good", "Excellent"];
 
@@ -14,6 +22,7 @@ const LEVELS: AgencyRatingLevel[] = ["Poor", "Fair", "Good", "Excellent"];
  */
 export function AgencyProfileCard({ profile }: { profile: AgencyProfile }) {
   const agency = AGENCY_NAMES[profile.agency] ?? profile.agency.toUpperCase();
+  const placedAt = profile.placement === "sites" ? "access sites" : "boat ramps";
   const facts = [
     profile.surface_acres ? `${profile.surface_acres.toLocaleString("en-US")} acres` : null,
     profile.max_depth_ft ? `up to ${profile.max_depth_ft} ft deep` : null,
@@ -47,21 +56,23 @@ export function AgencyProfileCard({ profile }: { profile: AgencyProfile }) {
 
       {profile.predominant_species.length > 0 && (
         <p className="agency-species">
-          <span className="agency-subhead">Predominant fish: </span>
+          <span className="agency-subhead">
+            {profile.agency === "ga_wrd" ? "Fish WRD lists at its access sites: " : "Predominant fish: "}
+          </span>
           {profile.predominant_species.join("; ")}
         </p>
       )}
 
-      {profile.placement === "ramps" && (
+      {(profile.placement === "ramps" || profile.placement === "sites") && (
         <p className="agency-note">
-          Shown on the map at {agency}&apos;s boat ramps: this lake has no outline on
+          Shown on the map at {agency}&apos;s {placedAt}: this lake has no outline on
           OpenStreetMap, so its marker is near the shore, not the middle.
         </p>
       )}
 
       <p className="source-line agency-links">
         <a href={profile.page_url} target="_blank" rel="noreferrer">
-          Lake page
+          {pageLinkText(profile)}
         </a>
         {profile.survey_report_url && (
           <>
@@ -75,7 +86,7 @@ export function AgencyProfileCard({ profile }: { profile: AgencyProfile }) {
           <>
             {" · "}
             <a href={profile.access_page_url} target="_blank" rel="noreferrer">
-              Access, fees and parks
+              {profile.agency === "ga_wrd" ? "WRD fishing map" : "Access, fees and parks"}
             </a>
           </>
         )}

@@ -83,8 +83,10 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "paralyze it. Fished free with no weight, through the tail.",
             "Keep them in a minnow bucket in the water they came from and use them soon. Never "
             "dump unused bait into a lake: it can bring in unwanted animals.",
+            "Check your state's bait rules before you buy them: some states restrict live fish as "
+            "bait, and California does not allow fish as bait in most of its inland waters.",
         ),
-        source_ids=("tmf-live-bait", "tamu-hook-bait", "tamu-baits", "mdc-bait-lures", "tpwd-wcp", "tpwd-lmb"),
+        source_ids=("tmf-live-bait", "tamu-hook-bait", "tamu-baits", "mdc-bait-lures", "tpwd-wcp", "tpwd-lmb", "cdfw-regs-2026"),
     ),
     HandbookTopic(
         id="bait-insects",
@@ -568,6 +570,20 @@ TOPICS: tuple[HandbookTopic, ...] = (
         region="GA",
     ),
     HandbookTopic(
+        id="care-keeping-ca",
+        category="care",
+        title="Measuring and keeping fish (California)",
+        body=(
+            "In California a fish's length is its total length: the longest straight line from the "
+            "tip of the head to the end of the longest lobe of the tail. Limits are set water by "
+            "water; CDFW's interactive regulations map shows the ones for the water you are on.",
+            "Salmon and steelhead must be kept so their species and size can be told until you get "
+            "home or prepare them to eat, and trout may not be kept alive in a container on a boat.",
+        ),
+        source_ids=("cdfw-regs-2026",),
+        region="CA",
+    ),
+    HandbookTopic(
         id="care-eating-safely",
         category="care",
         title="Eating your catch safely",
@@ -834,6 +850,23 @@ TOPICS: tuple[HandbookTopic, ...] = (
         source_ids=("gawrd-angler", "gawrd-parkfishing"),
         region="GA",
     ),
+    HandbookTopic(
+        id="start-first-trip-ca",
+        category="technique",
+        title="Your first trip in California",
+        body=(
+            "Three things to sort out first: somewhere to go, a licence if you need one, and the "
+            "rules for that water.",
+            "CDFW's Fishing in the City program runs short introductory clinics on safety, knots, "
+            "rigging, casting and the rules, lends equipment to beginners, and stocks many urban "
+            "lakes with rainbow trout and catfish before its clinics.",
+            "Anglers 15 and younger need no licence, and nobody needs one on Free Fishing Days.",
+            "Before you buy minnows, read the bait rules: most inland waters don't allow fish as "
+            "bait, so worms, insects and lures are the usual start.",
+        ),
+        source_ids=("cdfw-fitc", "cdfw-license", "cdfw-regs-2026"),
+        region="CA",
+    ),
     # ------------------------------------------------------------ conditions
     HandbookTopic(
         id="cond-cover",
@@ -975,6 +1008,21 @@ TOPICS: tuple[HandbookTopic, ...] = (
         region="GA",
     ),
     HandbookTopic(
+        id="safe-lifejacket-ca",
+        category="safety",
+        title="Life jacket law (California)",
+        body=(
+            "In California every child under 13 must wear a US Coast Guard-approved life jacket "
+            "while the boat is under way \u2014 on motorboats, sailboats, and human-powered boats "
+            "such as kayaks and canoes. On a motorboat or sailboat a child inside an enclosed cabin "
+            "is exempt, and on a sailboat so is a child in a harness tethered to the boat.",
+            "Every boat must carry a life jacket that fits each person aboard, within easy reach. "
+            "Sailboats 16 feet and longer also need a throwable one.",
+        ),
+        source_ids=("cadbw-safety",),
+        region="CA",
+    ),
+    HandbookTopic(
         id="safe-handling",
         category="safety",
         title="Handling a fish without getting hurt",
@@ -1064,6 +1112,44 @@ TOPICS: tuple[HandbookTopic, ...] = (
         ),
         source_ids=("gawrd-cdd", "garegs-general"),
         region="GA",
+    ),
+    HandbookTopic(
+        id="rule-license-ca",
+        category="rules",
+        title="Do I need a fishing licence? (California)",
+        body=(
+            "In California anyone 16 or older needs a sport fishing licence, kept in their "
+            "immediate possession while fishing. Under 16, no licence is needed.",
+            "Report cards are needed by anyone, whatever their age, fishing for steelhead or "
+            "sturgeon (and salmon in the Klamath, Trinity and Smith rivers), even on Free Fishing "
+            "Days.",
+            "Fishing with two rods in inland waters needs a Second Rod validation on the licence; "
+            "anglers under 16 may use two rods without one.",
+            "No licence is needed to fish from a public pier in ocean waters, and none on CDFW's "
+            "Free Fishing Days. Licence terms and fees change: CDFW's licence page is the authority.",
+        ),
+        source_ids=("cdfw-license", "cdfw-regs-2026", "cdfw-fitc"),
+        region="CA",
+    ),
+    HandbookTopic(
+        id="rule-clean-drain-dry-ca",
+        category="rules",
+        title="Clean, drain and dry, and mussel inspections (California)",
+        body=(
+            "Quagga, zebra and now golden mussels threaten California's lakes, and many reservoirs "
+            "inspect boats at the ramp: a boat that isn't clean, drained and dry can be quarantined "
+            "or turned away.",
+            "Clean: remove all plants, animals and mud from the boat, motor and trailer, put them in "
+            "the trash, and rinse away from storm drains and waterways.",
+            "Drain: drain the motor, ballast, livewell and buckets on land before leaving.",
+            "Dry: leave compartments open and let the boat dry for at least five days in warm, dry "
+            "weather, up to 30 days in cool, damp weather.",
+            "By law, a motorized boat used in fresh water must display a current Mussel Fee sticker "
+            "next to its registration. Report a suspected mussel to CDFW with a close-up photo and "
+            "the location.",
+        ),
+        source_ids=("cadbw-mussels", "cdfw-mussels"),
+        region="CA",
     ),
     HandbookTopic(
         id="rule-line-disposal",

@@ -7,7 +7,7 @@ a rule. Those carry a region (a state code, `REGION_ALL` for the rest) and
 are shown only where they apply.
 
 This registry is what the rest of the app asks "who runs the rules here?".
-Texas and Georgia have reviewed rule passages so far. Every other state
+Texas, Georgia and California have reviewed rule passages so far. Every other state
 is listed so a person in it gets a straight answer — "FishEye hasn't
 written this state's rules yet; they come from <name>'s fish and wildlife
 agency" — instead of Texas's rules presented as theirs.
@@ -57,6 +57,11 @@ class Jurisdiction:
     # state (services/rag/chunking.py) and the bait-rules card on the guide.
     bait_rules: tuple[str, ...] = ()
     bait_rules_source_ids: tuple[str, ...] = ()
+    # True where the bait rules contradict the guides' general advice (the
+    # guides recommend live minnows; California forbids fish as bait in most
+    # inland waters). Then every bait question in that state shows the rules,
+    # whatever they rank (services/rag/ask.py, docs/adr/0030).
+    bait_rules_on_every_bait_question: bool = False
 
     @property
     def covered(self) -> bool:
@@ -85,7 +90,38 @@ GEORGIA_BAIT_RULES = (
     "George, it is illegal to have or fish with live blueback herring.",
 )
 
+# California's, from CDFW's 2026 freshwater booklet (Title 14, sections
+# 1.63 and 4.00-4.30). The important difference from Texas and Georgia: in
+# most inland waters, fish may not be used as bait at all. The per-district
+# species lists are long and change; the card says so and links the booklet.
+CALIFORNIA_BAIT_RULES = (
+    "In most of California's inland waters, live or dead fin fish \u2014 minnows, shiners, shad "
+    "and other fish \u2014 may not be used as bait. "
+    "Each district (Southern, Colorado River, Valley and South Central, North Central, Sierra "
+    "and North Coast) allows only the species and waters its rules list.",
+    "Where a district allows a fish such as threadfin shad or Mississippi silverside as live "
+    "bait, it may be used only in the water where it was caught: live fish may not be carried "
+    "away from the water where they were taken.",
+    "Dead ocean fish may be used as bait statewide, except where special rules say otherwise.",
+    "Worms, insects, crayfish and other legally taken invertebrates, and frogs, may be used as "
+    "bait; salamanders may not. Crayfish may not be used as bait in the Pit River and its "
+    "tributaries.",
+    "No trout may be kept alive in a container on or attached to a boat.",
+)
+
 _COVERED: dict[str, Jurisdiction] = {
+    "CA": Jurisdiction(
+        code="CA",
+        name="California",
+        agency="California Department of Fish and Wildlife",
+        agency_short="CDFW",
+        # Limits are set water by water; CDFW's interactive map shows them.
+        limits_url="https://apps.wildlife.ca.gov/sportfishingregs/",
+        license_url="https://wildlife.ca.gov/Licensing/Fishing",
+        bait_rules=CALIFORNIA_BAIT_RULES,
+        bait_rules_source_ids=("cdfw-regs-2026",),
+        bait_rules_on_every_bait_question=True,
+    ),
     "GA": Jurisdiction(
         code="GA",
         name="Georgia",

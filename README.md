@@ -35,11 +35,11 @@ FishEye pulls those sources into one place, organised around **where you are**:
    (GBIF) are shown as exactly that, and entrances from OpenStreetMap are
    labelled unverified.
 3. **Know when and how.** A spot score and morning/evening bite windows from
-   the National Weather Service forecast, reviewed guides for eighteen species and an angler's handbook,
+   the National Weather Service forecast, reviewed guides for nineteen species and an angler's handbook,
    and a Q&A over those guides that answers in plain language and cites them.
 
-Lake data is Texas's today, and fishing rules are written for Texas and
-Georgia; the data model, importers, guides and Ask are per-state (see
+Lake data is Texas's today, and fishing rules are written for Texas,
+Georgia and California; the data model, importers, guides and Ask are per-state (see
 [Roadmap](#roadmap) and ADRs 0027–0028).
 
 ## What it does
@@ -47,7 +47,7 @@ Georgia; the data model, importers, guides and Ask are per-state (see
 | Page | |
 |---|---|
 | **Map** (`/map`) | Locate me / search; lakes in view, with verified lakes always kept and the rest ranked by size when a view is crowded; a lake panel with TPWD's profile and fishing ratings, species with their evidence, public boat ramps, weather, bite windows and an AI explanation of the ranking. |
-| **Fish guides** (`/fish`) | Eighteen species: how to recognise each one (look-alikes compared on the same features), habitat and habits, where and when, bait and why it works, lures, beginner tackle setups, cleaning and eating. Plus a 64-topic angler's handbook: baits, lures, tackle, knots, casting and playing a fish, weather and water, staying safe, the licence, telling fish families apart, timing, and releasing, cleaning and cooking a catch. Every section cites its sources. |
+| **Fish guides** (`/fish`) | Nineteen species: how to recognise each one (look-alikes compared on the same features), habitat and habits, where and when, bait and why it works, lures, beginner tackle setups, cleaning and eating. Plus a 75-card angler's handbook: baits, lures, tackle, knots, casting and playing a fish, weather and water, staying safe, the licence, telling fish families apart, timing, and releasing, cleaning and cooking a catch. Every section cites its sources. |
 | **Ask** (`/ask`) | Free-text questions, in English or Chinese ("how do I tell white bass from hybrid striped bass?", "鲈鱼怎么钓") answered with the matching guide passages and their sources, free and with no account. An empty answer says which kind it is: not a fishing question, a fish with no guide, or a fishing question the guides don't answer. Signed in, an AI summary of those passages, 3 a day. |
 | **Community** (`/community`) | Accounts and catch pins with photos, with moderation tools for admins. |
 
@@ -134,7 +134,7 @@ a production frontend build, and a Docker build with smoke tests on every push.
   suite, so a regression fails CI.
 - **Rules belong to a state.** How to catch a fish is the same everywhere; a
   licence, a limit or a bait rule is a state's. Passages that state a rule are
-  tagged with their state and shown only there (Texas and Georgia so far),
+  tagged with their state and shown only there (Texas, Georgia and California so far),
   each state searching its own index; anyone in
   another state is told the rules aren't written yet and pointed to their
   own agency, instead of being given another state's as if they were theirs
@@ -208,6 +208,8 @@ agency-verified lakes yet:
 docker compose exec backend python -m app.data_import.osm_waterbody_import --state GA --save-raw /tmp/ga_osm.json
 docker compose exec backend python -m app.data_import.gbif_occurrence_import --state GA --osm /tmp/ga_osm.json --save-raw /tmp/gbif_ga_raw.json
 ```
+
+California (docs/adr/0030) the same way, with `--state CA` and `ca_` file names.
 
 Running without Docker: [`backend/README.md`](backend/README.md) and
 [`frontend/README.md`](frontend/README.md). Putting it on a server:

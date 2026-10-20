@@ -168,6 +168,22 @@ SOURCES: dict[str, Source] = {
         Source("garegs-methods", "Georgia Fishing Regulations 2026: fishing methods", "https://www.eregulations.com/georgia/fishing/fishing-methods", "agency"),
         Source("garegs-boating", "Georgia Fishing Regulations 2026: boating", "https://www.eregulations.com/georgia/fishing/boating", "agency"),
         Source("garegs-bordering", "Georgia Fishing Regulations 2026: agreements with bordering states", "https://www.eregulations.com/georgia/fishing/agreements-with-bordering-states", "agency"),
+        # Smallmouth bass (docs/adr/0030), a guide written for Texas, Georgia
+        # and California anglers alike.
+        Source("tpwd-smb", "TPWD: Smallmouth Bass", "https://tpwd.texas.gov/huntwild/wild/species/smb/", "agency"),
+        Source("mdc-smb", "Missouri Department of Conservation: Smallmouth Bass field guide", "https://mdc.mo.gov/discover-nature/field-guide/smallmouth-bass", "agency"),
+        Source("mndnr-smb", "Minnesota DNR: how to catch a smallmouth bass", "https://www.dnr.state.mn.us/gofishing/how-catch-smallmouth-bass.html", "agency"),
+        Source("nydec-bass", "New York DEC: fishing for largemouth and smallmouth bass", "https://dec.ny.gov/things-to-do/freshwater-fishing/learn-to-fish/tips-skills/fishing-for-largemouth-smallmouth-bass", "agency"),
+        Source("tmf-river-smb", "Take Me Fishing: Mississippi River smallmouth bass", "https://www.takemefishing.org/blog/may-2024/mississippi-river-smallmouth-bass/", "publication"),
+        # California (docs/adr/0030): the Department of Fish and Wildlife,
+        # its 2026 freshwater regulations booklet, and the Division of
+        # Boating and Waterways (California State Parks).
+        Source("cdfw-license", "CDFW: sport fishing licenses and report cards", "https://wildlife.ca.gov/Licensing/Fishing", "agency"),
+        Source("cdfw-regs-2026", "CDFW: 2026 freshwater sport fishing regulations", "https://nrm.dfg.ca.gov/FileHandler.ashx?DocumentID=209090&inline", "agency"),
+        Source("cdfw-fitc", "CDFW: Fishing in the City", "https://wildlife.ca.gov/Fishing-in-the-City/Overview", "agency"),
+        Source("cdfw-mussels", "CDFW: quagga and zebra mussels", "https://wildlife.ca.gov/Conservation/Invasives/Mussels", "agency"),
+        Source("cadbw-safety", "California Division of Boating and Waterways: safety equipment", "https://dbw.parks.ca.gov/SafetyEquipment", "agency"),
+        Source("cadbw-mussels", "California Division of Boating and Waterways: invasive mussels", "https://dbw.parks.ca.gov/?page_id=28996", "agency"),
     ]
 }
 
@@ -1378,6 +1394,111 @@ def _with_details(guide: SpeciesGuide) -> SpeciesGuide:
 # --------------------------------------------------------------------------
 
 _NEW_GUIDES: tuple[SpeciesGuide, ...] = (
+    SpeciesGuide(
+        common_name="Smallmouth Bass",
+        scientific_name="Micropterus dolomieu",
+        role="sport",
+        difficulty="intermediate",
+        summary=(
+            "A bronze-brown bass of clear, cool, rocky lakes and streams, and one of the hardest-"
+            "fighting freshwater fish. Fish rock and current breaks with crayfish-colored baits."
+        ),
+        diet=(
+            "Fish, crayfish and large aquatic insects; crayfish are a favorite. Young fish start on "
+            "zooplankton and insect larvae."
+        ),
+        diet_type="carnivore",
+        identification=(
+            "Greenish brown with faint dark mottling and vertical bars, not the dark horizontal "
+            "stripe of a largemouth bass.",
+            "With the mouth closed, the upper jaw reaches about the back edge of the eye and never "
+            "past it; on a largemouth bass it extends far behind the eye.",
+            "The two dorsal fins are connected, and the cheek scales are much smaller than the body "
+            "scales.",
+            "The tongue usually has a rough tooth patch.",
+        ),
+        habitat=(
+            "Clear water over rock or gravel: large, clear lakes more than about 100 acres and 30 ft "
+            "deep, and cool streams with gravel bottoms, near riffles but out of the main current.",
+            "Native from the central U.S. north to Minnesota and southern Quebec, and stocked widely "
+            "elsewhere; in Texas mainly in streams of the Edwards Plateau.",
+        ),
+        habits=(
+            "Most active at dawn and dusk.",
+            "Males move onto spawning areas as the water nears 60\u00b0F and fan out saucer-shaped "
+            "nests where there is no noticeable current: near shore in lakes, below a boulder in "
+            "streams. The male guards the eggs and the fry.",
+            "Usually 10\u201320 in long and \u00bd\u20134 lb; the largest known in Texas is over "
+            "7.5 lb. Lives up to about 10\u201312 years.",
+        ),
+        where_and_when=(
+            "Lakes: rocky shoals, reefs, shorelines and points that drop into deep water, anywhere "
+            "from 5 to 35 ft deep. Start shallow and work deeper.",
+            "Rivers: rocky riffles, eddies and pools, and the calm water beside the current where "
+            "they rest between feeding, such as behind wing dams and rocks.",
+            "Best from mid-June through August, when the water is 60\u201375\u00b0F. Surface lures "
+            "work best early in the morning and late in the evening.",
+        ),
+        live_baits=(
+            "Crayfish",
+            "Minnows, on a jig or a circle hook",
+            "Hellgrammites",
+            "Nightcrawlers, on a jig when lures aren't working",
+        ),
+        lures=(
+            "3\u20134 in tube on a 1/8\u20131/4 oz jighead",
+            "Ned rig: a 3\u20134 in stick worm on a 1/8\u20131/4 oz mushroom jighead",
+            "Drop-shot rig with a small soft plastic",
+            "Crankbaits in crawfish or shad colors",
+            "Spinnerbaits, heavier ones in current",
+            "Jerkbaits, and topwater lures twitched like an injured fish",
+        ),
+        why_these_baits=(
+            "Crayfish are a preferred food, so crawfish colors and jigs and tubes bounced over rock "
+            "imitate what it is hunting.",
+            "It sees well in the clear water it prefers: light line and small finesse plastics get "
+            "more bites. When the water turns murky, a spinnerbait's flash and vibration work better.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Tube or Ned rig on light spinning tackle",
+                use_when="Rocky points and shoals in clear water; the beginner's setup.",
+                method="lure",
+                rod="6\u00bd\u20137 ft medium-action spinning rod",
+                reel="Spinning reel",
+                line="8\u201310 lb monofilament",
+                terminal=(
+                    "A 3\u20134 in tube or stick worm on a 1/8\u20131/4 oz jighead. Let it sink, "
+                    "then hop it or drag it slowly over the rocks, pausing a few seconds."
+                ),
+                source_ids=("nydec-bass",),
+            ),
+            TackleSetup(
+                name="Jig and minnow on the bottom",
+                use_when="Deeper rock and drop-offs, or when the fish won't take plastics.",
+                method="bait",
+                rod="7\u20137\u00bd ft rod",
+                reel="Baitcasting or spinning reel",
+                line="Monofilament or fluorocarbon (the source gives no pound test)",
+                terminal=(
+                    "A 1/4\u20131/2 oz jig tipped with a minnow or a plastic twister tail, dropped to "
+                    "the bottom and bounced along the rocks. If that fails, a nightcrawler on the jig."
+                ),
+                source_ids=("mndnr-smb",),
+            ),
+        ),
+        tips=(
+            "A rocky point that gave you a fish will usually give you another next trip: bass set up "
+            "in predictable places.",
+            "Bring a landing net and needle-nose pliers for the hooks.",
+            "Check the rules for the water you are on: some waters have special smallmouth limits.",
+        ),
+        eating=(
+            "Edible, but many anglers put smallmouth back, partly because they don't rate it highly "
+            "as food.",
+        ),
+        source_ids=("tpwd-smb", "mdc-smb", "mndnr-smb", "nydec-bass", "tmf-river-smb"),
+    ),
     SpeciesGuide(
         common_name="Flathead Catfish",
         scientific_name="Pylodictis olivaris",

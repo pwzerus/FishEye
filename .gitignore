@@ -36,6 +36,7 @@ backend/*_osm.json
 backend/gbif_*_raw.json
 backend/gbif_*_report.json
 backend/tpwd_cache/
+backend/ga_wrd_cache/
 
 # Community photo uploads (MEDIA_ROOT): user content, never committed
 backend/media/
@@ -46,3 +47,4 @@ docs/commercialization.md
 docs/private/
 # Embedding model files (~470 MB): fetched by app.cli.fetch_embedding_model
 backend/models/
+backend/*.db.bak-*

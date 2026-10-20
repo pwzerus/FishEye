@@ -202,6 +202,10 @@ LMB_CRANK = "Crankbaits and ¼–½ oz lipless crankbaits"
 LMB_SHINER = "Large live shiners (8–9 in) under a bobber."
 WHITE_BASS_TOP = "Topwater lures when schools are breaking the surface"
 SPOT_WORM = "4–6 in straight-tail worms (green pumpkin or watermelon) on a shaky head or drop shot"
+SMB_TUBE = "3–4 in tube on a 1/8–1/4 oz jighead"
+SMB_NED = "Ned rig: a 3–4 in stick worm on a 1/8–1/4 oz mushroom jighead"
+SMB_SPINNER = "Spinnerbaits, heavier ones in current"
+SMB_TOP = "Jerkbaits, and topwater lures twitched like an injured fish"
 STRIPER_POPPER = "6 in pencil poppers (topwater)"
 STRIPER_SLAB = "1–2 oz slabs in chartreuse, chrome or white"
 HYBRID_MARABOU = "White or chartreuse marabou jigs in low light"
@@ -241,6 +245,33 @@ TACKLE: dict[str, Tackle] = {
             ),
         ),
         bait_fallback=((LMB_SHINER, "Fish it next to cover. Bass take a real shiner faster than any plastic."),),
+    ),
+    # From the guide's own sources (docs/adr/0030): surface lures early and
+    # late (Minnesota DNR), finesse plastics in clear water and spinnerbaits
+    # once it's murky (Take Me Fishing), tubes and Ned rigs over rock (NY DEC).
+    "Smallmouth Bass": Tackle(
+        lures=(
+            Rule(
+                lambda c: c.low_light,
+                SMB_TOP,
+                lambda c: f"At {c.light_word}, smallmouth hunt the shallows: twitch a surface lure over rock.",
+            ),
+            Rule(
+                lambda c: c.sky == "rain" or c.choppy,
+                SMB_SPINNER,
+                "Rain or wind muddies the water: a spinnerbait's flash and vibration are easier to find.",
+            ),
+            Rule(
+                lambda c: c.bright or c.calm,
+                SMB_NED,
+                "Clear, bright water: smallmouth see well, so a small, slow finesse bait near rock gets bit.",
+            ),
+        ),
+        lure_fallback=(
+            (SMB_TUBE, "The classic smallmouth bait: let it sink, then hop it over rocky points."),
+            (SMB_NED, "Drag it slowly over rock, pausing a few seconds."),
+        ),
+        bait_fallback=(("Crayfish", "Their favorite food: fish it along the bottom near rock."),),
     ),
     "Spotted Bass": Tackle(
         lures=(
