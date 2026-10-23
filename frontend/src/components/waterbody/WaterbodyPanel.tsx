@@ -158,7 +158,9 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
         <div className="unverified-banner">
           This lake comes from OpenStreetMap, a community-edited map. FishEye hasn&apos;t
           verified its fish or public access. Any entrances below are what OpenStreetMap
-          reports: confirm they&apos;re open to the public before you go.
+          reports: confirm they&apos;re open to the public before you go. FishEye leaves
+          out lakes that OpenStreetMap or the lake&apos;s name clearly marks as private, but
+          it can&apos;t catch every one, so a lake shown here may still be private.
         </div>
       )}
 

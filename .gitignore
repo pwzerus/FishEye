@@ -48,3 +48,10 @@ docs/private/
 # Embedding model files (~470 MB): fetched by app.cli.fetch_embedding_model
 backend/models/
 backend/*.db.bak-*
+
+
+# Codex's UI preview, kept for comparison only; never pushed
+frontend-preview/
+
+# Server login keys must never be committed
+*.pem

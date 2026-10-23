@@ -366,6 +366,14 @@ describe("WaterbodyPanel", () => {
     expect(screen.getByText(/many ponds are on private land/i)).toBeInTheDocument();
   });
 
+  it("says clearly private lakes are left out but some private ones may remain", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(osmDetail);
+    render(<WaterbodyPanel waterbodyId={7} />);
+
+    await waitFor(() => expect(screen.getByText("unverified")).toBeInTheDocument());
+    expect(screen.getByText(/may still be private/i)).toBeInTheDocument();
+  });
+
   it("does not show the pond warning for an unverified reservoir", async () => {
     vi.mocked(getWaterbody).mockResolvedValue(osmDetail);
     render(<WaterbodyPanel waterbodyId={7} />);
