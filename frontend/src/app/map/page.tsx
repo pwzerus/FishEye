@@ -31,7 +31,7 @@ export default async function MapPage() {
   } catch {
     // Backend not reachable (not running yet, wrong URL, etc): degrade to a
     // clear message instead of a Next.js error page.
-    backendError = "Could not reach the backend API. Is it running? See backend/README.md.";
+    backendError = "We couldn't load the map right now. Please refresh in a moment.";
   }
 
   return (

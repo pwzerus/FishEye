@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { HandbookTopic } from "@/lib/api/types";
 import { Handbook } from "./Handbook";
@@ -16,6 +16,21 @@ describe("Handbook", () => {
     topic("bait-minnows", "baits", "Live and natural bait", "Minnows and shiners"),
     topic("care-release", "care", "Releasing, keeping and cleaning fish", "Catch and release"),
   ];
+
+  it("opens a collapsed category when an Ask citation links to a topic", () => {
+    window.history.replaceState(null, "", "#bait-minnows");
+    const scroll = vi.fn();
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scroll;
+    try {
+      const { container } = render(<Handbook topics={topics} />);
+      expect(container.querySelector("#baits")).toHaveAttribute("open");
+      expect(scroll).toHaveBeenCalled();
+    } finally {
+      Element.prototype.scrollIntoView = original;
+      window.history.replaceState(null, "", "/");
+    }
+  });
 
   it("puts every topic under its own anchor, where Ask citations link", () => {
     const { container } = render(<Handbook topics={topics} />);

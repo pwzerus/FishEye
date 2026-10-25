@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ContentSkeleton } from "@/components/ui/ContentSkeleton";
 
 import { ApiError, getWeather, postRecommendations } from "@/lib/api/client";
 import type { FishingPlan, PlanPick, PlanWindow, RecommendationResponse, Weather } from "@/lib/api/types";
@@ -117,15 +118,20 @@ function Picks({ picks }: { picks: PlanPick[] }) {
 export function PlanCard({
   plan,
   onSpeciesChange,
+  updating = false,
+  selectedSpecies,
 }: {
   plan: FishingPlan;
   onSpeciesChange: (species: string) => void;
+  updating?: boolean;
+  selectedSpecies?: string;
 }) {
+  const [expanded, setExpanded] = useState(false);
   return (
-    <section className="plan-card" aria-label="Today's plan">
+    <section className={`plan-card${expanded ? " plan-expanded" : ""}`} aria-label="Today's plan" aria-busy={updating}>
       <label className="plan-fish">
         <span>Fishing for</span>
-        <select value={plan.species ?? ""} onChange={(e) => onSpeciesChange(e.target.value)}>
+        <select value={selectedSpecies ?? plan.species ?? ""} disabled={updating} onChange={(e) => onSpeciesChange(e.target.value)}>
           {plan.species === null && <option value="">Pick a fish</option>}
           {plan.species_options.map((name) => (
             <option key={name} value={name}>
@@ -134,6 +140,7 @@ export function PlanCard({
           ))}
         </select>
       </label>
+      {updating && <p className="plan-updating" role="status">Updating plan…</p>}
       {plan.species && plan.species_on_record === false && (
         <p className="plan-note">Not on record in this lake, so this is general advice for the fish.</p>
       )}
@@ -146,18 +153,18 @@ export function PlanCard({
         </ul>
       )}
 
-      <dl className="plan-rows">
+      <dl className="plan-rows" id="plan-contents">
         {plan.where && (
           <div>
             <dt>Where</dt>
-            <dd>{plan.where.text}</dd>
+            <dd className="plan-where">{plan.where.text}</dd>
           </div>
         )}
         {plan.when && (
           <div>
             <dt>When</dt>
             <dd>
-              {windowText(plan.when)}
+              <span className="plan-window-short">{shortWindowText(plan.when)}</span><span className="plan-window-full">{windowText(plan.when)}</span>
               {plan.also && <span className="plan-also"> · or {shortWindowText(plan.also)}</span>}
               {plan.conditions && <span className="plan-conditions">{plan.conditions}</span>}
             </dd>
@@ -201,6 +208,7 @@ export function PlanCard({
           </div>
         )}
       </dl>
+      <button type="button" className="plan-expand" aria-expanded={expanded} aria-controls="plan-contents" onClick={() => setExpanded((value) => !value)}>{expanded ? "Less detail ↑" : "Why this plan? More bait & gear ↓"}</button>
     </section>
   );
 }
@@ -226,11 +234,12 @@ export function WeatherRecommendations({
   const [error, setError] = useState<string | null>(null);
   // "" = let the backend pick this lake's main fish.
   const [species, setSpecies] = useState("");
+  const [attempt, setAttempt] = useState(0);
   // The request a completed fetch answered. Deriving `loading` from this
   // (rather than resetting state at the top of the effect) is what keeps
   // react-hooks/set-state-in-effect quiet — only the async callbacks below
   // ever call setState, same fix as WaterbodyPanel's own loading flag.
-  const requestKey = `${waterbodyId}:${latitude}:${longitude}:${species}`;
+  const requestKey = `${waterbodyId}:${latitude}:${longitude}:${species}:${attempt}`;
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const loading = loadedKey !== requestKey;
 
@@ -263,11 +272,11 @@ export function WeatherRecommendations({
     <div className="weather-recommendations">
       <h3>Today&apos;s plan</h3>
 
-      {error && !loading && <div className="panel-error">{error}</div>}
-      {loading && !recommendations && <div className="muted">Loading today&apos;s plan…</div>}
+      {error && !loading && <div className="panel-error" role="alert"><p>{error}</p><button className="btn btn-ghost btn-sm" type="button" onClick={() => setAttempt((value) => value + 1)}>Try again</button></div>}
+      {loading && !recommendations && <ContentSkeleton label="Loading today's plan…" />}
 
       {recommendations && <WeatherAlertBanner warnings={recommendations.safety_warnings} />}
-      {recommendations?.plan && <PlanCard plan={recommendations.plan} onSpeciesChange={setSpecies} />}
+      {recommendations?.plan && (!error || loading) && <PlanCard plan={recommendations.plan} onSpeciesChange={setSpecies} updating={loading} selectedSpecies={species || undefined} />}
       {weather && (
         <>
           <div className="plan-now-label">Right now</div>

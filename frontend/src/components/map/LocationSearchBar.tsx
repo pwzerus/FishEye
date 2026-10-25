@@ -89,10 +89,12 @@ export function LocationSearchBar({ onLocate }: { onLocate: (point: LocatedPoint
     <div className="location-search-bar">
       <form onSubmit={handleSubmit} className="location-search-form">
         <input
-          type="text"
+          type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search a city, lake, or ZIP code"
+          placeholder="City, lake or ZIP"
+          autoComplete="off"
+          enterKeyHint="search"
           className="location-search-input"
           aria-label="Search for a location"
         />
@@ -107,7 +109,7 @@ export function LocationSearchBar({ onLocate }: { onLocate: (point: LocatedPoint
         disabled={locating}
         title="Use my current location"
       >
-        {locating ? "Locating…" : "📍 Use my location"}
+        {locating ? "Locating…" : "⌖ Use my location"}
       </button>
       {error && <div className="location-search-error">{error}</div>}
     </div>

@@ -10,10 +10,7 @@ export const metadata: Metadata = {
 
 const SUGGESTIONS = [
   "What bait for crappie?",
-  "Easiest setup for a kid who has never fished?",
-  "When do white bass run?",
-  "How do I get shad for bait?",
-  "Can I bring live bait from one lake to another?",
+  "How do I tie a fishing knot?",
   "What hook size for bluegill?",
 ];
 
@@ -29,12 +26,10 @@ export default async function AskPage(props: PageProps<"/ask">) {
             Ask FishEye
           </p>
           <h1 className="reveal" style={{ "--i": 1 } as React.CSSProperties}>
-            What do you want to know?
+            Bait, gear or timing?
           </h1>
           <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
-            Answers come only from FishEye&apos;s reviewed fish guides and cite the passage they
-            used. If the guides don&apos;t cover your question, FishEye says so instead of
-            guessing.
+            Ask in English or Chinese. Sources included.
           </p>
         </section>
         <div className="reveal" style={{ "--i": 3 } as React.CSSProperties}>

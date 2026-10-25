@@ -44,6 +44,22 @@ describe("lake time helpers", () => {
 });
 
 describe("PlanCard", () => {
+  it("lets people reveal the full plan without losing the selected fish", () => {
+    render(<PlanCard plan={plan} onSpeciesChange={() => {}} />);
+    const more = screen.getByRole("button", { name: /Why this plan/ });
+    expect(more).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(more);
+    expect(screen.getByRole("button", { name: /Less detail/ })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByLabelText(/Fishing for/)).toHaveValue("Largemouth Bass");
+  });
+
+  it("marks an updating plan busy and prevents a second species change", () => {
+    render(<PlanCard plan={plan} onSpeciesChange={() => {}} updating selectedSpecies="Bluegill" />);
+    expect(screen.getByRole("region", { name: "Today's plan" })).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByLabelText(/Fishing for/)).toBeDisabled();
+    expect(screen.getByLabelText(/Fishing for/)).toHaveValue("Bluegill");
+  });
+
   it("says where, when, and what to use, each with its reason", () => {
     render(<PlanCard plan={plan} onSpeciesChange={() => {}} />);
     expect(screen.getByText(/Try the NW bank/)).toBeInTheDocument();

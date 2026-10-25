@@ -131,7 +131,24 @@ describe("WaterbodyPanel", () => {
 
   it("shows the empty-state prompt when nothing is selected", () => {
     render(<WaterbodyPanel waterbodyId={null} />);
-    expect(screen.getByText(/click a lake marker/i)).toBeInTheDocument();
+    expect(screen.getByText(/search a place or choose a highlighted state/i)).toBeInTheDocument();
+  });
+
+  it("retries a failed lake without reloading the map", async () => {
+    vi.mocked(getWaterbody).mockRejectedValueOnce(new ApiError("Try later", 503)).mockResolvedValueOnce(mockDetail);
+    render(<WaterbodyPanel waterbodyId={1} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Lake Fork")).toBeInTheDocument();
+    expect(getWaterbody).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not show one lake's error while loading another lake", async () => {
+    vi.mocked(getWaterbody).mockRejectedValueOnce(new ApiError("First lake unavailable", 503)).mockResolvedValueOnce({ ...mockDetail, id: 2 });
+    const page = render(<WaterbodyPanel waterbodyId={1} />);
+    await screen.findByText("First lake unavailable");
+    page.rerender(<WaterbodyPanel waterbodyId={2} />);
+    expect(screen.queryByText("First lake unavailable")).not.toBeInTheDocument();
+    expect(await screen.findByText("Lake Fork")).toBeInTheDocument();
   });
 
   it("renders lake details, access points, and species once loaded", async () => {
@@ -288,7 +305,7 @@ describe("WaterbodyPanel", () => {
     render(<WaterbodyPanel waterbodyId={4} />);
 
     await waitFor(() =>
-      expect(screen.getByText(/currently closed to public access/i)).toBeInTheDocument(),
+      expect(screen.getByText(/Closed to public access\./i)).toBeInTheDocument(),
     );
     expect(screen.getByText("closed to the public")).toBeInTheDocument();
     // No point scoring recommendations for a lake nobody can legally fish.
@@ -327,7 +344,7 @@ describe("WaterbodyPanel", () => {
     render(<WaterbodyPanel waterbodyId={7} />);
 
     await waitFor(() => expect(screen.getByText("unverified")).toBeInTheDocument());
-    expect(screen.getByText(/comes from OpenStreetMap/i)).toBeInTheDocument();
+    expect(screen.getByText(/unverified lake from OpenStreetMap/i)).toBeInTheDocument();
     expect(screen.getByText(/no fish records for this lake yet/i)).toBeInTheDocument();
   });
 
@@ -353,12 +370,13 @@ describe("WaterbodyPanel", () => {
     await waitFor(() => expect(getWeather).toHaveBeenCalledWith(osmDetail.latitude, osmDetail.longitude));
   });
 
-  it("warns that a pond may be on private land", async () => {
+  it("warns that a pond with no reported entrance may be on private land", async () => {
     vi.mocked(getWaterbody).mockResolvedValue({
       ...osmDetail,
       id: 8,
       name: "Bee Creek Park Pond",
       water_type: "pond",
+      access_points: [],
     });
     render(<WaterbodyPanel waterbodyId={8} />);
 
@@ -366,12 +384,26 @@ describe("WaterbodyPanel", () => {
     expect(screen.getByText(/many ponds are on private land/i)).toBeInTheDocument();
   });
 
+  it("gives a pond with a reported entrance only the short banner", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue({
+      ...osmDetail,
+      id: 9,
+      name: "Park Pond",
+      water_type: "pond",
+    });
+    render(<WaterbodyPanel waterbodyId={9} />);
+
+    await waitFor(() => expect(screen.getByText("unverified")).toBeInTheDocument());
+    expect(screen.getByText(/unverified lake from OpenStreetMap/i)).toBeInTheDocument();
+    expect(screen.queryByText(/many ponds are on private land/i)).not.toBeInTheDocument();
+  });
+
   it("says clearly private lakes are left out but some private ones may remain", async () => {
     vi.mocked(getWaterbody).mockResolvedValue(osmDetail);
     render(<WaterbodyPanel waterbodyId={7} />);
 
     await waitFor(() => expect(screen.getByText("unverified")).toBeInTheDocument());
-    expect(screen.getByText(/may still be private/i)).toBeInTheDocument();
+    expect(screen.getByText(/some may remain/i)).toBeInTheDocument();
   });
 
   it("does not show the pond warning for an unverified reservoir", async () => {
@@ -388,7 +420,7 @@ describe("WaterbodyPanel", () => {
 
     await waitFor(() => expect(screen.getByText("Lake Fork")).toBeInTheDocument());
     expect(screen.queryByText("unverified")).not.toBeInTheDocument();
-    expect(screen.queryByText(/comes from OpenStreetMap/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/lake from OpenStreetMap/i)).not.toBeInTheDocument();
   });
 
   // --- Species on record (GBIF): never presented as confirmed ---
@@ -420,6 +452,7 @@ describe("WaterbodyPanel", () => {
     render(<WaterbodyPanel waterbodyId={7} />);
 
     await waitFor(() => expect(screen.getByText("Fish on record (not verified)")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("tab", { name: "Fish" }));
     expect(screen.getByText("37 records · last recorded 2023")).toBeInTheDocument();
     expect(screen.getByText("Fishes of Texas (UT Austin) 30 · iNaturalist 7")).toBeInTheDocument();
     expect(screen.getByText("Weak evidence: a single record from 1968.")).toBeInTheDocument();
@@ -442,6 +475,7 @@ describe("WaterbodyPanel", () => {
     await waitFor(() =>
       expect(screen.getByText("Also on record (not in the official survey)")).toBeInTheDocument(),
     );
+    fireEvent.click(screen.getByRole("tab", { name: "Fish" }));
     const section = screen.getByRole("region", { name: "Fish on record" });
     expect(section).toHaveTextContent("Striped Bass");
     expect(section).not.toHaveTextContent("Largemouth Bass");
@@ -578,7 +612,7 @@ describe("WaterbodyPanel", () => {
     vi.mocked(getWaterbody).mockResolvedValue(georgia);
     render(<WaterbodyPanel waterbodyId={21} />);
     await waitFor(() => expect(screen.getByText("Fish attractors")).toBeInTheDocument());
-    expect(screen.getByText(/2 fish attractors .* Georgia WRD, placed 2017–2023/)).toBeInTheDocument();
+    expect(screen.getByText(/2 fish-holding structures by Georgia WRD, placed 2017–2023/)).toBeInTheDocument();
   });
 
   it("shows no attractor section on a lake without any, or on a closed lake", async () => {

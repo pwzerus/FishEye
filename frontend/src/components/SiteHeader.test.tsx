@@ -15,11 +15,11 @@ const { SiteHeader } = await import("./SiteHeader");
 describe("SiteHeader", () => {
   it.each([
     ["/", "Home"],
-    ["/map", "Map"],
+    ["/map", "Find water"],
     ["/fish", "Fish guide"],
     ["/fish/bluegill", "Fish guide"],
-    ["/community", "Community"],
-    ["/community/12", "Community"],
+    ["/community", "Catches"],
+    ["/community/12", "Catches"],
     ["/ask", "Ask"],
   ])("on %s marks %s as the current page", async (path, label) => {
     nav.pathname = path;

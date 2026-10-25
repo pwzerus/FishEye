@@ -79,7 +79,7 @@ export function FishGrid({ guides, photos }: { guides: SpeciesGuide[]; photos: S
         <p className="empty-note">No fish match that. Try another filter.</p>
       ) : (
         // Keyed on the filter so the cards re-run their entrance when it changes.
-        <ul className="fish-grid" key={`${filter}-${q}`}>
+        <ul className="fish-grid">
           {shown.map((g, i) => {
             const photo = photos[g.slug];
             const [wa, wb] = waterFor(g.slug);
@@ -106,10 +106,8 @@ export function FishGrid({ guides, photos }: { guides: SpeciesGuide[]; photos: S
                       <h2>{g.common_name}</h2>
                       <Tag guide={g} />
                     </div>
-                    <p className="sci">{g.scientific_name}</p>
-                    <p className="fish-card-summary">{g.summary}</p>
                     <span className="fish-card-cta">
-                      How to catch it <span aria-hidden="true">→</span>
+                      Bait & gear <span aria-hidden="true">→</span>
                     </span>
                   </div>
                 </Link>

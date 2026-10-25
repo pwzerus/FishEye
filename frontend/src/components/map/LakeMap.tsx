@@ -11,43 +11,10 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 import type { PinSummary, WaterbodyListItem } from "@/lib/api/types";
 import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from "@/lib/map/tiles";
 import { BaseMap } from "./BaseMap";
+import { waterIcon } from "./waterIcon";
 import { DraftMarker, PinMarkers, PlaceOnClick } from "./PinLayer";
 import { StatesLayer } from "./StatesLayer";
 import { US_CENTER, US_ZOOM, type MapMode, zoomLimitsFor } from "./zoomPolicy";
-
-// Leaflet's default marker icons reference image files by relative URL,
-// which breaks under bundlers (webpack rewrites the paths). Point them at
-// CDN-hosted copies instead of shipping our own icon assets for the MVP.
-const defaultIcon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
-const fieldTestedIcon = L.icon({
-  ...defaultIcon.options,
-  className: "field-tested-marker",
-});
-
-// Same pin, greyed out by CSS: a lake OpenStreetMap knows about but this
-// app has no verified information on. Deliberately less eye-catching than
-// a verified lake's pin.
-const osmIcon = L.icon({
-  ...defaultIcon.options,
-  className: "osm-marker",
-});
-
-// An unverified lake that has fish records (GBIF): tinted amber so people can
-// find the lakes FishEye knows *something* about, while staying distinct
-// from a verified lake's blue pin. See docs/adr/0012-gbif-reported-species.md.
-const reportedIcon = L.icon({
-  ...defaultIcon.options,
-  className: "osm-marker-reported",
-});
 
 const SEARCH_ZOOM = 11;
 const VIEWPORT_DEBOUNCE_MS = 300;
@@ -217,13 +184,7 @@ function AllStatesControl({ onClick }: { onClick: () => void }) {
 function LakeMarker({ lake, onSelect }: { lake: WaterbodyListItem; onSelect: (id: number) => void }) {
   const isOsm = lake.data_tier === "osm";
   const reported = lake.reported_species_count ?? 0;
-  const icon = isOsm
-    ? reported > 0
-      ? reportedIcon
-      : osmIcon
-    : lake.field_tested
-      ? fieldTestedIcon
-      : defaultIcon;
+  const icon = waterIcon(isOsm ? reported > 0 ? "reported" : "osm" : "verified");
   return (
     <Marker
       position={[lake.latitude, lake.longitude]}

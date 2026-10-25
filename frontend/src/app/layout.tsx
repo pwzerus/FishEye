@@ -6,6 +6,8 @@ import { ToastProvider } from "@/components/ui/Toast";
 import "./base.css";
 import "./globals.css";
 import "./community.css";
+import "./preview.css";
+import "./refinements.css";
 
 export const metadata: Metadata = {
   title: "FishEye",

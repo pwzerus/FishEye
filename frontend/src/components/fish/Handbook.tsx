@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect } from "react";
 import { RegionGate } from "@/components/rules/RegionGate";
 import type { HandbookTopic } from "@/lib/api/types";
 
@@ -13,6 +16,18 @@ import type { HandbookTopic } from "@/lib/api/types";
  * where they are (backend docs/adr/0027).
  */
 export function Handbook({ topics }: { topics: HandbookTopic[] }) {
+  useEffect(() => {
+    const revealTarget = () => {
+      let id: string;
+      try { id = decodeURIComponent(window.location.hash.slice(1)); } catch { return; }
+      const target = document.getElementById(id);
+      const group = target?.closest<HTMLDetailsElement>("details.handbook-group");
+      if (group) { group.open = true; target?.scrollIntoView({ block: "start", behavior: "instant" }); }
+    };
+    revealTarget();
+    window.addEventListener("hashchange", revealTarget);
+    return () => window.removeEventListener("hashchange", revealTarget);
+  }, []);
   if (topics.length === 0) return null;
   const groups: { category: string; label: string; topics: HandbookTopic[] }[] = [];
   for (const t of topics) {
@@ -25,10 +40,7 @@ export function Handbook({ topics }: { topics: HandbookTopic[] }) {
     <section id="handbook" className="handbook" aria-labelledby="handbook-title">
       <h2 id="handbook-title">The angler&apos;s handbook</h2>
       <p className="muted">
-        What applies to every fish: baits and why they work, lures, tackle, knots, casting and
-        playing a fish, weather and water, staying safe, and releasing, cleaning and cooking a
-        catch. Cards about licences, limits and other rules are for one state, and say which.
-        Each card names its sources.
+        Pick a topic. Learn one thing. Try it outside.
       </p>
       <nav className="chip-row handbook-nav" aria-label="Handbook sections">
         {groups.map((g) => (
@@ -38,8 +50,8 @@ export function Handbook({ topics }: { topics: HandbookTopic[] }) {
         ))}
       </nav>
       {groups.map((g) => (
-        <div key={g.category} id={g.category} className="handbook-group">
-          <h3>{g.label}</h3>
+        <details key={g.category} id={g.category} className="handbook-group">
+          <summary><h3>{g.label}</h3><span>{g.topics.length} topics</span></summary>
           <div className="handbook-grid">
             {g.topics.map((t) => {
               const card = (
@@ -69,7 +81,7 @@ export function Handbook({ topics }: { topics: HandbookTopic[] }) {
               );
             })}
           </div>
-        </div>
+        </details>
       ))}
     </section>
   );

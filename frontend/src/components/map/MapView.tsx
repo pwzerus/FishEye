@@ -108,6 +108,15 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   const [placing, setPlacing] = useState(params.get("addPin") === "1");
   const [draft, setDraft] = useState<Point | null>(null);
   const [created, setCreated] = useState<PinDetail | null>(null);
+  const [sheet, setSheet] = useState<"peek" | "half" | "full">(selectedId !== null ? "half" : "peek");
+  const workspace = useRef<HTMLDivElement>(null);
+  const [sheetHeight, setSheetHeight] = useState<number | null>(null);
+  const sheetGesture = useRef<{ y: number; height: number; mapHeight: number; time: number } | null>(null);
+
+  function selectLake(id: number) {
+    setSelectedId(id);
+    setSheet("half");
+  }
 
   const loadPins = useCallback(
     (bbox: string | null) => {
@@ -132,36 +141,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     }
   }, [placing, authLoading, user, router]);
 
-  // First open, no deep link and no lake already selected: ask the browser
-  // for the person's location and centre there. Silent on denial/failure —
-  // this is a courtesy attempt, not a request the person made, so it falls
-  // back to the statewide overview without an error banner. A ?lake= or
-  // ?at= link, or picking a lake before this resolves, means the person
-  // already told us where they want to look, so it's skipped.
-  const triedAutoLocate = useRef(false);
-  useEffect(() => {
-    if (triedAutoLocate.current) return;
-    if (focusPoint !== null || selectedId !== null) {
-      triedAutoLocate.current = true;
-      return;
-    }
-    if (typeof navigator === "undefined" || !("geolocation" in navigator)) return;
-    triedAutoLocate.current = true;
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setMode("exploring");
-        setFocusPoint({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          label: "your location",
-        });
-      },
-      () => undefined, // denied or unavailable: stay on the states map
-      { enableHighAccuracy: false, timeout: 10_000 },
-    );
-    // Runs once, before the person can have interacted with the map.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Location is requested only when the person chooses Use my location.
 
   useEffect(() => {
     listStates()
@@ -213,6 +193,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     setLastView(target ? asExploringView(target) : null);
     setMode("exploring");
     setSelectedId(null);
+    setSheet("peek");
   }
 
   function handleViewportChange({ bbox, zoom: newZoom, center }: Viewport) {
@@ -266,6 +247,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     // A pin needs a map you can zoom into; the national map is locked.
     setMode("exploring");
     setPlacing(true);
+    setSheet("half");
   }
 
   function stopPlacing() {
@@ -330,11 +312,11 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
       </div>
     );
   } else {
-    panel = <WaterbodyPanel waterbodyId={selectedId} />;
+    panel = <WaterbodyPanel key={selectedId ?? "overview"} waterbodyId={selectedId} onExplore={handleLocate} />;
   }
 
   return (
-    <div className={selectedId !== null ? "map-view has-lake" : "map-view"}>
+    <div ref={workspace} className={selectedId !== null ? "map-view has-lake" : "map-view"} data-sheet={sheet}>
       <div className="map-container">
         {selectedId === null ? (
           <>
@@ -348,18 +330,17 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
               {loading && <div className="map-status-chip">Loading lakes…</div>}
               {!loading && !placing && national && (
                 <div className="map-status-chip">
-                  Pick a highlighted state, search a city, lake, or ZIP code, or allow location
-                  access, to see fishing spots.
+                  Pick a state or search a place.
                 </div>
               )}
               {!loading && !national && !zoomedOut && truncated && (
                 <div className="map-status-chip">
-                  Showing the largest {VIEWPORT_LIMIT} lakes and ponds here. Zoom in to see the rest.
+                  {VIEWPORT_LIMIT} lakes shown · zoom in for more.
                 </div>
               )}
               {!loading && zoomedOut && !placing && (
                 <div className="map-status-chip">
-                  Showing verified lakes only. Zoom in to see every mapped lake.
+                  Official lakes shown · zoom in for more water.
                 </div>
               )}
               {showEmpty && (
@@ -375,14 +356,14 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
             </div>
             <LakeMap
               waterbodies={waterbodies}
-              onSelect={placing ? () => undefined : setSelectedId}
+              onSelect={placing ? () => undefined : selectLake}
               onViewportChange={handleViewportChange}
               focusPoint={focusPoint}
               initialView={national ? null : lastView}
               pins={showPins ? pins : []}
               placing={placing}
               draft={draft}
-              onPlace={(latitude, longitude) => setDraft({ latitude, longitude })}
+              onPlace={(latitude, longitude) => { setDraft({ latitude, longitude }); setSheet("full"); }}
               coveredStates={coverage?.codes ?? null}
               mode={mode}
               onEnterState={enterState}
@@ -401,14 +382,14 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
                   if (next) loadPins(lastBbox.current);
                 }}
               >
-                <span className="legend-catch" aria-hidden="true" /> <span className="fab-label">Community pins</span>
+                <span className="legend-catch" aria-hidden="true" /> <span className="fab-label">Catches</span>
               </button>
               {!placing && (
                 <button type="button" className="btn btn-primary btn-sm map-add" onClick={startPlacing} aria-label="Add a pin">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
                     <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                   </svg>
-                  <span className="fab-label">Add a pin</span>
+                  <span className="fab-label">Share catch</span>
                 </button>
               )}
             </div>
@@ -438,7 +419,38 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
           </>
         )}
       </div>
-      <aside className="side-panel">{panel}</aside>
+      <aside className="side-panel" style={sheetHeight === null ? undefined : { height: sheetHeight, transition: 'none' }}>
+        <div className="sheet-controls"
+          onPointerDown={(e) => {
+            if ((e.target as HTMLElement).closest("button") || !workspace.current) return;
+            sheetGesture.current = { y: e.clientY, height: e.currentTarget.parentElement!.getBoundingClientRect().height, mapHeight: workspace.current.clientHeight, time: performance.now() };
+            e.currentTarget.setPointerCapture(e.pointerId);
+          }}
+          onPointerMove={(e) => {
+            const gesture = sheetGesture.current;
+            if (gesture) setSheetHeight(Math.max(95, Math.min(gesture.mapHeight * .86, gesture.height + gesture.y - e.clientY)));
+          }}
+          onPointerUp={(e) => {
+            const gesture = sheetGesture.current;
+            if (!gesture) return;
+            const delta = gesture.y - e.clientY;
+            const levels = ['peek', 'half', 'full'] as const;
+            const heights = [95, gesture.mapHeight * .45, gesture.mapHeight * .86];
+            const endHeight = gesture.height + delta;
+            const velocity = Math.abs(delta) / Math.max(1, performance.now() - gesture.time);
+            const next = velocity > .45 && Math.abs(delta) > 25
+              ? Math.max(0, Math.min(2, levels.indexOf(sheet) + (delta > 0 ? 1 : -1)))
+              : heights.reduce((best, value, index) => Math.abs(value - endHeight) < Math.abs(heights[best] - endHeight) ? index : best, 0);
+            setSheet(levels[next]); setSheetHeight(null); sheetGesture.current = null;
+          }}
+          onPointerCancel={() => { sheetGesture.current = null; setSheetHeight(null); }}>
+          <span className="sheet-handle" aria-hidden="true" />
+          <div className="sheet-toolbar"><span className="sheet-caption">{placing ? "Your catch" : selectedId ? "Lake & plan" : "Explore"}</span><div className="sheet-actions">
+            {([['peek', 'Map'], ['half', 'Plan'], ['full', 'Full']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={sheet === value} onClick={() => { setSheet(value); setSheetHeight(null); }}>{label}</button>)}
+          </div></div>
+        </div>
+        <div className="sheet-content">{panel}</div>
+      </aside>
     </div>
   );
 }

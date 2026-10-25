@@ -97,6 +97,14 @@ describe("AskChat", () => {
     mockedSummary.mockReset();
   });
 
+  it("does not submit Enter while a Chinese input method is composing", () => {
+    render(<AskChat suggestions={SUGGESTIONS} />);
+    const box = screen.getByRole("textbox", { name: "Your question" });
+    fireEvent.change(box, { target: { value: "鲈鱼怎么钓" } });
+    fireEvent.keyDown(box, { key: "Enter", isComposing: true });
+    expect(mockedAsk).not.toHaveBeenCalled();
+  });
+
   it("shows the guide's passages first, saying no model was involved", async () => {
     mockedAsk.mockResolvedValue(searchResult());
     render(<AskChat suggestions={SUGGESTIONS} />);
@@ -198,7 +206,7 @@ describe("AskChat", () => {
     await askVia("what bait for crappie");
     await screen.findByText("Use small live minnows.");
 
-    expect(screen.getByText("How this answer was checked")).toBeInTheDocument();
+    expect(screen.getByText("Sources & answer details")).toBeInTheDocument();
     expect(screen.getByText("black-crappie#live_baits")).toBeInTheDocument();
     expect(screen.getAllByText("cited")).toHaveLength(2);
     expect(screen.getByText("Passed every check")).toBeInTheDocument();

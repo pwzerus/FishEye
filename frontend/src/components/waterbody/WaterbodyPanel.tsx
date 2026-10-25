@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ContentSkeleton } from "@/components/ui/ContentSkeleton";
 
 import { ApiError, getWaterbody } from "@/lib/api/client";
 import type { AccessPoint, FishAttractor, WaterbodyDetail } from "@/lib/api/types";
@@ -49,10 +51,7 @@ function AttractorNote({ attractors }: { attractors: FishAttractor[] }) {
     <>
       <h3>Fish attractors</h3>
       <p className="attractor-note">
-        {n} fish attractor{n === 1 ? "" : "s"} (brush piles, PVC trees and the like) sunk by{" "}
-        {by}
-        {span}, shown on the lake map as teal dots. Fish gather around them, but
-        older ones may have broken down.
+        {n} fish-holding structure{n === 1 ? '' : 's'} by {by}{span}. Teal dots on the map; older structures may have broken down.
       </p>
     </>
   );
@@ -77,6 +76,7 @@ function AccessPointList({ points, emptyText }: { points: AccessPoint[]; emptyTe
           ) : (
             <span className="public-status">{ap.public_status.replace("_", " ")}</span>
           )}
+          <div><a className="lake-navigate" href={`https://www.google.com/maps/dir/?api=1&destination=${ap.latitude},${ap.longitude}`} target="_blank" rel="noreferrer">Directions to this entrance ↗</a></div>
         </li>
       ))}
       {hidden > 0 && (
@@ -91,15 +91,18 @@ function AccessPointList({ points, emptyText }: { points: AccessPoint[]; emptyTe
   );
 }
 
-export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) {
+export function WaterbodyPanel({ waterbodyId, onExplore }: { waterbodyId: number | null; onExplore?: (point: { latitude: number; longitude: number; label: string }) => void }) {
   const [detail, setDetail] = useState<WaterbodyDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [failedId, setFailedId] = useState<number | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [tab, setTab] = useState<"access" | "fish" | "sources">("access");
 
   // Deliberately no separate `loading` state: react-hooks/set-state-in-effect
   // flags setState called synchronously in an effect body (only calls inside
   // an async callback are fine), so "loading" is derived instead of stored —
   // true whenever we have a selected lake whose data hasn't arrived yet.
-  const loading = waterbodyId !== null && detail?.id !== waterbodyId && error === null;
+  const loading = waterbodyId !== null && detail?.id !== waterbodyId && !(error && failedId === waterbodyId);
 
   useEffect(() => {
     if (waterbodyId === null) return;
@@ -113,22 +116,34 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
       .catch((e: unknown) => {
         if (cancelled) return;
         setError(e instanceof ApiError ? e.message : "Could not load lake details.");
+        setFailedId(waterbodyId);
       });
     return () => {
       cancelled = true;
     };
-  }, [waterbodyId]);
+  }, [waterbodyId, attempt]);
 
   if (waterbodyId === null) {
     return (
       <div className="panel-empty">
-        <p>Click a lake marker to see access points, confirmed species, and sources.</p>
+        <div className="map-welcome">
+          <p className="field-kicker">FIND WATER</p>
+          <h2>Where to?</h2>
+          <p>Search a place or choose a highlighted state.</p>
+          {onExplore && <div className="quick-places" aria-label="Explore a city">{[
+            { label: 'Austin', latitude: 30.2672, longitude: -97.7431 },
+            { label: 'Atlanta', latitude: 33.749, longitude: -84.388 },
+            { label: 'Sacramento', latitude: 38.5816, longitude: -121.4944 },
+          ].map((place) => <button type="button" key={place.label} onClick={() => onExplore(place)}>{place.label} ↗</button>)}</div>}
+          <div className="map-how"><span>1 · Pick a lake</span><span>2 · Check entrances</span><span>3 · See your plan</span></div>
+          <Link href="/fish" className="field-secondary">First time? Choose a fish →</Link>
+        </div>
       </div>
     );
   }
 
-  if (loading) return <div className="panel-empty">Loading…</div>;
-  if (error) return <div className="panel-empty panel-error">{error}</div>;
+  if (loading) return <ContentSkeleton label="Loading lake…" />;
+  if (error && failedId === waterbodyId) return <div className="panel-empty panel-error" role="alert"><p>{error}</p><button type="button" className="btn btn-ghost btn-sm" onClick={() => { setError(null); setAttempt((value) => value + 1); }}>Try again</button></div>;
   if (!detail) return null;
 
   const isClosed = detail.public_access_status === "closed";
@@ -156,29 +171,26 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
 
       {isOsm && (
         <div className="unverified-banner">
-          This lake comes from OpenStreetMap, a community-edited map. FishEye hasn&apos;t
-          verified its fish or public access. Any entrances below are what OpenStreetMap
-          reports: confirm they&apos;re open to the public before you go. FishEye leaves
-          out lakes that OpenStreetMap or the lake&apos;s name clearly marks as private, but
-          it can&apos;t catch every one, so a lake shown here may still be private.
+          <strong>Unverified lake from OpenStreetMap.</strong> Clearly private lakes are left out,
+          but some may remain, so check access before you go.
+          <details className="data-note"><summary>About this data</summary><p>OpenStreetMap is a community-edited map. FishEye hasn&apos;t verified this lake&apos;s fish or entrances.</p></details>
         </div>
       )}
 
       {isLikelyPrivate && (
         <div className="private-warning">
-          Its name suggests private land, such as a club, an estate or a ranch. Assume it&apos;s
-          private: only fish here if you know it&apos;s open to the public or you have the
-          owner&apos;s permission.
+          Its name suggests private land. Confirm public access or get the owner&apos;s permission.
         </div>
       )}
 
-      {isOsm && isPond && !isLikelyPrivate && (
-        // Ponds get their own, louder warning: in Texas many are on ranches,
-        // in gated neighborhoods or on golf courses, and unlike a reservoir
-        // there's rarely an official access page to check.
+      {isOsm && isPond && !isLikelyPrivate && detail.access_points.length === 0 && (
+        // Ponds with no reported entrance get their own, louder warning: in
+        // Texas many are on ranches, in gated neighborhoods or on golf
+        // courses, and unlike a reservoir there's rarely an official access
+        // page to check. A pond with an entrance listed gets only the short
+        // banner above.
         <div className="pond-warning">
-          Many ponds are on private land (ranches, neighborhoods, golf courses). Only fish
-          here if it&apos;s in a public park or you have permission.
+          Many ponds are on private land. Fish only in a public park or with permission.
         </div>
       )}
 
@@ -190,13 +202,26 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
         // happens to be what "no data yet" looks like — a very different
         // situation this banner exists to avoid conflating).
         <div className="closed-banner">
-          This lake is currently closed to public access, per its official
-          source. No public access points are shown, and no weather or best
-          times are given for it below.
+          Closed to public access. No entrances or fishing plan are shown.
         </div>
       )}
 
       {/* An OSM lake's summary repeats the banner above, so it's skipped. */}
+      <div className="lake-facts"><span>{detail.access_points.filter((a) => a.public_status === "confirmed_public").length} confirmed entrances</span><span>{isOsm ? `${detail.reported_species?.length ?? 0} species reported` : `${detail.species.length} species listed`}</span></div>
+      {!isClosed && <WeatherRecommendations key={`weather-${detail.id}`} waterbodyId={detail.id} latitude={detail.latitude} longitude={detail.longitude} />}
+
+      <div className="lake-tabs" role="tablist" aria-label="Lake information">
+        {([['access', 'Entrances'], ['fish', 'Fish'], ['sources', 'Sources']] as const).map(([id, label]) => <button key={id} id={`lake-tab-${id}`} role="tab" tabIndex={tab === id ? 0 : -1} aria-selected={tab === id} aria-controls={`lake-panel-${id}`} onClick={() => setTab(id)} onKeyDown={(event) => {
+          const keys = ['access', 'fish', 'sources'] as const;
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          const index = keys.indexOf(tab);
+          const next = keys[event.key === 'Home' ? 0 : event.key === 'End' ? 2 : (index + (event.key === 'ArrowRight' ? 1 : 2)) % 3];
+          setTab(next);
+          document.getElementById(`lake-tab-${next}`)?.focus();
+        }}>{label}</button>)}
+      </div>
+      <section id="lake-panel-sources" role="tabpanel" aria-labelledby="lake-tab-sources" hidden={tab !== "sources"}>
       {!isOsm && <p className="access-summary">{detail.access_summary}</p>}
       <p className="source-line">
         Source:{" "}
@@ -208,7 +233,9 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
       </p>
 
       {detail.agency_profile && <AgencyProfileCard profile={detail.agency_profile} />}
+      </section>
 
+      <section id="lake-panel-access" role="tabpanel" aria-labelledby="lake-tab-access" hidden={tab !== "access"}>
       <h3>
         {isOsm
           ? "Entrances reported on OpenStreetMap"
@@ -230,10 +257,12 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
       />
 
       {!isClosed && <AttractorNote attractors={detail.fish_attractors ?? []} />}
+      </section>
 
       {/* An unverified lake has no official species list, so only the
           records section is shown. A verified lake shows its official list,
           then any species on record that the survey doesn't mention. */}
+      <section id="lake-panel-fish" role="tabpanel" aria-labelledby="lake-tab-fish" hidden={tab !== "fish"}>
       {!isOsm && (
         <>
           <h3>Species</h3>
@@ -244,7 +273,7 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
                   <strong>{s.common_name}</strong>
                   <ConfidenceBadge confidence={s.confidence} />
                 </div>
-                <p className="evidence">{s.evidence}</p>
+                <details className="lake-evidence"><summary>Why this fish is listed</summary><p className="evidence">{s.evidence}</p></details>
                 <SpeciesHowTo commonName={s.common_name} />
               </li>
             ))}
@@ -257,16 +286,7 @@ export function WaterbodyPanel({ waterbodyId }: { waterbodyId: number | null }) 
         </>
       )}
       <ReportedSpeciesList reported={detail.reported_species ?? []} isOsm={isOsm} />
-
-      {!isClosed && (
-        <WeatherRecommendations
-          // Keyed by lake, so the fish picked on one lake doesn't carry over.
-          key={`weather-${detail.id}`}
-          waterbodyId={detail.id}
-          latitude={detail.latitude}
-          longitude={detail.longitude}
-        />
-      )}
+      </section>
     </div>
   );
 }

@@ -111,7 +111,7 @@ function Trace({ r }: { r: AskResponse }) {
   const cited = new Set(r.citations.map((c) => c.id));
   return (
     <details className="trace">
-      <summary>How this answer was checked</summary>
+      <summary>Sources & answer details</summary>
       <ol className="trace-steps">
         <li>
           <span className="trace-step-title">1 · Retrieve</span>
@@ -166,12 +166,14 @@ function Trace({ r }: { r: AskResponse }) {
 
 function Citations({ items, compact }: { items: AskCitation[]; compact: boolean }) {
   const states = useJurisdictions();
+  const [showAll, setShowAll] = useState(false);
   if (items.length === 0) return null;
+  const shown = showAll ? items : items.slice(0, 2);
   return (
     <div className="citations">
-      <p className="citations-label">From the guide</p>
+      <p className="citations-label">Sources</p>
       <ul>
-        {items.map((c, i) => {
+        {shown.map((c, i) => {
           const fish = c.species_slug !== "all-fish" ? c.species_slug : null;
           return (
             <li key={c.id} className="citation" style={{ "--i": i } as React.CSSProperties}>
@@ -202,6 +204,7 @@ function Citations({ items, compact }: { items: AskCitation[]; compact: boolean 
           );
         })}
       </ul>
+      {items.length > 2 && <button type="button" className="sources-expand" aria-expanded={showAll} onClick={() => setShowAll((value) => !value)}>{showAll ? "Fewer sources ↑" : `Show ${items.length - 2} more sources ↓`}</button>}
     </div>
   );
 }
@@ -250,7 +253,7 @@ function AiSummary({
       <div className="ai-summary ai-summary-cta">
         {error}
         <p className="muted">
-          Want these in a few plain sentences? <Link href={loginHref}>Sign in</Link> for a few AI summaries a day.
+          <Link href={loginHref}>Sign in</Link> for an AI summary.
         </p>
       </div>
     );
@@ -372,7 +375,8 @@ export function AskChat({
 
   useEffect(() => {
     if (turns.length === 0 && !busy) return;
-    endRef.current?.scrollIntoView?.({ behavior: "smooth", block: compact ? "nearest" : "end" });
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    endRef.current?.previousElementSibling?.scrollIntoView?.({ behavior: reduced ? "instant" : "smooth", block: compact ? "nearest" : "start" });
   }, [turns, busy, compact]);
 
   // Grow the textarea with its content, up to a few lines.
@@ -432,7 +436,7 @@ export function AskChat({
         <img src="/brand/fisheye-mark.svg" alt="" />
                 </span>
                 <div className="bubble-card bubble-error">
-                  <p>{turn.message ?? "Couldn't reach FishEye's server. Is the backend running?"}</p>
+                  <p>{turn.message ?? "Unable to connect right now. Please try again shortly."}</p>
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => ask(turn.question)} disabled={busy}>
                     Try again
                   </button>
@@ -452,7 +456,7 @@ export function AskChat({
                   <SourceBadge r={r} />
                 </div>
                 <div className="answer-text">
-                  {r.answer.split("\n\n").map((para, i) => (
+      {r.answer.split("\n\n").map((para, i) => (
                     <p key={i}>{para}</p>
                   ))}
                 </div>
@@ -476,7 +480,8 @@ export function AskChat({
         <div ref={endRef} />
       </div>
 
-      {!compact && <StatePicker className="state-picker state-picker-ask" />}
+      <div className="ask-composer">
+      {!compact && <StatePicker className="state-picker state-picker-ask" label="Rules for" />}
       <form
         className="ask-form"
         onSubmit={(e) => {
@@ -491,6 +496,7 @@ export function AskChat({
           maxLength={MAX_LEN}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing || e.keyCode === 229) return;
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               void ask(input);
@@ -505,6 +511,7 @@ export function AskChat({
           </svg>
         </button>
       </form>
+      </div>
       {input.length > MAX_LEN - 60 && (
         <p className="char-count muted">
           {input.length}/{MAX_LEN}

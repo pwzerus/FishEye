@@ -9,26 +9,8 @@ import { ApiError, getWaterbody } from "@/lib/api/client";
 import type { WaterbodyDetail } from "@/lib/api/types";
 import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from "@/lib/map/tiles";
 import { BaseMap } from "./BaseMap";
+import { waterIcon } from "./waterIcon";
 import { type MapViewState, lakeDetailExitZoom } from "./zoomPolicy";
-
-// Same CDN icon approach as LakeMap.tsx (see its comment) — a distinct
-// color for access points so they read as a different kind of pin than
-// the lake-centroid marker, without pulling in a whole icon set for two
-// colors.
-const lakeCenterIcon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
-const accessPointIcon = L.icon({
-  ...lakeCenterIcon.options,
-  className: "access-point-marker",
-});
 
 // Fish attractors: small teal dots, so they read as spots in the water and
 // not as more places to park.
@@ -182,7 +164,7 @@ export default function LakeDetailMap({
       <ZoomControl position="bottomright" />
       <FitToLakeExtent detail={detail} onSettled={(z) => setExitBelow(lakeDetailExitZoom(z))} />
       <ExitWhenZoomedOut exitBelow={exitBelow} onExit={onExit} onViewChange={onViewChange} />
-      <Marker position={[detail.latitude, detail.longitude]} icon={lakeCenterIcon}>
+      <Marker position={[detail.latitude, detail.longitude]} icon={waterIcon()}>
         <Popup>
           <strong>{detail.name}</strong>
           <div style={{ fontSize: 12, color: "#6b7280" }}>lake center (approximate)</div>
@@ -198,7 +180,7 @@ export default function LakeDetailMap({
           explicit rather than relying on that being true forever. */}
       {!isClosed &&
         detail.access_points.map((ap) => (
-          <Marker key={ap.id} position={[ap.latitude, ap.longitude]} icon={accessPointIcon}>
+          <Marker key={ap.id} position={[ap.latitude, ap.longitude]} icon={waterIcon(ap.public_status === "confirmed_public" ? "access" : "osm")}>
             <Popup>
               <strong>{ap.name}</strong>
               <div style={{ fontSize: 12, color: "#6b7280" }}>

@@ -15,6 +15,9 @@ export function CommunityFeed() {
   const [species, setSpecies] = useState("");
   const [mine, setMine] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const feedKey = `${species}:${mine}:${user?.id ?? 'guest'}`;
+  const [page, setPage] = useState({ key: '', count: 12 });
+  const visibleCount = page.key === feedKey ? page.count : 12;
 
   useEffect(() => {
     getPinOptions().then(setOptions).catch(() => undefined);
@@ -46,18 +49,17 @@ export function CommunityFeed() {
             Community
           </p>
           <h1 className="reveal" style={{ "--i": 1 } as React.CSSProperties}>
-            Where people are catching fish
+            Local catches
           </h1>
           <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
-            Spots other anglers pinned, with their photos and notes. These are their reports, not
-            verified survey data, and they never change what FishEye says a lake holds.
+            Photos and notes from anglers. Community reports, not verified data.
           </p>
         </div>
         <Link href={addHref} className="btn btn-primary reveal" style={{ "--i": 3 } as React.CSSProperties}>
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
             <path d="M12 5v14M5 12h14" strokeLinecap="round" />
           </svg>
-          Pin a catch
+          Share a catch
         </Link>
       </section>
 
@@ -114,24 +116,24 @@ export function CommunityFeed() {
           </Link>
         </div>
       ) : (
-        <ul className="pin-grid" key={`${species}-${mine}`}>
-          {pins.map((p, i) => (
+        <><ul className="pin-grid" key={`${species}-${mine}`}>
+          {pins.slice(0, visibleCount).map((p, i) => (
             <li key={p.id}>
               <PinCard pin={p} index={i} />
             </li>
           ))}
-        </ul>
+        </ul>{pins.length > visibleCount && <button type="button" className="btn btn-ghost feed-more" onClick={() => setPage({ key: feedKey, count: visibleCount + 12 })}>Show more catches ↓</button>}</>
       )}
 
-      <section className="rules-card community-rules">
-        <h2>Community rules</h2>
+      <details className="rules-card community-rules">
+        <summary>Posting guidelines</summary>
         <ul>
           <li>Pin places you actually fished, where the public can legally fish.</li>
           <li>Only post photos you took. No faces of other people without their OK.</li>
           <li>Keep a spot to yourself by making the pin &quot;Only me&quot;. Location data inside photos is always removed.</li>
           <li>Anyone signed in can report a pin. Pins reported by several people are hidden until a moderator reviews them.</li>
         </ul>
-      </section>
+      </details>
     </>
   );
 }

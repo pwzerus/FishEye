@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 
 import { AccountMenu } from "@/components/auth/AccountMenu";
 
@@ -18,11 +20,19 @@ import { AccountMenu } from "@/components/auth/AccountMenu";
 
 const NAV = [
   { href: "/", label: "Home", icon: "home" },
-  { href: "/map", label: "Map", icon: "map" },
+  { href: "/map", label: "Find water", icon: "map" },
   { href: "/fish", label: "Fish guide", icon: "fish" },
-  { href: "/community", label: "Community", icon: "community" },
+  { href: "/community", label: "Catches", icon: "community" },
   { href: "/ask", label: "Ask", icon: "ask" },
 ] as const;
+
+function watchMobile(onChange: () => void) {
+  const query = window.matchMedia?.('(max-width: 760px)');
+  query?.addEventListener('change', onChange);
+  return () => query?.removeEventListener('change', onChange);
+}
+const mobileSnapshot = () => window.matchMedia?.('(max-width: 760px)').matches ?? false;
+const serverSnapshot = () => false;
 
 function sectionIndex(pathname: string): number {
   const i = NAV.findIndex((n) => n.href !== "/" && pathname.startsWith(n.href));
@@ -82,12 +92,13 @@ function NavIcon({ name }: { name: (typeof NAV)[number]["icon"] }) {
 }
 
 export function SiteHeader() {
+  const mobile = useSyncExternalStore(watchMobile, mobileSnapshot, serverSnapshot);
   const pathname = usePathname() ?? "/";
   const current = sectionIndex(pathname);
   const onRoot = pathname === "/";
 
   return (
-    <header className="site-header">
+    <><header className="site-header">
       <div className="site-header-inner">
         <Link
           href="/"
@@ -96,7 +107,6 @@ export function SiteHeader() {
           transitionTypes={onRoot ? undefined : ["nav-back"]}
         >
           <picture>
-            <source srcSet="/brand/fisheye-lockup-dark.svg" media="(prefers-color-scheme: dark)" />
             {/* A static SVG logo: next/image would add nothing here. */}
             <img src="/brand/fisheye-lockup.svg" alt="FishEye" className="brand-lockup" />
           </picture>
@@ -105,7 +115,7 @@ export function SiteHeader() {
           <img src="/brand/fisheye-mark.svg" alt="" className="brand-mark" aria-hidden="true" />
         </Link>
         <div className="site-header-right">
-        <nav className="site-nav" aria-label="Main">
+        <nav className="site-nav" aria-label="Main" hidden={mobile}>
           {NAV.map((item, i) => {
             const active = i === current && (item.href !== "/" || onRoot);
             const direction = i > current ? "nav-forward" : "nav-back";
@@ -113,8 +123,9 @@ export function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={active ? "site-nav-link active" : "site-nav-link"}
+                className={`site-nav-link${active ? " active" : ""}${item.href === "/" ? " nav-home" : ""}`}
                 aria-current={active ? "page" : undefined}
+                aria-label={item.label}
                 transitionTypes={active ? undefined : [direction]}
               >
                 <NavIcon name={item.icon} />
@@ -127,5 +138,7 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
+    {mobile && createPortal(<nav className="mobile-site-nav" aria-label="Main">{NAV.filter((item) => item.href !== '/').map((item) => <Link key={item.href} href={item.href} className={`site-nav-link${pathname.startsWith(item.href) ? ' active' : ''}`} aria-current={pathname.startsWith(item.href) ? 'page' : undefined} aria-label={item.label}><NavIcon name={item.icon}/><span>{item.label}</span></Link>)}</nav>, document.body)}
+    </>
   );
 }

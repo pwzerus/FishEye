@@ -33,7 +33,7 @@ export default async function FishGuidePage() {
       listHandbook().catch(() => []),
     ]);
   } catch {
-    backendError = "Could not reach the backend API. Is it running? See backend/README.md.";
+    backendError = "We couldn't load the guides. Please refresh to try again.";
   }
 
   const baitRules = guides.find((g) => g.legal_notes.length > 0)?.legal_notes ?? [];
@@ -49,20 +49,16 @@ export default async function FishGuidePage() {
             Meet the fish
           </h1>
           <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
-            {guides.length > 0 ? `${guides.length} freshwater fish` : "Freshwater fish"}, most of them
-            found across the U.S.: what each one eats, where it lives, which bait works and why, and
-            rod-and-reel setups from a first cane pole up, plus a handbook for everything else. Every
-            setup names its source, mostly state wildlife agencies. How to catch a fish is the same
-            everywhere; the rules are a state&apos;s, and so far FishEye has written Texas&apos;s,
-            Georgia&apos;s and California&apos;s.
+            Pick a fish for bait and gear. Open the handbook for knots, casting and the basics.
           </p>
+          <div className="guide-shortcuts"><a href="#fish-species">Fish species ↓</a><a href="#handbook">Fishing basics ↓</a></div>
           <StatePicker />
         </section>
 
         {backendError ? (
           <div className="backend-error">{backendError}</div>
         ) : (
-          <FishGrid guides={guides} photos={photos} />
+          <div id="fish-species"><FishGrid guides={guides} photos={photos} /></div>
         )}
 
         {!backendError && <Handbook topics={handbook} />}

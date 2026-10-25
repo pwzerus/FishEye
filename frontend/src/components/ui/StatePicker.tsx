@@ -7,7 +7,7 @@ import { rememberState, useJurisdictions, useSelectedState } from "@/lib/jurisdi
  * the handbook and the guides show (backend docs/adr/0027). Optional:
  * left unset, nothing is hidden.
  */
-export function StatePicker({ className }: { className?: string }) {
+export function StatePicker({ className, label = "Fishing in" }: { className?: string; label?: string }) {
   const state = useSelectedState();
   const list = useJurisdictions();
   if (!list) return null; // no list, no picker: the rest still works
@@ -15,7 +15,7 @@ export function StatePicker({ className }: { className?: string }) {
   const rest = list.filter((j) => !j.covered);
   return (
     <label className={className ?? "state-picker"}>
-      <span className="state-picker-label">Fishing in</span>
+      <span className="state-picker-label">{label}</span>
       <select value={state ?? ""} onChange={(e) => rememberState(e.target.value || null)}>
         <option value="">Any state</option>
         {covered.length > 0 && (
