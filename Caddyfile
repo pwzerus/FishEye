@@ -21,3 +21,11 @@
 		reverse_proxy frontend:3000
 	}
 }
+
+# Optional: send www.<domain> to the main address. Set WWW_ADDRESS in .env
+# (e.g. www.fisheyefishing.com) and point its DNS at this server. When it is
+# not set, this falls back to a plain-HTTP block on an unused local port that
+# nothing can reach, so it does no harm.
+{$WWW_ADDRESS:http://www.localhost:8081} {
+	redir {$PUBLIC_URL:http://localhost}{uri} permanent
+}
