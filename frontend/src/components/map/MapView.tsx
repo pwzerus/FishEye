@@ -47,6 +47,8 @@ const LakeDetailMap = dynamic(() => import("./LakeDetailMap"), {
 // lake this app knows something about; the map says the view is partial
 // rather than silently dropping the rest.
 const VIEWPORT_LIMIT = 2000;
+// How long "Stay here" silences the zoom-out question.
+const ZOOM_OUT_ASK_QUIET_MS = 15_000;
 const PIN_LIMIT = 300;
 
 type Point = { latitude: number; longitude: number };
@@ -90,6 +92,12 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   // Where the single-lake map is looking; see leaveLake.
   const detailView = useRef<MapViewState | null>(null);
   const [zoom, setZoom] = useState<number | null>(null);
+  // "Go back to the map of all states?" offered when someone tries to zoom out
+  // past exploring mode's floor. After "Stay here" it stays quiet for a while,
+  // so a person who keeps scrolling isn't asked again at once.
+  const [askBack, setAskBack] = useState(false);
+  const askQuietUntil = useRef(0);
+  const askBackButton = useRef<HTMLButtonElement>(null);
   const [loading, setLoading] = useState(false);
   const [truncated, setTruncated] = useState(false);
   // Where the overview map was last looking, so "← All lakes" returns there
@@ -177,6 +185,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   );
 
   function backToStates() {
+    setAskBack(false);
     setMode("national");
     setFocusPoint(null); // also clears the "no lakes near …" banner
     setFocusBounds(null);
@@ -196,8 +205,25 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     setSheet("peek");
   }
 
+  function offerBackToStates() {
+    if (Date.now() < askQuietUntil.current) return;
+    setAskBack(true);
+  }
+
+  function stayHere() {
+    askQuietUntil.current = Date.now() + ZOOM_OUT_ASK_QUIET_MS;
+    setAskBack(false);
+  }
+
+  // Moving focus into the prompt lets Enter accept and Escape decline.
+  useEffect(() => {
+    if (askBack) askBackButton.current?.focus();
+  }, [askBack]);
+
   function handleViewportChange({ bbox, zoom: newZoom, center }: Viewport) {
     setZoom(newZoom);
+    // The person moved the map themselves: the question no longer applies.
+    setAskBack(false);
     const query = lakeQueryFor(modeRef.current, newZoom);
     if (query === null) {
       // National mode: the states layer is the way in, so no lakes and no
@@ -369,7 +395,28 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
               onEnterState={enterState}
               focusBounds={focusBounds}
               onAllStates={backToStates}
+              onZoomOutBlocked={offerBackToStates}
             />
+            {askBack && !national && !placing && (
+              <div
+                className="zoom-out-prompt"
+                role="dialog"
+                aria-label="Go back to the map of all states?"
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") stayHere();
+                }}
+              >
+                <p>That&apos;s as far out as the lake view goes. Go back to the map of all states?</p>
+                <div className="zoom-out-prompt-actions">
+                  <button ref={askBackButton} type="button" className="btn btn-primary btn-sm" onClick={backToStates}>
+                    Back to all states
+                  </button>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={stayHere}>
+                    Stay here
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="map-fabs">
               <button
                 type="button"

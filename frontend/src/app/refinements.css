@@ -126,3 +126,13 @@ button:active:not(:disabled), .btn:active { translate:0 1px; }
 .map-how { display:grid; gap:12px; border-block:1px solid var(--line); padding:22px 0; color:var(--ink-2); font-size:14px; }
 .map-welcome > a { font-size:13px; }
 .location-search-input::-webkit-search-cancel-button { cursor:pointer; }
+
+/* "Go back to the map of all states?" — offered when the person tries to zoom
+   out past the lake view's floor. A small card, not a modal: the map stays
+   usable behind it and any pan or zoom dismisses it. */
+.zoom-out-prompt { position:absolute; left:50%; bottom:92px; transform:translateX(-50%); z-index:1100; width:min(360px, calc(100% - 32px)); background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 30px #203c3326; padding:14px 16px; }
+.zoom-out-prompt p { margin:0 0 12px; font-size:14px; line-height:1.45; color:var(--ink); }
+.zoom-out-prompt-actions { display:flex; flex-wrap:wrap; gap:8px; }
+@media(max-width:760px) { .zoom-out-prompt { bottom:auto; top:70px; } }
+@media(prefers-reduced-motion:no-preference) { .zoom-out-prompt { animation:zoom-out-prompt-in .16s ease-out; } }
+@keyframes zoom-out-prompt-in { from { opacity:0; transform:translate(-50%, 6px); } to { opacity:1; transform:translate(-50%, 0); } }

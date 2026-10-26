@@ -181,6 +181,71 @@ function AllStatesControl({ onClick }: { onClick: () => void }) {
   return null;
 }
 
+const ZOOM_OUT_PROMPT_GAP_MS = 1200;
+
+/**
+ * Exploring mode stops zooming out at state scale (zoomPolicy.ts), and a map
+ * that silently refuses to zoom out reads as broken. This notices someone
+ * trying to zoom out further while already at that floor — scroll wheel, the
+ * "-" key, or a pinch — and tells the parent, which offers the way back to
+ * the map of all states. It never moves the map itself: the person decides.
+ *
+ * Leaflet clamps zoom before any zoom event fires, so a refused zoom-out
+ * can't be observed through Leaflet's own events; the raw input is watched
+ * instead. Calls are spaced out so one long wheel spin asks once.
+ */
+export function ZoomOutLimit({ onBlocked }: { onBlocked: () => void }) {
+  const map = useMap();
+  const latest = useRef(onBlocked);
+  useEffect(() => {
+    latest.current = onBlocked;
+  });
+  useEffect(() => {
+    const el = map.getContainer();
+    let last = 0;
+    const atFloor = () => map.getZoom() <= map.getMinZoom();
+    const blocked = () => {
+      const now = Date.now();
+      if (now - last < ZOOM_OUT_PROMPT_GAP_MS) return;
+      last = now;
+      latest.current();
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY > 0 && atFloor()) blocked();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key === "-" || e.key === "_") && atFloor()) blocked();
+    };
+    let pinchStart: number | null = null;
+    const spread = (e: TouchEvent) => Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY,
+    );
+    const onTouchStart = (e: TouchEvent) => {
+      pinchStart = e.touches.length === 2 ? spread(e) : null;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (pinchStart === null || e.touches.length !== 2) return;
+      // Fingers closing together = zoom out.
+      if (spread(e) < pinchStart - 30 && atFloor()) {
+        pinchStart = spread(e);
+        blocked();
+      }
+    };
+    el.addEventListener("wheel", onWheel, { passive: true });
+    el.addEventListener("keydown", onKey);
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: true });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("keydown", onKey);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [map]);
+  return null;
+}
+
 function LakeMarker({ lake, onSelect }: { lake: WaterbodyListItem; onSelect: (id: number) => void }) {
   const isOsm = lake.data_tier === "osm";
   const reported = lake.reported_species_count ?? 0;
@@ -228,6 +293,7 @@ export default function LakeMap({
   onEnterState = () => undefined,
   focusBounds = null,
   onAllStates,
+  onZoomOutBlocked,
 }: {
   waterbodies: WaterbodyListItem[];
   onSelect: (id: number) => void;
@@ -250,6 +316,8 @@ export default function LakeMap({
   focusBounds?: L.LatLngBounds | null;
   // Shown (exploring mode, not placing a pin) when given.
   onAllStates?: () => void;
+  // Called when the person tries to zoom out past exploring mode's floor.
+  onZoomOutBlocked?: () => void;
 }) {
   const verified = waterbodies.filter((w) => w.data_tier !== "osm");
   const osm = waterbodies.filter((w) => w.data_tier === "osm");
@@ -270,6 +338,7 @@ export default function LakeMap({
       <BaseMap />
       <ZoomControl position="bottomright" />
       {mode === "exploring" && !placing && onAllStates && <AllStatesControl onClick={onAllStates} />}
+      {mode === "exploring" && !placing && onZoomOutBlocked && <ZoomOutLimit onBlocked={onZoomOutBlocked} />}
       {/* Only at country scale, and never while placing a pin: a tap then
           means "here", not "go to this state". */}
       {mode === "national" && !placing && <StatesLayer covered={coveredStates} onEnter={onEnterState} />}
