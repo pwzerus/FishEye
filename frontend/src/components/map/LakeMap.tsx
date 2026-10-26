@@ -5,7 +5,7 @@ import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import L from "leaflet";
 import { useEffect, useRef } from "react";
-import { MapContainer, Marker, Popup, ZoomControl, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, Polygon, Popup, ZoomControl, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 
 import type { PinSummary, WaterbodyListItem } from "@/lib/api/types";
@@ -14,10 +14,13 @@ import { BaseMap } from "./BaseMap";
 import { waterIcon } from "./waterIcon";
 import { DraftMarker, PinMarkers, PlaceOnClick } from "./PinLayer";
 import { StatesLayer } from "./StatesLayer";
+import type { StateRegion } from "./usStates";
 import { US_CENTER, US_ZOOM, type MapMode, zoomLimitsFor } from "./zoomPolicy";
 
 const SEARCH_ZOOM = 11;
 const VIEWPORT_DEBOUNCE_MS = 300;
+// Space kept around a state when the map frames it.
+const STATE_PADDING = 24;
 
 export interface Viewport {
   bbox: string; // "west,south,east,north"
@@ -93,56 +96,110 @@ function FlyToFocus({
   return null;
 }
 
+const WORLD_RING: [number, number][] = [
+  [-85, -540],
+  [85, -540],
+  [85, 540],
+  [-85, 540],
+];
+
 /**
- * Applies the zoom limits of the current mode (zoomPolicy.ts), and on the
- * way back to national mode re-centres on the country. Rendered before
- * FitToBounds and FlyToFocus so that, when a state click or a search switches
- * the mode and asks for a new view in the same update, the ceiling is lifted
- * before the map flies in rather than clamping the flight at country scale.
+ * Applies the limits of the current mode (zoomPolicy.ts) and, inside a state,
+ * locks the map to that state: it can't zoom out past the level that shows the
+ * whole state, nor pan away from it. On the way back to national mode it
+ * re-centres on the country.
  *
- * Order matters inside each branch too: Leaflet rejects a minimum above the
- * current maximum, so the limit that moves outward is set first.
+ * Rendered before FlyToFocus so that, when a search switches the mode and asks
+ * for a new view in the same update, the limits are lifted before the map
+ * flies rather than clamping the flight. Applied only when the mode or the
+ * state actually changes: re-applying a floor the map already has is not a
+ * no-op in Leaflet (setMinZoom snaps a map below it up to it), and landing
+ * that mid-flight cancels the flight.
+ *
+ * `fit` frames the whole state — for a state just picked on the national
+ * map. A state worked out from where the map already is (after a search, or
+ * coming back from a lake) is locked without moving the map; so is the state
+ * on a map remounted to restore a view (`skipFitOnMount`).
  */
-function ModeLimits({ mode }: { mode: MapMode }) {
+function ViewLimits({
+  mode,
+  region,
+  fit,
+  skipFitOnMount,
+}: {
+  mode: MapMode;
+  region: StateRegion | null;
+  fit: boolean;
+  skipFitOnMount: boolean;
+}) {
   const map = useMap();
-  const previous = useRef<MapMode | null>(null);
+  const previous = useRef<{ mode: MapMode; code: string | null } | null>(null);
   useEffect(() => {
-    const { min, max } = zoomLimitsFor(mode);
-    // Only when they change. Re-applying a floor the map already has is not
-    // a no-op in Leaflet: setMinZoom snaps any map below it up to it, and if
-    // that lands mid-flight (React re-runs mount effects in development, and
-    // the fly-to for a search or ?at= link starts in the same update) it
-    // cancels the flight and strands the map at state scale.
-    if (map.getMinZoom() === min && map.getMaxZoom() === max && previous.current === mode) return;
+    const code = mode === "exploring" ? (region?.code ?? null) : null;
+    const prev = previous.current;
+    if (prev && prev.mode === mode && prev.code === code) return;
+    previous.current = { mode, code };
+
     if (mode === "national") {
+      const { min, max } = zoomLimitsFor("national");
+      map.setMaxBounds(undefined);
+      // Leaflet rejects a minimum above the current maximum, so the limit
+      // that moves outward is set first.
       map.setMinZoom(min);
-      if (previous.current === "exploring") map.setView(US_CENTER, US_ZOOM, { animate: false });
+      if (prev?.mode === "exploring") map.setView(US_CENTER, US_ZOOM, { animate: false });
       map.setMaxZoom(max);
-    } else {
-      map.setMaxZoom(max);
-      map.setMinZoom(min);
+      return;
     }
-    previous.current = mode;
-  }, [map, mode]);
+
+    const { min, max } = zoomLimitsFor("exploring");
+    map.setMaxZoom(max);
+    if (!region) {
+      map.setMaxBounds(undefined);
+      map.setMinZoom(min);
+      return;
+    }
+    const bounds = L.latLngBounds(region.bounds);
+    const pad = L.point(STATE_PADDING * 2, STATE_PADDING * 2);
+    const floor = Math.max(min, map.getBoundsZoom(bounds, false, pad));
+    if (fit && !(prev === null && skipFitOnMount)) {
+      map.setMaxBounds(undefined);
+      map.fitBounds(bounds, { padding: [STATE_PADDING, STATE_PADDING], animate: false });
+    }
+    map.setMinZoom(floor);
+    map.setMaxBounds(bounds.pad(0.1));
+  }, [map, mode, region, fit, skipFitOnMount]);
   return null;
 }
 
-/** Fits the map to a chosen state's outline (StatesLayer → MapView).
- *
- * Acts only on a state it hasn't fitted yet. When the map is remounted to
- * restore a view (coming back from a lake), the state picked earlier is still
- * the current `bounds`, and re-fitting to it would throw the person from where
- * they zoomed out of the lake back to the whole state. Tracking the applied
- * target, rather than skipping "the first run", also survives React running
- * mount effects twice in development. */
-function FitToBounds({ bounds, skipOnMount }: { bounds: L.LatLngBounds | null; skipOnMount: boolean }) {
+/** Dims everything outside the state being explored and outlines it, so it
+ * reads as "this state", not a crop of the whole map. */
+function RegionMask({ region }: { region: StateRegion }) {
+  return (
+    <>
+      <Polygon
+        positions={[WORLD_RING, ...region.rings]}
+        interactive={false}
+        pathOptions={{ stroke: false, fillColor: "#1d3a30", fillOpacity: 0.22 }}
+      />
+      <Polygon
+        positions={region.rings}
+        interactive={false}
+        pathOptions={{ color: "#1f6b52", weight: 2, opacity: 0.7, fill: false }}
+      />
+    </>
+  );
+}
+
+/** Holds the map still while the "back to all states?" question is open. */
+function Freeze({ frozen }: { frozen: boolean }) {
   const map = useMap();
-  const applied = useRef<L.LatLngBounds | null>(skipOnMount ? bounds : null);
   useEffect(() => {
-    if (!bounds || bounds === applied.current) return;
-    applied.current = bounds;
-    map.fitBounds(bounds, { padding: [24, 24] });
-  }, [bounds, map]);
+    const handlers = [map.scrollWheelZoom, map.dragging, map.touchZoom, map.doubleClickZoom, map.boxZoom, map.keyboard];
+    for (const h of handlers) {
+      if (frozen) h.disable();
+      else h.enable();
+    }
+  }, [map, frozen]);
   return null;
 }
 
@@ -184,7 +241,8 @@ function AllStatesControl({ onClick }: { onClick: () => void }) {
 const ZOOM_OUT_PROMPT_GAP_MS = 1200;
 
 /**
- * Exploring mode stops zooming out at state scale (zoomPolicy.ts), and a map
+ * Inside a state the map stops zooming out once the whole state shows
+ * (ViewLimits), and a map
  * that silently refuses to zoom out reads as broken. This notices someone
  * trying to zoom out further while already at that floor — scroll wheel, the
  * "-" key, or a pinch — and tells the parent, which offers the way back to
@@ -291,7 +349,9 @@ export default function LakeMap({
   coveredStates = null,
   mode = "exploring",
   onEnterState = () => undefined,
-  focusBounds = null,
+  region = null,
+  fitRegion = false,
+  frozen = false,
   onAllStates,
   onZoomOutBlocked,
 }: {
@@ -312,8 +372,12 @@ export default function LakeMap({
   // National (states only, zoom locked) or exploring — zoomPolicy.ts.
   mode?: MapMode;
   onEnterState?: (bounds: L.LatLngBounds, code: string) => void;
-  // A state the person just picked, to fit the map to.
-  focusBounds?: L.LatLngBounds | null;
+  // The state being explored: the map shows it alone and can't leave it.
+  region?: StateRegion | null;
+  // Frame the whole state (it was just picked) rather than lock in place.
+  fitRegion?: boolean;
+  // Hold the map still (a question about leaving the state is open).
+  frozen?: boolean;
   // Shown (exploring mode, not placing a pin) when given.
   onAllStates?: () => void;
   // Called when the person tries to zoom out past exploring mode's floor.
@@ -329,6 +393,8 @@ export default function LakeMap({
       minZoom={MAP_MIN_ZOOM}
       maxZoom={MAP_MAX_ZOOM}
       scrollWheelZoom
+      // A hard edge at the state's border (ViewLimits), not a rubber band.
+      maxBoundsViscosity={1}
       className={placing ? "is-placing" : undefined}
       // Moved to the bottom right: the search bar sits in the top left,
       // where Leaflet puts the zoom buttons by default.
@@ -342,8 +408,9 @@ export default function LakeMap({
       {/* Only at country scale, and never while placing a pin: a tap then
           means "here", not "go to this state". */}
       {mode === "national" && !placing && <StatesLayer covered={coveredStates} onEnter={onEnterState} />}
-      <ModeLimits mode={mode} />
-      <FitToBounds bounds={focusBounds} skipOnMount={initialView !== null} />
+      <ViewLimits mode={mode} region={region} fit={fitRegion} skipFitOnMount={initialView !== null} />
+      <Freeze frozen={frozen} />
+      {mode === "exploring" && region && <RegionMask region={region} />}
       <ViewportWatcher onChange={onViewportChange} loadOnMount={initialView !== null} />
       <FlyToFocus focusPoint={focusPoint} skipOnMount={initialView !== null} />
 

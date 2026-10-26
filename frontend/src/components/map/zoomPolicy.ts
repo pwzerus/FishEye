@@ -10,10 +10,13 @@
  * the map as a dense clump, and it also kept requesting higher-zoom basemap
  * tiles nobody had asked for.
  *
- * EXPLORING — a state or a place. Zoom locked to 5–18. Entered only by an
- * explicit act: clicking a state that has lakes, searching, or allowing
- * location. Left only by the "All states" button. Once in, the map is an
- * ordinary map: pan across a state line and the other side's lakes load too.
+ * EXPLORING — one state. Entered only by an explicit act: clicking a state
+ * that has lakes, searching, or allowing location (the state is then the one
+ * the map lands in). Only that state's lakes load, and the map can't be
+ * zoomed out past the level that shows the whole state nor panned away from
+ * it (LakeMap's ViewLimits); trying to zoom out further offers the way back.
+ * Left by that offer or the "All states" button. The zoom range below is the
+ * outer bound; the state's own floor is usually a level or two tighter.
  *
  *   5 – 7   verified lakes only — a statewide view holds thousands of
  *           OpenStreetMap lakes, and a capped subset of them would look like

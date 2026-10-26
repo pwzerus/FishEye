@@ -18,6 +18,7 @@ import type L from "leaflet";
 import type { Viewport } from "./LakeMap";
 import { LocationSearchBar, type LocatedPoint } from "./LocationSearchBar";
 import { MapLegend } from "./MapLegend";
+import { type StateRegion, loadStates, regionOf, stateCodeAt } from "./usStates";
 import {
   MIN_ZOOM_FOR_ALL_LAKES,
   type MapMode,
@@ -87,8 +88,17 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     modeRef.current = next;
     setModeState(next);
   }, []);
-  // A state just picked on the national map, for the map to fit itself to.
-  const [focusBounds, setFocusBounds] = useState<L.LatLngBounds | null>(null);
+  // The one state being explored. The map shows only its lakes and can't be
+  // zoomed or panned out of it (LakeMap's ViewLimits). `fit` frames the whole
+  // state — set when it was just picked on the national map; a state worked
+  // out from where the map already is (a search, a link, back from a lake)
+  // is locked in place instead.
+  const [region, setRegionState] = useState<{ state: StateRegion; fit: boolean } | null>(null);
+  const regionRef = useRef<StateRegion | null>(null);
+  const setRegion = useCallback((next: { state: StateRegion; fit: boolean } | null) => {
+    regionRef.current = next?.state ?? null;
+    setRegionState(next);
+  }, []);
   // Where the single-lake map is looking; see leaveLake.
   const detailView = useRef<MapViewState | null>(null);
   const [zoom, setZoom] = useState<number | null>(null);
@@ -108,6 +118,8 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   // Which states have lakes on file: lights them on the national map and
   // names them when a search lands somewhere empty. null = not known (yet).
   const [coverage, setCoverage] = useState<{ codes: Set<string>; names: string[] } | null>(null);
+  const coverageRef = useRef<Set<string> | null>(null);
+  coverageRef.current = coverage?.codes ?? null;
 
   const [showPins, setShowPins] = useState(true);
   const [pins, setPins] = useState<PinSummary[]>([]);
@@ -174,21 +186,28 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   }
 
   const enterState = useCallback(
-    (bounds: L.LatLngBounds, code: string) => {
-      setMode("exploring");
-      setFocusBounds(bounds);
-      // Ask, the handbook and the guides show this state's rules from now on
-      // (lib/jurisdiction.ts); the picker on those pages can change it.
-      rememberState(code);
+    (_bounds: L.LatLngBounds, code: string) => {
+      // The states file is already loaded: the national map drew it.
+      loadStates()
+        .then((file) => {
+          const state = regionOf(file, code);
+          if (!state) return;
+          setRegion({ state, fit: true });
+          setMode("exploring");
+          // Ask, the handbook and the guides show this state's rules from now
+          // on (lib/jurisdiction.ts); the picker on those pages can change it.
+          rememberState(code);
+        })
+        .catch((e: unknown) => console.error("could not open state:", e));
     },
-    [setMode],
+    [setMode, setRegion],
   );
 
   function backToStates() {
     setAskBack(false);
     setMode("national");
     setFocusPoint(null); // also clears the "no lakes near …" banner
-    setFocusBounds(null);
+    setRegion(null);
     setLastView(null);
     clearLakesAndPins();
   }
@@ -235,10 +254,42 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     // someone to the locked national map.
     setLastView({ center, zoom: newZoom });
     const requestId = ++latestRequest.current;
-    setLoading(true);
     lastBbox.current = bbox;
     if (showPins) loadPins(bbox);
-    listWaterbodies({ bbox, ...query, limit: VIEWPORT_LIMIT })
+
+    const state = regionRef.current;
+    if (!state) {
+      // Lakes are only ever one state's. While placing a pin the map roams
+      // free and shows none; otherwise (a search, a link, back from a lake)
+      // the state is the one under the middle of the map, which then locks.
+      setWaterbodies([]);
+      setTruncated(false);
+      if (placing) {
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      loadStates()
+        .then((file) => {
+          if (requestId !== latestRequest.current || regionRef.current) return;
+          const code = stateCodeAt(file, center[0], center[1], coverageRef.current);
+          const found = code ? regionOf(file, code) : null;
+          if (!found) {
+            setLoading(false);
+            return;
+          }
+          setRegion({ state: found, fit: false });
+          if (coverageRef.current?.has(found.code)) rememberState(found.code);
+          handleViewportChange({ bbox, zoom: newZoom, center });
+        })
+        .catch(() => {
+          if (requestId === latestRequest.current) setLoading(false);
+        });
+      return;
+    }
+
+    setLoading(true);
+    listWaterbodies({ bbox, stateCode: state.code, ...query, limit: VIEWPORT_LIMIT })
       .then((lakes) => {
         if (requestId !== latestRequest.current) return;
         setWaterbodies(lakes);
@@ -256,6 +307,9 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
 
   function handleLocate(point: LocatedPoint) {
     setSelectedId(null);
+    // The place may be in another state: unlock, fly there, and lock to
+    // whichever state the map lands in.
+    setRegion(null);
     setMode("exploring");
     // Flying there fires moveend, which loads that area's lakes through
     // handleViewportChange like any other pan.
@@ -393,7 +447,9 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
               coveredStates={coverage?.codes ?? null}
               mode={mode}
               onEnterState={enterState}
-              focusBounds={focusBounds}
+              region={national ? null : (region?.state ?? null)}
+              fitRegion={region?.fit ?? false}
+              frozen={askBack && !national && !placing}
               onAllStates={backToStates}
               onZoomOutBlocked={offerBackToStates}
             />
@@ -406,7 +462,10 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
                   if (e.key === "Escape") stayHere();
                 }}
               >
-                <p>That&apos;s as far out as the lake view goes. Go back to the map of all states?</p>
+                <p>
+                  {region ? `That's all of ${region.state.name}.` : "That's as far out as the lake view goes."} Go
+                  back to the map of all states?
+                </p>
                 <div className="zoom-out-prompt-actions">
                   <button ref={askBackButton} type="button" className="btn btn-primary btn-sm" onClick={backToStates}>
                     Back to all states

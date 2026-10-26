@@ -1,33 +1,19 @@
 "use client";
 
-import type { Feature, FeatureCollection, Geometry } from "geojson";
+import type { Feature, Geometry } from "geojson";
 import L from "leaflet";
 import { useEffect, useState } from "react";
 import { GeoJSON, useMap } from "react-leaflet";
 
-type StateProps = { code: string; name: string };
-type StatesFile = FeatureCollection<Geometry, StateProps>;
-
-// Census state boundaries, built once from us-atlas (see the file's
-// "source" field). A static file rather than a dependency: 55 KB gzipped,
-// fetched only by the map page, cached across remounts of the map.
-let statesFile: Promise<StatesFile> | null = null;
-function loadStates(): Promise<StatesFile> {
-  statesFile ??= fetch("/geo/us-states.json").then((r) => {
-    if (!r.ok) throw new Error(`us-states.json: ${r.status}`);
-    return r.json() as Promise<StatesFile>;
-  });
-  return statesFile;
-}
+import { type StateProps, type StatesFile, loadStates } from "./usStates";
 
 /**
  * The way into the map at country scale: every state as a shape. Clicking a
  * state FishEye has lakes for reports it through `onEnter`; MapView then
  * switches the map into exploring mode and fits it to the state
- * (zoomPolicy.ts). After that it's the ordinary map — pan anywhere, across
- * state lines too. The state is an entrance, not a filter: someone north of
- * Dallas may be closest to a lake on the Oklahoma side, and that should just
- * show up.
+ * (zoomPolicy.ts). From then on the map is that state alone: only its lakes,
+ * and it can't be zoomed or panned out past the state. The way to another
+ * state is back through this map.
  *
  * A state with nothing on file says so and stays put, rather than flying the
  * person to an empty map.
@@ -51,7 +37,6 @@ export function StatesLayer({
     loadStates()
       .then((d) => live && setData(d))
       .catch((e: unknown) => {
-        statesFile = null; // let a later mount retry
         console.error("state boundaries failed to load:", e);
       });
     return () => {
