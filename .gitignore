@@ -66,6 +66,10 @@ frontend-preview/
 # Server login keys must never be committed
 *.pem
 
+# Claude Code's local settings (dev-server launch config, skill copies;
+# the skills themselves are kept in docs/skills/)
+/.claude/
+
 # Local screenshots for reviewing a change; never committed
 /screenshots/
 /reports/
