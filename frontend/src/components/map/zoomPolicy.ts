@@ -28,6 +28,9 @@ export type MapMode = "national" | "exploring";
 
 export const MIN_ZOOM_FOR_LAKES = 5;
 export const MIN_ZOOM_FOR_ALL_LAKES = 8;
+/** Bait and tackle shops show from the same zoom: at state scale a state's
+ * hundred-odd shops would bury the lakes they are there to serve. */
+export const MIN_ZOOM_FOR_SHOPS = MIN_ZOOM_FOR_ALL_LAKES;
 
 /** Where the map opens for someone we know nothing about: the lower 48. */
 export const US_CENTER: [number, number] = [39.5, -98.35];
@@ -35,6 +38,23 @@ export const US_ZOOM = 4;
 
 const NATIONAL_MIN_ZOOM = 3;
 const EXPLORING_MAX_ZOOM = 18;
+
+/** A searched place: the town and the lakes around it. */
+export const SEARCH_ZOOM = 11;
+/** The person's own position: street level, the streets around them readable. */
+export const LOCATION_ZOOM = 15;
+
+/**
+ * How close "Use my location" zooms. Street level, unless the browser's fix
+ * is too rough for that (a laptop placed by its network can be off by
+ * kilometres): then the zoom that shows the whole area it may be in, so the
+ * map doesn't point at a street it can't know, and never wider than a search.
+ * `fitsAccuracy` is the zoom that frames that area on this map.
+ */
+export function locationZoom(fitsAccuracy: number): number {
+  if (!Number.isFinite(fitsAccuracy)) return LOCATION_ZOOM;
+  return Math.max(SEARCH_ZOOM, Math.min(LOCATION_ZOOM, fitsAccuracy));
+}
 
 export function zoomLimitsFor(mode: MapMode): { min: number; max: number } {
   return mode === "national"

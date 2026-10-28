@@ -24,23 +24,27 @@ None of them answers "near me", and most assume you already know the jargon.
 FishEye pulls those sources into one place, organised around **where you are**:
 
 1. **Find water nearby.** Your location (or a search) centres the map; nearby
-   lakes load for whatever is in view. Every named lake in Texas can be loaded
-   from OpenStreetMap, and 160 of the 175 lakes Texas Parks & Wildlife (TPWD)
-   publishes a page for are verified on top.
-2. **Know what you'll find, and where to get in.** On those 160 lakes the
-   species come from TPWD's own lists and survey reports, TPWD's
-   poor-to-excellent fishing ratings are shown as TPWD wrote them, and the
-   public boat ramps come from TPWD's statewide ramp dataset (about 900).
-   Elsewhere, species *reported* in museum, agency and citizen-science records
-   (GBIF) are shown as exactly that, and entrances from OpenStreetMap are
-   labelled unverified.
+   lakes load for whatever is in view. Every named lake in all 50 states and
+   DC comes from OpenStreetMap (about 65,000), with lakes verified by state
+   agencies on top: 160 from Texas Parks & Wildlife (TPWD), Georgia WRD's
+   access sites, and in California every lake CDFW stocks.
+2. **Know what you'll find, and where to get in.** Species come from agency
+   surveys, stocking schedules and plans, and state fish records, each as a
+   fact in FishEye's own words with a link to the source; TPWD's
+   poor-to-excellent ratings and public boat ramps are shown with "Data:
+   TPWD". Species *reported* in museum, agency and citizen-science records
+   (GBIF, USGS) are shown as exactly that. Entrances from OpenStreetMap are
+   labelled unverified, and a lake on public land (PAD-US) says so.
 3. **Know when and how.** A spot score and morning/evening bite windows from
    the National Weather Service forecast, reviewed guides for nineteen species and an angler's handbook,
    and a Q&A over those guides that answers in plain language and cites them.
 
-Lake data is Texas's today, and fishing rules are written for Texas,
-Georgia and California; the data model, importers, guides and Ask are per-state (see
-[Roadmap](#roadmap) and ADRs 0027–0028).
+Lakes cover every state; official data covers Texas, Georgia and California,
+and fishing rules are written for those three; the data model, importers,
+guides and Ask are per-state (see [Roadmap](#roadmap), ADRs 0027–0028 and
+0034–0036). Every data source, its terms and its credit is listed in
+[`docs/data-sources.md`](docs/data-sources.md); which OpenStreetMap water
+counts as a lake is the skill [`fisheye-osm-lakes`](docs/skills/fisheye-osm-lakes/SKILL.md).
 
 ## What it does
 
@@ -161,7 +165,7 @@ a production frontend build, and a Docker build with smoke tests on every push.
   keyless weather (NWS) and OpenStreetMap tiles mean a clean clone works
   with `docker compose up`, and the failure paths are tested, not just the
   happy path.
-- **Decisions written down.** 26 architecture decision records in
+- **Decisions written down.** 35 architecture decision records in
   [`docs/adr/`](docs/adr/), each with the alternatives considered and the
   trade-off taken.
 

@@ -5,8 +5,9 @@ import { useEffect, useRef } from "react";
 import { Marker, Popup, useMapEvents } from "react-leaflet";
 import type { Marker as LeafletMarker } from "leaflet";
 
-import { catchIcon } from "./catchIcon";
+import { speciesCheckText } from "@/components/community/PinCard";
 import type { PinSummary } from "@/lib/api/types";
+import { catchIcon } from "./catchIcon";
 
 /** Community pins on the main map, each with a small preview popup. */
 export function PinMarkers({ pins }: { pins: PinSummary[] }) {
@@ -27,7 +28,14 @@ export function PinMarkers({ pins }: { pins: PinSummary[] }) {
               )}
               <strong>{p.title}</strong>
               <span>
-                {p.species_label ?? "Catch"} · {p.is_mine ? "you" : p.author.display_name}
+                {p.species_label ?? "Catch"}
+                {p.species_check && (
+                  <span className="catch-pop-check" title={speciesCheckText(p) ?? undefined}>
+                    {" "}✓ {p.species_check === "confirmed" ? "photo-checked" : "photo shows " + (p.species_check_label ?? "a look-alike")}
+                  </span>
+                )}
+                {" · "}
+                {p.is_mine ? "you" : p.author.display_name}
                 {p.visibility === "private" ? " · only you" : ""}
               </span>
               <Link href={`/community/${p.id}`}>Open pin →</Link>

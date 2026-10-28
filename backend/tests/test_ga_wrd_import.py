@@ -95,7 +95,7 @@ def test_a_site_on_a_lake_of_its_name_confirms_the_lake(db_session):
     assert all(link.confidence == "confirmed" and "Acworth Beach" in link.evidence for link in wb.species_links)
     profile = wb.agency_profile
     assert profile.agency == "ga_wrd" and profile.agency_name == "Lake Acworth"
-    assert profile.predominant_species == ["Largemouth bass", "Bluegill", "Redbreast sunfish"]
+    assert profile.predominant_species == ["Bluegill", "Largemouth Bass", "Redbreast Sunfish"]
     assert profile.page_url == wrd.MAP_PAGE and profile.surface_acres == 300
 
 

@@ -112,7 +112,6 @@ describe("AskChat", () => {
 
     expect(await screen.findByText("From the guides")).toBeInTheDocument();
     expect(screen.getByText(/White Crappie · Live and natural bait/)).toBeInTheDocument();
-    expect(screen.getByText("No model: these are the guide's own words")).toBeInTheDocument();
     expect(mockedSummary).not.toHaveBeenCalled();
   });
 
@@ -200,17 +199,15 @@ describe("AskChat", () => {
     expect(rulesLink).toHaveAttribute("href", "/fish#bait_rules");
   });
 
-  it("opens a trace showing what was retrieved, what was cited and how it was checked", async () => {
+  it("keeps how the answer was found to developers: no scores, model usage or trace id", async () => {
     mockedAsk.mockResolvedValue(response());
     render(<AskChat suggestions={SUGGESTIONS} />);
     await askVia("what bait for crappie");
     await screen.findByText("Use small live minnows.");
 
-    expect(screen.getByText("Sources & answer details")).toBeInTheDocument();
-    expect(screen.getByText("black-crappie#live_baits")).toBeInTheDocument();
-    expect(screen.getAllByText("cited")).toHaveLength(2);
-    expect(screen.getByText("Passed every check")).toBeInTheDocument();
-    expect(screen.getByText(/routed to white-crappie, black-crappie/)).toBeInTheDocument();
+    expect(screen.queryByText("Sources & answer details")).not.toBeInTheDocument();
+    expect(screen.queryByText("black-crappie#live_baits")).not.toBeInTheDocument();
+    expect(screen.queryByText(/BM25|claude-haiku|tokens|abcdef12/)).not.toBeInTheDocument();
   });
 
   it.each([
@@ -245,13 +242,14 @@ describe("AskChat", () => {
     expect(screen.queryByText("AI answer · checked")).not.toBeInTheDocument();
   });
 
-  it("explains a rejected model answer in the trace", async () => {
+  it("explains a rejected model answer in plain words, without the check's code name", async () => {
     const base = response({ answer_source: "fallback" });
     mockedAsk.mockResolvedValue({ ...base, trace: { ...base.trace, outcome: "ungrounded_number", validation_attempts: 2 } });
     render(<AskChat suggestions={SUGGESTIONS} />);
     await askVia("hook size?");
-    expect(await screen.findByText(/used a number the passages don't give/)).toBeInTheDocument();
-    expect(screen.getByText("(2 attempts)")).toBeInTheDocument();
+    const badge = await screen.findByText("Straight from the guides");
+    expect(badge).toHaveAttribute("title", "The AI summary couldn't be used, so this is the guide's own text");
+    expect(screen.queryByText(/ungrounded|attempts/)).not.toBeInTheDocument();
   });
 
   it("offers a retry when the backend can't be reached", async () => {

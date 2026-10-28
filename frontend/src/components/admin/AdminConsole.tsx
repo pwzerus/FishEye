@@ -20,7 +20,8 @@ import {
   adminUpdateUser,
   adminUsers,
 } from "@/lib/api/session";
-import type { AdminPin, AdminReportGroup, AdminStats, AdminUser, AuditEntry, Paged } from "@/lib/api/types";
+import type { AdminPin, AdminReportGroup, AdminStats, AdminUser, AuditEntry, Paged, PinSummary } from "@/lib/api/types";
+import { useJurisdictions } from "@/lib/jurisdiction";
 import { TpwdRefresh } from "./TpwdRefresh";
 
 const TABS = [
@@ -32,6 +33,14 @@ const TABS = [
   { id: "data", label: "Data refresh" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
+
+/** The photo check on the species named (backend services/fish_id.py), for moderators. */
+function checkNote(pin: Pick<PinSummary, "species_label" | "species_check" | "species_check_label">): string {
+  if (!pin.species_label) return "";
+  if (pin.species_check === "confirmed") return " (photo-checked)";
+  if (pin.species_check === "group") return ` (photo: ${pin.species_check_label ?? "look-alike"})`;
+  return " (not photo-checked)";
+}
 
 function when(iso: string | null): string {
   if (!iso) return "never";
@@ -245,7 +254,7 @@ function Reports({ confirmThen }: { confirmThen: (p: Pending) => void }) {
     const copy = {
       dismiss: { title: "Dismiss these reports?", body: "The pin stays up (and comes back if the reports had hidden it).", confirm: "Dismiss", danger: false },
       hide: { title: "Hide this pin?", body: "Only its owner and admins will see it. You can restore it later.", confirm: "Hide pin", danger: false },
-      remove: { title: "Remove this pin?", body: "Removed pins are hidden from everyone but admins, and the owner can't edit them. Reversible from the Pins tab.", confirm: "Remove pin", danger: true },
+      remove: { title: "Remove this pin?", body: "Removed pins are hidden from everyone but admins, and the owner can't edit them (only delete them). Reversible from the Pins tab.", confirm: "Remove pin", danger: true },
     }[action];
     confirmThen({
       ...copy,
@@ -268,7 +277,7 @@ function Reports({ confirmThen }: { confirmThen: (p: Pending) => void }) {
                 {g.pin.title}
               </Link>
               <p className="muted small">
-                by {g.pin.author.display_name} · {g.pin.species_label ?? "no species"} · status {g.pin.status}
+                by {g.pin.author.display_name} · {g.pin.species_label ?? "no species"}{checkNote(g.pin)} · status {g.pin.status}
               </p>
             </div>
             <span className="report-count">{g.reports.length}</span>
@@ -324,6 +333,8 @@ function Pager({ page, total, size, onPage }: { page: number; total: number; siz
 function Pins({ confirmThen }: { confirmThen: (p: Pending) => void }) {
   const [status, setStatus] = useState("");
   const [visibility, setVisibility] = useState("");
+  const [state, setState] = useState("");
+  const states = useJurisdictions();
   const [q, setQ] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -332,8 +343,8 @@ function Pins({ confirmThen }: { confirmThen: (p: Pending) => void }) {
   const toast = useToast();
 
   const load = useCallback(() => {
-    adminPins({ status, visibility, q: query, page }).then(setData).catch((e) => setError(errText(e)));
-  }, [status, visibility, query, page]);
+    adminPins({ status, visibility, state, q: query, page }).then(setData).catch((e) => setError(errText(e)));
+  }, [status, visibility, state, query, page]);
   useEffect(load, [load]);
 
   const setPinStatus = (p: AdminPin, s: "published" | "hidden" | "removed") =>
@@ -374,6 +385,14 @@ function Pins({ confirmThen }: { confirmThen: (p: Pending) => void }) {
           <option value="public">Public</option>
           <option value="private">Only-me</option>
         </select>
+        <select aria-label="State" value={state} onChange={(e) => { setState(e.target.value); setPage(1); }}>
+          <option value="">Any state</option>
+          {states?.map((j) => (
+            <option key={j.code} value={j.code}>
+              {j.name}
+            </option>
+          ))}
+        </select>
         <button type="submit" className="btn btn-ghost btn-sm">
           Search
         </button>
@@ -405,7 +424,8 @@ function Pins({ confirmThen }: { confirmThen: (p: Pending) => void }) {
                           <Link href={`/community/${p.id}`} className="text-link">
                             {p.title}
                           </Link>
-                          <div className="muted small">{p.species_label ?? "—"}{p.visibility === "private" ? " · only-me" : ""}</div>
+                          <div className="muted small">{p.species_label ?? "—"}{checkNote(p)}{p.visibility === "private" ? " · only-me" : ""}</div>
+                          {p.county_name && <div className="muted small">{p.lake ? `${p.lake.name} · ` : ""}{p.county_name}, {p.state_code}</div>}
                         </div>
                       </div>
                     </td>

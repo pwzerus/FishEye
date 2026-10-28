@@ -30,6 +30,32 @@ logger = logging.getLogger(__name__)
 # NOT NULL column to a table that already has rows.
 _ADD_EXTENT = "ALTER TABLE waterbodies ADD COLUMN extent_km2 FLOAT NOT NULL DEFAULT 0"
 
+# Nullable columns added since: (table, column, DDL type). Nothing to
+# backfill; the importers that fill them say so when they run.
+_NULLABLE_COLUMNS = (
+    ("waterbodies", "dfg_water_id", "INTEGER"),
+    ("waterbodies", "official_name", "VARCHAR(128)"),
+    ("waterbodies", "public_land", "VARCHAR(16)"),
+    ("waterbodies", "public_land_name", "VARCHAR(160)"),
+    ("waterbodies", "public_land_manager", "VARCHAR(64)"),
+    ("source_records", "source_key", "VARCHAR(64)"),
+    ("source_records", "title", "VARCHAR(256)"),
+    ("source_records", "licence_class", "VARCHAR(16)"),
+    ("source_records", "licence_name", "VARCHAR(128)"),
+    ("source_records", "citation", "TEXT"),
+    # The photo check on catches (services/fish_id.py).
+    ("catch_pins", "species_check", "VARCHAR(16)"),
+    ("catch_pins", "species_check_confidence", "FLOAT"),
+    ("catch_pins", "species_detected", "VARCHAR(64)"),
+    ("catch_pins", "species_check_model", "VARCHAR(64)"),
+    ("catch_pins", "species_check_photo_id", "INTEGER"),
+    # Browsing catches by state and county (services/counties.py); startup
+    # fills them for pins saved before (services/pins.fill_places).
+    ("catch_pins", "state_code", "VARCHAR(2)"),
+    ("catch_pins", "county_geoid", "VARCHAR(5)"),
+    ("catch_pins", "county_name", "VARCHAR(64)"),
+)
+
 _INDEXES = (
     (
         "ix_waterbodies_state_id",
@@ -44,7 +70,18 @@ _INDEXES = (
         "ix_waterbodies_extent",
         "CREATE INDEX IF NOT EXISTS ix_waterbodies_extent ON waterbodies (extent_km2 DESC)",
     ),
+    (
+        "ix_waterbodies_dfg_water_id",
+        "CREATE INDEX IF NOT EXISTS ix_waterbodies_dfg_water_id ON waterbodies (dfg_water_id)",
+    ),
 )
+
+# On tables other than waterbodies. A fresh database gets the same
+# uniqueness from the model's unique=True.
+_OTHER_INDEXES = (
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_source_records_source_key ON source_records (source_key)",
+)
+_PIN_PLACE_INDEX = "CREATE INDEX IF NOT EXISTS ix_catch_pins_place ON catch_pins (state_code, county_geoid)"
 
 
 def ensure_waterbody_ranking_schema(engine: Engine) -> None:
@@ -55,13 +92,36 @@ def ensure_waterbody_ranking_schema(engine: Engine) -> None:
     if not inspector.has_table("waterbodies"):
         return  # create_all has not run; nothing to upgrade
 
-    columns = {c["name"] for c in inspector.get_columns("waterbodies")}
+    columns = {
+        table: {c["name"] for c in inspector.get_columns(table)}
+        for table in ("waterbodies", "source_records", "catch_pins")
+        if inspector.has_table(table)
+    }
     with engine.begin() as conn:
-        if "extent_km2" not in columns:
+        if "extent_km2" not in columns["waterbodies"]:
             conn.execute(text(_ADD_EXTENT))
             logger.info(
                 "Added waterbodies.extent_km2. Existing OpenStreetMap lakes rank "
                 "last until the importer is re-run (it fills the column)."
             )
+        for table, column, ddl_type in _NULLABLE_COLUMNS:
+            if table in columns and column not in columns[table]:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl_type}"))
+                logger.info("Added %s.%s.", table, column)
         for _name, ddl in _INDEXES:
             conn.execute(text(ddl))
+        if "source_records" in columns:
+            for ddl in _OTHER_INDEXES:
+                conn.execute(text(ddl))
+        if "catch_pins" in columns:
+            conn.execute(text(_PIN_PLACE_INDEX))
+
+
+def prepare_database(engine: Engine) -> None:
+    """What the API does at startup, for command-line importers: build any
+    missing table, then bring existing tables up to the current columns."""
+    from app.db.session import Base
+    import app.models  # noqa: F401  (registers every table on Base)
+
+    Base.metadata.create_all(bind=engine)
+    ensure_waterbody_ranking_schema(engine)

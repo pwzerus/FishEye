@@ -38,9 +38,10 @@ export type WaterType = "lake" | "reservoir" | "pond";
 
 // "verified": hand-curated or from an official source (TPWD) — species,
 //   confirmed-public access, scoring and AI explanations all apply.
-// "osm": imported from OpenStreetMap to show that a lake exists at all.
-//   Community-mapped, no species, entrances are "osm_reported" and never
-//   scored. See backend/app/models/waterbody.py and ADR 0010.
+// "osm": unverified: mapped by OpenStreetMap (or, in California, only by
+//   CDFW's lake layer) to show that a lake exists. Entrances are
+//   "osm_reported" and never scored; species appear only when an official
+//   source (a survey, a state record) names them. See ADR 0010 and 0034.
 export type DataTier = "verified" | "osm";
 export type PublicAccessStatus = "open" | "closed" | "unknown" | "likely_private";
 
@@ -62,6 +63,17 @@ export interface AccessPoint {
   parking: boolean;
 }
 
+// One official fact that the species is in the lake (a stocking, a survey,
+// a state record): FishEye's own sentence and a link to the source.
+// Mirrors EvidenceItemOut in backend/app/schemas/waterbody.py.
+export interface EvidenceItem {
+  evidence: string;
+  source_url: string;
+  kind: "stocking" | "stocking_plan" | "survey" | "record" | string;
+  year: number | null;
+  publisher: string | null;
+}
+
 export interface SpeciesSummary {
   common_name: string;
   difficulty: string;
@@ -69,6 +81,18 @@ export interface SpeciesSummary {
   evidence: string;
   source_url: string;
   observed_at: string;
+  // Every official fact behind it, newest first; empty when `evidence` is
+  // the only one.
+  evidence_items?: EvidenceItem[];
+}
+
+// A dataset behind a lake's facts, with the credit it asks for.
+export interface DatasetSource {
+  title: string;
+  publisher: string;
+  licence: string | null;
+  citation: string | null;
+  url: string;
 }
 
 // Mirrors ReportedSpeciesOut in backend/app/schemas/waterbody.py. A species
@@ -93,8 +117,8 @@ export interface ReportedSpecies {
   also_confirmed: boolean;
 }
 
-// Mirrors backend/app/schemas/waterbody.py AgencyProfileOut: what the state
-// agency itself publishes about a lake, in its own words.
+// Mirrors backend/app/schemas/waterbody.py AgencyProfileOut: the facts the
+// state agency publishes about a lake (size, depth, its fish), with links.
 export type AgencyRatingLevel = "Poor" | "Fair" | "Good" | "Excellent";
 
 export interface AgencyRating {
@@ -150,6 +174,16 @@ export interface WaterbodyDetail {
   reported_species: ReportedSpecies[];
   agency_profile?: AgencyProfile | null;
   fish_attractors?: FishAttractor[];
+  // The lake's name on the state agency's map, when it differs from `name`.
+  official_name?: string | null;
+  // PAD-US: the lake's centre is on land open to the public ("open") or
+  // open with limits ("restricted"); null when PAD-US says neither.
+  public_land?: "open" | "restricted" | null;
+  public_land_name?: string | null;
+  public_land_manager?: string | null;
+  // "Data: <state agency>" for facts that came from it.
+  data_credit?: string | null;
+  sources?: DatasetSource[];
 }
 
 // Mirrors backend/app/schemas/admin.py.
@@ -538,6 +572,24 @@ export interface PinPhoto {
   height: number;
 }
 
+/** A bait or tackle shop OpenStreetMap maps (backend app/api/shops.py). */
+export interface Shop {
+  id: number;
+  name: string;
+  // bait: sells bait (and usually tackle); tackle: fishing gear;
+  // store: a fishing retailer's store (Bass Pro Shops, Cabela's, Academy).
+  kind: "bait" | "tackle" | "store";
+  latitude: number;
+  longitude: number;
+  address: string | null;
+  phone: string | null;
+  website: string | null;
+  opening_hours: string | null;
+  osm_url: string;
+  // Straight-line, from the point asked about (listShopsNear only).
+  distance_km?: number | null;
+}
+
 export interface PinSummary {
   id: number;
   latitude: number;
@@ -545,6 +597,12 @@ export interface PinSummary {
   title: string;
   species_slug: string | null;
   species_label: string | null;
+  // The photo check (backend services/fish_id.py): "confirmed" = the photo
+  // shows this species; "group" = a look-alike of it, `species_check_label`
+  // says which kind ("a black bass") and the species is the angler's call;
+  // null = no species named, or not checked.
+  species_check: "confirmed" | "group" | null;
+  species_check_label: string | null;
   caught_on: string | null;
   created_at: string;
   visibility: PinVisibility;
@@ -553,9 +611,61 @@ export interface PinSummary {
   status_reason: string | null;
   author: { id: number; display_name: string };
   lake: { id: number; name: string } | null;
+  // Where it is (Census counties): "TX", "48201", "Harris County".
+  state_code?: string | null;
+  county_geoid?: string | null;
+  county_name?: string | null;
   photo_count: number;
   thumb_url: string | null;
   is_mine: boolean;
+}
+
+/** GET /api/pins/places: one level of browsing catches by place. `id` is a
+ * state code, a county GEOID, or a lake id ("0": not at a mapped lake). */
+export interface PinPlace {
+  id: string;
+  name: string;
+  count: number;
+}
+
+export interface PinPlaces {
+  level: "state" | "county" | "lake";
+  places: PinPlace[];
+  state_name?: string | null;
+  county_name?: string | null;
+}
+
+/** GET /api/pins/where: the county a point is in. */
+export interface PinWhere {
+  state_code: string | null;
+  state_name: string | null;
+  county_geoid: string | null;
+  county_name: string | null;
+}
+
+/** POST /api/fish-id: what a catch photo shows (backend app/api/pins.py). */
+export interface FishCandidate {
+  slug: string;
+  label: string;
+  probability: number;
+  in_guides: boolean; // one of the species a catch can name
+}
+
+export interface FishVerdict {
+  status: "confirmed" | "group" | "mismatch" | "other_fish" | "no_fish" | "unsure";
+  accepted: boolean;
+  detected: string | null;
+  detected_label: string | null;
+  detected_in_guides: boolean;
+  message: string;
+}
+
+export interface FishIdResult {
+  available: boolean; // false: the server doesn't check photos (FISH_ID=off)
+  model: string | null;
+  fish_probability: number | null;
+  candidates: FishCandidate[];
+  verdict: FishVerdict | null; // only when a species was given
 }
 
 export interface PinDetail extends PinSummary {

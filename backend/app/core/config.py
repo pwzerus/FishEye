@@ -78,6 +78,13 @@ class Settings(BaseSettings):
     max_photos_per_pin: int = 4
     # Distinct open reports that hide a pin until an admin looks at it.
     report_auto_hide_threshold: int = 3
+    # The photo check on catches (services/fish_id.py, docs/adr/0037). "on":
+    # a catch that names a species needs a photo the recognizer agrees with,
+    # and waits (503) while the model isn't installed rather than go
+    # unchecked. "off": no check, for the test suite and CI, which don't
+    # carry the 300 MB model.
+    fish_id: str = "on"
+    fish_id_model_dir: str = "models/fish-id"
 
     # Per-client request limits on the endpoints anyone can call
     # (app/api/rate_limits.py). Only for turning them off in a pinch.

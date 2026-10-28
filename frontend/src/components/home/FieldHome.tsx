@@ -8,6 +8,8 @@ import { waterFor } from "@/lib/fishArt";
 
 export const dynamic = "force-dynamic";
 
+const FEEDBACK_EMAIL = "feedback.fisheyefishing@gmail.com";
+
 function WaterIllustration() {
   return <svg className="field-map" viewBox="0 0 640 510" fill="none" aria-hidden="true">
     <defs>
@@ -70,6 +72,13 @@ export default async function FieldHome() {
       ] as const).map((action) => <Link key={action.href} href={action.href} className="home-action"><span className="home-action-icon"><ActionIcon name={action.icon}/></span><span><h2>{action.title}</h2><p>{action.text}</p></span><ActionIcon name="arrow"/></Link>)}
     </section>
     {starters.length > 0 && <section className="field-starters"><div className="field-section-heading"><h2>Good first fish</h2><Link href="/fish" className="field-secondary">All fish →</Link></div><div className="field-fish-row">{starters.map((g) => <Link key={g.slug} href={`/fish/${g.slug}`} className="field-fish"><div style={{ background: `linear-gradient(140deg, ${waterFor(g.slug)[0]}, ${waterFor(g.slug)[1]})` }}><FishArt slug={g.slug} uid={`field-${g.slug}`} /></div><h3>{g.common_name} <span aria-hidden="true">↗</span></h3><span className="field-small-label">BEGINNER FRIENDLY</span></Link>)}</div></section>}
-    <footer className="field-footer"><span>FishEye · Get outside.</span><details className="home-sources"><summary>Where our information comes from</summary><p>State wildlife agencies, OpenStreetMap, GBIF and the National Weather Service. Map reports are labelled separately from verified information. Always check local rules.</p></details></footer>
+    <section className="home-feedback" aria-labelledby="home-feedback-title">
+      <div>
+        <h2 id="home-feedback-title">Help us make FishEye better</h2>
+        <p>Found a lake we got wrong, or wish FishEye did something it doesn&apos;t? Tell us.</p>
+      </div>
+      <a className="btn btn-primary" href={`mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent("FishEye feedback")}`}>Send feedback</a>
+    </section>
+    <footer className="field-footer"><span>FishEye · Get outside.</span><details className="home-sources"><summary>Where our information comes from</summary><p>State wildlife agencies (facts with links to their pages), USGS (PAD-US public lands, Nonindigenous Aquatic Species), OpenStreetMap (© OpenStreetMap contributors), GBIF and the National Weather Service. Map reports are labelled separately from verified information. Always check local rules.</p></details></footer>
   </main></PageTransition>;
 }

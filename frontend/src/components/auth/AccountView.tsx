@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -22,6 +23,12 @@ import type { PinSummary } from "@/lib/api/types";
 import { initials } from "./AccountMenu";
 import { useAuth } from "./AuthProvider";
 import { ReauthDialog } from "./ReauthDialog";
+
+// Leaflet needs `window`: the map loads in the browser only.
+const MyCatchesMap = dynamic(() => import("@/components/community/MyCatchesMap"), {
+  ssr: false,
+  loading: () => <div className="sk" style={{ height: "100%" }} />,
+});
 
 /** What to do once the user has confirmed it's them. */
 interface ReauthRequest {
@@ -121,7 +128,7 @@ export function AccountView() {
         <div className="acct-stats">
           <div>
             <strong>{pins?.length ?? "–"}</strong>
-            <span>pins</span>
+            <span>catches</span>
           </div>
           <div>
             <strong>{counts.public}</strong>
@@ -197,17 +204,21 @@ export function AccountView() {
           </Section>
         </div>
 
-        <Section id="pins" title="My pins">
+        <Section id="pins" title="My catches">
           {pins === null ? (
             <div className="sk" style={{ height: 180 }} />
           ) : pins.length === 0 ? (
             <div className="empty-state compact">
-              <p className="muted">No pins yet. Open the map and tap where you fished.</p>
+              <p className="muted">No catches yet. Open the map, pin where you fished and add a photo of the fish.</p>
               <Link href="/map?addPin=1" className="btn btn-primary btn-sm">
-                Pin a catch
+                Share a catch
               </Link>
             </div>
           ) : (
+            <>
+            <div className="acct-map" aria-label="Where you've pinned catches">
+              <MyCatchesMap pins={pins} />
+            </div>
             <ul className="pin-grid pin-grid-compact">
               {pins.map((p, i) => (
                 <li key={p.id}>
@@ -215,6 +226,7 @@ export function AccountView() {
                 </li>
               ))}
             </ul>
+            </>
           )}
         </Section>
       </div>

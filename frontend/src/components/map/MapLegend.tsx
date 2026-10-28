@@ -7,7 +7,7 @@ const ROWS = [
   { className: "is-osm", label: "Mapped water · access unknown" },
 ];
 
-export function MapLegend({ showPins = false }: { showPins?: boolean }) {
+export function MapLegend({ showPins = false, showShops = false }: { showPins?: boolean; showShops?: boolean }) {
   return (
     <div className="map-legend" aria-label="Map legend">
       {ROWS.map((row) => (
@@ -21,6 +21,12 @@ export function MapLegend({ showPins = false }: { showPins?: boolean }) {
         <div className="map-legend-row">
           <span className="legend-catch" aria-hidden="true" />
           <span>Community pin (an angler&apos;s report)</span>
+        </div>
+      )}
+      {showShops && (
+        <div className="map-legend-row">
+          <span className="legend-shop" aria-hidden="true" />
+          <span>Bait &amp; tackle shop</span>
         </div>
       )}
     </div>

@@ -1,0 +1,16 @@
+# Building the fish photo check's model (app/cli/build_fish_id_model.py),
+# once, on a developer's machine, in an environment of its own. Not needed by
+# the API or its Docker image: they run the built model with onnxruntime
+# (requirements-semantic.txt). docs/adr/0037.
+#
+#   python -m venv <short path>     # Windows: onnx's files need a short path
+#   <env>/Scripts/pip install --index-url https://download.pytorch.org/whl/cpu torch
+#   <env>/Scripts/pip install -r requirements-fishid-build.txt
+#
+# Built and measured on 2026-10-27 with torch 2.14.1+cpu.
+open_clip_torch==2.32.0
+onnx==1.18.0
+numpy==2.2.1
+pillow==11.3.0
+huggingface_hub==0.27.0
+safetensors

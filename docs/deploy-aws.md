@@ -196,6 +196,89 @@ California; Texas's TPWD pages are fetched with
 
 Then back up the database (below), so a mistake never means doing this again.
 
+### Every state, and the official data (ADRs 0034, 0035)
+
+Prepared on your machine (the downloads and the GIS/PDF parsing need
+`requirements-import.txt`); the server only imports the JSON files they
+leave. From `F:\FishEye\backend` (PowerShell), copy them up:
+
+```
+scp -i fisheye.pem -r osm_cache cdfw_cache padus_cache usgs_nas_cache records_cache tpwd_cache ga_wrd_cache ubuntu@<ELASTIC_IP>:~/data/
+```
+
+On the server, back up first, then deploy the code (the API adds the new
+columns and tables when it starts), then import, in this order:
+
+```bash
+cd ~/FishEye
+DC="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+mkdir -p ~/backups && $DC exec -T db pg_dump -U fisheye fisheye | gzip > ~/backups/fisheye-$(date +%F-%H%M).sql.gz
+ls -lh ~/backups | tail -1
+
+git pull
+$DC up --build -d backend frontend
+$DC cp ~/data/. backend:/tmp/data
+
+# 1. Lakes, every state, from the extracts' payloads (about 2 minutes)
+for f in ~/data/osm_cache/*_osm.json; do
+  st=$(basename "$f" _osm.json)
+  $DC exec -T backend python -m app.data_import.osm_waterbody_import --state "${st^^}" --from-file "/tmp/data/osm_cache/${st}_osm.json"
+done
+# 2. California: CDFW lakes, stocking, surveys
+$DC exec -T backend python -m app.data_import.cdfw_import --osm /tmp/data/osm_cache/ca_osm.json --cache /tmp/data/cdfw_cache
+# 3. Public land
+for st in CA GA TX; do $DC exec -T backend python -m app.data_import.padus_import --state $st --cache /tmp/data/padus_cache; done
+# 4. Non-native fish records, California
+$DC exec -T backend python -m app.data_import.usgs_nas_import --state CA --osm /tmp/data/osm_cache/ca_osm.json --cache /tmp/data/usgs_nas_cache --cdfw-cache /tmp/data/cdfw_cache
+# 5. State records and ShareLunker
+for st in TX GA CA; do $DC exec -T backend python -m app.data_import.record_fish_import --state $st --cache /tmp/data/records_cache --cdfw-cache /tmp/data/cdfw_cache; done
+# 6. Facts + link: rewrite stored TPWD wording, then check nothing is left
+$DC exec -T backend python -m app.cli.facts_only --caches /tmp/data
+```
+
+Never `down -v`. Each step prints what it matched and what it left out, and
+is safe to run again.
+
+### Bait and tackle shops, and the photo check on catches (ADR 0037)
+
+Both are prepared on your machine. The shops are one JSON file
+(`osm_cache/tackle_shops.json`, from `python -m app.data_import.tackle_shops
+--states all`). The photo check's model (`models/fish-id/`) is built with
+PyTorch, which the server never installs (`build_fish_id_model.py`,
+`fish_id_train.py`). Copy up the model without its uncompressed encoder (the
+app uses `image_int8.onnx`):
+
+```
+ssh -i fisheye.pem ubuntu@<ELASTIC_IP> "mkdir -p ~/FishEye/backend/models/fish-id"
+scp -i fisheye.pem models/fish-id/image_int8.onnx models/fish-id/text.npy models/fish-id/head.npz models/fish-id/classes.json models/fish-id/SOURCE.json models/fish-id/TRAINING_CREDITS.json ubuntu@<ELASTIC_IP>:~/FishEye/backend/models/fish-id/
+scp -i fisheye.pem osm_cache/tackle_shops.json ubuntu@<ELASTIC_IP>:~/data/osm_cache/
+```
+
+On the server, after the backup and `git pull` above (`docker-compose.prod.yml`
+mounts `backend/models/fish-id` into the backend, read-only):
+
+```bash
+$DC up --build -d backend frontend
+$DC cp ~/data/osm_cache/tackle_shops.json backend:/tmp/data/tackle_shops.json
+$DC exec -T backend python -m app.data_import.tackle_shops --from-file /tmp/data/tackle_shops.json
+# The photo check loads on the first photo; this checks it is installed:
+$DC exec -T backend python -c "from app.services.fish_id import get_recognizer; print(get_recognizer().name)"
+```
+
+The last line prints `bioclip-2@2957b322090f/int8+head`. Without the model,
+the site works and a catch that names a fish is refused with "The photo check
+isn't available right now" until it is copied up; `FISH_ID=off` in `.env`
+turns the check off instead (not for a public site).
+
+Size: `image_int8.onnx` is 309 MB to copy up. Loaded, the model adds about
+330 MB to the backend (measured on Windows: 108 → 440 MB, 506 MB while
+reading a photo), so the stack stays near 1.4 GB of the server's 2 GB. A
+photo takes about 1 s on two CPU threads (measured on a desktop; expect 1.5
+to 2 s on the t3.small), once: checking it again on save reuses the result.
+If that proves too slow or too big, the lighter BioCLIP is built with
+`build_fish_id_model --model bioclip` (89 MB, about +115 MB of memory, 0.3 s),
+at the cost of accuracy (ADR 0037 has both measured).
+
 ## 7. Try it on your phone
 
 Over mobile data, not Wi-Fi: use my location, open a state and a lake, read

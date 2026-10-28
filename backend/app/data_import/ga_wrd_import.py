@@ -61,6 +61,7 @@ from sqlalchemy.orm import Session
 
 from app.data_import.gbif_occurrence_import import lake_targets
 from app.data_import.osm_waterbody_import import OsmLake, core_name, merge_pieces, parse_elements
+from app.data_import.species_names import species_list
 from app.data_import.tpwd_lake_survey_scraper import upsert_species
 from app.data_import.tpwd_statewide_import import km_between, search_radius_km
 from app.models.waterbody import AccessPoint, AgencyLakeProfile, FishAttractor, State, Waterbody, WaterbodySpecies
@@ -86,8 +87,9 @@ SITE_MARGIN_M = 300.0
 LAKE_TYPES = frozenset({"Major Reservoir", "Small Impoundment"})
 ACRES_TO_KM2 = 0.004046856
 
-# WRD species field -> its fish, as WRD names them (stored verbatim in the
-# lake's profile) and the guide species it is (linked as confirmed).
+# WRD species field -> its fish, as WRD names them (the lake's profile lists
+# them as species_names.species_list() renders them) and the guide species
+# it is (linked as confirmed).
 SPECIES_FIELDS: dict[str, tuple[str, str | None]] = {
     "Largemouth": ("Largemouth bass", "Largemouth Bass"),
     "Smallmouth": ("Smallmouth bass", "Smallmouth Bass"),
@@ -560,7 +562,7 @@ def _write_profile(db: Session, wb: Waterbody, sites: list[Site], method: str, f
     profile.access_page_url = MAP_PAGE if forecast else None
     profile.location = (", ".join(counties) + (" County" if len(counties) == 1 else " Counties")) if counties else None
     profile.surface_acres = int(acres) if acres > 0 else None
-    profile.predominant_species = labels
+    profile.predominant_species = species_list(labels)
     profile.ratings = []
     if profile.placement != "sites":  # a lake this import placed keeps that
         profile.placement = method

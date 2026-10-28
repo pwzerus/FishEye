@@ -8,6 +8,7 @@ import type {
   HandbookTopic,
   Jurisdiction,
   RecommendationRequest,
+  Shop,
   SpeciesGuide,
   StateCoverage,
   RecommendationResponse,
@@ -103,6 +104,19 @@ export function listWaterbodies(params?: {
   const interactive = params?.lat !== undefined || params?.bbox !== undefined;
   const cacheOpt = interactive ? { cache: "no-store" as const } : undefined;
   return apiFetch<WaterbodyListItem[]>(`/api/waterbodies${suffix}`, cacheOpt);
+}
+
+/** Bait and tackle shops in the map's view (backend app/api/shops.py). */
+export function listShops(bbox: string, stateCode?: string): Promise<Shop[]> {
+  const qs = new URLSearchParams({ bbox });
+  if (stateCode) qs.set("state_code", stateCode);
+  return apiFetch<Shop[]>(`/api/shops?${qs.toString()}`, { cache: "no-store" });
+}
+
+/** The shops closest to a point (a lake), nearest first. */
+export function listShopsNear(latitude: number, longitude: number, limit = 3): Promise<Shop[]> {
+  const qs = new URLSearchParams({ lat: String(latitude), lng: String(longitude), limit: String(limit) });
+  return apiFetch<Shop[]>(`/api/shops/near?${qs.toString()}`);
 }
 
 export function listStates(): Promise<StateCoverage[]> {

@@ -16,11 +16,12 @@ vi.mock("@/lib/api/client", async () => {
     getWaterbody: vi.fn(),
     getWeather: vi.fn(),
     postRecommendations: vi.fn(),
+    listShopsNear: vi.fn(),
   };
 });
 
 // Imported after the mock so we get the mocked references.
-const { getWaterbody, getWeather, postRecommendations } = await import("@/lib/api/client");
+const { getWaterbody, getWeather, listShopsNear, postRecommendations } = await import("@/lib/api/client");
 
 const mockDetail: WaterbodyDetail = {
   id: 1,
@@ -127,6 +128,22 @@ describe("WaterbodyPanel", () => {
     // the lake-detail rendering above them.
     vi.mocked(getWeather).mockResolvedValue(mockWeather);
     vi.mocked(postRecommendations).mockResolvedValue(mockRecommendations);
+    vi.mocked(listShopsNear).mockReset();
+    vi.mocked(listShopsNear).mockResolvedValue([]);
+  });
+
+  it("names the nearest bait and tackle shops, with how far they are", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    vi.mocked(listShopsNear).mockResolvedValue([
+      {
+        id: 4, name: "Lake Fork Marina Bait", kind: "bait", latitude: 32.81, longitude: -95.59, address: null,
+        phone: null, website: null, opening_hours: null, osm_url: "https://www.openstreetmap.org/node/4", distance_km: 3.2,
+      },
+    ]);
+    render(<WaterbodyPanel waterbodyId={1} />);
+    expect(await screen.findByText("Lake Fork Marina Bait")).toBeInTheDocument();
+    expect(screen.getByText(/2\.0 mi away/)).toBeInTheDocument();
+    expect(listShopsNear).toHaveBeenCalledWith(32.8, -95.6);
   });
 
   it("shows the empty-state prompt when nothing is selected", () => {
@@ -517,11 +534,11 @@ describe("WaterbodyPanel", () => {
     },
   };
 
-  it("shows the agency's own ratings, facts and links, credited to the agency", async () => {
+  it("shows the agency's ratings, facts and links, credited to the agency", async () => {
     vi.mocked(getWaterbody).mockResolvedValue(profiled);
     render(<WaterbodyPanel waterbodyId={9} />);
 
-    await waitFor(() => expect(screen.getByText("What Texas Parks & Wildlife says")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("From Texas Parks & Wildlife")).toBeInTheDocument());
     expect(screen.getByText(/11,456 acres · up to 38 ft deep · impounded 1967/)).toBeInTheDocument();
     expect(screen.getByLabelText("Excellent, 4 of 4")).toBeInTheDocument();
     expect(screen.getByLabelText("Good, 3 of 4")).toBeInTheDocument();
@@ -599,7 +616,7 @@ describe("WaterbodyPanel", () => {
   it("credits Georgia WRD and links its fishing forecast", async () => {
     vi.mocked(getWaterbody).mockResolvedValue(georgia);
     render(<WaterbodyPanel waterbodyId={21} />);
-    await waitFor(() => expect(screen.getByText("What Georgia WRD says")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("From Georgia WRD")).toBeInTheDocument());
     expect(screen.getByText("WRD fishing forecast").closest("a")).toHaveAttribute(
       "href",
       "https://storymaps.arcgis.com/stories/bf90dbefc6d34795a96fdc0181e746d9",
@@ -630,5 +647,94 @@ describe("WaterbodyPanel", () => {
     render(<WaterbodyPanel waterbodyId={21} />);
     await waitFor(() => expect(screen.getByText(/Georgia WRD's access sites: this lake has no outline/)).toBeInTheDocument());
     expect(screen.getByText("WRD fishing map")).toBeInTheDocument();
+  });
+
+  describe("facts with links (data-sourcing rule 3)", () => {
+    const california: WaterbodyDetail = {
+      ...mockDetail,
+      id: 31,
+      name: "Lake Natoma",
+      source_url: "https://www.openstreetmap.org/way/1",
+      data_tier: "verified",
+      field_tested: false,
+      data_credit: "Data: California Department of Fish and Wildlife",
+      official_name: "Natoma Lake",
+      public_land: "open",
+      public_land_name: "Folsom Lake State Recreation Area",
+      public_land_manager: "State Park",
+      species: [
+        {
+          common_name: "Rainbow Trout",
+          difficulty: "beginner",
+          confidence: "confirmed",
+          evidence: "CDFW's 2026 stocking plan lists Rainbow Trout for this water.",
+          source_url: "https://nrm.dfg.ca.gov/plan",
+          observed_at: "2026-01-01T00:00:00Z",
+          evidence_items: [
+            { evidence: "CDFW's fish planting schedule lists trout planted here the week of January 4, 2026.", source_url: "https://nrm.dfg.ca.gov/FishPlants/PublicPlantSearch?Params.StockingWaterID=2700", kind: "stocking", year: 2026, publisher: "California Department of Fish and Wildlife" },
+            { evidence: "CDFW's 2026 stocking plan lists Rainbow Trout for this water.", source_url: "https://nrm.dfg.ca.gov/plan", kind: "stocking_plan", year: 2026, publisher: "California Department of Fish and Wildlife" },
+          ],
+        },
+      ],
+      sources: [
+        { title: "Recent Stocked Waters - California [ds778]", publisher: "California Department of Fish and Wildlife", licence: "CC BY 4.0", citation: "Cited as BIOS asks", url: "https://filelib.wildlife.ca.gov/ds778.zip" },
+      ],
+    };
+
+    it("links every fact behind a species to its source", async () => {
+      vi.mocked(getWaterbody).mockResolvedValue(california);
+      render(<WaterbodyPanel waterbodyId={31} />);
+      await waitFor(() => expect(screen.getByText("Rainbow Trout")).toBeInTheDocument());
+      const links = screen.getAllByText("Source ↗").map((a) => a.closest("a"));
+      expect(links.map((a) => a?.getAttribute("href"))).toEqual([
+        "https://nrm.dfg.ca.gov/FishPlants/PublicPlantSearch?Params.StockingWaterID=2700",
+        "https://nrm.dfg.ca.gov/plan",
+      ]);
+      expect(links.every((a) => a?.getAttribute("target") === "_blank")).toBe(true);
+    });
+
+    it("credits the datasets, the agency and OpenStreetMap on the Sources tab", async () => {
+      vi.mocked(getWaterbody).mockResolvedValue(california);
+      render(<WaterbodyPanel waterbodyId={31} />);
+      await waitFor(() => expect(screen.getByText("Lake Natoma")).toBeInTheDocument());
+      expect(screen.getByText("Official name: Natoma Lake")).toBeInTheDocument();
+      expect(screen.getByText("Data: California Department of Fish and Wildlife")).toBeInTheDocument();
+      expect(screen.getByText("Map data © OpenStreetMap contributors (ODbL)")).toBeInTheDocument();
+      expect(screen.getByText("Recent Stocked Waters - California [ds778]").closest("a")).toHaveAttribute("href", "https://filelib.wildlife.ca.gov/ds778.zip");
+      expect(screen.getByText(/CC BY 4.0/)).toBeInTheDocument();
+    });
+
+    it("says a verified lake lies on public land, from PAD-US", async () => {
+      vi.mocked(getWaterbody).mockResolvedValue(california);
+      render(<WaterbodyPanel waterbodyId={31} />);
+      await waitFor(() => expect(screen.getByText(/in Folsom Lake State Recreation Area \(State Park\), land open to the public \(PAD-US\)/)).toBeInTheDocument());
+    });
+
+    it("tells an unverified lake on public land apart from one that may be private", async () => {
+      const onForest: WaterbodyDetail = {
+        ...mockDetail, id: 32, name: "Frog Lake", data_tier: "osm", public_access_status: "unknown", water_type: "pond",
+        field_tested: false, access_points: [], species: [],
+        source_url: "https://services2.arcgis.com/x/CA_Lakes_wm/FeatureServer/0/query?where=DFGWATERID%3D9001",
+        public_land: "open", public_land_name: "Stanislaus National Forest", public_land_manager: "Forest Service",
+      };
+      vi.mocked(getWaterbody).mockResolvedValue(onForest);
+      render(<WaterbodyPanel waterbodyId={32} />);
+      await waitFor(() => expect(screen.getByText("Unverified lake from CDFW's California Lakes map.")).toBeInTheDocument());
+      expect(screen.getByText(/in Stanislaus National Forest \(Forest Service\), land open to the public/)).toBeInTheDocument();
+      // On open public land, the private-pond warning doesn't apply.
+      expect(screen.queryByText(/Many ponds are on private land/)).not.toBeInTheDocument();
+    });
+
+    it("lists fish an official source names on an unverified lake", async () => {
+      const recorded: WaterbodyDetail = {
+        ...california, id: 33, data_tier: "osm", public_access_status: "unknown", public_land: null,
+        species: [{ ...california.species[0], common_name: "Brook Trout", evidence_items: [] }],
+      };
+      vi.mocked(getWaterbody).mockResolvedValue(recorded);
+      render(<WaterbodyPanel waterbodyId={33} />);
+      await waitFor(() => expect(screen.getByText("Fish named by official sources")).toBeInTheDocument());
+      expect(screen.getByText("Brook Trout")).toBeInTheDocument();
+      expect(screen.getByText("Source ↗").closest("a")).toHaveAttribute("href", "https://nrm.dfg.ca.gov/plan");
+    });
   });
 });

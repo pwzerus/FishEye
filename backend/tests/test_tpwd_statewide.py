@@ -191,12 +191,14 @@ def test_species_come_from_the_report_then_the_lake_page(db_session, state, tmp_
     assert all(link.confidence == "confirmed" for link in links.values())
     assert links["Channel Catfish"].source_url.endswith("/pwd_rp_t3200_1374/")
     assert links["Channel Catfish"].observed_at == datetime(2020, 1, 1)
-    assert "predominant fish species" in links["Blue Catfish"].evidence
+    # FishEye's own sentences naming the document, never TPWD's (data-sourcing rule 3).
+    assert links["Channel Catfish"].evidence == "TPWD's 2020 survey report for this lake records Channel Catfish."
+    assert links["Blue Catfish"].evidence == "TPWD's page for this lake lists Blue Catfish among its predominant fish."
     assert links["Blue Catfish"].source_url.endswith("/lakes/somerville/")
     assert "Striped Bass" not in links  # "hybrid striped bass" is not "striped bass"
 
 
-def test_the_profile_keeps_tpwds_own_words(db_session, state, tmp_path):
+def test_the_profile_keeps_tpwds_facts_not_its_words(db_session, state, tmp_path):
     wb = osm_lake(db_session, state, "Lake Somerville", 30.34, -96.54, "way/1")
     cache = write_cache(tmp_path, {"somerville": lake_html("Lake Somerville")}, {"pwd_rp_t3200_1374": SOMERVILLE_REPORT})
     imp.run(db_session, cache, [])
@@ -204,7 +206,11 @@ def test_the_profile_keeps_tpwds_own_words(db_session, state, tmp_path):
     assert profile.waterbody_id == wb.id
     assert (profile.agency, profile.agency_lake_id, profile.placement) == ("tpwd", "somerville", "osm_name_only")
     assert profile.ratings == [{"label": "Largemouth Bass", "rating": "Excellent"}, {"label": "Crappie", "rating": "Good"}]
-    assert profile.predominant_species[-1] == "Crappie"
+    # TPWD's list items become our own list of fish names, sorted; its
+    # description of where the lake is is not stored.
+    assert profile.predominant_species == sorted(profile.predominant_species)
+    assert "Crappie" in profile.predominant_species
+    assert profile.location is None
     assert (profile.surface_acres, profile.survey_year) == (11456, 2020)
 
 

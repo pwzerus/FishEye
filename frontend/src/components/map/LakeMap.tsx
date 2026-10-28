@@ -4,21 +4,32 @@ import "leaflet/dist/leaflet.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import L from "leaflet";
-import { useEffect, useRef } from "react";
-import { MapContainer, Marker, Polygon, Popup, ZoomControl, useMap, useMapEvents } from "react-leaflet";
+import { useEffect, useRef, useState } from "react";
+import {
+  Circle,
+  MapContainer,
+  Marker,
+  Polygon,
+  Popup,
+  Tooltip,
+  ZoomControl,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 
-import type { PinSummary, WaterbodyListItem } from "@/lib/api/types";
+import type { PinSummary, Shop, WaterbodyListItem } from "@/lib/api/types";
 import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from "@/lib/map/tiles";
 import { BaseMap } from "./BaseMap";
 import { waterIcon } from "./waterIcon";
 import { DraftMarker, PinMarkers, PlaceOnClick } from "./PinLayer";
+import { ShopMarkers } from "./ShopLayer";
 import { StatesLayer } from "./StatesLayer";
-import type { StateRegion } from "./usStates";
-import { US_CENTER, US_ZOOM, type MapMode, zoomLimitsFor } from "./zoomPolicy";
+import { displayLongitude, type StateRegion } from "./usStates";
+import { SEARCH_ZOOM, US_CENTER, US_ZOOM, type MapMode, locationZoom, zoomLimitsFor } from "./zoomPolicy";
 
-const SEARCH_ZOOM = 11;
 const VIEWPORT_DEBOUNCE_MS = 300;
+const YOU_COLOR = "#2563eb";
 // Space kept around a state when the map frames it.
 const STATE_PADDING = 24;
 
@@ -44,6 +55,11 @@ export interface Viewport {
 function ViewportWatcher({ onChange, loadOnMount }: { onChange: (viewport: Viewport) => void; loadOnMount: boolean }) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const map = useMapEvents({
+    // A new move makes a report still waiting on the last one stale: reading
+    // the map mid-flight would lock whichever state the flight was crossing.
+    movestart: () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
     moveend: () => schedule(),
   });
 
@@ -70,15 +86,17 @@ function ViewportWatcher({ onChange, loadOnMount }: { onChange: (viewport: Viewp
 }
 
 /**
- * Flies to the last searched / located point. The map no longer re-fits
- * itself to whatever markers are loaded: markers are now *loaded from* the
- * viewport, so fitting the viewport to the markers would loop.
+ * Flies to the last searched / located point: a searched place at town
+ * scale, the person's own position at street level (zoomPolicy's
+ * locationZoom). The map no longer re-fits itself to whatever markers are
+ * loaded: markers are now *loaded from* the viewport, so fitting the
+ * viewport to the markers would loop.
  */
 function FlyToFocus({
   focusPoint,
   skipOnMount,
 }: {
-  focusPoint: { latitude: number; longitude: number } | null;
+  focusPoint: { latitude: number; longitude: number; own?: { accuracy: number } } | null;
   skipOnMount: boolean;
 }) {
   const map = useMap();
@@ -91,9 +109,66 @@ function FlyToFocus({
   useEffect(() => {
     if (!focusPoint || focusPoint === applied.current) return;
     applied.current = focusPoint;
-    map.flyTo([focusPoint.latitude, focusPoint.longitude], SEARCH_ZOOM);
+    const at = L.latLng(focusPoint.latitude, focusPoint.longitude);
+    const zoom = focusPoint.own
+      ? locationZoom(map.getBoundsZoom(at.toBounds(focusPoint.own.accuracy * 2)))
+      : SEARCH_ZOOM;
+    map.flyTo(at, zoom);
   }, [focusPoint, map]);
   return null;
+}
+
+// The dot is a marker icon, not an SVG circle. While the map zooms, Leaflet
+// scales its whole SVG layer and redraws it only when the move ends, so a
+// fixed-size circle swelled with every level of a flight (from state scale
+// to street level, a thousandfold: the whole screen) and snapped back on
+// landing. Markers are repositioned each frame and keep their size.
+const YOU_ICON = L.divIcon({ className: "you-are-here-dot", iconSize: [18, 18], tooltipAnchor: [0, -10] });
+
+// Below this many pixels the accuracy circle says nothing, and Leaflet draws
+// it at least 1 px wide anyway: that pixel, scaled up by a flight, became a
+// blue disc over the whole map. It is drawn only once the map is close enough.
+const ACCURACY_MIN_PX = 4;
+
+function metresPerPixel(latitude: number, zoom: number): number {
+  return (40_075_016.686 * Math.cos((latitude * Math.PI) / 180)) / 2 ** (zoom + 8);
+}
+
+/**
+ * "Use my location": a blue dot where the browser places the person, labelled,
+ * in a pale circle as wide as the browser says the fix may be off. Neither
+ * takes clicks, so a lake under them still opens.
+ */
+export function YouAreHere({
+  at,
+  region = null,
+}: {
+  at: { latitude: number; longitude: number; accuracy: number };
+  region?: StateRegion | null;
+}) {
+  const map = useMap();
+  // The zoom the map last settled at, not each frame of a zoom in progress.
+  const [zoom, setZoom] = useState(() => map.getZoom());
+  useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
+  const center: [number, number] = [at.latitude, displayLongitude(at.longitude, region)];
+  const showAccuracy = at.accuracy / metresPerPixel(at.latitude, zoom) >= ACCURACY_MIN_PX;
+  return (
+    <>
+      {showAccuracy && (
+        <Circle
+          center={center}
+          radius={at.accuracy}
+          interactive={false}
+          pathOptions={{ color: YOU_COLOR, weight: 1, opacity: 0.5, fillColor: YOU_COLOR, fillOpacity: 0.12 }}
+        />
+      )}
+      <Marker position={center} icon={YOU_ICON} interactive={false} keyboard={false} zIndexOffset={1000}>
+        <Tooltip permanent direction="top" className="you-are-here">
+          You are here
+        </Tooltip>
+      </Marker>
+    </>
+  );
 }
 
 const WORLD_RING: [number, number][] = [
@@ -155,10 +230,23 @@ function ViewLimits({
     map.setMaxZoom(max);
     if (!region) {
       map.setMaxBounds(undefined);
+      // Up to the floor at once. setMinZoom alone would animate there, and
+      // that animation ends after a search's flight has begun: it jumps the
+      // map back to where it started and reports that view, which then
+      // locks the wrong state.
+      if (map.getZoom() < min) map.setZoom(min, { animate: false });
       map.setMinZoom(min);
       return;
     }
     const bounds = L.latLngBounds(region.bounds);
+    // Alaska's region runs west of -180 (usStates.displayLongitude). A view
+    // that landed on the Aleutians east of the date line (a search for Attu)
+    // is the same place 360° west; move there before the bounds would drag
+    // the map back to the mainland.
+    const center = map.getCenter();
+    if (region.bounds[0][1] < -180 && center.lng > 0) {
+      map.setView([center.lat, center.lng - 360], map.getZoom(), { animate: false });
+    }
     const pad = L.point(STATE_PADDING * 2, STATE_PADDING * 2);
     const floor = Math.max(min, map.getBoundsZoom(bounds, false, pad));
     if (fit && !(prev === null && skipFitOnMount)) {
@@ -304,13 +392,13 @@ export function ZoomOutLimit({ onBlocked }: { onBlocked: () => void }) {
   return null;
 }
 
-function LakeMarker({ lake, onSelect }: { lake: WaterbodyListItem; onSelect: (id: number) => void }) {
+function LakeMarker({ lake, onSelect, region }: { lake: WaterbodyListItem; onSelect: (id: number) => void; region?: StateRegion | null }) {
   const isOsm = lake.data_tier === "osm";
   const reported = lake.reported_species_count ?? 0;
   const icon = waterIcon(isOsm ? reported > 0 ? "reported" : "osm" : "verified");
   return (
     <Marker
-      position={[lake.latitude, lake.longitude]}
+      position={[lake.latitude, displayLongitude(lake.longitude, region)]}
       icon={icon}
       eventHandlers={{ click: () => onSelect(lake.id) }}
     >
@@ -319,7 +407,7 @@ function LakeMarker({ lake, onSelect }: { lake: WaterbodyListItem; onSelect: (id
         {isOsm ? (
           <div style={{ fontSize: 12, color: "#6b7280" }}>
             {lake.public_access_status === "likely_private" ? "Probably private · " : ""}
-            {lake.water_type === "pond" ? "Pond · " : ""}Unverified · from OpenStreetMap
+            {lake.water_type === "pond" ? "Pond · " : ""}Unverified map data
             {reported > 0 && (
               <div style={{ color: "#92400e" }}>
                 {reported} fish species on record
@@ -341,8 +429,10 @@ export default function LakeMap({
   onSelect,
   onViewportChange,
   focusPoint = null,
+  you = null,
   initialView = null,
   pins = [],
+  shops = [],
   placing = false,
   draft = null,
   onPlace,
@@ -358,12 +448,16 @@ export default function LakeMap({
   waterbodies: WaterbodyListItem[];
   onSelect: (id: number) => void;
   onViewportChange: (viewport: Viewport) => void;
-  focusPoint?: { latitude: number; longitude: number } | null;
+  focusPoint?: { latitude: number; longitude: number; own?: { accuracy: number } } | null;
+  // Where "Use my location" placed the person, marked while exploring.
+  you?: { latitude: number; longitude: number; accuracy: number } | null;
   // Where to open the map; defaults to the whole country, where the states
   // layer is the way in.
   initialView?: { center: [number, number]; zoom: number } | null;
   // Community pins in view, and the "add a pin" mode (MapView.tsx).
   pins?: PinSummary[];
+  // Bait and tackle shops in view (ShopLayer.tsx).
+  shops?: Shop[];
   placing?: boolean;
   draft?: { latitude: number; longitude: number } | null;
   onPlace?: (lat: number, lng: number) => void;
@@ -421,6 +515,7 @@ export default function LakeMap({
           bubble that could be panned into view. */}
       {mode === "exploring" && (
         <>
+        {you && <YouAreHere at={you} region={region} />}
         {/* Verified lakes are never clustered: there are few of them and
             they're the ones this app can actually say something about.
             That is a claim about data volume, not a rule of the map. Tried
@@ -429,17 +524,18 @@ export default function LakeMap({
             state's worth of curated lakes) it is fine; once a wide view can
             hold a few hundred, cluster them below some zoom. */}
         {verified.map((lake) => (
-          <LakeMarker key={lake.id} lake={lake} onSelect={onSelect} />
+          <LakeMarker key={lake.id} lake={lake} onSelect={onSelect} region={region} />
         ))}
 
         {/* OSM lakes can number in the thousands in one view; clustering
             keeps the map readable and the browser responsive. */}
         <MarkerClusterGroup chunkedLoading showCoverageOnHover={false}>
           {osm.map((lake) => (
-            <LakeMarker key={lake.id} lake={lake} onSelect={onSelect} />
+            <LakeMarker key={lake.id} lake={lake} onSelect={onSelect} region={region} />
           ))}
         </MarkerClusterGroup>
 
+        <ShopMarkers shops={shops} region={region} />
         <PinMarkers pins={pins} />
         </>
       )}

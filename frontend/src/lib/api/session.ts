@@ -15,10 +15,13 @@ import type {
   AdminUser,
   AuditEntry,
   AuthProviders,
+  FishIdResult,
   Paged,
   PinDetail,
   PinOptions,
+  PinPlaces,
   PinSummary,
+  PinWhere,
   PinUpdate,
   User,
 } from "./types";
@@ -108,14 +111,52 @@ export function googleStartUrl(next: string): string {
 
 export const getPinOptions = () => sfetch<PinOptions>("/api/pins/options");
 
-export function listPins(params: { bbox?: string; species?: string; mine?: boolean; limit?: number } = {}) {
+/** Where catches are browsed: a state, a county in it, a lake in that. */
+export interface PinScope {
+  state?: string;
+  county?: string;
+  lake?: string;
+}
+
+function scopeQuery(qs: URLSearchParams, scope: PinScope) {
+  if (scope.state) qs.set("state", scope.state);
+  if (scope.county) qs.set("county", scope.county);
+  if (scope.lake) qs.set("lake", scope.lake);
+}
+
+export function listPins(params: { bbox?: string; species?: string; mine?: boolean; limit?: number } & PinScope = {}) {
   const qs = new URLSearchParams();
   if (params.bbox) qs.set("bbox", params.bbox);
   if (params.species) qs.set("species", params.species);
   if (params.mine) qs.set("mine", "true");
   if (params.limit) qs.set("limit", String(params.limit));
+  scopeQuery(qs, params);
   const suffix = qs.toString() ? `?${qs}` : "";
   return sfetch<PinSummary[]>(`/api/pins${suffix}`);
+}
+
+/** The places one level below `scope` that have catches, with counts. */
+export function listPinPlaces(params: { species?: string; mine?: boolean } & Omit<PinScope, "lake"> = {}) {
+  const qs = new URLSearchParams();
+  if (params.species) qs.set("species", params.species);
+  if (params.mine) qs.set("mine", "true");
+  scopeQuery(qs, params);
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return sfetch<PinPlaces>(`/api/pins/places${suffix}`);
+}
+
+/** The county a point is in (not stored by the server). */
+export const pinWhere = (lat: number, lng: number) =>
+  sfetch<PinWhere>(`/api/pins/where?lat=${lat.toFixed(3)}&lng=${lng.toFixed(3)}`);
+
+/** What fish a photo shows and, given a species, whether it backs it. The
+ * server checks again on save; this is the form's early warning. */
+export function identifyFish(photo: File, claim: { species_slug?: string; species_other?: string } = {}) {
+  const form = new FormData();
+  form.append("photo", photo, photo.name);
+  if (claim.species_slug) form.set("species_slug", claim.species_slug);
+  if (claim.species_other) form.set("species_other", claim.species_other);
+  return sfetch<FishIdResult>("/api/fish-id", { method: "POST", body: form });
 }
 
 export const getPin = (id: number) => sfetch<PinDetail>(`/api/pins/${id}`);
@@ -193,7 +234,7 @@ export const adminReports = () => sfetch<AdminReportGroup[]>("/api/admin/reports
 export const adminResolve = (pinId: number, action: "dismiss" | "hide" | "remove", note?: string) =>
   sfetch<AdminPin>(`/api/admin/reports/${pinId}/resolve`, json("POST", { action, note: note || null }));
 
-export function adminPins(params: { status?: string; visibility?: string; q?: string; page?: number }) {
+export function adminPins(params: { status?: string; visibility?: string; state?: string; q?: string; page?: number }) {
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") qs.set(k, String(v));
   return sfetch<Paged<AdminPin>>(`/api/admin/pins?${qs}`);

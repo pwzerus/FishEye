@@ -109,7 +109,7 @@ describe("LocationSearchBar", () => {
     it("reports the browser's own position, with no geocoding call at all", () => {
       const getCurrentPosition = vi.fn((success: PositionCallback) => {
         success({
-          coords: { latitude: 30.1, longitude: -97.7 },
+          coords: { latitude: 30.1, longitude: -97.7, accuracy: 35 },
         } as GeolocationPosition);
       });
       Object.defineProperty(navigator, "geolocation", {
@@ -125,6 +125,7 @@ describe("LocationSearchBar", () => {
         latitude: 30.1,
         longitude: -97.7,
         label: "Your location",
+        own: { accuracy: 35 },
       });
       expect(geocodePlace).not.toHaveBeenCalled();
     });

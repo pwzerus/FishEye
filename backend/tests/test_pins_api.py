@@ -95,8 +95,11 @@ def test_pin_validation(make_client, fields):
 def test_free_text_species_when_its_not_in_the_guide(make_client):
     c = make_client()
     signup(c)
-    pin = create(c, species_other="Freshwater drum").json()
-    assert pin["species_slug"] is None and pin["species_label"] == "Freshwater drum"
+    pin = create(c, species_other="Walleye").json()
+    assert pin["species_slug"] is None and pin["species_label"] == "Walleye"
+    # A guide species typed in is that species (and is photo-checked as one).
+    pin = create(c, species_other="freshwater drum").json()
+    assert pin["species_slug"] == "freshwater-drum" and pin["species_label"] == "Freshwater Drum"
 
 
 # ------------------------------------------------------------------ photos
@@ -220,6 +223,65 @@ def test_public_list_filters(make_client):
     assert anon.get("/api/pins", params={"bbox": "nonsense"}).status_code == 422
 
 
+def test_catches_are_browsed_by_state_then_county_then_lake(make_client, seeded_lake):
+    c = make_client()
+    signup(c)
+    fork = create(c, title="Fork bass").json()  # at Lake Fork, Wood County
+    create(c, title="Fork bank", latitude=32.66, longitude=-95.49)  # same county, no lake
+    create(c, title="Houston cat", latitude=29.76, longitude=-95.37)
+    create(c, title="Atlanta bream", latitude=33.75, longitude=-84.39)
+    create(c, title="Secret spot", latitude=29.75, longitude=-95.36, visibility="private")
+    assert (fork["state_code"], fork["county_geoid"], fork["county_name"]) == ("TX", "48499", "Wood County")
+
+    anon = make_client()
+    states = anon.get("/api/pins/places").json()
+    assert states["level"] == "state"
+    # A private pin is never counted for anyone else.
+    assert [(p["id"], p["name"], p["count"]) for p in states["places"]] == [("TX", "Texas", 3), ("GA", "Georgia", 1)]
+    tx = anon.get("/api/pins/places", params={"state": "tx"}).json()
+    assert (tx["level"], tx["state_name"]) == ("county", "Texas")
+    assert [(p["name"], p["count"]) for p in tx["places"]] == [("Wood County", 2), ("Harris County", 1)]
+    lakes = anon.get("/api/pins/places", params={"county": "48499"}).json()
+    assert (lakes["level"], lakes["state_name"], lakes["county_name"]) == ("lake", "Texas", "Wood County")
+    assert [(p["id"], p["name"], p["count"]) for p in lakes["places"]] == [
+        (str(seeded_lake["waterbody"].id), "Lake Fork", 1),
+        ("0", "Not at a mapped lake", 1),
+    ]
+    # The owner's own private pin counts for them.
+    assert [p["count"] for p in c.get("/api/pins/places", params={"state": "TX"}).json()["places"]] == [2, 2]
+
+    def titles(**params):
+        return sorted(p["title"] for p in anon.get("/api/pins", params=params).json())
+
+    assert titles(state="TX") == ["Fork bank", "Fork bass", "Houston cat"]
+    assert titles(county="48499") == ["Fork bank", "Fork bass"]
+    assert titles(county="48499", lake=seeded_lake["waterbody"].id) == ["Fork bass"]
+    assert titles(county="48499", lake=0) == ["Fork bank"]
+    assert anon.get("/api/pins", params={"county": "Wood"}).status_code == 422
+
+
+def test_where_names_the_county_a_point_is_in(make_client):
+    anon = make_client()
+    assert anon.get("/api/pins/where", params={"lat": 29.76, "lng": -95.37}).json() == {
+        "state_code": "TX", "state_name": "Texas", "county_geoid": "48201", "county_name": "Harris County",
+    }
+    assert anon.get("/api/pins/where", params={"lat": 0, "lng": 0}).json()["county_geoid"] is None
+
+
+def test_pins_saved_before_counties_get_one_at_startup(make_client, db_session):
+    from app.services.pins import fill_places
+
+    c = make_client()
+    signup(c)
+    pin_id = create(c).json()["id"]
+    pin = db_session.get(CatchPin, pin_id)
+    pin.state_code = pin.county_geoid = pin.county_name = None
+    db_session.commit()
+    assert fill_places(db_session) == 1
+    db_session.refresh(pin)
+    assert (pin.state_code, pin.county_name) == ("TX", "Wood County")
+
+
 # ----------------------------------------------------------------- editing
 
 
@@ -305,7 +367,7 @@ def test_switching_between_a_guide_species_and_free_text(make_client):
     c = make_client()
     signup(c)
     pin = create(c, species_slug="bluegill").json()
-    other = c.patch(f"/api/pins/{pin['id']}", json={"species_other": "Freshwater drum"}).json()
-    assert other["species_slug"] is None and other["species_label"] == "Freshwater drum"
+    other = c.patch(f"/api/pins/{pin['id']}", json={"species_other": "Walleye"}).json()
+    assert other["species_slug"] is None and other["species_label"] == "Walleye"
     back = c.patch(f"/api/pins/{pin['id']}", json={"species_slug": "white-crappie"}).json()
     assert back["species_slug"] == "white-crappie" and back["species_label"] == "White Crappie"

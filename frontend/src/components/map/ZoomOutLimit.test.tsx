@@ -5,11 +5,13 @@ import { describe, expect, it, vi } from "vitest";
 import { ZoomOutLimit } from "./LakeMap";
 
 // Leaflet clamps a refused zoom-out before any zoom event fires, so the
-// prompt depends on watching raw input at the zoom floor.
+// prompt depends on watching raw input at the zoom floor. Leaflet's own wheel
+// zoom is off: it zooms on a timer that would fire after the test's map is
+// gone, and the prompt reads the raw wheel event either way.
 function setup(zoom: number) {
   const onBlocked = vi.fn();
   const { container } = render(
-    <MapContainer center={[31, -97]} zoom={zoom} minZoom={5} maxZoom={18} style={{ height: 300, width: 300 }}>
+    <MapContainer center={[31, -97]} zoom={zoom} minZoom={5} maxZoom={18} scrollWheelZoom={false} style={{ height: 300, width: 300 }}>
       <ZoomOutLimit onBlocked={onBlocked} />
     </MapContainer>,
   );

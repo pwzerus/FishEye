@@ -31,6 +31,25 @@ export function PinBadges({ pin }: { pin: PinSummary }) {
   );
 }
 
+/** What the photo check said about the species named (backend services/fish_id.py). */
+export function speciesCheckText(pin: Pick<PinSummary, "species_check" | "species_check_label" | "species_label">): string | null {
+  if (pin.species_check === "confirmed") return `The catch photo shows ${pin.species_label ? `a ${pin.species_label}` : "this fish"}.`;
+  if (pin.species_check === "group") {
+    return `The catch photo shows ${pin.species_check_label ?? "a look-alike"}; which kind is the angler's call.`;
+  }
+  return null;
+}
+
+export function SpeciesCheck({ pin }: { pin: PinSummary }) {
+  const text = speciesCheckText(pin);
+  if (!text) return null;
+  return (
+    <span className={pin.species_check === "confirmed" ? "tag tag-checked" : "tag tag-checked-group"} title={text}>
+      ✓ {pin.species_check === "confirmed" ? "Photo-checked" : "Photo: " + (pin.species_check_label ?? "look-alike").replace(/^an? /, "")}
+    </span>
+  );
+}
+
 /** A pin in a grid: its first photo, or the species illustration. */
 export function PinCard({ pin, index = 0 }: { pin: PinSummary; index?: number }) {
   const art = pin.species_slug;
@@ -67,8 +86,14 @@ export function PinCard({ pin, index = 0 }: { pin: PinSummary; index?: number })
       <div className="pin-card-body">
         <h3>{pin.title}</h3>
         <p className="pin-card-meta">
-          {pin.species_label && <span className="pin-species">{pin.species_label}</span>}
-          {pin.lake && <span>near {pin.lake.name}</span>}
+          {/* The title is the fish's name when none was typed: don't say it twice. */}
+          {pin.species_label && pin.species_label !== pin.title && <span className="pin-species">{pin.species_label}</span>}
+          <SpeciesCheck pin={pin} />
+          {pin.lake ? (
+            <span>near {pin.lake.name}</span>
+          ) : (
+            pin.county_name && <span>{pin.county_name}, {pin.state_code}</span>
+          )}
         </p>
         <p className="pin-card-by muted">
           {pin.is_mine ? "You" : pin.author.display_name} · {formatDay(pin.caught_on ?? pin.created_at)}

@@ -1767,108 +1767,6 @@ h3 {
 .ai-summary-error {
   color: var(--danger);
 }
-.trace {
-  font-size: 13px;
-  border-top: 1px dashed var(--line);
-  padding-top: 10px;
-}
-.trace summary {
-  cursor: pointer;
-  font-weight: 650;
-  color: var(--ink-2);
-  list-style: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.trace summary::-webkit-details-marker {
-  display: none;
-}
-.trace summary::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(-45deg);
-  transition: transform var(--dur) var(--ease);
-}
-.trace[open] summary::before {
-  transform: rotate(45deg);
-}
-.trace-steps {
-  list-style: none;
-  display: grid;
-  gap: 12px;
-  margin-top: 12px;
-  padding-left: 14px;
-  border-left: 2px solid var(--line);
-  animation: fade-in var(--dur) var(--ease) both;
-}
-.trace-steps > li {
-  display: grid;
-  gap: 4px;
-}
-.trace-step-title {
-  font-weight: 750;
-  color: var(--ink);
-}
-.trace-hits {
-  list-style: none;
-  display: grid;
-  gap: 4px;
-}
-.trace-hits li {
-  display: grid;
-  /* fixed trailing columns so every bar starts and ends at the same x */
-  grid-template-columns: minmax(0, 1.4fr) minmax(60px, 1fr) 40px 38px;
-  gap: 8px;
-  align-items: center;
-}
-.trace-hits code {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.score-bar {
-  height: 6px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  overflow: hidden;
-}
-.score-bar span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #14b8a6, #0b5d7a);
-  animation: grow var(--dur-slow) var(--ease) both;
-  transform-origin: left;
-}
-.score {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--muted);
-}
-.cited {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ok);
-}
-.check-ok {
-  color: var(--ok);
-  font-weight: 650;
-}
-.check-warn {
-  color: var(--warn);
-  font-weight: 650;
-}
-.trace-id {
-  margin-top: 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
 
 .ask-form {
   position: sticky;
@@ -2061,11 +1959,6 @@ h3 {
   }
   to {
     opacity: 1;
-  }
-}
-@keyframes grow {
-  from {
-    transform: scaleX(0);
   }
 }
 @keyframes typing {

@@ -79,7 +79,7 @@ describe("AdminConsole for an admin", () => {
     nav.search = new URLSearchParams("tab=reports");
     const group = {
       pin: {
-        id: 9, latitude: 1, longitude: 2, title: "Spammy pin", species_slug: null, species_label: null, caught_on: null,
+        id: 9, latitude: 1, longitude: 2, title: "Spammy pin", species_slug: null, species_label: null, species_check: null, species_check_label: null, caught_on: null,
         created_at: "2026-09-25T12:00:00Z", visibility: "public" as const, status: "hidden" as const, status_reason: "reports",
         author: { id: 3, display_name: "Spammer" }, lake: null, photo_count: 0, thumb_url: null, is_mine: false,
       },

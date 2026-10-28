@@ -192,7 +192,7 @@ def test_sqlite_enforces_foreign_keys(db_session):
 # ------------------------------------------------------------- pin rules
 
 
-def test_owners_cannot_delete_a_pin_a_moderator_took_down(make_client, db_session):
+def test_owners_cannot_edit_a_pin_a_moderator_took_down_but_can_delete_it(make_client, db_session):
     owner = make_client()
     signup(owner)
     pin = create(owner).json()
@@ -201,11 +201,10 @@ def test_owners_cannot_delete_a_pin_a_moderator_took_down(make_client, db_sessio
     make_admin(db_session, "admin@example.com")
     admin.post(f"/api/admin/pins/{pin['id']}/status", json={"status": "hidden"})
 
-    resp = owner.delete(f"/api/pins/{pin['id']}")
-    assert resp.status_code == 409  # the evidence stays until a moderator decides
+    # The reported content stays as it was until a moderator decides...
     assert owner.get(f"/api/pins/{pin['id']}").json()["can_edit"] is False
     assert owner.patch(f"/api/pins/{pin['id']}", json={"title": "Nothing to see"}).status_code == 409
-    admin.post(f"/api/admin/pins/{pin['id']}/status", json={"status": "published"})
+    # ...but taking your own content down is always allowed (audited).
     assert owner.delete(f"/api/pins/{pin['id']}").status_code == 204
 
 

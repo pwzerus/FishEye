@@ -21,13 +21,14 @@ Each report index page includes a "Fish Community" narrative paragraph
 White Bass, ..."). Rather than attempting to grammatically parse arbitrary
 prose (fragile, and a bad idea for data that gets shown to users as fact),
 this does *substring matching* against a curated list of species names and
-common aliases, and keeps the sentence it matched as the `evidence` field
-on WaterbodySpecies — so every extracted fact stays traceable to the exact
-source text a human can double check. This is deliberately conservative:
-a species mentioned only in passing (e.g. inside a citation) can produce
-a false positive, which is exactly why every row is tagged
-`confidence="confirmed"` + a source_url + an evidence sentence rather than
-silently trusted as ground truth.
+common aliases. The sentence a match was found in is used to check the
+match (negations like "none were collected" are dropped) and is never
+stored: TPWD's report text is TPWD's to publish, so `evidence` on
+WaterbodySpecies is FishEye's own sentence naming the report, and
+source_url links to it, so a human can check the fact there
+(docs/data-sources.md, data-sourcing rule 3). A species mentioned only in
+passing (e.g. inside a citation) can still produce a false positive, which
+is why every row carries its source_url.
 
 WHAT ABOUT ACCESS POINTS
 ------------------------
@@ -517,7 +518,9 @@ def ingest_one_lake(db, target: TargetWaterbody, tx_state: State, user_agent: st
             link = WaterbodySpecies(waterbody_id=waterbody.id, species_id=species.id)
             db.add(link)
         link.confidence = "confirmed"
-        link.evidence = mention.evidence_sentence
+        # Our sentence, not the report's (data-sourcing rule 3): the match
+        # sentence is only used to find the fish, never stored.
+        link.evidence = f"TPWD's survey report for {target.name} records {mention.species_name}."
         link.source_url = target.survey_index_url
         link.observed_at = now
         written += 1

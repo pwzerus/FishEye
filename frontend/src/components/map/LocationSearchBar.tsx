@@ -8,6 +8,9 @@ export interface LocatedPoint {
   latitude: number;
   longitude: number;
   label: string;
+  // Set only for "use my location": the browser's estimate of how far off
+  // the point may be, in metres. The map zooms to street level and marks it.
+  own?: { accuracy: number };
 }
 
 /**
@@ -69,6 +72,7 @@ export function LocationSearchBar({ onLocate }: { onLocate: (point: LocatedPoint
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           label: "Your location",
+          own: { accuracy: position.coords.accuracy },
         });
       },
       (geoError) => {

@@ -37,6 +37,16 @@ backend/gbif_*_raw.json
 backend/gbif_*_report.json
 backend/tpwd_cache/
 backend/ga_wrd_cache/
+# Bulk downloads and the facts the importers keep from them (docs/data-sources.md)
+backend/geofabrik_cache/
+backend/osm_cache/
+backend/cdfw_cache/
+backend/padus_cache/
+backend/usgs_nas_cache/
+backend/records_cache/
+backend/census_cache/
+# Photos the fish recognizer is measured against (app/cli/fish_id_photos.py)
+backend/fishid_cache/
 
 # Community photo uploads (MEDIA_ROOT): user content, never committed
 backend/media/
@@ -55,3 +65,7 @@ frontend-preview/
 
 # Server login keys must never be committed
 *.pem
+
+# Local screenshots for reviewing a change; never committed
+/screenshots/
+/reports/

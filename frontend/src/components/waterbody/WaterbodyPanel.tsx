@@ -5,9 +5,10 @@ import Link from "next/link";
 import { ContentSkeleton } from "@/components/ui/ContentSkeleton";
 
 import { ApiError, getWaterbody } from "@/lib/api/client";
-import type { AccessPoint, FishAttractor, WaterbodyDetail } from "@/lib/api/types";
+import type { AccessPoint, FishAttractor, SpeciesSummary, WaterbodyDetail } from "@/lib/api/types";
 import { SpeciesHowTo } from "@/components/species/SpeciesHowTo";
 import { AgencyProfileCard } from "./AgencyProfileCard";
+import { NearbyShops } from "./NearbyShops";
 import { ReportedSpeciesList } from "./ReportedSpeciesList";
 import { WeatherRecommendations } from "./WeatherRecommendations";
 
@@ -55,6 +56,43 @@ function AttractorNote({ attractors }: { attractors: FishAttractor[] }) {
       </p>
     </>
   );
+}
+
+/** Why a fish is on the list: each official fact, in FishEye's own words,
+ * with a link to the source (data-sourcing rule 3). */
+function SpeciesEvidence({ species }: { species: SpeciesSummary }) {
+  const items = species.evidence_items ?? [];
+  return (
+    <details className="lake-evidence">
+      <summary>Why this fish is listed</summary>
+      {items.length > 0 ? (
+        <ul className="evidence-list">
+          {items.map((e, i) => (
+            <li key={`${i}-${e.kind}-${e.source_url}`}>
+              {e.evidence}{" "}
+              <a href={e.source_url} target="_blank" rel="noreferrer">Source ↗</a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="evidence">
+          {species.evidence}{" "}
+          <a href={species.source_url} target="_blank" rel="noreferrer">Source ↗</a>
+        </p>
+      )}
+    </details>
+  );
+}
+
+/** PAD-US says the lake lies in land the public may enter. A fact about the
+ * land around it, not a confirmed entrance. */
+function publicLandSentence(detail: WaterbodyDetail): string | null {
+  if (!detail.public_land) return null;
+  const where = detail.public_land_name ? `in ${detail.public_land_name}` : "on public land";
+  const by = detail.public_land_manager && detail.public_land_manager !== "Unknown" ? ` (${detail.public_land_manager})` : "";
+  return detail.public_land === "open"
+    ? `It lies ${where}${by}, land open to the public (PAD-US).`
+    : `It lies ${where}${by}, public land with limited access: permits, seasons or hours (PAD-US).`;
 }
 
 // A big reservoir can have fifty official ramps; the panel shows a few and
@@ -158,6 +196,10 @@ export function WaterbodyPanel({ waterbodyId, onExplore }: { waterbodyId: number
   // entrances, each labelled "reported, not verified"; the heading mustn't
   // call them confirmed.
   const allConfirmed = detail.access_points.every((ap) => ap.public_status === "confirmed_public");
+  // An unverified lake is mapped by OpenStreetMap, or in California only by
+  // CDFW's lake layer (backend cdfw_import.py).
+  const mappedBy = detail.source_url.includes("openstreetmap.org") ? "OpenStreetMap" : "CDFW's California Lakes map";
+  const onPublicLand = publicLandSentence(detail);
 
   return (
     <div className="panel">
@@ -171,9 +213,13 @@ export function WaterbodyPanel({ waterbodyId, onExplore }: { waterbodyId: number
 
       {isOsm && (
         <div className="unverified-banner">
-          <strong>Unverified lake from OpenStreetMap.</strong> Clearly private lakes are left out,
-          but some may remain, so check access before you go.
-          <details className="data-note"><summary>About this data</summary><p>OpenStreetMap is a community-edited map. FishEye hasn&apos;t verified this lake&apos;s fish or entrances.</p></details>
+          <strong>Unverified lake from {mappedBy}.</strong>{" "}
+          {onPublicLand && detail.public_land === "open"
+            ? <>{onPublicLand} Check local rules and where to park before you go.</>
+            : onPublicLand
+              ? <>{onPublicLand} Check the rules before you go.</>
+              : <>Clearly private lakes are left out, but some may remain, so check access before you go.</>}
+          <details className="data-note"><summary>About this data</summary><p>{mappedBy === "OpenStreetMap" ? "OpenStreetMap is a community-edited map." : "California's Department of Fish and Wildlife maps this lake."} FishEye hasn&apos;t verified this lake&apos;s entrances; any fish listed come from official sources.</p></details>
         </div>
       )}
 
@@ -183,7 +229,7 @@ export function WaterbodyPanel({ waterbodyId, onExplore }: { waterbodyId: number
         </div>
       )}
 
-      {isOsm && isPond && !isLikelyPrivate && detail.access_points.length === 0 && (
+      {isOsm && isPond && !isLikelyPrivate && detail.public_land !== "open" && detail.access_points.length === 0 && (
         // Ponds with no reported entrance get their own, louder warning: in
         // Texas many are on ranches, in gated neighborhoods or on golf
         // courses, and unlike a reservoir there's rarely an official access
@@ -207,7 +253,7 @@ export function WaterbodyPanel({ waterbodyId, onExplore }: { waterbodyId: number
       )}
 
       {/* An OSM lake's summary repeats the banner above, so it's skipped. */}
-      <div className="lake-facts"><span>{detail.access_points.filter((a) => a.public_status === "confirmed_public").length} confirmed entrances</span><span>{isOsm ? `${detail.reported_species?.length ?? 0} species reported` : `${detail.species.length} species listed`}</span></div>
+      <div className="lake-facts"><span>{detail.access_points.filter((a) => a.public_status === "confirmed_public").length} confirmed entrances</span><span>{isOsm && detail.species.length === 0 ? `${detail.reported_species?.length ?? 0} species reported` : `${detail.species.length} species listed`}</span></div>
       {!isClosed && <WeatherRecommendations key={`weather-${detail.id}`} waterbodyId={detail.id} latitude={detail.latitude} longitude={detail.longitude} />}
 
       <div className="lake-tabs" role="tablist" aria-label="Lake information">
@@ -231,8 +277,27 @@ export function WaterbodyPanel({ waterbodyId, onExplore }: { waterbodyId: number
         · {isOsm ? "imported" : "updated"}{" "}
         {new Date(detail.source_updated_at).toLocaleDateString()}
       </p>
+      {detail.official_name && <p className="source-line">Official name: {detail.official_name}</p>}
+      {detail.source_url.includes("openstreetmap.org") && (
+        <p className="data-credit">Map data © OpenStreetMap contributors (ODbL)</p>
+      )}
 
-      {detail.agency_profile && <AgencyProfileCard profile={detail.agency_profile} />}
+      {detail.agency_profile && <AgencyProfileCard profile={detail.agency_profile} credit={detail.data_credit ?? null} />}
+      {!detail.agency_profile && detail.data_credit && <p className="data-credit">{detail.data_credit}</p>}
+      {(detail.sources?.length ?? 0) > 0 && (
+        <>
+          <h3>Data sources</h3>
+          <ul className="dataset-sources">
+            {detail.sources!.map((src) => (
+              <li key={src.url}>
+                <a href={src.url} target="_blank" rel="noreferrer">{src.title}</a> · {src.publisher}
+                {src.licence && <span className="dataset-licence"> · {src.licence}</span>}
+                {src.citation && <div className="dataset-licence">{src.citation}</div>}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       </section>
 
       <section id="lake-panel-access" role="tabpanel" aria-labelledby="lake-tab-access" hidden={tab !== "access"}>
@@ -256,16 +321,19 @@ export function WaterbodyPanel({ waterbodyId, onExplore }: { waterbodyId: number
         }
       />
 
+      {onPublicLand && !isOsm && <p className="public-land-note">{onPublicLand}</p>}
       {!isClosed && <AttractorNote attractors={detail.fish_attractors ?? []} />}
+      {!isClosed && <NearbyShops key={`shops-${detail.id}`} latitude={detail.latitude} longitude={detail.longitude} />}
       </section>
 
-      {/* An unverified lake has no official species list, so only the
-          records section is shown. A verified lake shows its official list,
-          then any species on record that the survey doesn't mention. */}
+      {/* A verified lake shows its official list, then any species on record
+          that the survey doesn't mention. An unverified lake shows the fish
+          an official source names there (a survey, a state record), if any,
+          then the outside records. */}
       <section id="lake-panel-fish" role="tabpanel" aria-labelledby="lake-tab-fish" hidden={tab !== "fish"}>
-      {!isOsm && (
+      {(!isOsm || detail.species.length > 0) && (
         <>
-          <h3>Species</h3>
+          <h3>{isOsm ? "Fish named by official sources" : "Species"}</h3>
           <ul className="species-list">
             {detail.species.map((s) => (
               <li key={s.common_name}>
@@ -273,7 +341,7 @@ export function WaterbodyPanel({ waterbodyId, onExplore }: { waterbodyId: number
                   <strong>{s.common_name}</strong>
                   <ConfidenceBadge confidence={s.confidence} />
                 </div>
-                <details className="lake-evidence"><summary>Why this fish is listed</summary><p className="evidence">{s.evidence}</p></details>
+                <SpeciesEvidence species={s} />
                 <SpeciesHowTo commonName={s.common_name} />
               </li>
             ))}

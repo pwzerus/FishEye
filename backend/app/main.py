@@ -15,6 +15,7 @@ from app.api import (
     jurisdictions,
     pins,
     recommendations,
+    shops,
     species,
     states,
     waterbodies,
@@ -44,6 +45,12 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     # index, and decides whether the map's viewport queries may use them.
     # A no-op on SQLite (app/db/spatial.py explains the two shapes).
     ensure_spatial_schema(engine)
+    # Catches saved before counties existed get their state and county.
+    from app.db.session import SessionLocal
+    from app.services.pins import fill_places
+
+    with SessionLocal() as db:
+        fill_places(db)
     # Load Ask's search now rather than on the first question: with
     # RAG_SEMANTIC=on (the default) a missing model stops the server here,
     # with instructions, instead of breaking Ask later; and the model and
@@ -119,6 +126,7 @@ app.include_router(ask.router, prefix=settings.api_prefix)
 app.include_router(auth.router, prefix=settings.api_prefix)
 app.include_router(pins.router, prefix=settings.api_prefix)
 app.include_router(admin_community.router, prefix=settings.api_prefix)
+app.include_router(shops.router, prefix=settings.api_prefix)
 
 
 @app.get("/health")

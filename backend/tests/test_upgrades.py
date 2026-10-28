@@ -105,3 +105,41 @@ def test_a_database_with_no_waterbodies_table_is_left_alone(tmp_path):
         assert not inspect(engine).has_table("waterbodies")
     finally:
         engine.dispose()
+
+
+def test_an_old_database_gains_the_provenance_and_public_land_columns(old_engine):
+    with old_engine.begin() as conn:
+        conn.execute(text(
+            "CREATE TABLE source_records (id INTEGER PRIMARY KEY, source_type VARCHAR(32) NOT NULL,"
+            " url VARCHAR(512) NOT NULL, publisher VARCHAR(128) NOT NULL, retrieved_at DATETIME NOT NULL,"
+            " valid_until DATETIME, checksum VARCHAR(64))"
+        ))
+    ensure_waterbody_ranking_schema(old_engine)
+    ensure_waterbody_ranking_schema(old_engine)  # idempotent
+    inspector = inspect(old_engine)
+    wb_cols = {c["name"] for c in inspector.get_columns("waterbodies")}
+    assert {"dfg_water_id", "official_name", "public_land", "public_land_name", "public_land_manager"} <= wb_cols
+    src_cols = {c["name"] for c in inspector.get_columns("source_records")}
+    assert {"source_key", "title", "licence_class", "licence_name", "citation"} <= src_cols
+    assert "ix_waterbodies_dfg_water_id" in _index_names(old_engine)
+
+
+def test_an_old_database_gains_the_photo_check_columns_and_keeps_its_pins(old_engine):
+    # catch_pins as it was before the photo check (ADR 0037).
+    with old_engine.begin() as conn:
+        conn.execute(text(
+            "CREATE TABLE catch_pins (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, latitude FLOAT NOT NULL,"
+            " longitude FLOAT NOT NULL, title VARCHAR(80) NOT NULL, note TEXT, species_slug VARCHAR(64),"
+            " species_other VARCHAR(60), caught_on DATE, visibility VARCHAR(16) NOT NULL, status VARCHAR(16) NOT NULL,"
+            " status_reason VARCHAR(32), waterbody_id INTEGER, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL)"
+        ))
+        conn.execute(text(
+            "INSERT INTO catch_pins (user_id, latitude, longitude, title, visibility, status, created_at, updated_at)"
+            " VALUES (1, 32.8, -95.6, 'Old pin', 'public', 'published', '2026-01-01', '2026-01-01')"
+        ))
+    ensure_waterbody_ranking_schema(old_engine)
+    ensure_waterbody_ranking_schema(old_engine)  # idempotent
+    cols = {c["name"] for c in inspect(old_engine).get_columns("catch_pins")}
+    assert {"species_check", "species_check_confidence", "species_detected", "species_check_model", "species_check_photo_id"} <= cols
+    with old_engine.connect() as conn:
+        assert conn.execute(text("SELECT title, species_check FROM catch_pins")).one() == ("Old pin", None)

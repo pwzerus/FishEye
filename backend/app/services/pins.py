@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import get_settings
 from app.db.types import utcnow
+from app.knowledge.jurisdictions import STATE_NAMES
 from app.knowledge.species_guides import GUIDES
 from app.models.community import (
     PIN_HIDDEN,
@@ -37,7 +38,7 @@ from app.models.community import (
     User,
 )
 from app.models.waterbody import Waterbody
-from app.services import audit
+from app.services import audit, counties, fish_id
 from app.db.spatial import bbox_filter
 from app.services.geo import haversine_km
 from app.services.media import MediaStore, PhotoRejected, clean_photo, new_key
@@ -76,7 +77,8 @@ def can_view(pin: CatchPin, user: User | None) -> bool:
 def can_edit(pin: CatchPin, user: User | None) -> bool:
     """Owners edit their published pins. A hidden or removed pin is a
     moderation case: it stays as it was reported until a moderator decides,
-    so the owner can't quietly rewrite (or delete) the evidence."""
+    so the owner can't quietly rewrite it. Deleting it is still the
+    owner's call (the delete endpoint, audited)."""
     return user is not None and user.id == pin.user_id and pin.status == PIN_PUBLISHED
 
 
@@ -113,6 +115,16 @@ def _text(value: str | None, max_len: int) -> str | None:
     return value
 
 
+def claimed_species(species_slug: str | None, species_other: str | None) -> str | None:
+    """The guide species a catch names, if any. "Other: largemouth bass" is
+    the guide species, and is checked as one."""
+    slug = (species_slug or "").strip() or None
+    if slug is not None and slug not in SPECIES_LABELS:
+        raise PinError(422, "Pick a species from the list, or use 'Other'.")
+    norm = " ".join((species_other or "").lower().replace("-", " ").split())
+    return slug or next((s for s, label in SPECIES_LABELS.items() if norm in (label.lower(), s.replace("-", " "))), None)
+
+
 def validate(
     *,
     latitude: float,
@@ -131,9 +143,7 @@ def validate(
     clean_title = " ".join((title or "").split())
     if not 3 <= len(clean_title) <= 80:
         raise PinError(422, "Give the pin a title of 3 to 80 characters.")
-    slug = (species_slug or "").strip() or None
-    if slug is not None and slug not in SPECIES_LABELS:
-        raise PinError(422, "Pick a species from the list, or use 'Other'.")
+    slug = claimed_species(species_slug, species_other)
     if visibility not in (VISIBILITY_PUBLIC, VISIBILITY_PRIVATE):
         raise PinError(422, "Visibility is public or private.")
     if caught_on is not None:
@@ -209,6 +219,53 @@ def _attach(db: Session, pin: CatchPin, cleaned: list, store: MediaStore) -> Non
         raise
 
 
+# ---------------------------------------------------------- photo check
+
+
+@dataclass(frozen=True)
+class SpeciesCheck:
+    verdict: fish_id.Verdict
+    model: str
+
+
+def check_species(species_slug: str | None, species_other: str | None, photo: bytes | None) -> SpeciesCheck | None:
+    """The photo check on the fish a catch names (services/fish_id.py):
+    None when it names none, or the check is off; PinError when the photo
+    doesn't back the claim, with the reason and what the photo shows."""
+    if species_slug is None and species_other is None:
+        return None
+    try:
+        recognizer = fish_id.get_recognizer()
+    except fish_id.FishIdUnavailable as exc:
+        raise PinError(503, str(exc)) from exc
+    if recognizer is None:
+        return None
+    if photo is None:
+        raise PinError(422, "Add a photo of the fish: a catch that names a species needs one, and FishEye checks it.")
+    verdict = fish_id.check_claim(recognizer.identify(photo), species_slug)
+    if not verdict.accepted:
+        raise PinError(422, verdict.message)
+    return SpeciesCheck(verdict, recognizer.name)
+
+
+def _record_check(pin: CatchPin, check: SpeciesCheck | None, photo: PinPhoto | None) -> None:
+    v = check.verdict if check else None
+    # "Other" only had to show a fish: nothing about its species was checked.
+    pin.species_check = None if v is None or v.claimed is None else v.status
+    pin.species_check_confidence = round(v.confidence, 3) if v else None
+    pin.species_detected = v.detected if v else None
+    pin.species_check_model = check.model if check else None
+    pin.species_check_photo_id = photo.id if check and photo else None
+
+
+def recheck_species(db: Session, pin: CatchPin, species_slug: str | None, species_other: str | None, store: MediaStore) -> None:
+    """A changed species is checked against the pin's first photo."""
+    first = pin.photos[0] if pin.photos else None
+    path = store.path(first.storage_key, "full") if first else None
+    check = check_species(species_slug, species_other, path.read_bytes() if path else None)
+    _record_check(pin, check, first)
+
+
 # ---------------------------------------------------------------- writes
 
 
@@ -216,8 +273,10 @@ def create_pin(db: Session, user: User, fields: PinFields, uploads: list[bytes],
     if len(uploads) > get_settings().max_photos_per_pin:
         raise PinError(422, f"A pin can have up to {get_settings().max_photos_per_pin} photos.")
     # Every photo is validated before anything is written, so one bad file
-    # can't leave a half-created pin behind.
+    # can't leave a half-created pin behind. The first is the catch's photo:
+    # the one the species is checked against.
     cleaned = _clean_all(uploads)
+    check = check_species(fields.species_slug, fields.species_other, cleaned[0].full if cleaned else None)
     lake = nearest_waterbody(db, fields.latitude, fields.longitude)
     pin = CatchPin(
         user_id=user.id,
@@ -232,10 +291,12 @@ def create_pin(db: Session, user: User, fields: PinFields, uploads: list[bytes],
         status=PIN_PUBLISHED,
         waterbody_id=lake.id if lake else None,
     )
+    set_place(pin)
     db.add(pin)
     db.flush()
     if cleaned:
         _attach(db, pin, cleaned, store)
+    _record_check(pin, check, pin.photos[0] if pin.photos else None)
     return pin
 
 
@@ -253,6 +314,12 @@ def delete_photo(db: Session, pin: CatchPin, photo_id: int, store: MediaStore) -
     photo = next((p for p in pin.photos if p.id == photo_id), None)
     if photo is None:
         raise PinError(404, "No such photo.")
+    if photo.id == pin.species_check_photo_id and (pin.species_slug or pin.species_other):
+        raise PinError(
+            409,
+            "This is the photo that shows your fish, so it stays while the pin names a species. "
+            "Change the fish to “Not sure” first, or delete the pin.",
+        )
     key = photo.storage_key
     pin.photos.remove(photo)
     db.flush()
@@ -275,6 +342,47 @@ def photo_keys_of(user: User) -> list[str]:
 # ----------------------------------------------------------------- reads
 
 
+def set_place(pin: CatchPin) -> None:
+    """The pin's state and county, from where it is."""
+    county = counties.county_at(pin.latitude, pin.longitude)
+    pin.state_code = county.state if county else None
+    pin.county_geoid = county.geoid if county else None
+    pin.county_name = county.name if county else None
+
+
+def fill_places(db: Session) -> int:
+    """Gives pins saved before counties existed their state and county.
+    Runs at startup; a no-op once every pin has one (or the outlines are
+    missing). A pin outside every county is looked at again each time:
+    there are few, and a lookup is cheap."""
+    if counties.index() is None:
+        return 0
+    filled = 0
+    for pin in db.scalars(select(CatchPin).where(CatchPin.state_code.is_(None))):
+        set_place(pin)
+        filled += pin.state_code is not None
+    db.commit()
+    return filled
+
+
+def _visible(user: User | None, mine: bool):
+    if mine:
+        return CatchPin.user_id == (user.id if user else -1)
+    visible = (CatchPin.visibility == VISIBILITY_PUBLIC) & (CatchPin.status == PIN_PUBLISHED)
+    if user is not None:
+        # Your own pins appear on your map too, private or not — but not
+        # ones a moderator removed.
+        visible = visible | ((CatchPin.user_id == user.id) & (CatchPin.status != PIN_REMOVED))
+    return visible
+
+
+@dataclass
+class Place:
+    id: str
+    name: str
+    count: int
+
+
 def list_pins(
     db: Session,
     user: User | None,
@@ -282,27 +390,76 @@ def list_pins(
     bbox: tuple[float, float, float, float] | None = None,
     species: str | None = None,
     mine: bool = False,
+    state: str | None = None,
+    county: str | None = None,
+    lake: int | None = None,
     limit: int = 200,
 ) -> list[CatchPin]:
+    if mine and user is None:
+        return []
     q = select(CatchPin).options(selectinload(CatchPin.photos), selectinload(CatchPin.user))
-    if mine:
-        if user is None:
-            return []
-        q = q.where(CatchPin.user_id == user.id)
-    else:
-        visible = (CatchPin.visibility == VISIBILITY_PUBLIC) & (CatchPin.status == PIN_PUBLISHED)
-        if user is not None:
-            # Your own pins appear on your map too, private or not — but not
-            # ones a moderator removed.
-            visible = visible | ((CatchPin.user_id == user.id) & (CatchPin.status != PIN_REMOVED))
-        q = q.where(visible)
+    q = q.where(_visible(user, mine))
     if bbox is not None:
         west, south, east, north = bbox
         q = q.where(CatchPin.latitude.between(south, north), CatchPin.longitude.between(west, east))
     if species:
         q = q.where(CatchPin.species_slug == species)
+    if state:
+        q = q.where(CatchPin.state_code == state.upper())
+    if county:
+        q = q.where(CatchPin.county_geoid == county)
+    if lake is not None:
+        # 0: the county's pins that aren't at a mapped lake.
+        q = q.where(CatchPin.waterbody_id == lake if lake else CatchPin.waterbody_id.is_(None))
     q = q.order_by(CatchPin.created_at.desc(), CatchPin.id.desc()).limit(min(max(limit, 1), MAX_LIST))
     return list(db.scalars(q).all())
+
+
+NOT_AT_A_LAKE = "Not at a mapped lake"
+
+
+def places(
+    db: Session,
+    user: User | None,
+    *,
+    state: str | None = None,
+    county: str | None = None,
+    species: str | None = None,
+    mine: bool = False,
+) -> list[Place]:
+    """One level down from where the angler is browsing, with how many
+    catches each has: states; a state's counties; a county's lakes (and,
+    as lake 0, its pins that aren't at a mapped lake). Counted over the
+    pins this user may see, so a private pin never shows up as a count."""
+    if mine and user is None:
+        return []
+    where = [_visible(user, mine)]
+    if species:
+        where.append(CatchPin.species_slug == species)
+    n = func.count(CatchPin.id)
+    if county:
+        where.append(CatchPin.county_geoid == county)
+        rows = db.execute(
+            select(CatchPin.waterbody_id, Waterbody.name, n)
+            .outerjoin(Waterbody, Waterbody.id == CatchPin.waterbody_id)
+            .where(*where)
+            .group_by(CatchPin.waterbody_id, Waterbody.name)
+        ).all()
+        out = [Place(str(wid or 0), name or NOT_AT_A_LAKE, c) for wid, name, c in rows]
+        # Lakes by catches, then name; "not at a lake" last.
+        return sorted(out, key=lambda p: (p.id == "0", -p.count, p.name))
+    if state:
+        where.append(CatchPin.state_code == state.upper())
+        where.append(CatchPin.county_geoid.is_not(None))
+        rows = db.execute(
+            select(CatchPin.county_geoid, CatchPin.county_name, n)
+            .where(*where)
+            .group_by(CatchPin.county_geoid, CatchPin.county_name)
+        ).all()
+        return sorted((Place(g, name or g, c) for g, name, c in rows), key=lambda p: (-p.count, p.name))
+    where.append(CatchPin.state_code.is_not(None))
+    rows = db.execute(select(CatchPin.state_code, n).where(*where).group_by(CatchPin.state_code)).all()
+    return sorted((Place(code, STATE_NAMES.get(code, code), c) for code, c in rows), key=lambda p: (-p.count, p.name))
 
 
 def species_label(pin: CatchPin) -> str | None:

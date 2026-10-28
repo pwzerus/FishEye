@@ -4,12 +4,13 @@ See docs/adr/0022-statewide-tpwd-lakes.md. For each of TPWD's ~175 lake
 pages this:
 
 1. places the lake on the map (below);
-2. stores TPWD's own profile of it (AgencyLakeProfile): surface area,
-   location, the predominant-species list and TPWD's poor-to-excellent
-   fishing ratings, with links to the lake page and latest survey report;
+2. stores the facts TPWD publishes about it (AgencyLakeProfile): surface
+   area, depth, year impounded, the predominant-species list and TPWD's
+   poor-to-excellent fishing ratings, with links to the lake page and latest
+   survey report. Not TPWD's sentences (data-sourcing rule 3);
 3. links the guide species TPWD says are there (WaterbodySpecies,
-   confidence "confirmed"), each with the sentence or list item that says
-   so;
+   confidence "confirmed"), each with FishEye's own sentence naming the
+   document that lists it, and a link to it;
 4. adds TPWD's public boat ramps on that lake (AccessPoint,
    "confirmed_public"), from TPWD's statewide Public Boat Ramps dataset.
 
@@ -59,6 +60,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.data_import.osm_waterbody_import import core_name
+from app.data_import.species_names import species_list
 from app.data_import.tpwd_lake_survey_scraper import upsert_species
 from app.data_import.tpwd_pages import BASE, LakePage, ReportPage, parse_lake_page, parse_report_page
 from app.models.waterbody import AccessPoint, AgencyLakeProfile, State, Waterbody, WaterbodySpecies
@@ -211,19 +213,33 @@ class ImportSummary:
     lakes_without_ramps: list[str] = field(default_factory=list)
 
 
+def survey_evidence(species: str, year: int | None) -> str:
+    """FishEye's sentence for "TPWD's survey report names this fish". Only
+    the facts (species, year) come from TPWD; the words are ours, and the
+    report is one click away (data-sourcing rule 3)."""
+    return (
+        f"TPWD's {year} survey report for this lake records {species}."
+        if year
+        else f"TPWD's survey report for this lake records {species}."
+    )
+
+
+def lake_page_evidence(species: str) -> str:
+    return f"TPWD's page for this lake lists {species} among its predominant fish."
+
+
 def _evidence(lake: LakePage, report: ReportPage | None, retrieved_at: datetime) -> dict[str, tuple[str, str, datetime]]:
-    """species -> (evidence, source_url, observed_at). The survey report's
-    own sentence when it has one, otherwise the lake page's list item."""
+    """species -> (evidence, source_url, observed_at). From the survey report
+    when it names the fish, otherwise from the lake page's species list.
+    The sentence the match was found in is never stored: our own sentence
+    says which document names the fish, and links to it."""
     out: dict[str, tuple[str, str, datetime]] = {}
     if report is not None:
         observed = datetime(report.year, 1, 1) if report.year else retrieved_at
         for m in report.mentions:
-            out[m.species_name] = (m.evidence_sentence, report.url, observed)
-    for name, item in lake.species.items():
-        out.setdefault(
-            name,
-            (f"Listed by TPWD among this lake's predominant fish species: “{item}”.", lake.url, retrieved_at),
-        )
+            out[m.species_name] = (survey_evidence(m.species_name, report.year), report.url, observed)
+    for name in lake.species:
+        out.setdefault(name, (lake_page_evidence(name), lake.url, retrieved_at))
     return out
 
 
@@ -355,11 +371,14 @@ def import_lake(
     profile.access_page_url = lake.access_url
     profile.survey_report_url = report.url if report else None
     profile.survey_year = report.year if report else None
-    profile.location = lake.location
+    # TPWD's own description of where the lake is ("On Elm Creek 20 miles
+    # south of Abilene") is its wording, not a fact we may copy; the map
+    # already shows where the lake is.
+    profile.location = None
     profile.surface_acres = lake.surface_acres
     profile.max_depth_ft = lake.max_depth_ft
     profile.impounded = lake.impounded
-    profile.predominant_species = list(lake.predominant)
+    profile.predominant_species = species_list(list(lake.predominant))
     profile.ratings = [{"label": r.label, "rating": r.rating} for r in lake.ratings]
     profile.placement = placement.method
     profile.retrieved_at = retrieved_at
@@ -383,6 +402,12 @@ def find_ramps_file(cache: Path) -> Path | None:
 
 
 def run(db: Session, cache: Path, ramps: list[Ramp], state_code: str = "TX") -> ImportSummary:
+    # Species links, ramps and profiles are added by id, not through each
+    # lake's collections, so a lake still in the session from an earlier run
+    # would show stale ones (no profile, no ramps) and be placed or written
+    # twice. Start from what the database holds.
+    db.flush()
+    db.expire_all()
     manifest_path = cache / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
     state = db.scalar(select(State).where(State.code == state_code))

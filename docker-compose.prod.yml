@@ -58,6 +58,12 @@ services:
       # frontend can reach it, and Caddy replaces any X-Forwarded-For a
       # visitor sends with the address the connection really came from.
       FORWARDED_ALLOW_IPS: "*"
+    volumes:
+      # The fish photo check's model (docs/adr/0037), copied up from a
+      # developer's machine: it is built with PyTorch, which the image
+      # doesn't carry. Without it, a catch that names a fish waits (503)
+      # rather than going up unchecked; everything else works.
+      - ./backend/models/fish-id:/app/models/fish-id:ro
 
   frontend:
     restart: unless-stopped

@@ -6,6 +6,8 @@ import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 import { AccountMenu } from "@/components/auth/AccountMenu";
+import { useToast } from "@/components/ui/Toast";
+import { CATCHES_AVAILABLE, CATCHES_SOON } from "@/lib/features";
 
 /**
  * The one piece of chrome that never moves. It lives in the root layout and
@@ -25,6 +27,32 @@ const NAV = [
   { href: "/community", label: "Catches", icon: "community" },
   { href: "/ask", label: "Ask", icon: "ask" },
 ] as const;
+
+type NavItem = (typeof NAV)[number];
+
+// A section that is built but not open yet (lib/features.ts): it keeps its
+// place in the nav, says so, and explains itself when tapped.
+function unavailable(item: NavItem): boolean {
+  return item.href === "/community" && !CATCHES_AVAILABLE;
+}
+
+function UnavailableNavItem({ item }: { item: NavItem }) {
+  const toast = useToast();
+  return (
+    <button
+      type="button"
+      className="site-nav-link is-unavailable"
+      aria-disabled="true"
+      aria-label={`${item.label} (unavailable)`}
+      title={CATCHES_SOON}
+      onClick={() => toast(CATCHES_SOON, "info")}
+    >
+      <NavIcon name={item.icon} />
+      <span>{item.label}</span>
+      <span className="nav-unavailable">Unavailable</span>
+    </button>
+  );
+}
 
 function watchMobile(onChange: () => void) {
   const query = window.matchMedia?.('(max-width: 760px)');
@@ -117,6 +145,7 @@ export function SiteHeader() {
         <div className="site-header-right">
         <nav className="site-nav" aria-label="Main" hidden={mobile}>
           {NAV.map((item, i) => {
+            if (unavailable(item)) return <UnavailableNavItem key={item.href} item={item} />;
             const active = i === current && (item.href !== "/" || onRoot);
             const direction = i > current ? "nav-forward" : "nav-back";
             return (
@@ -138,7 +167,7 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
-    {mobile && createPortal(<nav className="mobile-site-nav" aria-label="Main">{NAV.filter((item) => item.href !== '/').map((item) => <Link key={item.href} href={item.href} className={`site-nav-link${pathname.startsWith(item.href) ? ' active' : ''}`} aria-current={pathname.startsWith(item.href) ? 'page' : undefined} aria-label={item.label}><NavIcon name={item.icon}/><span>{item.label}</span></Link>)}</nav>, document.body)}
+    {mobile && createPortal(<nav className="mobile-site-nav" aria-label="Main">{NAV.filter((item) => item.href !== '/').map((item) => unavailable(item) ? <UnavailableNavItem key={item.href} item={item} /> : <Link key={item.href} href={item.href} className={`site-nav-link${pathname.startsWith(item.href) ? ' active' : ''}`} aria-current={pathname.startsWith(item.href) ? 'page' : undefined} aria-label={item.label}><NavIcon name={item.icon}/><span>{item.label}</span></Link>)}</nav>, document.body)}
     </>
   );
 }

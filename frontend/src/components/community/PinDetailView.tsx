@@ -14,7 +14,8 @@ import { addPhotos, deletePhoto, deletePin, getPin, getPinOptions, updatePin } f
 import { waterFor } from "@/lib/fishArt";
 import type { PinDetail, PinOptions, PinVisibility } from "@/lib/api/types";
 import { PhotoPicker } from "./PhotoPicker";
-import { formatDay, PinBadges } from "./PinCard";
+import { AdminModeration } from "./AdminModeration";
+import { formatDay, PinBadges, SpeciesCheck, speciesCheckText } from "./PinCard";
 import { VisibilityToggle } from "./PinForm";
 import { ReportDialog } from "./ReportDialog";
 
@@ -25,14 +26,18 @@ const PinMiniMap = dynamic(() => import("./PinMiniMap"), {
 
 function StatusBanner({ pin }: { pin: PinDetail }) {
   if (pin.status === "removed")
-    return <div className="banner banner-danger">A moderator removed this pin. Only you (and admins) can see it.</div>;
+    return (
+      <div className="banner banner-danger">
+        A moderator removed this pin. Only you (and admins) can see it. It can&apos;t be edited, but you can delete it.
+      </div>
+    );
   if (pin.status === "hidden")
     return (
       <div className="banner banner-warn">
         {pin.status_reason === "reports"
           ? "Hidden after several reports, until a moderator reviews it."
           : "A moderator hid this pin."}{" "}
-        Only you (and admins) can see it, and it can&apos;t be edited or deleted until the review.
+        Only you (and admins) can see it. It can&apos;t be edited until the review, but you can delete it.
       </div>
     );
   if (pin.visibility === "private" && pin.is_mine)
@@ -148,8 +153,14 @@ export function PinDetailView({ pinId }: { pinId: number }) {
         <div className="pin-info">
           <div className="pin-tags reveal" style={{ "--i": 1 } as React.CSSProperties}>
             {pin.species_label && <span className="tag tag-species">{pin.species_label}</span>}
+            <SpeciesCheck pin={pin} />
             <PinBadges pin={pin} />
           </div>
+          {speciesCheckText(pin) && (
+            <p className="pin-check-note muted reveal" style={{ "--i": 1 } as React.CSSProperties}>
+              {speciesCheckText(pin)}
+            </p>
+          )}
           <h1 className="reveal" style={{ "--i": 2 } as React.CSSProperties}>
             {pin.title}
           </h1>
@@ -198,6 +209,33 @@ export function PinDetailView({ pinId }: { pinId: number }) {
           </div>
 
           <div className="pin-actions reveal" style={{ "--i": 7 } as React.CSSProperties}>
+            {pin.visibility === "public" && pin.status === "published" && (
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={async () => {
+                  const url = window.location.href;
+                  const title = pin.species_label ? `${pin.species_label} · ${pin.title}` : pin.title;
+                  // The phone's own share sheet where there is one; else the link.
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({ title, url });
+                    } catch {
+                      // closed without sharing
+                    }
+                    return;
+                  }
+                  try {
+                    await navigator.clipboard.writeText(url);
+                    toast("Link copied");
+                  } catch {
+                    toast("Couldn't copy the link", "error");
+                  }
+                }}
+              >
+                Share
+              </button>
+            )}
             {pin.can_edit && (
               <>
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(true)}>
@@ -211,6 +249,12 @@ export function PinDetailView({ pinId }: { pinId: number }) {
                 </button>
               </>
             )}
+            {/* Locked for editing while moderated, but always the owner's to delete. */}
+            {pin.is_mine && !pin.can_edit && (
+              <button type="button" className="btn btn-ghost btn-sm btn-danger-text" onClick={() => setConfirmDelete(true)}>
+                Delete
+              </button>
+            )}
             {!pin.is_mine && pin.can_report && (
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReporting(true)}>
                 Report
@@ -223,6 +267,9 @@ export function PinDetailView({ pinId }: { pinId: number }) {
               </Link>
             )}
           </div>
+          {user?.role === "admin" && (
+            <AdminModeration pin={pin} onChanged={load} onPurged={() => router.push("/community")} />
+          )}
         </div>
       </div>
 
@@ -394,6 +441,9 @@ function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () 
             <span>Which fish?</span>
             <input value={other} onChange={(e) => setOther(e.target.value)} maxLength={60} />
           </label>
+        )}
+        {species !== (pin.species_slug ?? (pin.species_label ? "__other" : "")) && species !== "" && (
+          <p className="hint">A different fish is checked against the catch photo when you save.</p>
         )}
         <label className="field">
           <span>Notes</span>

@@ -27,6 +27,17 @@ class AccessPointOut(BaseModel):
     parking: bool
 
 
+class EvidenceItemOut(BaseModel):
+    """One official fact that the species is here (models.SpeciesEvidence):
+    FishEye's own sentence and a link to the source."""
+
+    evidence: str
+    source_url: str
+    kind: str  # stocking | stocking_plan | survey | record
+    year: int | None = None
+    publisher: str | None = None
+
+
 class SpeciesSummaryOut(BaseModel):
     """Species as seen from a waterbody listing — confidence-qualified,
     never a bare species name (PRD §4.2: don't equate statewide species
@@ -39,6 +50,10 @@ class SpeciesSummaryOut(BaseModel):
     evidence: str
     source_url: str
     observed_at: datetime
+    # Every official fact behind this species, newest first. Empty for links
+    # written before species_evidence existed (TPWD, Georgia WRD), whose one
+    # sentence and link are `evidence` and `source_url`.
+    evidence_items: list[EvidenceItemOut] = []
 
 
 class ReportedSourceOut(BaseModel):
@@ -104,6 +119,17 @@ class AgencyProfileOut(BaseModel):
     placement: str
 
 
+class DatasetSourceOut(BaseModel):
+    """A dataset behind this lake's facts, with the credit it asks for
+    (data-sourcing rule 7)."""
+
+    title: str
+    publisher: str
+    licence: str | None = None
+    citation: str | None = None
+    url: str
+
+
 class FishAttractorOut(BaseModel):
     """A fish attractor the state agency placed here (models.waterbody.FishAttractor)."""
 
@@ -136,6 +162,16 @@ class WaterbodyDetail(BaseModel):
     reported_species: list[ReportedSpeciesOut] = []
     agency_profile: AgencyProfileOut | None = None
     fish_attractors: list[FishAttractorOut] = []
+    # The lake's name on the state agency's map, when it differs from `name`.
+    official_name: str | None = None
+    # PAD-US: the lake's centre is on land open to the public ("open") or
+    # open with limits ("restricted"), and which land that is.
+    public_land: str | None = None
+    public_land_name: str | None = None
+    public_land_manager: str | None = None
+    # "Data: <agency>" for facts from a state agency (shown with the facts).
+    data_credit: str | None = None
+    sources: list[DatasetSourceOut] = []
 
 
 class SpeciesConditionOut(BaseModel):

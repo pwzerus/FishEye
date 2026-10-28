@@ -1,15 +1,32 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  LOCATION_ZOOM,
   MIN_ZOOM_FOR_ALL_LAKES,
   MIN_ZOOM_FOR_LAKES,
+  SEARCH_ZOOM,
   US_ZOOM,
   asExploringView,
   lakeDetailExitZoom,
   lakeQueryFor,
   listStateNames,
+  locationZoom,
   zoomLimitsFor,
 } from "./zoomPolicy";
+
+describe("locationZoom", () => {
+  it("goes to street level, closer than a search, for a good fix", () => {
+    expect(LOCATION_ZOOM).toBeGreaterThan(SEARCH_ZOOM);
+    expect(locationZoom(19)).toBe(LOCATION_ZOOM);
+    expect(locationZoom(Infinity)).toBe(LOCATION_ZOOM);
+    expect(locationZoom(NaN)).toBe(LOCATION_ZOOM);
+  });
+
+  it("shows the whole area a rough fix may be in, but never wider than a search", () => {
+    expect(locationZoom(13)).toBe(13);
+    expect(locationZoom(6)).toBe(SEARCH_ZOOM);
+  });
+});
 
 describe("zoomLimitsFor", () => {
   it("locks the national map at country scale, so a scroll can't reach state scale", () => {

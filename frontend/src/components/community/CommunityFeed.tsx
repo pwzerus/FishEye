@@ -1,35 +1,122 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
-import { getPinOptions, listPins } from "@/lib/api/session";
-import type { PinOptions, PinSummary } from "@/lib/api/types";
+import { getPinOptions, listPinPlaces, listPins, pinWhere, type PinScope } from "@/lib/api/session";
+import type { PinOptions, PinPlaces, PinSummary } from "@/lib/api/types";
+import { readState } from "@/lib/jurisdiction";
 import { PinCard } from "./PinCard";
+import { PlaceBrowser, readScope, rememberScope, scopeFromUrl, scopeTitle, scopeToSearch } from "./PlaceBrowser";
 
+function locate(): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) reject(new Error("unsupported"));
+    else navigator.geolocation.getCurrentPosition(resolve, reject, { maximumAge: 10 * 60 * 1000, timeout: 15000 });
+  });
+}
+
+/** Catches are browsed by place: a state, a county in it, a lake in that.
+ * "Near me" opens the county you are in. Nothing is one nationwide pile. */
 export function CommunityFeed() {
   const { user, loading: authLoading } = useAuth();
-  const [pins, setPins] = useState<PinSummary[] | null>(null);
+  // The catches for `feedKey`; anything else is still loading.
+  const [feed, setFeed] = useState<{ key: string; pins: PinSummary[] } | null>(null);
   const [options, setOptions] = useState<PinOptions | null>(null);
   const [species, setSpecies] = useState("");
   const [mine, setMine] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const feedKey = `${species}:${mine}:${user?.id ?? 'guest'}`;
+  // null until the starting place is decided, so the page doesn't flash
+  // "all states" before opening the angler's county.
+  const [scope, setScopeState] = useState<PinScope | null>(null);
+  const [places, setPlaces] = useState<PinPlaces | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locateError, setLocateError] = useState<string | null>(null);
+  const feedKey = `${species}:${mine}:${user?.id ?? 'guest'}:${scopeToSearch(scope ?? {})}`;
   const [page, setPage] = useState({ key: '', count: 12 });
   const visibleCount = page.key === feedKey ? page.count : 12;
+
+  const setScope = useCallback((next: PinScope) => {
+    setScopeState(next);
+    rememberScope(next);
+    const url = `${window.location.pathname}${scopeToSearch(next)}`;
+    if (url !== `${window.location.pathname}${window.location.search}`) window.history.pushState(null, "", url);
+  }, []);
+
+  const nearMe = useCallback(
+    async (quiet = false) => {
+      setLocating(true);
+      setLocateError(null);
+      try {
+        const pos = await locate();
+        const where = await pinWhere(pos.coords.latitude, pos.coords.longitude);
+        if (where.state_code && where.county_geoid) {
+          setScope({ state: where.state_code, county: where.county_geoid });
+          return true;
+        }
+        if (!quiet) setLocateError("You seem to be outside the US counties FishEye covers. Pick a state instead.");
+      } catch {
+        if (!quiet) setLocateError("Couldn't get your location. Allow location for this site, or pick a state.");
+      } finally {
+        setLocating(false);
+      }
+      return false;
+    },
+    [setScope],
+  );
+
+  // Where to start: the link's place, then the last place browsed, then the
+  // state chosen on the map. With location already allowed, the county you
+  // are in (never asks: a prompt on page load is the "Near me" button's job).
+  useEffect(() => {
+    // After mount (the server has no URL or storage to read), then once.
+    void Promise.resolve().then(() => {
+      const start = scopeFromUrl(window.location.search) ?? readScope();
+      if (start) {
+        setScopeState(start);
+        return;
+      }
+      const state = readState();
+      setScopeState(state ? { state } : {});
+      navigator.permissions
+        ?.query({ name: "geolocation" })
+        .then((p) => p.state === "granted" && nearMe(true))
+        .catch(() => undefined);
+    });
+  }, [nearMe]);
+
+  useEffect(() => {
+    const onPop = () => setScopeState(scopeFromUrl(window.location.search) ?? {});
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   useEffect(() => {
     getPinOptions().then(setOptions).catch(() => undefined);
   }, []);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || scope === null) return;
     let cancelled = false;
-    listPins({ species: species || undefined, mine: mine && !!user, limit: 120 })
+    listPinPlaces({ state: scope.state, county: scope.county, species: species || undefined, mine: mine && !!user })
+      .then((p) => !cancelled && setPlaces(p))
+      .catch(() => !cancelled && setPlaces(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [scope, species, mine, user, authLoading]);
+
+  // Everyone's catches always have a place; your own can be seen all at once.
+  const pickFirst = scope !== null && !scope.state && !(mine && user);
+
+  useEffect(() => {
+    if (authLoading || scope === null || pickFirst) return;
+    let cancelled = false;
+    listPins({ ...scope, species: species || undefined, mine: mine && !!user, limit: 120 })
       .then((p) => {
         if (!cancelled) {
-          setPins(p);
+          setFeed({ key: feedKey, pins: p });
           setError(null);
         }
       })
@@ -37,7 +124,15 @@ export function CommunityFeed() {
     return () => {
       cancelled = true;
     };
-  }, [species, mine, user, authLoading]);
+  }, [scope, species, mine, user, authLoading, pickFirst, feedKey]);
+  const pins = feed?.key === feedKey ? feed.pins : null;
+
+  const names = {
+    state: places?.state_name,
+    county: places?.county_name,
+    lake: scope?.lake ? places?.places.find((p) => p.id === scope.lake)?.name : null,
+  };
+  const where = scope ? scopeTitle(scope, names) : null;
 
   const addHref = user ? "/map?addPin=1" : `/login?next=${encodeURIComponent("/map?addPin=1")}`;
 
@@ -52,7 +147,7 @@ export function CommunityFeed() {
             Local catches
           </h1>
           <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
-            Photos and notes from anglers. Community reports, not verified data.
+            Catches anglers shared. The fish they name is checked against their photo; where and when is their word.
           </p>
         </div>
         <Link href={addHref} className="btn btn-primary reveal" style={{ "--i": 3 } as React.CSSProperties}>
@@ -77,7 +172,7 @@ export function CommunityFeed() {
             className={mine ? "segment active" : "segment"}
             onClick={() => setMine(true)}
           >
-            My pins
+            My catches
           </button>
         </div>
         <label className="select-field">
@@ -93,7 +188,21 @@ export function CommunityFeed() {
         </label>
       </div>
 
-      {error ? (
+      {scope && (
+        <PlaceBrowser
+          scope={scope}
+          names={names}
+          places={places}
+          onChange={setScope}
+          onNearMe={() => nearMe()}
+          locating={locating}
+          locateError={locateError}
+        />
+      )}
+
+      {where && !pickFirst && <h2 className="feed-heading">Catches in {where}</h2>}
+
+      {pickFirst ? null : error ? (
         <div className="backend-error">{error}</div>
       ) : pins === null ? (
         <ul className="pin-grid" aria-busy="true">
@@ -109,14 +218,23 @@ export function CommunityFeed() {
         </ul>
       ) : pins.length === 0 ? (
         <div className="empty-state reveal">
-          <h2>{mine ? "You haven't pinned anything yet" : "No pins here yet"}</h2>
+          <h2>
+            {mine ? `You haven't pinned anything${where ? ` in ${where}` : ""} yet` : `No catches${where ? ` in ${where}` : ""} yet`}
+          </h2>
           <p className="muted">Be the first: open the map, tap where you fished, and add a photo.</p>
-          <Link href={addHref} className="btn btn-primary btn-sm">
-            Pin a catch
-          </Link>
+          <div className="empty-actions">
+            <Link href={addHref} className="btn btn-primary btn-sm">
+              Pin a catch
+            </Link>
+            {scope?.county && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setScope({ state: scope.state })}>
+                See all of {names.state ?? scope.state}
+              </button>
+            )}
+          </div>
         </div>
       ) : (
-        <><ul className="pin-grid" key={`${species}-${mine}`}>
+        <><ul className="pin-grid" key={feedKey}>
           {pins.slice(0, visibleCount).map((p, i) => (
             <li key={p.id}>
               <PinCard pin={p} index={i} />

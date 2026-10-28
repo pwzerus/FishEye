@@ -103,11 +103,13 @@ version's tests didn't cover. Each is fixed and has a regression test in
   `actor_label` snapshot ("Name <email>"), so the log still says who acted.
   Ids are `AUTOINCREMENT` and never reused, so an old link or audit entry
   can't come to point at someone else's account or pin.
-- **Moderated pins are frozen.** A hidden or removed pin can't be edited,
-  have photos changed, or be deleted by its owner (409) until a moderator
-  decides, so reported content can't be quietly rewritten, and deleting it
-  can't erase the reports. An owner deleting a *published* pin that has
-  open reports is recorded in the audit log.
+- **Moderated pins are frozen, but always deletable.** A hidden or removed
+  pin can't be edited or have photos changed by its owner (409) until a
+  moderator decides, so reported content can't be quietly rewritten. The
+  owner can still delete it (changed 2026-10-28 at the product owner's
+  request: taking down your own content is always allowed); that, and an
+  owner deleting a published pin with open reports, is recorded in the
+  audit log, since the reports go with the pin.
 - **Request size is capped before the body is read.** Pin routes accept
   `max photos × max photo size + 1 MB`, everything else 256 KB; a chunked
   or multipart body without `Content-Length` is refused (411). Upload

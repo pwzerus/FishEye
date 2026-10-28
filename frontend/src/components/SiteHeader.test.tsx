@@ -18,8 +18,6 @@ describe("SiteHeader", () => {
     ["/map", "Find water"],
     ["/fish", "Fish guide"],
     ["/fish/bluegill", "Fish guide"],
-    ["/community", "Catches"],
-    ["/community/12", "Catches"],
     ["/ask", "Ask"],
   ])("on %s marks %s as the current page", async (path, label) => {
     nav.pathname = path;
@@ -28,5 +26,13 @@ describe("SiteHeader", () => {
     const current = screen.getAllByRole("link").filter((a) => a.getAttribute("aria-current") === "page");
     expect(current).toHaveLength(1);
     expect(current[0]).toHaveTextContent(label);
+  });
+
+  it("links Catches in the nav now that catches are open", async () => {
+    nav.pathname = "/map";
+    renderApp(<SiteHeader />);
+    await screen.findByText("Sign in");
+    expect(screen.getByRole("link", { name: "Catches" })).toHaveAttribute("href", "/community");
+    expect(screen.queryByRole("button", { name: "Catches (unavailable)" })).not.toBeInTheDocument();
   });
 });

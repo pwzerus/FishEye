@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -5,8 +7,10 @@ from sqlalchemy.orm import Session, selectinload
 from app.api import rate_limits
 from app.api.deps import get_db
 from app.db.spatial import bbox_filter, radius_filter, radius_is_exact
-from app.models.waterbody import Species, Waterbody, WaterbodySpecies
+from app.models.waterbody import Species, SpeciesEvidence, Waterbody, WaterbodySource, WaterbodySpecies
 from app.schemas.waterbody import (
+    DatasetSourceOut,
+    EvidenceItemOut,
     AgencyProfileOut,
     SpeciesDetail,
     SpeciesSummaryOut,
@@ -147,11 +151,19 @@ def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> Waterbody
             selectinload(Waterbody.species_links),
             selectinload(Waterbody.agency_profile),
             selectinload(Waterbody.fish_attractors),
+            selectinload(Waterbody.species_evidence).selectinload(SpeciesEvidence.source_record),
+            selectinload(Waterbody.dataset_links).selectinload(WaterbodySource.source_record),
         ],
     )
     if wb is None:
         raise HTTPException(status_code=404, detail="waterbody not found")
 
+    items: dict[int, list[EvidenceItemOut]] = defaultdict(list)
+    for e in sorted(wb.species_evidence, key=lambda e: (-(e.year or 0), e.kind)):
+        items[e.species_id].append(EvidenceItemOut(
+            evidence=e.evidence, source_url=e.source_url, kind=e.kind, year=e.year,
+            publisher=e.source_record.publisher if e.source_record else None,
+        ))
     species_out = [
         SpeciesSummaryOut(
             common_name=link.species.common_name,
@@ -160,8 +172,9 @@ def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> Waterbody
             evidence=link.evidence,
             source_url=link.source_url,
             observed_at=link.observed_at,
+            evidence_items=items.get(link.species_id, []),
         )
-        for link in wb.species_links
+        for link in sorted(wb.species_links, key=lambda link: link.species.common_name)
     ]
     return WaterbodyDetail(
         id=wb.id,
@@ -181,7 +194,38 @@ def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> Waterbody
         agency_profile=AgencyProfileOut.model_validate(wb.agency_profile) if wb.agency_profile else None,
         # A closed lake shows no places to fish, official or not (PRD §12).
         fish_attractors=[] if wb.public_access_status == "closed" else list(wb.fish_attractors),
+        official_name=wb.official_name,
+        public_land=wb.public_land,
+        public_land_name=wb.public_land_name,
+        public_land_manager=wb.public_land_manager,
+        data_credit=AGENCY_CREDITS.get(wb.agency_profile.agency) if wb.agency_profile else None,
+        sources=_sources(wb),
     )
+
+
+# Facts from a state agency are credited to it next to the facts
+# (data-sourcing rule 7; docs/data-sources.md).
+AGENCY_CREDITS = {
+    "tpwd": "Data: Texas Parks and Wildlife Department",
+    "ga_wrd": "Data: Georgia DNR Wildlife Resources Division",
+    "cdfw": "Data: California Department of Fish and Wildlife",
+}
+
+
+def _sources(wb: Waterbody) -> list[DatasetSourceOut]:
+    """Every dataset behind this lake, once each: the lake's own (CDFW's
+    lake layer, stocking, PAD-US), then those behind its species."""
+    seen: dict[int, DatasetSourceOut] = {}
+    records = [link.source_record for link in wb.dataset_links] + [
+        e.source_record for e in wb.species_evidence if e.source_record is not None
+    ]
+    for r in records:
+        if r.id not in seen:
+            seen[r.id] = DatasetSourceOut(
+                title=r.title or r.publisher, publisher=r.publisher, licence=r.licence_name,
+                citation=r.citation, url=r.url,
+            )
+    return list(seen.values())
 
 
 @router.get("/{waterbody_id}/species", response_model=list[SpeciesDetail])

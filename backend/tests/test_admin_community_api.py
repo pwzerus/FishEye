@@ -106,6 +106,18 @@ def test_removed_pins_are_gone_from_the_owners_map_and_locked(admin, angler):
     assert angler.patch(f"/api/pins/{pin['id']}", json={"title": "Undo it"}).status_code == 409
 
 
+@pytest.mark.parametrize("status", ["hidden", "removed"])
+def test_owners_can_delete_but_not_edit_a_moderated_pin(admin, angler, status):
+    pin = create(angler).json()
+    admin.post(f"/api/admin/pins/{pin['id']}/status", json={"status": status})
+    edit = angler.patch(f"/api/pins/{pin['id']}", json={"title": "Undo it"})
+    assert edit.status_code == 409 and "You can still delete it." in edit.json()["detail"]
+    assert angler.delete(f"/api/pins/{pin['id']}").status_code == 204
+    assert admin.get("/api/admin/pins").json()["total"] == 0
+    entry = admin.get("/api/admin/audit").json()["items"][0]
+    assert entry["action"] == "pin.deleted_by_owner" and f'"status_before": "{status}"' in entry["detail"]
+
+
 def test_status_changes_and_restore(admin, angler, make_client):
     pin = create(angler).json()
     assert admin.post(f"/api/admin/pins/{pin['id']}/status", json={"status": "hidden"}).json()["status"] == "hidden"
@@ -122,6 +134,10 @@ def test_admin_pin_search_and_filters(admin, angler):
     assert page["total"] == 1 and page["items"][0]["author_email"] == "angler@example.com"
     assert admin.get("/api/admin/pins", params={"visibility": "private"}).json()["total"] == 1
     assert admin.get("/api/admin/pins", params={"q": "angler@"}).json()["total"] == 2
+    create(angler, title="Atlanta bream", latitude=33.75, longitude=-84.39)
+    ga = admin.get("/api/admin/pins", params={"state": "ga"}).json()
+    assert [(p["title"], p["county_name"]) for p in ga["items"]] == [("Atlanta bream", "Fulton County")]
+    assert admin.get("/api/admin/pins", params={"state": "TX"}).json()["total"] == 2
 
 
 def test_purge_deletes_the_pin_and_its_files(admin, angler):

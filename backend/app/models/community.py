@@ -100,6 +100,7 @@ class CatchPin(Base):
     __table_args__ = (
         Index("ix_catch_pins_status_visibility", "status", "visibility"),
         Index("ix_catch_pins_lat_lng", "latitude", "longitude"),
+        Index("ix_catch_pins_place", "state_code", "county_geoid"),
         _NO_ID_REUSE,
     )
 
@@ -115,6 +116,15 @@ class CatchPin(Base):
     species_slug: Mapped[str | None] = mapped_column(String(64), nullable=True)
     species_other: Mapped[str | None] = mapped_column(String(60), nullable=True)
     caught_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # The photo check (services/fish_id.py) of the species named, against
+    # `species_check_photo_id`: "confirmed" (the photo shows that species),
+    # "group" (a look-alike of it; the species is the angler's call), or
+    # None (no species named, or the check was off).
+    species_check: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    species_check_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    species_detected: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    species_check_model: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    species_check_photo_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     visibility: Mapped[str] = mapped_column(String(16), default=VISIBILITY_PUBLIC)
     status: Mapped[str] = mapped_column(String(16), default=PIN_PUBLISHED)
     # Why a pin isn't published: "reports" (auto-hidden) or "moderator".
@@ -124,6 +134,13 @@ class CatchPin(Base):
     waterbody_id: Mapped[int | None] = mapped_column(
         ForeignKey("waterbodies.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    # Where the pin is, for browsing by state, county, lake: looked up from
+    # the Census county outlines when it is saved (services/counties.py).
+    # None outside the US or for a pin saved before this existed and not
+    # yet filled in (startup fills those).
+    state_code: Mapped[str | None] = mapped_column(String(2), nullable=True)
+    county_geoid: Mapped[str | None] = mapped_column(String(5), nullable=True)
+    county_name: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
 

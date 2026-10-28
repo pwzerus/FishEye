@@ -15,15 +15,22 @@ export function PhotoPicker({
   max,
   maxMb,
   disabled = false,
+  firstLabel,
 }: {
   files: File[];
   onChange: (files: File[]) => void;
   max: number;
   maxMb: number;
   disabled?: boolean;
+  // Marks the first photo, e.g. "Catch photo": the one the fish is checked on.
+  firstLabel?: string;
 }) {
   const input = useRef<HTMLInputElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
   const [drag, setDrag] = useState(false);
+  // A phone opens its camera from a "capture" input; a desktop would just
+  // show the same file chooser twice, so the button is for touch screens.
+  const [touch] = useState(() => typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)")?.matches === true);
   const [problem, setProblem] = useState<string | null>(null);
   const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
   useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
@@ -49,6 +56,7 @@ export function PhotoPicker({
             {/* A local preview (blob: URL) of a file not yet uploaded. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={previews[i]} alt={`Selected photo ${i + 1}`} />
+            {i === 0 && firstLabel && <figcaption className="photo-first">{firstLabel}</figcaption>}
             <button
               type="button"
               className="photo-remove"
@@ -60,6 +68,15 @@ export function PhotoPicker({
             </button>
           </figure>
         ))}
+        {files.length < max && touch && (
+          <button type="button" className="photo-drop photo-camera" disabled={disabled} onClick={() => camera.current?.click()}>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+              <circle cx="12" cy="13" r="3.5" />
+            </svg>
+            <span>Take photo</span>
+          </button>
+        )}
         {files.length < max && (
           <button
             type="button"
@@ -94,6 +111,17 @@ export function PhotoPicker({
         type="file"
         accept={ACCEPT.join(",")}
         multiple
+        hidden
+        onChange={(e) => {
+          if (e.target.files) add(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={camera}
+        type="file"
+        accept="image/*"
+        capture="environment"
         hidden
         onChange={(e) => {
           if (e.target.files) add(e.target.files);

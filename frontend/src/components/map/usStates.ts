@@ -89,17 +89,31 @@ export function stateCodeAt(
   lng: number,
   prefer: Set<string> | null = null,
 ): string | null {
+  // Alaska's outline runs west of -180 (the Aleutians), where a point east
+  // of the date line (+172 to +180) is drawn; test both.
+  const lngs = lng > 0 ? [lng, lng - 360] : [lng];
   for (const f of file.features) {
-    if (outerRings(f.geometry).some((ring) => inRing(lng, lat, ring))) return f.properties.code;
+    if (outerRings(f.geometry).some((ring) => lngs.some((x) => inRing(x, lat, ring)))) return f.properties.code;
   }
   let fallback: string | null = null;
   for (const f of file.features) {
     const region = regionOf(file, f.properties.code);
     if (!region) continue;
     const [[s, w], [n, e]] = region.bounds;
-    if (lat < s - 0.05 || lat > n + 0.05 || lng < w - 0.05 || lng > e + 0.05) continue;
+    if (lat < s - 0.05 || lat > n + 0.05 || !lngs.some((x) => x >= w - 0.05 && x <= e + 0.05)) continue;
     if (prefer?.has(f.properties.code)) return f.properties.code;
     fallback ??= f.properties.code;
   }
   return fallback;
+}
+
+/**
+ * Where to draw a longitude inside a state's view. Lakes are stored at their
+ * real longitude, but Alaska's region runs west of -180 so the Aleutians stay
+ * one continuous shape; a lake at +175 is drawn at -185 there, inside the
+ * view, instead of across the world.
+ */
+export function displayLongitude(lng: number, region: StateRegion | null | undefined): number {
+  if (region && region.bounds[0][1] < -180 && lng > 0) return lng - 360;
+  return lng;
 }

@@ -144,7 +144,6 @@ body { background: var(--bg); }
 .citation { border-color: var(--line); }
 .bubble-card { border-radius: 12px; box-shadow: none; }
 .ask-page .page-intro { padding-top: 40px; }
-.trace { font-size: 12px; }
 .tag, .badge { border-radius: 5px; }
 .pin-card { border-radius: 12px; box-shadow: none; }
 

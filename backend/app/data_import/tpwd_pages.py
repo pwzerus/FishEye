@@ -13,8 +13,8 @@ Two kinds of page per lake, both by TPWD's Inland Fisheries Division:
   the biologists' prose, which names the species they sampled.
 
 Species are only ever matched against the hand-curated aliases in
-tpwd_lake_survey_scraper.KNOWN_SPECIES, and each match keeps the exact text
-it came from as evidence. A generic word ("Crappie", "Catfish") names no
+tpwd_lake_survey_scraper.KNOWN_SPECIES; the text a match came from is kept
+in memory to check it, never stored (only facts and a link are). A generic word ("Crappie", "Catfish") names no
 particular species and matches nothing.
 """
 from __future__ import annotations

@@ -163,7 +163,16 @@ def bbox_filter(
     ix_waterbodies_lat_lng using both columns. The module docstring has the
     measurements, and the reason the PostGIS form was removed.
     """
-    return Waterbody.latitude.between(south, north) & Waterbody.longitude.between(west, east)
+    lat = Waterbody.latitude.between(south, north)
+    cond = lat & Waterbody.longitude.between(west, east)
+    # A view across the date line: Alaska's region runs west of -180 so the
+    # Aleutians stay one shape (frontend usStates.ts), while lakes there are
+    # stored at their real longitude, +172 to +180. Match those too.
+    if west < -180:
+        cond = cond | (lat & Waterbody.longitude.between(west + 360, 180))
+    if east > 180:
+        cond = cond | (lat & Waterbody.longitude.between(-180, east - 360))
+    return cond
 
 
 def radius_filter(

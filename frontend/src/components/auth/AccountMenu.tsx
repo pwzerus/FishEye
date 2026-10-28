@@ -80,7 +80,7 @@ export function AccountMenu() {
             Account
           </Link>
           <Link role="menuitem" href="/account#pins" className="menu-item">
-            My pins
+            My catches
           </Link>
           <Link role="menuitem" href="/map?addPin=1" className="menu-item">
             Add a pin

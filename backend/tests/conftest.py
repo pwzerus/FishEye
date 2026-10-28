@@ -11,6 +11,9 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 # Keyword search only: the suite must not depend on a 470 MB model being
 # downloaded. Semantic retrieval has its own tests (tests/test_hybrid.py).
 os.environ.setdefault("RAG_SEMANTIC", "off")
+# No photo check either (a 300 MB model); tests/test_fish_id.py drives it
+# with a stand-in recognizer.
+os.environ.setdefault("FISH_ID", "off")
 
 from app.api.deps import get_db  # noqa: E402
 from app.db.session import Base, enforce_sqlite_foreign_keys  # noqa: E402
@@ -172,6 +175,7 @@ def _isolated_community_state(tmp_path, monkeypatch):
         auth_api.register_by_ip,
         pins_api.create_by_user,
         pins_api.report_by_user,
+        pins_api.fish_id_by_user,
     ):
         limiter.reset()
     rate_limits.reset_all()

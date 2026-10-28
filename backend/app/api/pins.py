@@ -25,6 +25,9 @@ from app.models.community import (
 )
 from app.models.waterbody import Waterbody
 from app.schemas.pins import (
+    FishCandidateOut,
+    FishIdOut,
+    FishVerdictOut,
     PinAuthorOut,
     PinDetailOut,
     PinLakeOut,
@@ -32,20 +35,27 @@ from app.schemas.pins import (
     PinPhotoOut,
     PinSummaryOut,
     PinUpdateIn,
+    PlaceOut,
+    PlacesOut,
     ReportIn,
     ReportOut,
+    WhereOut,
 )
-from app.services import audit
+from app.knowledge.jurisdictions import STATE_NAMES
+from app.services import audit, counties, fish_id
 from app.services import pins as svc
-from app.services.media import get_store
+from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, group_label
+from app.services.media import PhotoRejected, clean_photo, get_store
 from app.services.pins import PinError
 
 router = APIRouter(tags=["pins"], dependencies=[Depends(same_origin)])
 
-UNDER_MODERATION = "This pin is under moderation, so it can't be changed or deleted until a moderator reviews it."
+UNDER_MODERATION = "This pin is under moderation, so it can't be changed until a moderator reviews it. You can still delete it."
 
 create_by_user = RateLimiter(limit=30, window_seconds=60 * 60)
 report_by_user = RateLimiter(limit=20, window_seconds=60 * 60)
+# Each check is a few hundred milliseconds of the server's CPU.
+fish_id_by_user = RateLimiter(limit=60, window_seconds=60 * 60)
 
 
 def _raise(exc: PinError) -> NoReturn:
@@ -69,6 +79,13 @@ def _media_url(photo: PinPhoto, thumb: bool = False) -> str:
     return f"{base}/api/media/photos/{photo.id}" + ("?size=thumb" if thumb else "")
 
 
+def _group_label(pin: CatchPin) -> str | None:
+    """What a "group" check confirmed: "a black bass" for a pin that says
+    smallmouth when the photo can't tell which black bass it is."""
+    claimed = BY_SLUG.get(pin.species_slug or "")
+    return group_label(CLAIM_GROUPS.get(pin.species_slug or "") or (claimed.group if claimed else None))
+
+
 def summary_fields(pin: CatchPin, user: User | None, lakes: dict[int, Waterbody]) -> dict:
     lake = lakes.get(pin.waterbody_id) if pin.waterbody_id else None
     first = pin.photos[0] if pin.photos else None
@@ -79,6 +96,8 @@ def summary_fields(pin: CatchPin, user: User | None, lakes: dict[int, Waterbody]
         "title": pin.title,
         "species_slug": pin.species_slug,
         "species_label": svc.species_label(pin),
+        "species_check": pin.species_check,
+        "species_check_label": _group_label(pin) if pin.species_check == fish_id.GROUP else None,
         "caught_on": pin.caught_on,
         "created_at": pin.created_at,
         "visibility": pin.visibility,
@@ -86,6 +105,9 @@ def summary_fields(pin: CatchPin, user: User | None, lakes: dict[int, Waterbody]
         "status_reason": pin.status_reason,
         "author": PinAuthorOut(id=pin.user.id, display_name=pin.user.display_name),
         "lake": PinLakeOut(id=lake.id, name=lake.name) if lake else None,
+        "state_code": pin.state_code,
+        "county_geoid": pin.county_geoid,
+        "county_name": pin.county_name,
         "photo_count": len(pin.photos),
         "thumb_url": _media_url(first, thumb=True) if first else None,
         "is_mine": user is not None and user.id == pin.user_id,
@@ -163,16 +185,65 @@ def pin_options() -> PinOptionsOut:
     )
 
 
+StateParam = Query(default=None, pattern=r"^[A-Za-z]{2}$")
+CountyParam = Query(default=None, pattern=r"^\d{5}$")
+
+
+@router.get("/pins/places", response_model=PlacesOut)
+def pin_places(
+    state: str | None = StateParam,
+    county: str | None = CountyParam,
+    species: str | None = None,
+    mine: bool = False,
+    user: User | None = Depends(optional_user),
+    db: Session = Depends(get_db),
+) -> PlacesOut:
+    """Browsing catches: the states with catches; with `state`, its
+    counties; with `county`, its lakes. Each with how many catches."""
+    level = "lake" if county else "county" if state else "state"
+    found = svc.places(db, user, state=state, county=county, species=species, mine=mine)
+    c = counties.index().by_geoid.get(county) if county and counties.index() else None
+    state = state or (c.state if c else None)
+    return PlacesOut(
+        level=level,
+        places=[PlaceOut(id=p.id, name=p.name, count=p.count) for p in found],
+        state_name=STATE_NAMES.get(state.upper(), state.upper()) if state else None,
+        county_name=c.name if c else None,
+    )
+
+
+@router.get("/pins/where", response_model=WhereOut)
+def pin_where(
+    lat: float = Query(ge=-90, le=90),
+    lng: float = Query(ge=-180, le=180),
+) -> WhereOut:
+    """The county a point is in: where "near me" opens the catches. Not
+    stored or logged."""
+    c = counties.county_at(lat, lng)
+    return WhereOut(
+        state_code=c.state if c else None,
+        state_name=STATE_NAMES.get(c.state, c.state) if c else None,
+        county_geoid=c.geoid if c else None,
+        county_name=c.name if c else None,
+    )
+
+
 @router.get("/pins", response_model=list[PinSummaryOut])
 def list_pins(
     bbox: str | None = None,
     species: str | None = None,
     mine: bool = False,
+    state: str | None = StateParam,
+    county: str | None = CountyParam,
+    lake: int | None = Query(default=None, ge=0),
     limit: int = Query(default=200, ge=1, le=svc.MAX_LIST),
     user: User | None = Depends(optional_user),
     db: Session = Depends(get_db),
 ) -> list[PinSummaryOut]:
-    pins = svc.list_pins(db, user, bbox=_parse_bbox(bbox), species=species, mine=mine, limit=limit)
+    pins = svc.list_pins(
+        db, user, bbox=_parse_bbox(bbox), species=species, mine=mine,
+        state=state, county=county, lake=lake, limit=limit,
+    )
     lakes = lakes_for(db, pins)
     return [PinSummaryOut(**summary_fields(p, user, lakes)) for p in pins]
 
@@ -271,6 +342,13 @@ def update_pin(
         )
     except PinError as exc:
         _raise(exc)
+    if (fields.species_slug, fields.species_other) != (pin.species_slug, pin.species_other):
+        # A different fish is checked against the catch's photo, like a new pin.
+        try:
+            svc.recheck_species(db, pin, fields.species_slug, fields.species_other, get_store())
+        except PinError as exc:
+            db.rollback()
+            _raise(exc)
     pin.title, pin.note = fields.title, fields.note
     pin.species_slug, pin.species_other = fields.species_slug, fields.species_other
     pin.caught_on, pin.visibility = fields.caught_on, fields.visibility
@@ -284,14 +362,16 @@ def delete_pin(pin_id: DbId, user: User = Depends(require_user), db: Session = D
     pin = db.get(CatchPin, pin_id)
     if pin is None or not svc.can_view(pin, user) or pin.user_id != user.id:
         raise HTTPException(status_code=404, detail="No such pin.")
-    if pin.status != PIN_PUBLISHED:
-        # A hidden or removed pin is a moderation case; deleting it would
-        # also delete the reports against it. It's already invisible to
-        # everyone else, so nothing is lost by waiting for the review.
-        raise HTTPException(status_code=409, detail=UNDER_MODERATION)
+    # An owner can always take their own catch down, even while it is
+    # hidden or removed (it can't be edited then: see svc.can_edit). The
+    # reports go with it, so deleting one that was moderated or reported
+    # is recorded for the admins.
     open_reports = svc.open_report_count(db, pin.id)
-    if open_reports:
-        audit.record(db, user, "pin.deleted_by_owner", "pin", pin.id, title=pin.title, open_reports=open_reports)
+    if open_reports or pin.status != PIN_PUBLISHED:
+        audit.record(
+            db, user, "pin.deleted_by_owner", "pin", pin.id,
+            title=pin.title, status_before=pin.status, open_reports=open_reports,
+        )
     svc.delete_pin(db, pin, get_store())
     db.commit()
     return Response(status_code=204)
@@ -351,6 +431,59 @@ def report_pin(
         raise HTTPException(status_code=409, detail="You've already reported this pin.") from None
     db.commit()
     return ReportOut(received=True, pin_hidden=hidden)
+
+
+# ------------------------------------------------------------ photo check
+
+
+@router.post("/fish-id", response_model=FishIdOut)
+def identify_fish(
+    photo: UploadFile = File(...),
+    species_slug: str | None = Form(default=None),
+    species_other: str | None = Form(default=None, max_length=120),
+    user: User = Depends(require_user),
+) -> FishIdOut:
+    """What fish a photo shows, and, given one, whether it backs the claim:
+    the catch form asks as soon as a photo is chosen, so a mismatch is said
+    before anything is saved. Saving checks again (services/pins.py); this
+    answer is advice to the form, never trusted."""
+    _throttle(fish_id_by_user, user)
+    data = _read_uploads([photo], 1)[0]
+    try:
+        cleaned = clean_photo(data)
+    except PhotoRejected as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    try:
+        recognizer = fish_id.get_recognizer()
+    except fish_id.FishIdUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if recognizer is None:
+        return FishIdOut(available=False, model=None, fish_probability=None, candidates=[], verdict=None)
+    try:
+        claim = svc.claimed_species(species_slug, species_other)
+    except PinError as exc:
+        _raise(exc)
+    ident = recognizer.identify(cleaned.full)
+    verdict = fish_id.check_claim(ident, claim) if (species_slug or species_other) else None
+    return FishIdOut(
+        available=True,
+        model=recognizer.name,
+        fish_probability=round(ident.fish_probability, 3),
+        candidates=[
+            FishCandidateOut(slug=c.slug, label=c.label, probability=round(c.probability, 3), in_guides=c.kind == GUIDE)
+            for c in ident.fish(3)
+        ],
+        verdict=FishVerdictOut(
+            status=verdict.status,
+            accepted=verdict.accepted,
+            detected=verdict.detected,
+            detected_label=BY_SLUG[verdict.detected].common if verdict.detected in BY_SLUG else None,
+            detected_in_guides=verdict.detected in svc.SPECIES_LABELS,
+            message=verdict.message,
+        )
+        if verdict
+        else None,
+    )
 
 
 # ----------------------------------------------------------------- media

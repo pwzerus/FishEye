@@ -756,6 +756,90 @@
   color: var(--brand-strong);
   background: var(--brand-soft);
 }
+.photo-camera {
+  border-style: solid;
+  color: var(--brand-strong);
+}
+.photo-first {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 3px 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(transparent, rgba(7, 20, 27, 0.75));
+}
+
+/* The photo check under the catch photo (PinForm.tsx FishCheckNote). */
+.fish-check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin: 8px 0 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.fish-check p {
+  margin: 0;
+  flex-basis: 100%;
+}
+.fish-check-chip small {
+  color: var(--muted);
+  font-weight: 600;
+}
+.fish-check.is-ok {
+  background: #dcfce7;
+  color: #14532d;
+  font-weight: 600;
+}
+.fish-check.is-group {
+  background: #e0f2fe;
+  color: #0c4a6e;
+}
+.fish-check.is-bad {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+.fish-check.is-bad p {
+  font-weight: 600;
+}
+.fish-check-skip {
+  font-size: 13px;
+  font-weight: 600;
+}
+.fish-check.is-error {
+  background: #fef3c7;
+  color: #78350f;
+}
+.fish-check-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--brand);
+  animation: fish-check-spin 0.8s linear infinite;
+}
+@keyframes fish-check-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The photo check on a saved catch (PinCard.tsx SpeciesCheck). */
+.tag-checked {
+  background: #dcfce7;
+  color: #14532d;
+}
+.tag-checked-group {
+  background: #e0f2fe;
+  color: #0c4a6e;
+}
 
 .upload-progress {
   position: relative;
@@ -1066,6 +1150,18 @@
 .acct-section h2 {
   font-size: 18px;
 }
+/* Where you've pinned catches (MyCatchesMap.tsx). */
+.acct-map {
+  height: 260px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  isolation: isolate;
+}
+.pin-check-note {
+  margin: 0;
+  font-size: 13px;
+}
 .acct-danger {
   border-color: color-mix(in srgb, var(--danger) 30%, var(--line));
 }
@@ -1100,6 +1196,10 @@
 @media (max-width: 860px) {
   .acct-grid {
     grid-template-columns: 1fr;
+  }
+  /* One column: your catches first, the account settings after them. */
+  .acct-grid > #pins {
+    order: -1;
   }
   .acct-stats {
     margin-left: 0;
@@ -1192,6 +1292,10 @@
   font-weight: 700;
   color: #0a7f84;
 }
+.catch-pop span.catch-pop-check {
+  color: #15803d;
+  font-weight: 600;
+}
 
 .map-fabs {
   position: absolute;
@@ -1236,6 +1340,111 @@
 }
 .map-toggle:not(.active) .legend-catch {
   filter: grayscale(1);
+}
+
+/* Bait and tackle shops (ShopLayer.tsx): a rounded square, unlike a lake's
+   teardrop or a catch's badge, so a shop never reads as water or a report. */
+.shop-marker-wrap {
+  background: none;
+  border: 0;
+}
+.shop-marker {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: #fff;
+  background: #6d28d9;
+  border: 2px solid #fff;
+  box-shadow: 0 3px 8px -2px rgba(76, 29, 149, 0.55);
+  transition: transform var(--dur) var(--spring);
+}
+.shop-marker-wrap:hover .shop-marker {
+  transform: scale(1.12);
+}
+.legend-shop {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: #6d28d9;
+  border: 1.5px solid #fff;
+  box-shadow: 0 0 0 1px rgba(76, 29, 149, 0.35);
+}
+.map-toggle:not(.active) .legend-shop {
+  filter: grayscale(1);
+}
+.shop-popup .leaflet-popup-content {
+  margin: 10px 12px;
+}
+.shop-pop {
+  display: grid;
+  gap: 3px;
+  min-width: 180px;
+  max-width: 240px;
+  font-family: var(--font);
+  font-size: 12.5px;
+  color: #33505c;
+}
+.shop-pop strong {
+  font-size: 14px;
+  color: #0f2530;
+}
+.shop-pop-kind {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6d28d9;
+}
+.shop-pop-hours {
+  color: #5b6f78;
+}
+.shop-pop-links {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+.shop-pop-links a {
+  font-weight: 700;
+  color: #0a7f84;
+}
+.shop-pop a.shop-pop-source {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #7a8c93;
+}
+/* The nearest shops on a lake's Entrances tab (NearbyShops.tsx). */
+.nearby-shops {
+  margin-top: 18px;
+}
+.nearby-shops ul {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.nearby-shops li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+.nearby-shop-body {
+  display: grid;
+  font-size: 13px;
+}
+.nearby-shop-body strong {
+  font-size: 14px;
+}
+.nearby-shops-credit {
+  margin: 6px 0 0;
+  font-size: 11px;
 }
 /* LakeMap's AllStatesControl: a Leaflet control, so it takes Leaflet's
    corner spacing; this only undoes the pill's resting transparency. */
@@ -1576,4 +1785,152 @@ button.stat-card:hover {
   border-radius: 50%;
   padding: 2px;
   box-sizing: content-box;
+}
+
+/* ---------------------------------------------- catches by place */
+
+.place-browser {
+  margin: 0 0 24px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+.place-browser-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.place-crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 15px;
+}
+.place-crumbs li + li::before {
+  content: "›";
+  margin-right: 6px;
+  color: var(--ink-2);
+}
+.place-crumbs [aria-current] {
+  font-weight: 700;
+  color: var(--ink);
+}
+.place-crumbs .text-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.place-near-me {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.place-locate-error {
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+.place-level {
+  margin-top: 14px;
+}
+.place-level-heading {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.place-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.place-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 6px 8px 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.place-chip:hover {
+  border-color: var(--brand);
+}
+.place-chip.active {
+  border-color: var(--brand-strong);
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+}
+.place-chip-count {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+.feed-heading {
+  margin: 0 0 14px;
+  font-size: 20px;
+}
+.empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+@media (max-width: 760px) {
+  .place-browser {
+    padding: 14px;
+  }
+  .place-near-me {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* An admin's moderation controls on a catch's page */
+.admin-moderation {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+.admin-moderation-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.admin-moderation-head .text-link {
+  margin-left: auto;
+}
+.admin-moderation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
 }

@@ -206,6 +206,10 @@ def _start(c) -> tuple[str, str]:
 
 
 def test_providers_reports_google_only_when_configured(make_client, monkeypatch):
+    # A developer's backend/.env may configure Google; this test needs it off.
+    s = get_settings()
+    monkeypatch.setattr(s, "google_client_id", "")
+    monkeypatch.setattr(s, "google_client_secret", "")
     assert make_client().get("/api/auth/providers").json() == {"password": True, "google": False}
     assert make_client().get("/api/auth/google/start", follow_redirects=False).status_code == 404
 

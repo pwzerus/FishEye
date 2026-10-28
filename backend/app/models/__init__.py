@@ -7,6 +7,7 @@ from app.models.community import (  # noqa: F401
     User,
     UserSession,
 )
+from app.models.shop import TackleShop  # noqa: F401
 from app.models.waterbody import (  # noqa: F401
     AccessPoint,
     AgencyLakeProfile,
@@ -14,9 +15,11 @@ from app.models.waterbody import (  # noqa: F401
     SourceRecord,
     Species,
     SpeciesCondition,
+    SpeciesEvidence,
     SpeciesOccurrence,
     State,
     Waterbody,
+    WaterbodySource,
     WaterbodySpecies,
 )
 
@@ -28,8 +31,10 @@ __all__ = [
     "FishAttractor",
     "Species",
     "WaterbodySpecies",
+    "WaterbodySource",
     "SpeciesCondition",
     "SpeciesOccurrence",
+    "SpeciesEvidence",
     "SourceRecord",
     "User",
     "UserSession",
@@ -38,4 +43,5 @@ __all__ = [
     "PinReport",
     "AuditLog",
     "AiUsage",
+    "TackleShop",
 ]

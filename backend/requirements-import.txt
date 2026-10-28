@@ -1,0 +1,10 @@
+# Local data-preparation tools, not needed by the API or its Docker image.
+# The fetch steps that read OpenStreetMap extracts (geofabrik_lakes.py) and
+# CDFW's geodatabases and PDF (cdfw_import.py --fetch) use these; the import
+# steps read the JSON they write and need only requirements.txt, so a server
+# imports from copied cache files without them. docs/data-sources.md.
+osmium==4.3.2
+pyogrio==0.13.0
+pyproj==3.8.0
+shapely==2.2.0
+pypdf==6.21.2

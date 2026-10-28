@@ -181,12 +181,15 @@ def _admin_pin(db: Session, pin: CatchPin, admin: User, lakes=None) -> AdminPinO
 def admin_pins(
     status: str | None = None,
     visibility: str | None = None,
+    state: str | None = Query(default=None, pattern=r"^[A-Za-z]{2}$"),
     q: str | None = Query(default=None, max_length=80),
     page: int = Query(default=1, ge=1, le=MAX_PAGE),
     admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ) -> AdminPinPage:
     where = []
+    if state:
+        where.append(CatchPin.state_code == state.upper())
     if status:
         where.append(CatchPin.status == status)
     if visibility:

@@ -89,6 +89,20 @@ class Waterbody(Base):
     # lakes are always shown) and for OSM rows imported before this column
     # existed, which sort last until the importer is re-run.
     extent_km2: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
+    # California's own id for the water (CDFW's DFGWATERID, from its
+    # California Lakes layer). What CDFW's stocking data is keyed on
+    # (cdfw_import.py); None outside California and for lakes CDFW doesn't map.
+    dfg_water_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    # The lake's name on the agency's own map, when it differs from ours
+    # (OpenStreetMap's). Shown as "Official name".
+    official_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    # Whether the lake's centre lies in land PAD-US says the public may enter
+    # (padus_import.py): "open" (PAD-US Pub_Access "OA"), "restricted" ("RA":
+    # permit, season or hours), or None (not in PAD-US, closed, or unknown).
+    # A fact about the land, not a promise about every shore.
+    public_land: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    public_land_name: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    public_land_manager: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     state: Mapped["State"] = relationship(back_populates="waterbodies")
     access_points: Mapped[list["AccessPoint"]] = relationship(
@@ -106,6 +120,10 @@ class Waterbody(Base):
     fish_attractors: Mapped[list["FishAttractor"]] = relationship(
         back_populates="waterbody", cascade="all, delete-orphan"
     )
+    species_evidence: Mapped[list["SpeciesEvidence"]] = relationship(
+        back_populates="waterbody", cascade="all, delete-orphan"
+    )
+    dataset_links: Mapped[list["WaterbodySource"]] = relationship(cascade="all, delete-orphan")
 
     # The map's viewport query filters on lat/lng ranges; with a statewide
     # import this table goes from 7 rows to thousands.
@@ -293,7 +311,14 @@ class SpeciesCondition(Base):
 
 class SourceRecord(Base):
     """Every fact worth citing keeps its provenance. This is what makes the
-    AI Advisor's "cite your sources" behavior possible instead of aspirational."""
+    AI Advisor's "cite your sources" behavior possible instead of aspirational.
+
+    For imported datasets (docs/data-sources.md, data-sourcing rule 6) one
+    row per dataset, found again by `source_key` on every re-import, holds
+    its licence: `licence_class` is PD | OPEN | RESTRICTED (NC and FORBIDDEN
+    sources are never imported), `licence_name` the licence as written
+    ("CC BY 4.0", "Public domain (CDFW site terms)", "Facts + link"), and
+    `citation` the credit the source asks for."""
 
     __tablename__ = "source_records"
 
@@ -304,6 +329,62 @@ class SourceRecord(Base):
     retrieved_at: Mapped[datetime] = mapped_column(DateTime)
     valid_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     checksum: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    source_key: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    title: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    licence_class: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    licence_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    citation: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class WaterbodySource(Base):
+    """A dataset that contributed facts about this lake as a whole (its
+    official name and acreage, that it is stocked, that it lies on public
+    land). Listed with its credit on the lake's Sources tab. Species facts
+    carry their own source on SpeciesEvidence."""
+
+    __tablename__ = "waterbody_sources"
+
+    waterbody_id: Mapped[int] = mapped_column(ForeignKey("waterbodies.id", ondelete="CASCADE"), primary_key=True)
+    source_record_id: Mapped[int] = mapped_column(ForeignKey("source_records.id"), primary_key=True)
+    # The source's own id for this lake (a DFGWATERID, a PAD-US unit id).
+    source_key: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+
+    source_record: Mapped["SourceRecord"] = relationship()
+
+
+class SpeciesEvidence(Base):
+    """One piece of evidence that a species is in a lake, from one official
+    source: a stocking record, a stocking plan, an agency survey, a state
+    record or ShareLunker entry. Many per lake and species; the lake's
+    WaterbodySpecies row is the one-line summary the rest of the app reads.
+
+    `evidence` is always FishEye's own sentence built from facts (species,
+    year, kind of record), never the source's words (data-sourcing rule 3),
+    and `source_url` opens the source. `source_key` is the source's own id
+    for the fact, which keeps re-imports from duplicating it."""
+
+    __tablename__ = "species_evidence"
+    __table_args__ = (UniqueConstraint("source", "source_key", name="uq_species_evidence_source_key"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    waterbody_id: Mapped[int] = mapped_column(ForeignKey("waterbodies.id"), index=True)
+    species_id: Mapped[int] = mapped_column(ForeignKey("species.id"))
+    # e.g. "cdfw_ds778", "cdfw_plants", "cdfw_plan_2026", "cdfw_ds102",
+    # "tpwd_records", "sharelunker", "ga_records", "ca_records"
+    source: Mapped[str] = mapped_column(String(32))
+    source_key: Mapped[str] = mapped_column(String(128))
+    source_record_id: Mapped[int | None] = mapped_column(ForeignKey("source_records.id"), nullable=True)
+    # stocking | stocking_plan | survey | record
+    kind: Mapped[str] = mapped_column(String(16))
+    year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    evidence: Mapped[str] = mapped_column(Text)
+    source_url: Mapped[str] = mapped_column(String(512))
+    imported_at: Mapped[datetime] = mapped_column(DateTime)
+
+    waterbody: Mapped["Waterbody"] = relationship(back_populates="species_evidence")
+    species: Mapped["Species"] = relationship()
+    source_record: Mapped["SourceRecord | None"] = relationship()
 
 
 class AgencyLakeProfile(Base):

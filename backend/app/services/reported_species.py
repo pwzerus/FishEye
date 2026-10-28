@@ -1,7 +1,8 @@
 """What outside records say about a lake's fish: the "reported" tier.
 
 Reads SpeciesOccurrence (GBIF records, see
-app/data_import/gbif_occurrence_import.py) and summarises it per species:
+app/data_import/gbif_occurrence_import.py, and USGS Nonindigenous Aquatic
+Species records, app/data_import/usgs_nas_import.py) and summarises it per species:
 how many records, the most recent year, and who recorded them. Nothing here
 feeds scoring or the AI advisor; those read only official, confirmed species
 (WaterbodySpecies). See docs/adr/0012-gbif-reported-species.md.
@@ -19,7 +20,8 @@ from app.models.waterbody import SpeciesOccurrence
 from app.schemas.waterbody import ReportedSourceOut, ReportedSpeciesOut
 
 # Licences that allow commercial use. See docs/commercialization.md.
-COMMERCIAL_LICENSES = ("CC0", "CC BY")
+# "PD": U.S. federal data (USGS NAS), public domain.
+COMMERCIAL_LICENSES = ("CC0", "CC BY", "PD")
 
 # One record from before this year (or undated) is shown, but flagged as weak
 # evidence: a single 1960s museum specimen says little about the lake today.
@@ -30,6 +32,7 @@ SOURCE_LABELS = {
     "inaturalist": "iNaturalist",
     "tpwd": "Texas Parks & Wildlife",
     "maris": "State agency fish surveys (MARIS)",
+    "usgs_nas": "USGS Nonindigenous Aquatic Species",
     "other": "Other museums and surveys",
 }
 
@@ -43,6 +46,8 @@ def _licensed(stmt: Select) -> Select:  # type: ignore[type-arg]
 def _record_url(source: str, record_id: str) -> str | None:
     if source == "gbif":
         return f"https://www.gbif.org/occurrence/{record_id}"
+    if source == "usgs_nas":
+        return f"https://nas.er.usgs.gov/queries/SpecimenViewer.aspx?SpecimenID={record_id}"
     return None
 
 

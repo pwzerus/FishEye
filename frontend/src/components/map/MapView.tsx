@@ -8,10 +8,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { PinForm } from "@/components/community/PinForm";
 import { useToast } from "@/components/ui/Toast";
-import { ApiError, listStates, listWaterbodies } from "@/lib/api/client";
+import { CATCHES_AVAILABLE, CATCHES_SOON } from "@/lib/features";
+import { ApiError, listShops, listStates, listWaterbodies } from "@/lib/api/client";
 import { listPins } from "@/lib/api/session";
 import { rememberState } from "@/lib/jurisdiction";
-import type { PinDetail, PinSummary, WaterbodyListItem } from "@/lib/api/types";
+import type { PinDetail, PinSummary, Shop, WaterbodyListItem } from "@/lib/api/types";
 import { WaterbodyPanel } from "@/components/waterbody/WaterbodyPanel";
 import type L from "leaflet";
 
@@ -21,6 +22,8 @@ import { MapLegend } from "./MapLegend";
 import { type StateRegion, loadStates, regionOf, stateCodeAt } from "./usStates";
 import {
   MIN_ZOOM_FOR_ALL_LAKES,
+  MIN_ZOOM_FOR_SHOPS,
+  SEARCH_ZOOM,
   type MapMode,
   type MapViewState,
   asExploringView,
@@ -51,6 +54,8 @@ const VIEWPORT_LIMIT = 2000;
 // How long "Stay here" silences the zoom-out question.
 const ZOOM_OUT_ASK_QUIET_MS = 15_000;
 const PIN_LIMIT = 300;
+// States off the opening view, offered as buttons on the national map.
+const OFFSHORE_STATES = [["AK", "Alaska"], ["HI", "Hawaii"]] as const;
 
 type Point = { latitude: number; longitude: number };
 
@@ -75,6 +80,9 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   );
   const [waterbodies, setWaterbodies] = useState(initialWaterbodies);
   const [focusPoint, setFocusPoint] = useState<LocatedPoint | null>(() => parseAt(params.get("at")));
+  // Where "Use my location" last placed the person; stays marked after a
+  // later search, as it's still where they are.
+  const [you, setYou] = useState<{ latitude: number; longitude: number; accuracy: number } | null>(null);
   // National (whole country, states only) or exploring (zoomPolicy.ts). A
   // link to a lake or a point already says where to look, so it opens
   // exploring; everything else starts at the states map.
@@ -121,12 +129,19 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   const coverageRef = useRef<Set<string> | null>(null);
   coverageRef.current = coverage?.codes ?? null;
 
-  const [showPins, setShowPins] = useState(true);
+  // With Catches switched off (lib/features.ts) no pins are loaded or drawn.
+  const [showPins, setShowPins] = useState(CATCHES_AVAILABLE);
   const [pins, setPins] = useState<PinSummary[]>([]);
   const lastBbox = useRef<string | null>(null);
   const latestPins = useRef(0);
-  const [placing, setPlacing] = useState(params.get("addPin") === "1");
+  // Bait and tackle shops (ShopLayer.tsx): shown unless switched off, from
+  // the zoom where every lake shows, in the state being explored.
+  const [showShops, setShowShops] = useState(true);
+  const [shops, setShops] = useState<Shop[]>([]);
+  const latestShops = useRef(0);
+  const [placing, setPlacing] = useState(CATCHES_AVAILABLE && params.get("addPin") === "1");
   const [draft, setDraft] = useState<Point | null>(null);
+  const [locating, setLocating] = useState(false);
   const [created, setCreated] = useState<PinDetail | null>(null);
   const [sheet, setSheet] = useState<"peek" | "half" | "full">(selectedId !== null ? "half" : "peek");
   const workspace = useRef<HTMLDivElement>(null);
@@ -140,7 +155,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
 
   const loadPins = useCallback(
     (bbox: string | null) => {
-      if (!bbox) return;
+      if (!bbox || !CATCHES_AVAILABLE) return;
       const id = ++latestPins.current;
       listPins({ bbox, limit: PIN_LIMIT })
         .then((p) => id === latestPins.current && setPins(p))
@@ -148,6 +163,18 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     },
     [],
   );
+
+  const loadShops = useCallback((bbox: string | null, atZoom: number | null) => {
+    const id = ++latestShops.current;
+    const state = regionRef.current;
+    if (!bbox || !state || atZoom === null || atZoom < MIN_ZOOM_FOR_SHOPS) {
+      setShops([]);
+      return;
+    }
+    listShops(bbox, state.code)
+      .then((s) => id === latestShops.current && setShops(s))
+      .catch(() => undefined); // the lake map works without them
+  }, []);
 
   // Signing in or out changes which pins you may see (your private ones).
   useEffect(() => {
@@ -178,15 +205,17 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     // view, which would otherwise land after this and repaint the map.
     ++latestRequest.current;
     ++latestPins.current;
+    ++latestShops.current;
     lastBbox.current = null;
     setWaterbodies([]);
     setPins([]);
+    setShops([]);
     setTruncated(false);
     setLoading(false);
   }
 
-  const enterState = useCallback(
-    (_bounds: L.LatLngBounds, code: string) => {
+  const openState = useCallback(
+    (code: string) => {
       // The states file is already loaded: the national map drew it.
       loadStates()
         .then((file) => {
@@ -202,6 +231,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     },
     [setMode, setRegion],
   );
+  const enterState = useCallback((_bounds: L.LatLngBounds, code: string) => openState(code), [openState]);
 
   function backToStates() {
     setAskBack(false);
@@ -256,6 +286,9 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     const requestId = ++latestRequest.current;
     lastBbox.current = bbox;
     if (showPins) loadPins(bbox);
+    // With no state yet this clears them; the call below, once the state
+    // under the map is known, loads that state's.
+    if (showShops) loadShops(bbox, newZoom);
 
     const state = regionRef.current;
     if (!state) {
@@ -312,11 +345,40 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     setRegion(null);
     setMode("exploring");
     // Flying there fires moveend, which loads that area's lakes through
-    // handleViewportChange like any other pan.
+    // handleViewportChange like any other pan. Until then the last view's
+    // zoom says nothing about this one: no "no lakes" banner mid-flight.
+    setZoom(null);
     setFocusPoint(point);
+    if (point.own) setYou({ latitude: point.latitude, longitude: point.longitude, accuracy: point.own.accuracy });
+  }
+
+  /** Drops the catch's pin where the phone is: at the water, the usual case. */
+  function pinWhereIAm() {
+    if (!navigator.geolocation) {
+      toast("This browser can't share your location. Tap the map instead.", "error");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocating(false);
+        const point = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+        handleLocate({ ...point, label: "Your location", own: { accuracy: position.coords.accuracy } });
+        setDraft(point);
+      },
+      () => {
+        setLocating(false);
+        toast("Couldn't get your location. Tap the map where you fished instead.", "error");
+      },
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 60_000 },
+    );
   }
 
   function startPlacing() {
+    if (!CATCHES_AVAILABLE) {
+      toast(CATCHES_SOON, "info");
+      return;
+    }
     if (!user) {
       router.push(`/login?next=${encodeURIComponent("/map?addPin=1")}`);
       return;
@@ -341,18 +403,29 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     setCreated(pin);
     setPlacing(false);
     setDraft(null);
-    toast(pin.visibility === "private" ? "Saved to your private pins" : "Pinned! It's live on the map.");
+    toast(pin.visibility === "private" ? "Saved to your private catches" : "Shared! Your catch is on the map.");
     if (params.get("addPin")) router.replace("/map", { scroll: false });
   }
 
   const national = mode === "national";
   const zoomedOut = !national && zoom !== null && zoom < MIN_ZOOM_FOR_ALL_LAKES;
   const showEmpty =
-    !national && focusPoint !== null && !loading && !zoomedOut && waterbodies.length === 0 && !placing;
+    !national && focusPoint !== null && zoom !== null && !loading && !zoomedOut && waterbodies.length === 0 && !placing;
 
   let panel: React.ReactNode;
   if (placing && draft) {
-    panel = <PinForm key="form" point={draft} onCreated={handleCreated} onCancel={stopPlacing} />;
+    panel = (
+      <PinForm
+        key="form"
+        point={draft}
+        onCreated={handleCreated}
+        onCancel={stopPlacing}
+        onMove={(latitude, longitude) => {
+          handleLocate({ latitude, longitude, label: "Where the photo was taken" });
+          setDraft({ latitude, longitude });
+        }}
+      />
+    );
   } else if (placing) {
     panel = (
       <div className="place-hint reveal">
@@ -363,24 +436,29 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
             </svg>
           </span>
         </div>
-        <h2>Tap the map where you fished</h2>
-        <p className="muted">Zoom in for accuracy. You can drag the pin afterwards to fine-tune it.</p>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={stopPlacing}>
-          Cancel
-        </button>
+        <h2>Where did you catch it?</h2>
+        <p className="muted">Tap the map where you fished, or pin where you are now. You can drag the pin afterwards to fine-tune it.</p>
+        <div className="form-actions">
+          <button type="button" className="btn btn-primary btn-sm" onClick={pinWhereIAm} disabled={locating}>
+            {locating ? "Finding you…" : "Pin where I am"}
+          </button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={stopPlacing}>
+            Cancel
+          </button>
+        </div>
       </div>
     );
   } else if (created) {
     panel = (
       <div className="place-hint reveal">
-        <h2>{created.visibility === "private" ? "Saved, just for you" : "Your pin is live"}</h2>
+        <h2>{created.visibility === "private" ? "Saved, just for you" : "Your catch is live"}</h2>
         <p className="muted">
           {created.title}
           {created.lake ? ` · near ${created.lake.name}` : ""}
         </p>
         <div className="form-actions">
           <Link href={`/community/${created.id}`} className="btn btn-primary btn-sm">
-            View pin
+            View catch
           </Link>
           <button type="button" className="btn btn-ghost btn-sm" onClick={startPlacing}>
             Add another
@@ -413,6 +491,22 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
                   Pick a state or search a place.
                 </div>
               )}
+              {/* Alaska and Hawaii sit outside the opening view, and Hawaii's
+                  islands are a few pixels wide at country scale. */}
+              {!loading && !placing && national && (
+                <div className="map-offshore" aria-label="States outside this view">
+                  {OFFSHORE_STATES.map(([code, name]) => (
+                    <button
+                      key={code}
+                      type="button"
+                      className="map-status-chip map-offshore-state"
+                      onClick={() => openState(code)}
+                    >
+                      {name} ↗
+                    </button>
+                  ))}
+                </div>
+              )}
               {!loading && !national && !zoomedOut && truncated && (
                 <div className="map-status-chip">
                   {VIEWPORT_LIMIT} lakes shown · zoom in for more.
@@ -420,17 +514,25 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
               )}
               {!loading && zoomedOut && !placing && (
                 <div className="map-status-chip">
-                  Official lakes shown · zoom in for more water.
+                  Official lakes shown · zoom in for more water{showShops ? " and bait shops" : ""}.
                 </div>
               )}
               {showEmpty && (
                 // Honest, not apologetic, and named from the data rather than
-                // hardcoded, so it stays true as states are imported.
+                // hardcoded, so it stays true as states are imported. Closer
+                // than a search's framing (Use my location's street level) an
+                // empty view says nothing about the area around it.
                 <div className="no-nearby-lakes-banner">
-                  No lakes on file near {focusPoint?.label} yet.
-                  {coverage && coverage.names.length > 0 && coverage.names.length <= 4
-                    ? ` FishEye covers ${listStateNames(coverage.names)} for now.`
-                    : ""}
+                  {zoom !== null && zoom > SEARCH_ZOOM ? (
+                    "No lakes in this view · zoom out to see lakes nearby."
+                  ) : (
+                    <>
+                      No lakes on file near {focusPoint?.label} yet.
+                      {coverage && coverage.names.length > 0 && coverage.names.length <= 4
+                        ? ` FishEye covers ${listStateNames(coverage.names)} for now.`
+                        : ""}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -439,8 +541,10 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
               onSelect={placing ? () => undefined : selectLake}
               onViewportChange={handleViewportChange}
               focusPoint={focusPoint}
+              you={you}
               initialView={national ? null : lastView}
               pins={showPins ? pins : []}
+              shops={showShops ? shops : []}
               placing={placing}
               draft={draft}
               onPlace={(latitude, longitude) => { setDraft({ latitude, longitude }); setSheet("full"); }}
@@ -477,29 +581,64 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
               </div>
             )}
             <div className="map-fabs">
+              {CATCHES_AVAILABLE ? (
+                <button
+                  type="button"
+                  className={showPins ? "map-toggle active" : "map-toggle"}
+                  aria-pressed={showPins}
+                  aria-label="Community pins"
+                  onClick={() => {
+                    const next = !showPins;
+                    setShowPins(next);
+                    if (next) loadPins(lastBbox.current);
+                  }}
+                >
+                  <span className="legend-catch" aria-hidden="true" /> <span className="fab-label">Catches</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="map-toggle is-unavailable"
+                  aria-disabled="true"
+                  aria-label="Catches (unavailable)"
+                  title={CATCHES_SOON}
+                  onClick={() => toast(CATCHES_SOON, "info")}
+                >
+                  <span className="legend-catch" aria-hidden="true" /> <span className="fab-label">Catches</span>
+                  <span className="fab-unavailable">Unavailable</span>
+                </button>
+              )}
               <button
                 type="button"
-                className={showPins ? "map-toggle active" : "map-toggle"}
-                aria-pressed={showPins}
-                aria-label="Community pins"
+                className={showShops ? "map-toggle active" : "map-toggle"}
+                aria-pressed={showShops}
+                aria-label="Bait and tackle shops"
                 onClick={() => {
-                  const next = !showPins;
-                  setShowPins(next);
-                  if (next) loadPins(lastBbox.current);
+                  const next = !showShops;
+                  setShowShops(next);
+                  if (next) loadShops(lastBbox.current, zoom);
                 }}
               >
-                <span className="legend-catch" aria-hidden="true" /> <span className="fab-label">Catches</span>
+                <span className="legend-shop" aria-hidden="true" /> <span className="fab-label">Bait &amp; tackle</span>
               </button>
               {!placing && (
-                <button type="button" className="btn btn-primary btn-sm map-add" onClick={startPlacing} aria-label="Add a pin">
+                <button
+                  type="button"
+                  className={CATCHES_AVAILABLE ? "btn btn-primary btn-sm map-add" : "btn btn-primary btn-sm map-add is-unavailable"}
+                  onClick={startPlacing}
+                  aria-label={CATCHES_AVAILABLE ? "Share a catch" : "Share catch (unavailable)"}
+                  aria-disabled={CATCHES_AVAILABLE ? undefined : "true"}
+                  title={CATCHES_AVAILABLE ? undefined : CATCHES_SOON}
+                >
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
                     <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                   </svg>
                   <span className="fab-label">Share catch</span>
+                  {!CATCHES_AVAILABLE && <span className="fab-unavailable">Unavailable</span>}
                 </button>
               )}
             </div>
-            <MapLegend showPins={showPins} />
+            <MapLegend showPins={showPins} showShops={showShops && shops.length > 0} />
           </>
         ) : (
           <>

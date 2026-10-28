@@ -105,6 +105,33 @@ Cloud Console, add the redirect URI
 and `GOOGLE_CLIENT_SECRET` in `.env`. Without them the Google button simply
 isn't shown. Design and security notes: docs/adr/0016-accounts-and-community-pins.md.
 
+### Catches: the photo check, and bait and tackle shops (ADR 0037)
+
+A catch that names a fish needs a photo that shows it: the API reads the
+photo with a local model (BioCLIP 2, MIT; 309 MB, onnxruntime, no PyTorch) and
+refuses a fish the photo contradicts. The model is built once on a
+developer's machine, in an environment with PyTorch (see
+`requirements-fishid-build.txt`), then fitted and measured on openly
+licensed iNaturalist photos:
+
+```bash
+<build-env>/python -m app.cli.build_fish_id_model         # BioCLIP 2 -> models/fish-id/ (ONNX + class vectors); --model bioclip: the lighter one
+python -m app.cli.build_fish_id_model --quantize-only     # int8, in this env
+python -m app.cli.fish_id_photos --train                  # training photos (GBIF, CC0/CC BY) -> fishid_cache/train/
+python -m app.cli.fish_id_photos                          # test photos (2024 on) -> fishid_cache/
+python -m app.cli.fish_id_train --sweep                   # classifier head -> models/fish-id/head.npz
+python -m app.cli.fish_id_eval --out ../reports/fish-id-eval.md
+# FISH_ID=on (default: catches naming a fish wait while the model is missing) | off (tests, CI)
+```
+
+Bait and tackle shops come from the OpenStreetMap extracts the lake import
+already downloaded:
+
+```bash
+python -m app.data_import.tackle_shops --states all       # extract + import
+python -m app.data_import.tackle_shops --from-file osm_cache/tackle_shops.json   # import only (a server)
+```
+
 ### Fish-guide Q&A (RAG) and the LLM
 
 `POST /api/ask` searches the fish guides and returns the matching passages
