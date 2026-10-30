@@ -50,6 +50,32 @@ class CleanPhoto:
     thumb: bytes
     width: int
     height: int
+    # Where the camera says it was, from the upload's EXIF before the
+    # metadata is dropped; None when it carries no location.
+    gps: tuple[float, float] | None = None
+
+
+_GPS_IFD = 0x8825
+
+
+def photo_gps(img: Image.Image) -> tuple[float, float] | None:
+    """(lat, lng) from a photo's EXIF GPS block, if it has a sensible one."""
+    try:
+        gps = img.getexif().get_ifd(_GPS_IFD)
+        lat_ref, lat, lng_ref, lng = gps.get(1), gps.get(2), gps.get(3), gps.get(4)
+        if not (lat and lng and lat_ref and lng_ref):
+            return None
+        to_deg = lambda dms: float(dms[0]) + float(dms[1]) / 60 + float(dms[2]) / 3600  # noqa: E731
+        value = (
+            to_deg(lat) * (-1 if str(lat_ref).upper().startswith("S") else 1),
+            to_deg(lng) * (-1 if str(lng_ref).upper().startswith("W") else 1),
+        )
+    except (KeyError, IndexError, TypeError, ValueError, ZeroDivisionError, AttributeError):
+        return None
+    # 0,0 is what some apps write when they have no fix.
+    if not (-90 <= value[0] <= 90 and -180 <= value[1] <= 180) or value == (0.0, 0.0):
+        return None
+    return value
 
 
 def _flatten(img: Image.Image) -> Image.Image:
@@ -86,6 +112,7 @@ def clean_photo(data: bytes) -> CleanPhoto:
             probe.verify()  # structural check; the image must be reopened after
         with Image.open(io.BytesIO(data)) as img:
             img.load()
+            gps = photo_gps(img)
             img = ImageOps.exif_transpose(img)
             img = _flatten(img)
     except PhotoRejected:
@@ -95,7 +122,7 @@ def clean_photo(data: bytes) -> CleanPhoto:
 
     full, w, h = _jpeg(img, FULL_MAX_EDGE, 85)
     thumb, _, _ = _jpeg(img, THUMB_MAX_EDGE, 78)
-    return CleanPhoto(full=full, thumb=thumb, width=w, height=h)
+    return CleanPhoto(full=full, thumb=thumb, width=w, height=h, gps=gps)
 
 
 class MediaStore(Protocol):

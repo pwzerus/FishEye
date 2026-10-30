@@ -9,6 +9,7 @@ import type {
   AiAllowance,
   AskRequest,
   AskResponse,
+  AdminLakeReport,
   AdminPin,
   AdminReportGroup,
   AdminStats,
@@ -16,12 +17,14 @@ import type {
   AuditEntry,
   AuthProviders,
   FishIdResult,
+  LakeReportInput,
   Paged,
   PinDetail,
   PinOptions,
   PinPlaces,
   PinSummary,
   PinWhere,
+  WaterGroup,
   PinUpdate,
   User,
 } from "./types";
@@ -93,6 +96,10 @@ export const register = (email: string, password: string, display_name: string) 
 export const login = (email: string, password: string) =>
   sfetch<User>("/api/auth/login", json("POST", { email, password }));
 export const logout = () => sfetch<void>("/api/auth/logout", { method: "POST" });
+// Confirming the email address: a new link, and the link's token itself.
+export const sendVerificationEmail = () => sfetch<User>("/api/auth/verify-email/send", { method: "POST" });
+export const confirmEmail = (token: string) =>
+  sfetch<{ verified: boolean; email: string }>("/api/auth/verify-email", json("POST", { token }));
 export const updateProfile = (display_name: string) => sfetch<User>("/api/auth/me", json("PATCH", { display_name }));
 export const changePassword = (new_password: string, current_password?: string) =>
   sfetch<User>("/api/auth/me/password", json("POST", { new_password, current_password: current_password ?? null }));
@@ -111,17 +118,21 @@ export function googleStartUrl(next: string): string {
 
 export const getPinOptions = () => sfetch<PinOptions>("/api/pins/options");
 
-/** Where catches are browsed: a state, a county in it, a lake in that. */
+/** Where catches are browsed: a state, a county in it, a lake or river in
+ * that. A river is "r<id>" as a place (PinPlace.id); `river` is its id. */
 export interface PinScope {
   state?: string;
   county?: string;
   lake?: string;
+  river?: string;
 }
 
 function scopeQuery(qs: URLSearchParams, scope: PinScope) {
   if (scope.state) qs.set("state", scope.state);
   if (scope.county) qs.set("county", scope.county);
-  if (scope.lake) qs.set("lake", scope.lake);
+  if (scope.lake?.startsWith("r")) qs.set("river", scope.lake.slice(1));
+  else if (scope.lake) qs.set("lake", scope.lake);
+  if (scope.river) qs.set("river", scope.river);
 }
 
 export function listPins(params: { bbox?: string; species?: string; mine?: boolean; limit?: number } & PinScope = {}) {
@@ -135,8 +146,12 @@ export function listPins(params: { bbox?: string; species?: string; mine?: boole
   return sfetch<PinSummary[]>(`/api/pins${suffix}`);
 }
 
+/** Other people's catches in view, one group per water (backend ADR 0040). */
+export const listWaterGroups = (bbox: string) =>
+  sfetch<WaterGroup[]>(`/api/pins/waters?bbox=${encodeURIComponent(bbox)}`);
+
 /** The places one level below `scope` that have catches, with counts. */
-export function listPinPlaces(params: { species?: string; mine?: boolean } & Omit<PinScope, "lake"> = {}) {
+export function listPinPlaces(params: { species?: string; mine?: boolean } & Omit<PinScope, "lake" | "river"> = {}) {
   const qs = new URLSearchParams();
   if (params.species) qs.set("species", params.species);
   if (params.mine) qs.set("mine", "true");
@@ -145,9 +160,13 @@ export function listPinPlaces(params: { species?: string; mine?: boolean } & Omi
   return sfetch<PinPlaces>(`/api/pins/places${suffix}`);
 }
 
-/** The county a point is in (not stored by the server). */
-export const pinWhere = (lat: number, lng: number) =>
-  sfetch<PinWhere>(`/api/pins/where?lat=${lat.toFixed(3)}&lng=${lng.toFixed(3)}`);
+/** The county a point is in (not stored by the server). Rounded to ~100 m
+ * unless `precise`: placing a catch asks which water is under the pin, and
+ * the bank is narrower than that. */
+export const pinWhere = (lat: number, lng: number, precise = false) => {
+  const digits = precise ? 5 : 3;
+  return sfetch<PinWhere>(`/api/pins/where?lat=${lat.toFixed(digits)}&lng=${lng.toFixed(digits)}`);
+};
 
 /** What fish a photo shows and, given a species, whether it backs it. The
  * server checks again on save; this is the form's early warning. */
@@ -204,6 +223,8 @@ export interface NewPin {
   species_other?: string;
   caught_on?: string;
   visibility: "public" | "private";
+  // Show others the exact spot; by default they see the lake or county.
+  share_exact?: boolean;
   photos: File[];
 }
 
@@ -217,6 +238,7 @@ export function createPin(pin: NewPin, onProgress?: (fraction: number) => void):
   if (pin.species_slug) form.set("species_slug", pin.species_slug);
   if (pin.species_other) form.set("species_other", pin.species_other);
   if (pin.caught_on) form.set("caught_on", pin.caught_on);
+  if (pin.share_exact) form.set("share_exact", "true");
   for (const f of pin.photos) form.append("photos", f, f.name);
   return upload<PinDetail>("/api/pins", form, onProgress);
 }
@@ -227,10 +249,20 @@ export function addPhotos(pinId: number, files: File[], onProgress?: (fraction: 
   return upload<PinDetail>(`/api/pins/${pinId}/photos`, form, onProgress);
 }
 
+// ------------------------------------------------------------ lake reports
+
+export const getLakeReportOptions = () => sfetch<{ reasons: { id: string; label: string }[] }>("/api/lake-reports/options");
+export const reportLake = (report: LakeReportInput) =>
+  sfetch<{ received: boolean; id: number }>("/api/lake-reports", json("POST", report));
+
 // ----------------------------------------------------------------- admin
 
 export const adminStats = () => sfetch<AdminStats>("/api/admin/stats");
 export const adminReports = () => sfetch<AdminReportGroup[]>("/api/admin/reports");
+export const adminLakeReports = (status: "open" | "resolved" = "open") =>
+  sfetch<AdminLakeReport[]>(`/api/admin/lake-reports?status=${status}`);
+export const adminResolveLakeReport = (id: number, resolution: "fixed" | "dismissed", note?: string) =>
+  sfetch<void>(`/api/admin/lake-reports/${id}/resolve`, json("POST", { resolution, note: note || null }));
 export const adminResolve = (pinId: number, action: "dismiss" | "hide" | "remove", note?: string) =>
   sfetch<AdminPin>(`/api/admin/reports/${pinId}/resolve`, json("POST", { action, note: note || null }));
 

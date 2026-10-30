@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+
+import { getT } from "@/i18n/server";
 import { Suspense } from "react";
 
 import { LoginForm } from "@/components/auth/LoginForm";
 import { PageTransition } from "@/components/motion/Transition";
 
-export const metadata: Metadata = {
-  title: "Sign in · FishEye",
-  description: "Sign in or create a FishEye account to pin your catches.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: `${t.pages.login} · FishEye`, description: t.pages.loginDescription };
+}
 
 export default function LoginPage() {
   return (

@@ -2,12 +2,15 @@ from app.models.community import (  # noqa: F401
     AiUsage,
     AuditLog,
     CatchPin,
+    EmailToken,
+    LakeReport,
     PinPhoto,
     PinReport,
     User,
     UserSession,
 )
 from app.models.shop import TackleShop  # noqa: F401
+from app.models.water import River, RiverReach, WaterPiece  # noqa: F401
 from app.models.waterbody import (  # noqa: F401
     AccessPoint,
     AgencyLakeProfile,
@@ -38,10 +41,15 @@ __all__ = [
     "SourceRecord",
     "User",
     "UserSession",
+    "EmailToken",
+    "LakeReport",
     "CatchPin",
     "PinPhoto",
     "PinReport",
     "AuditLog",
     "AiUsage",
     "TackleShop",
+    "River",
+    "RiverReach",
+    "WaterPiece",
 ]

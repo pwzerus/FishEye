@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { useT } from "@/i18n/client";
+
 const ACCEPT = ["image/jpeg", "image/png", "image/webp"];
 
 /**
@@ -25,6 +27,7 @@ export function PhotoPicker({
   // Marks the first photo, e.g. "Catch photo": the one the fish is checked on.
   firstLabel?: string;
 }) {
+  const t = useT().catch;
   const input = useRef<HTMLInputElement>(null);
   const camera = useRef<HTMLInputElement>(null);
   const [drag, setDrag] = useState(false);
@@ -39,12 +42,12 @@ export function PhotoPicker({
     const incoming = Array.from(list);
     const bad = incoming.find((f) => !ACCEPT.includes(f.type));
     const big = incoming.find((f) => f.size > maxMb * 1024 * 1024);
-    if (bad) setProblem(`"${bad.name}" isn't a JPEG, PNG or WebP photo.`);
-    else if (big) setProblem(`"${big.name}" is over ${maxMb} MB.`);
+    if (bad) setProblem(t.badType(bad.name));
+    else if (big) setProblem(t.tooBig(big.name, maxMb));
     else setProblem(null);
     const ok = incoming.filter((f) => ACCEPT.includes(f.type) && f.size <= maxMb * 1024 * 1024);
     const next = [...files, ...ok].slice(0, max);
-    if (files.length + ok.length > max) setProblem(`Up to ${max} photos per pin.`);
+    if (files.length + ok.length > max) setProblem(t.tooMany(max));
     onChange(next);
   }
 
@@ -55,12 +58,12 @@ export function PhotoPicker({
           <figure key={`${f.name}-${i}`} className="photo-thumb">
             {/* A local preview (blob: URL) of a file not yet uploaded. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={previews[i]} alt={`Selected photo ${i + 1}`} />
+            <img src={previews[i]} alt={t.selectedPhoto(i + 1)} />
             {i === 0 && firstLabel && <figcaption className="photo-first">{firstLabel}</figcaption>}
             <button
               type="button"
               className="photo-remove"
-              aria-label={`Remove photo ${i + 1}`}
+              aria-label={t.removePhoto(i + 1)}
               disabled={disabled}
               onClick={() => onChange(files.filter((_, j) => j !== i))}
             >
@@ -74,7 +77,7 @@ export function PhotoPicker({
               <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
               <circle cx="12" cy="13" r="3.5" />
             </svg>
-            <span>Take photo</span>
+            <span>{t.takePhoto}</span>
           </button>
         )}
         {files.length < max && (
@@ -99,7 +102,7 @@ export function PhotoPicker({
               <circle cx="9" cy="10" r="1.6" />
               <path d="M5 17l5-5 4 4 2-2 3 3" />
             </svg>
-            <span>{files.length === 0 ? "Add photos" : "Add more"}</span>
+            <span>{files.length === 0 ? t.addPhotos : t.addMore}</span>
             <small>
               {files.length}/{max}
             </small>
@@ -129,7 +132,7 @@ export function PhotoPicker({
         }}
       />
       <p className="hint">
-        Location data inside photos is removed when you upload.
+        {t.locationRemoved}
         {problem && <span className="hint-warn"> {problem}</span>}
       </p>
     </div>

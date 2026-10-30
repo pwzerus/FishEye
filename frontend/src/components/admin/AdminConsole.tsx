@@ -11,22 +11,34 @@ import { useToast } from "@/components/ui/Toast";
 import { ApiError } from "@/lib/api/client";
 import {
   adminAudit,
+  adminLakeReports,
   adminPins,
   adminPurgePin,
   adminReports,
   adminResolve,
+  adminResolveLakeReport,
   adminSetPinStatus,
   adminStats,
   adminUpdateUser,
   adminUsers,
 } from "@/lib/api/session";
-import type { AdminPin, AdminReportGroup, AdminStats, AdminUser, AuditEntry, Paged, PinSummary } from "@/lib/api/types";
+import type {
+  AdminLakeReport,
+  AdminPin,
+  AdminReportGroup,
+  AdminStats,
+  AdminUser,
+  AuditEntry,
+  Paged,
+  PinSummary,
+} from "@/lib/api/types";
 import { useJurisdictions } from "@/lib/jurisdiction";
 import { TpwdRefresh } from "./TpwdRefresh";
 
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "reports", label: "Reports" },
+  { id: "lakes", label: "Lake reports" },
   { id: "pins", label: "Pins" },
   { id: "users", label: "Users" },
   { id: "audit", label: "Audit log" },
@@ -44,7 +56,7 @@ function checkNote(pin: Pick<PinSummary, "species_label" | "species_check" | "sp
 
 function when(iso: string | null): string {
   if (!iso) return "never";
-  return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  return new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
 function errText(e: unknown) {
@@ -124,6 +136,7 @@ export function AdminConsole() {
       <div className="admin-body" key={tab}>
         {tab === "overview" && <Overview onGo={(t) => router.replace(`${pathname}?tab=${t}`, { scroll: false })} />}
         {tab === "reports" && <Reports confirmThen={confirmThen} />}
+        {tab === "lakes" && <LakeReports confirmThen={confirmThen} />}
         {tab === "pins" && <Pins confirmThen={confirmThen} />}
         {tab === "users" && <Users meId={user.id} confirmThen={confirmThen} />}
         {tab === "audit" && <Audit />}
@@ -200,6 +213,13 @@ function Overview({ onGo }: { onGo: (tab: TabId) => void }) {
           sub={`${stats.open_reports} open report${stats.open_reports === 1 ? "" : "s"}`}
           tone={stats.pins_awaiting_review > 0 ? "warn" : undefined}
           onClick={() => onGo("reports")}
+        />
+        <StatCard
+          label="Lake reports"
+          value={stats.lake_reports_open ?? 0}
+          sub="wrong or missing lakes to check"
+          tone={(stats.lake_reports_open ?? 0) > 0 ? "warn" : undefined}
+          onClick={() => onGo("lakes")}
         />
         <StatCard label="Pins" value={stats.pins} sub={`+${stats.pins_new_7d} this week`} onClick={() => onGo("pins")} />
         <StatCard label="Public / only-me" value={`${stats.pins_public} / ${stats.pins_private}`} sub={`${stats.photos} photos`} />
@@ -308,6 +328,107 @@ function Reports({ confirmThen }: { confirmThen: (p: Pending) => void }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+// ------------------------------------------------------------ lake reports
+
+/** "Something's wrong with this lake" and "a lake is missing" (backend ADR
+ * 0039): check each against a source, fix the data by hand, then mark it. */
+function LakeReports({ confirmThen }: { confirmThen: (p: Pending) => void }) {
+  const [status, setStatus] = useState<"open" | "resolved">("open");
+  const [rows, setRows] = useState<AdminLakeReport[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
+  const load = useCallback(() => {
+    adminLakeReports(status).then(setRows).catch((e) => setError(errText(e)));
+  }, [status]);
+  useEffect(load, [load]);
+
+  const act = (r: AdminLakeReport, resolution: "fixed" | "dismissed") =>
+    confirmThen({
+      title: resolution === "fixed" ? "Mark as fixed?" : "Dismiss this report?",
+      body:
+        resolution === "fixed"
+          ? "Only once the data is corrected (or the lake added) from a source. This doesn't change the map by itself."
+          : "Nothing changes on the map. Use this when a source shows the map was right.",
+      confirm: resolution === "fixed" ? "Mark fixed" : "Dismiss",
+      danger: false,
+      run: async () => {
+        await adminResolveLakeReport(r.id, resolution);
+        toast(resolution === "fixed" ? "Marked fixed" : "Report dismissed");
+        load();
+      },
+    });
+
+  return (
+    <section className="admin-panel">
+      <div className="panel-head">
+        <h2>Lake reports</h2>
+        <div className="segmented" role="group" aria-label="Show">
+          {(["open", "resolved"] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={status === s ? "segment active" : "segment"}
+              aria-pressed={status === s}
+              onClick={() => {
+                setRows(null);
+                setStatus(s);
+              }}
+            >
+              {s === "open" ? "Open" : "Resolved"}
+            </button>
+          ))}
+        </div>
+      </div>
+      {error ? (
+        <div className="backend-error">{error}</div>
+      ) : rows === null ? (
+        <div className="sk" style={{ height: 160 }} />
+      ) : rows.length === 0 ? (
+        <p className="muted">{status === "open" ? "No open lake reports." : "Nothing resolved yet."}</p>
+      ) : (
+        <ul className="report-list">
+          {rows.map((r, i) => {
+            const mapHref = r.waterbody_id
+              ? `/map?lake=${r.waterbody_id}`
+              : r.latitude !== null && r.longitude !== null
+                ? `/map?at=${r.latitude},${r.longitude}`
+                : null;
+            return (
+              <li key={r.id} className="report-card reveal" style={{ "--i": Math.min(i, 8) } as React.CSSProperties}>
+                <div>
+                  <strong>{r.reason_label}</strong>
+                  <p className="muted small">
+                    {mapHref ? (
+                      <Link href={mapHref} className="text-link">
+                        {r.lake_name ?? "Unnamed"}
+                      </Link>
+                    ) : (
+                      (r.lake_name ?? "Unnamed")
+                    )}
+                    {r.state_code ? `, ${r.state_code}` : ""} · {r.reporter ?? "signed out"}, {when(r.created_at)}
+                    {r.resolution && ` · ${r.resolution} ${when(r.resolved_at)}`}
+                  </p>
+                  {r.detail && <p className="small">“{r.detail}”</p>}
+                </div>
+                {r.status === "open" && (
+                  <div className="row-actions">
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => act(r, "dismissed")}>
+                      Dismiss
+                    </button>
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => act(r, "fixed")}>
+                      Fixed
+                    </button>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }
 

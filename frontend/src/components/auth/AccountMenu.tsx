@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { useToast } from "@/components/ui/Toast";
+import { useT } from "@/i18n/client";
 import { useAuth } from "./AuthProvider";
 
 /** "Angler Amy" -> "AA"; words that don't start with a letter or digit
@@ -25,6 +26,7 @@ export function AccountMenu() {
   const pathname = usePathname() ?? "/";
   const router = useRouter();
   const toast = useToast();
+  const t = useT();
 
   useEffect(() => {
     if (!open) return;
@@ -52,7 +54,7 @@ export function AccountMenu() {
     const next = pathname.startsWith("/login") ? "/" : pathname;
     return (
       <Link href={`/login?next=${encodeURIComponent(next)}`} className="btn btn-primary btn-sm signin-btn">
-        Sign in
+        {t.common.signIn}
       </Link>
     );
   }
@@ -64,7 +66,7 @@ export function AccountMenu() {
         className="avatar-btn"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`Account menu for ${user.display_name}`}
+        aria-label={t.account.menuFor(user.display_name)}
         onClick={() => setOpen((v) => !v)}
       >
         {initials(user.display_name)}
@@ -74,20 +76,20 @@ export function AccountMenu() {
           <div className="menu-who">
             <strong>{user.display_name}</strong>
             <span>{user.email}</span>
-            {user.role === "admin" && <span className="tag tag-admin">Admin</span>}
+            {user.role === "admin" && <span className="tag tag-admin">{t.account.admin}</span>}
           </div>
           <Link role="menuitem" href="/account" className="menu-item">
-            Account
+            {t.account.account}
           </Link>
           <Link role="menuitem" href="/account#pins" className="menu-item">
-            My catches
+            {t.account.myCatches}
           </Link>
           <Link role="menuitem" href="/map?addPin=1" className="menu-item">
-            Add a pin
+            {t.account.shareCatch}
           </Link>
           {user.role === "admin" && (
             <Link role="menuitem" href="/admin" className="menu-item">
-              Admin
+              {t.account.admin}
             </Link>
           )}
           <button
@@ -97,11 +99,11 @@ export function AccountMenu() {
             onClick={async () => {
               setOpen(false);
               await signOut();
-              toast("Signed out", "info");
+              toast(t.account.signedOut, "info");
               if (pathname.startsWith("/account") || pathname.startsWith("/admin")) router.push("/");
             }}
           >
-            Sign out
+            {t.account.signOut}
           </button>
         </div>
       )}

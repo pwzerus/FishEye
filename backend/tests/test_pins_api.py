@@ -172,6 +172,34 @@ def test_photo_count_and_size_limits(make_client, monkeypatch):
     assert create(c, photos=[jpeg(800, 600)]).status_code == 413
 
 
+def test_a_new_account_shares_a_few_catches_a_day(make_client, db_session, monkeypatch):
+    from datetime import timedelta
+
+    from app.db.types import utcnow
+    from app.models.community import User
+
+    monkeypatch.setattr(get_settings(), "new_account_pins_per_day", 2)
+    c = make_client()
+    signup(c)
+    assert create(c, title="One").status_code == 201
+    assert create(c, title="Two").status_code == 201
+    third = create(c, title="Three")
+    assert third.status_code == 429
+    assert "New accounts can share 2 catches a day" in third.json()["detail"]
+
+    # After its first days the account posts like anyone else.
+    user = db_session.scalar(select(User).where(User.email == "angler@example.com"))
+    user.created_at = utcnow() - timedelta(days=get_settings().new_account_days, minutes=1)
+    db_session.commit()
+    assert create(c, title="Three").status_code == 201
+
+    # Admins are never held back.
+    admin = make_client()
+    signup(admin, email="admin@example.com", name="Admin")
+    make_admin(db_session, "admin@example.com")
+    assert all(create(admin, title=f"Pin {i}").status_code == 201 for i in range(3))
+
+
 def test_adding_and_deleting_photos_later(make_client):
     c = make_client()
     signup(c)
@@ -245,7 +273,7 @@ def test_catches_are_browsed_by_state_then_county_then_lake(make_client, seeded_
     assert (lakes["level"], lakes["state_name"], lakes["county_name"]) == ("lake", "Texas", "Wood County")
     assert [(p["id"], p["name"], p["count"]) for p in lakes["places"]] == [
         (str(seeded_lake["waterbody"].id), "Lake Fork", 1),
-        ("0", "Not at a mapped lake", 1),
+        ("0", "Not on mapped water", 1),
     ]
     # The owner's own private pin counts for them.
     assert [p["count"] for p in c.get("/api/pins/places", params={"state": "TX"}).json()["places"]] == [2, 2]
@@ -264,6 +292,7 @@ def test_where_names_the_county_a_point_is_in(make_client):
     anon = make_client()
     assert anon.get("/api/pins/where", params={"lat": 29.76, "lng": -95.37}).json() == {
         "state_code": "TX", "state_name": "Texas", "county_geoid": "48201", "county_name": "Harris County",
+        "water": None, "water_required": False,
     }
     assert anon.get("/api/pins/where", params={"lat": 0, "lng": 0}).json()["county_geoid"] is None
 
@@ -280,6 +309,95 @@ def test_pins_saved_before_counties_get_one_at_startup(make_client, db_session):
     assert fill_places(db_session) == 1
     db_session.refresh(pin)
     assert (pin.state_code, pin.county_name) == ("TX", "Wood County")
+
+
+# ---------------------------------------------------- where others see it
+
+
+def test_others_see_the_lake_not_the_spot_unless_the_angler_shares_it(make_client, db_session, seeded_lake):
+    owner = make_client()
+    signup(owner)
+    lake = seeded_lake["waterbody"]
+    pin = create(owner, latitude=32.8101, longitude=-95.5899).json()  # on Lake Fork, off its centre
+    assert (pin["latitude"], pin["longitude"], pin["location_shown"]) == (32.8101, -95.5899, "exact")
+    assert (pin["share_exact"], pin["public_place"]) == (False, "lake")
+
+    anon = make_client()
+    seen = anon.get(f"/api/pins/{pin['id']}").json()
+    assert (seen["latitude"], seen["longitude"], seen["location_shown"]) == (lake.latitude, lake.longitude, "lake")
+    assert [(p["latitude"], p["longitude"]) for p in anon.get("/api/pins").json()] == [(lake.latitude, lake.longitude)]
+    # A box around the spot that leaves out the lake's centre finds nothing,
+    # so the spot can't be narrowed down box by box...
+    tight = "-95.5900,32.8100,-95.5898,32.8102"
+    assert anon.get("/api/pins", params={"bbox": tight}).json() == []
+    stranger = make_client()
+    signup(stranger, email="s@example.com", name="Stranger")
+    assert stranger.get("/api/pins", params={"bbox": tight}).json() == []
+    # ...while the owner finds their own catch there, at the spot.
+    mine = owner.get("/api/pins", params={"bbox": tight}).json()
+    assert [(p["id"], p["location_shown"]) for p in mine] == [(pin["id"], "exact")]
+
+    admin = make_client()
+    signup(admin, email="admin@example.com", name="Admin")
+    make_admin(db_session, "admin@example.com")
+    assert admin.get(f"/api/pins/{pin['id']}").json()["location_shown"] == "exact"
+
+    # Sharing the spot shows it to everyone; un-sharing hides it again.
+    shared = owner.patch(f"/api/pins/{pin['id']}", json={"share_exact": True}).json()
+    assert (shared["share_exact"], shared["public_place"]) == (True, "exact")
+    seen = anon.get(f"/api/pins/{pin['id']}").json()
+    assert (seen["latitude"], seen["longitude"], seen["location_shown"]) == (32.8101, -95.5899, "exact")
+    assert [p["id"] for p in anon.get("/api/pins", params={"bbox": tight}).json()] == [pin["id"]]
+    owner.patch(f"/api/pins/{pin['id']}", json={"share_exact": False})
+    assert anon.get(f"/api/pins/{pin['id']}").json()["location_shown"] == "lake"
+    assert anon.get("/api/pins", params={"bbox": tight}).json() == []
+
+
+def test_a_catch_can_be_shared_at_its_spot_from_the_start(make_client, seeded_lake):
+    c = make_client()
+    signup(c)
+    pin = create(c, latitude=32.8101, longitude=-95.5899, share_exact="true").json()
+    assert (pin["share_exact"], pin["public_place"]) == (True, "exact")
+    seen = make_client().get(f"/api/pins/{pin['id']}").json()
+    assert (seen["latitude"], seen["longitude"], seen["location_shown"]) == (32.8101, -95.5899, "exact")
+
+
+def test_away_from_lakes_others_see_the_county_or_a_rounded_area(make_client):
+    from app.services import counties
+
+    c = make_client()
+    signup(c)
+    houston = create(c, latitude=29.7604, longitude=-95.3698).json()  # Harris County, no lake
+    assert houston["public_place"] == "county"
+    seen = make_client().get(f"/api/pins/{houston['id']}").json()
+    assert seen["location_shown"] == "county"
+    assert (seen["latitude"], seen["longitude"]) != (29.7604, -95.3698)
+    assert counties.county_at(seen["latitude"], seen["longitude"]).geoid == "48201"  # the county's middle
+
+    # Outside every county: the spot to one decimal (~11 km).
+    far = create(c, latitude=10.1234, longitude=20.5678).json()
+    assert far["public_place"] == "area"
+    seen = make_client().get(f"/api/pins/{far['id']}").json()
+    assert (seen["latitude"], seen["longitude"], seen["location_shown"]) == (10.1, 20.6, "area")
+
+
+def test_pins_saved_before_get_their_public_point_at_startup(make_client, db_session, seeded_lake):
+    from app.services.pins import fill_public_points
+
+    c = make_client()
+    signup(c)
+    pin_id = create(c, latitude=32.8101, longitude=-95.5899).json()["id"]
+    pin = db_session.get(CatchPin, pin_id)
+    pin.public_latitude = pin.public_longitude = pin.public_place = None
+    db_session.commit()
+    # Until then others see the rounded spot, never the exact one.
+    seen = make_client().get(f"/api/pins/{pin_id}").json()
+    assert (seen["latitude"], seen["longitude"], seen["location_shown"]) == (32.8, -95.6, "area")
+    assert fill_public_points(db_session) == 1
+    db_session.refresh(pin)
+    assert (pin.public_latitude, pin.public_longitude, pin.public_place) == (
+        seeded_lake["waterbody"].latitude, seeded_lake["waterbody"].longitude, "lake",
+    )
 
 
 # ----------------------------------------------------------------- editing

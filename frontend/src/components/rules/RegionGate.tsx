@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 
+import { useLocale, useT } from "@/i18n/client";
+import { localStateName } from "@/i18n/names";
 import type { Jurisdiction } from "@/lib/api/types";
 import { useJurisdictions, useSelectedJurisdiction, useSelectedState } from "@/lib/jurisdiction";
 
@@ -27,17 +29,16 @@ export function RegionGate({
 
 /** Where someone in a state FishEye hasn't written rules for is sent
  * instead. Never links an agency page FishEye hasn't reviewed. */
-export function OtherStateRules({ subject = "Fishing rules" }: { subject?: string }) {
+export function OtherStateRules({ subject }: { subject?: string }) {
   const j = useSelectedJurisdiction();
-  const name = j ? j.name : "your state"; // never the bare code while the list loads
+  const t = useT().stateRules;
+  const locale = useLocale();
+  // Never the bare code while the list loads.
+  const name = j ? localStateName(j.code, j.name, locale) : t.yourState;
   return (
     <section className="rules-card">
-      <h2>{subject} differ by state</h2>
-      <p>
-        FishEye hasn&apos;t written {name}&apos;s rules yet. Check {name}&apos;s fish and wildlife agency
-        for the current licence, limits and bait rules before you fish. Everything about how to catch,
-        handle and cook a fish works the same wherever you are.
-      </p>
+      <h2>{t.differ(subject ?? t.fishingRules)}</h2>
+      <p>{t.notWritten(name)}</p>
     </section>
   );
 }
@@ -49,32 +50,30 @@ export function OtherStateRules({ subject = "Fishing rules" }: { subject?: strin
 export function LimitsNote({ texasUrl, className }: { texasUrl: string; className?: string }) {
   const state = useSelectedState();
   const list = useJurisdictions();
+  const { stateRules: t, common } = useT();
+  const locale = useLocale();
   const j = state ? list?.find((x) => x.code === state) ?? null : null;
-  if (state && j?.covered && j.limits_url) {
+  // Every state's agency page is on file now, not only the states FishEye
+  // has written rules for (knowledge/jurisdictions.py).
+  if (state && j?.limits_url) {
     return (
       <p className={className}>
-        Size and bag limits vary by species and lake.{" "}
+        {t.limitsVary}
         <a href={j.limits_url} target="_blank" rel="noreferrer">
-          Check {j.agency_short ?? j.name}&apos;s current limits
-        </a>{" "}
-        before you keep a fish.
+          {t.checkLimits(j.agency_short ?? j.agency ?? j.name)}
+        </a>
+        {t.beforeKeep}
       </p>
     );
   }
   if (state && j && !j.covered) {
     return (
-      <p className={className}>
-        Size and bag limits vary by state, species and lake. Check {j.name}&apos;s fish and wildlife agency for
-        the current ones before you keep a fish.
-      </p>
+      <p className={className}>{t.limitsVaryState(localStateName(j.code, j.name, locale))}</p>
     );
   }
   if (state && !j) {
     return (
-      <p className={className}>
-        Size and bag limits vary by state, species and lake. Check your state&apos;s fish and wildlife agency for
-        the current ones before you keep a fish.
-      </p>
+      <p className={className}>{t.limitsVaryYours}</p>
     );
   }
   const covered: Pick<Jurisdiction, "code" | "name" | "agency_short" | "limits_url">[] = list
@@ -82,16 +81,16 @@ export function LimitsNote({ texasUrl, className }: { texasUrl: string; classNam
     : [{ code: "TX", name: "Texas", agency_short: "TPWD", limits_url: texasUrl }];
   return (
     <p className={className}>
-      Size and bag limits vary by state, species and lake. Current limits:{" "}
+      {t.currentLimits}
       {covered.map((x, i) => (
         <span key={x.code}>
-          {i > 0 && ", "}
+          {i > 0 && common.listSep}
           <a href={x.limits_url ?? undefined} target="_blank" rel="noreferrer">
-            {x.name} ({x.agency_short})
+            {localStateName(x.code, x.name, locale)} ({x.agency_short})
           </a>
         </span>
       ))}
-      ; elsewhere, your state&apos;s fish and wildlife agency. Check before you keep a fish.
+      {t.elsewhere}
     </p>
   );
 }
@@ -121,6 +120,8 @@ export function BaitRules({
 }) {
   const state = useSelectedState();
   const list = useJurisdictions();
+  const t = useT().stateRules;
+  const locale = useLocale();
   const withRules = list?.filter((j) => j.covered && j.bait_rules.length > 0) ?? null;
   type Card = Pick<Jurisdiction, "code" | "name" | "bait_rules"> & Partial<Pick<Jurisdiction, "bait_rules_sources">>;
   const loading: Card[] = [{ code: "TX", name: "Texas", bait_rules: texasRules }];
@@ -129,7 +130,7 @@ export function BaitRules({
   if (state === null) shown = withRules ?? loading;
   else if (withRules) {
     const mine = withRules.find((j) => j.code === state);
-    if (!mine) return <OtherStateRules subject="Bait rules" />;
+    if (!mine) return <OtherStateRules subject={t.baitRulesSubject} />;
     shown = [mine];
   } else if (state === "TX") shown = loading;
   else return null; // a state is chosen but the list hasn't loaded: show nothing rather than Texas's
@@ -139,9 +140,10 @@ export function BaitRules({
       {shown.map((j) => (
         <section key={j.code} id={baitRulesAnchor(j.code)} className={className}>
           <h2>
-            {j.name} bait rules{suffix}
+            {t.baitRulesOf(localStateName(j.code, j.name, locale))}
+            {suffix}
           </h2>
-          <ul>
+          <ul lang="en">
             {j.bait_rules.map((rule) => (
               <li key={rule}>{rule}</li>
             ))}
@@ -170,12 +172,15 @@ export function BaitRules({
  * guides were written where live minnows are legal (backend ADR 0030). */
 export function LiveBaitWarning() {
   const j = useSelectedJurisdiction();
+  const t = useT().stateRules;
+  const locale = useLocale();
   if (!j?.bait_rules_on_every_bait_question) return null;
+  const name = localStateName(j.code, j.name, locale);
   return (
     <p className="bait-warning" role="note">
-      In {j.name}, check the{" "}
-      <a href={`/fish#${baitRulesAnchor(j.code)}`}>bait rules</a> before using anything here: {j.name} doesn&apos;t
-      allow fish as bait in most of its inland waters.
+      {t.liveBaitWarning(name)}
+      <a href={`/fish#${baitRulesAnchor(j.code)}`}>{t.bait}</a>
+      {t.liveBaitWarningTail(name)}
     </p>
   );
 }

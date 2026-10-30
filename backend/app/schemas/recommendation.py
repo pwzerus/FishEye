@@ -12,6 +12,9 @@ class RecommendationRequest(BaseModel):
         "score instead of penalizing every spot equally.",
     )
     limit: int = Field(default=5, ge=1, le=20)
+    # The site's language: today's plan comes back in it (en, zh, es, ko, ja;
+    # anything else is English). knowledge/plan_text.py.
+    lang: str = Field(default="en", max_length=8)
 
 
 class FactorOut(BaseModel):

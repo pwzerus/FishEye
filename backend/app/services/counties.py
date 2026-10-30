@@ -88,3 +88,29 @@ def county_name(geoid: str | None) -> str | None:
     idx = index()
     c = idx.by_geoid.get(geoid) if idx and geoid else None
     return c.name if c else None
+
+
+def centre(geoid: str | None) -> tuple[float, float] | None:
+    """(lat, lng) of a county's middle: the centroid of its largest ring,
+    which for a county is its mainland. Where a catch whose spot isn't
+    shared, and that isn't at a mapped lake, is shown (ADR 0038). A
+    centroid can fall outside a strongly bent outline; that point then
+    stands for the county all the same."""
+    idx = index()
+    c = idx.by_geoid.get(geoid) if idx and geoid else None
+    if c is None:
+        return None
+    best, best_area = None, 0.0
+    for ring in c.rings:
+        a = cx = cy = 0.0
+        for (x0, y0), (x1, y1) in zip(ring, ring[1:] + ring[:1]):
+            cross = x0 * y1 - x1 * y0
+            a += cross
+            cx += (x0 + x1) * cross
+            cy += (y0 + y1) * cross
+        if abs(a) > best_area:
+            best, best_area = (cy / (3 * a), cx / (3 * a)), abs(a)
+    if best is None:
+        w, s, e, n = c.bbox
+        return (s + n) / 2, (w + e) / 2
+    return round(best[0], 4), round(best[1], 4)

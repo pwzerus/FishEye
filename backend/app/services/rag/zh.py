@@ -26,6 +26,10 @@ FISHING_TERMS = (
     "路亚", "亮片", "放流", "杀鱼", "放血", "去鳞", "刮鳞", "剥皮", "鱼片", "切鱼", "打窝",
     "鱼获", "咬钩", "上钩", "圈钩", "子线", "转环", "帕洛马结", "克林奇结", "鱼群", "产卵",
     "放养", "钩", "编织线", "尼龙线", "碳线", "子线",
+    # A rod on its own ("几根竿": how many rods) and a catch limit; the
+    # 2026-10-29 persona review asked Georgia's rod rule in Chinese and was
+    # told it wasn't a fishing question.
+    "竿", "限额",
 )
 
 # Chinese term -> the English words the guides use for it.
@@ -143,6 +147,12 @@ GLOSSARY: dict[str, str] = {
     "执照": "licence license",
     "许可证": "licence license",
     "救生衣": "life jacket",
+    "竿": "rod",
+    "带走": "keep",
+    "限额": "limit limits",
+    "几条": "limit",
+    "尺寸": "size length",
+    "规定": "rules",
 }
 _GLOSSARY = sorted(GLOSSARY.items(), key=lambda kv: -len(kv[0]))
 
@@ -168,19 +178,23 @@ def has_chinese(text: str) -> bool:
 NOT_FISHING = (
     "鱼香", "金鱼", "观赏鱼", "鱼缸", "水族", "鱼丸", "鱼干", "鱼翅", "鱼子酱", "木鱼",
     "鱿鱼", "章鱼", "鲍鱼", "鱼露", "鱼肝油", "鱼尾纹", "美人鱼", "鱼雷",
+    "旗竿", "竹竿", "晾衣竿",
 )
 AMBIGUOUS_TERMS = (
     "鱼", "保鲜", "冷冻", "冷藏", "解冻", "清洗", "处理", "新鲜", "好吃", "能吃", "可以吃",
     "煮", "烤", "炸", "煎", "冰", "水", "湖", "河", "池塘", "水库", "天气", "风", "下雨",
     "季节", "早上", "清晨", "傍晚", "晚上", "什么时候", "刀", "肉质", "刺", "杀", "鳞", "腥",
+    # Rules words: with a fish, a question about what may be kept.
+    "带走", "执照", "几条", "规定", "尺寸",
 )
 
 
 def is_on_topic(text: str) -> bool:
-    if any(term in text for term in FISHING_TERMS):
-        return True
+    # The other meanings go first: 旗竿 (a flagpole) holds 竿, a rod.
     for word in NOT_FISHING:
         text = text.replace(word, "")
+    if any(term in text for term in FISHING_TERMS):
+        return True
     return sum(1 for term in AMBIGUOUS_TERMS if term in text) >= 2
 
 

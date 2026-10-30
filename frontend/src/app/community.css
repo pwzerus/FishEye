@@ -691,6 +691,21 @@
 .vis-option:active {
   transform: scale(0.98);
 }
+.check-row.share-spot {
+  align-items: flex-start;
+  cursor: pointer;
+}
+.share-spot input {
+  margin-top: 3px;
+  accent-color: var(--brand);
+}
+.share-spot span {
+  display: grid;
+  gap: 2px;
+}
+.share-spot small {
+  font-size: 12px;
+}
 
 .photo-picker {
   display: grid;
@@ -1238,6 +1253,10 @@
 .catch-marker.is-private {
   background: linear-gradient(135deg, #475569, #1e293b);
   border-style: dashed;
+}
+.catch-marker.is-approx {
+  border-style: dotted;
+  opacity: 0.88;
 }
 .catch-marker.is-draft {
   background: linear-gradient(135deg, #14b8a6, #0b5d7a);
@@ -1933,4 +1952,154 @@ button.stat-card:hover {
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 10px;
+}
+
+/* ---------------------------------------------- catches on named water (ADR 0040) */
+
+/* Other people's catches: one bubble per lake or river, with how many. */
+.water-group-wrap {
+  background: none;
+  border: 0;
+}
+.water-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px 0 8px;
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+  border: 2px solid #fff;
+  box-shadow: 0 6px 14px -4px rgba(154, 52, 18, 0.55);
+  font: 800 13px/1 var(--font);
+  white-space: nowrap;
+  transition: transform var(--dur) var(--spring);
+}
+.water-group.is-m {
+  height: 32px;
+  font-size: 14px;
+}
+.water-group.is-l {
+  height: 36px;
+  font-size: 15px;
+}
+.water-group-wrap:hover .water-group {
+  transform: scale(1.08);
+}
+.group-pop {
+  display: grid;
+  gap: 4px;
+  min-width: 200px;
+  max-width: 250px;
+  font-family: var(--font);
+}
+.group-pop > span {
+  font-size: 12px;
+  color: #5b6f78;
+}
+.group-pop-species {
+  font-weight: 600;
+  color: #9a3412 !important;
+}
+.group-pop-list {
+  list-style: none;
+  margin: 4px 0 2px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.group-pop-list a {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 8px;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+.group-pop-list img,
+.group-pop-noimg {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: linear-gradient(135deg, #fed7aa, #fdba74);
+}
+.group-pop-list b {
+  display: block;
+  font-size: 13px;
+}
+.group-pop-list small {
+  font-size: 11px;
+  color: #5b6f78;
+}
+.group-pop > a {
+  font-weight: 700;
+  color: #0a7f84;
+}
+
+/* The draft pin's label: the water it's on, or that it's on none. */
+.leaflet-tooltip.draft-water {
+  font: 700 12px/1.2 var(--font);
+  color: #0b5d7a;
+  border-radius: 999px;
+  padding: 4px 10px;
+  border: 1px solid #99f6e4;
+  box-shadow: 0 4px 12px -4px rgba(11, 93, 122, 0.45);
+}
+.leaflet-tooltip.draft-water.is-off {
+  color: #9a3412;
+  border-color: #fdba74;
+}
+.map-status-chip.chip-placing.is-off {
+  background: #fff7ed;
+  color: #9a3412;
+  border-color: #fdba74;
+}
+
+/* The form's line saying where the pin is. */
+.pin-water-line {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+.pin-water-line.is-off {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
+}
+.pin-water-line.is-off p {
+  margin: 0;
+}
+
+/* "Photo taken here". */
+.tag-at-spot {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #ecfdf5;
+  color: #047857;
+}
+.pin-water::before {
+  content: "≈ ";
+  color: var(--brand);
+}
+
+/* "5 catches shared here →" on a lake's panel. */
+.lake-catches {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 2px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #c2410c;
+  text-decoration: none;
+}
+.lake-catches:hover {
+  text-decoration: underline;
 }

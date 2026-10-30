@@ -183,6 +183,12 @@ def test_a_verified_lake_is_linked_not_duplicated_or_overwritten(db_session, see
     assert verified.data_tier == "verified"
     assert verified.osm_ref == "way/1"
     assert (verified.name, verified.latitude, verified.access_summary, verified.source_url) == before
+    # It takes the OSM outline's box, to frame its map (its own point stays),
+    # on the first link and on every run after.
+    assert verified.bbox_south < verified.latitude < verified.bbox_north
+    verified.bbox_south = None
+    osm.run("TX", PAYLOAD, db_session)
+    assert verified.bbox_south is not None
     # The OSM ramp on the verified lake was not attached to it.
     statuses = {p.public_status for p in verified.access_points}
     assert statuses == {"confirmed_public"}
@@ -278,6 +284,13 @@ def test_detail_exposes_the_tier(client, db_session, seeded_lake):
     assert body["public_access_status"] == "unknown"
     assert body["species"] == []
     assert [p["public_status"] for p in body["access_points"]] == ["osm_reported"]
+    # The water's box, so its map frames the whole lake (not a fixed zoom).
+    south, west, north, east = body["bounds"]
+    assert south < lake.latitude < north and west < lake.longitude < east
+
+
+def test_a_hand_curated_lake_has_no_box(client, seeded_lake):
+    assert client.get(f"/api/waterbodies/{seeded_lake['waterbody'].id}").json()["bounds"] is None
 
 
 def test_advisor_never_calls_an_osm_source_official(db_session, seeded_lake):
@@ -558,8 +571,10 @@ def test_texas_lakes_still_point_to_tpwd():
     assert "Texas Parks and Wildlife Department" in osm.osm_lake_summary("TX")
 
 
-def test_a_state_without_an_agency_on_file_gets_a_generic_pointer():
-    assert "Colorado's fish and wildlife agency" in osm.osm_lake_summary("CO")
+def test_a_state_without_written_rules_still_points_to_its_own_agency():
+    # Every state's agency is on file now (knowledge/jurisdictions.py).
+    assert "Check with Colorado Parks and Wildlife before you go." in osm.osm_lake_summary("CO")
+    assert "fish and wildlife agency" in osm.osm_lake_summary("ZZ")  # unknown: a generic pointer
 
 
 # --- private water by name (docs/adr/0032) ----------------------------------

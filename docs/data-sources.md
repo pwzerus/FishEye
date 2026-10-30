@@ -43,6 +43,31 @@ Terms read on 2026-10-26. Not legal advice; re-read before each bulk import.
   data-sourcing skill names them as the bulk channel. Downloaded once per
   state, one file at a time, with a contact User-Agent. Listed under review.
 
+### OpenStreetMap water shapes: lake outlines and named rivers — OPEN (ODbL 1.0)
+
+- Data: the same Geofabrik extracts as above, read again by
+  `water_shapes.py` (ADR 0040). No other download.
+- Stored: each imported lake's outline (its OpenStreetMap elements'
+  polygons, simplified to 4–30 m); named `waterway=river|stream|canal`
+  ways joined into rivers per state (streams under 1 km and unnamed or
+  intermittent streams left out), with the `natural=water` +
+  `water=river|canal|stream|rapids` (and `waterway=riverbank`) polygons
+  their lines run through; an outline from any mapped water for verified
+  lakes with no OpenStreetMap twin. Cut into 0.05° pieces, encoded
+  polylines. Each river's point per county comes from the Census county
+  outlines below (PD).
+- Used for: whether a catch is on named water, and where others see a
+  river catch. Never shown as a map layer of their own.
+- Credit: the map's "© OpenStreetMap contributors"; the shapes are part of
+  the OpenStreetMap-derived database (share-alike if it is ever given out).
+- Tool: `python -m app.data_import.water_shapes --states all` (extract and
+  import); `--import-only` on a server, from `osm_cache/<code>_water.json.gz`.
+- Imported 2026-10-30, 51 states: 93,015 lake outlines (of 94,369 lakes),
+  134,288 rivers/streams/canals (28,705 rivers, 98,336 streams, 7,247
+  canals), 155,000 river-county points, 537,449 pieces; payloads 99 MB
+  gzipped; SQLite 79 → 301 MB. Verified lakes outlined from unnamed water:
+  Georgia 52 of 80, California 47 of 62, Texas 2 of 3.
+
 ### CDFW California Lakes — OPEN (CC BY 4.0)
 
 - Data: `https://services2.arcgis.com/Uq9r85Potqm3MfRV/arcgis/rest/services/CA_Lakes_wm/FeatureServer/0`
@@ -259,6 +284,28 @@ the fetchers drop those before writing anything to disk. No "big fish" feature.
 
 Unchanged (ADR 0012): CC0 and CC BY records only in a commercial build
 (`GBIF_EXCLUDE_NONCOMMERCIAL`).
+
+## Rules: who sets them, and their pages
+
+### Every state's fish and wildlife agency — links only
+
+- What: each agency's name and the address of its fishing regulations page
+  and fishing licence page, for the 48 jurisdictions FishEye hasn't written
+  rules for (`knowledge/jurisdictions.py` `_AGENCIES`). Shown where FishEye
+  says "check the agency": Ask's other-state answer, the limits note, OSM
+  lake summaries.
+- Licence class: not imported content. A name and a URL are facts (rule 3);
+  nothing from the pages is copied or shown.
+- How collected (2026-10-29): candidate addresses opened one at a time, a
+  second apart, with a User-Agent naming FishEye and its contact address;
+  pages that refuse scripts (Cloudflare and similar) opened in an ordinary
+  browser; a CAPTCHA was never answered. Wrong or moved pages replaced with
+  the agency's own page found by search, then opened again.
+- Open: Idaho's two pages (idfg.idaho.gov showed a site-wide maintenance
+  notice that night); South Carolina links its fishing page, which links the
+  rules, because no statewide rules page loaded.
+- Refresh: agencies move pages; re-check the list yearly, or when a report
+  says a link is dead.
 
 ## Not used
 

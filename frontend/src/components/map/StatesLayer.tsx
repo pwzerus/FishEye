@@ -2,6 +2,9 @@
 
 import type { Feature, Geometry } from "geojson";
 import L from "leaflet";
+
+import { useLocale, useT } from "@/i18n/client";
+import { localStateName } from "@/i18n/names";
 import { useEffect, useState } from "react";
 import { GeoJSON, useMap } from "react-leaflet";
 
@@ -29,6 +32,8 @@ export function StatesLayer({
   covered: Set<string> | null;
   onEnter: (bounds: L.LatLngBounds, code: string) => void;
 }) {
+  const t = useT().map;
+  const locale = useLocale();
   const map = useMap();
   const [data, setData] = useState<StatesFile | null>(null);
 
@@ -47,11 +52,13 @@ export function StatesLayer({
   if (!data) return null;
 
   const isOpen = (code: string) => covered === null || covered.has(code);
+  const label = (code: string, name: string) => localStateName(code, name, locale);
 
   function onEachFeature(feature: Feature<Geometry, StateProps>, layer: L.Layer) {
-    const { code, name } = feature.properties;
+    const { code } = feature.properties;
+    const name = label(code, feature.properties.name);
     const open = isOpen(code);
-    layer.bindTooltip(open ? name : `${name} · coming soon`, {
+    layer.bindTooltip(open ? name : t.stateSoon(name), {
       sticky: true,
       direction: "top",
       className: "state-tooltip",
@@ -67,7 +74,7 @@ export function StatesLayer({
       const body = document.createElement("div");
       const title = document.createElement("strong");
       title.textContent = name;
-      body.append(title, document.createElement("br"), "Not on FishEye yet — coming soon.");
+      body.append(title, document.createElement("br"), t.stateNotYet);
       L.popup({ className: "state-popup", closeButton: false, autoPan: false })
         .setLatLng(e.latlng)
         .setContent(body)
@@ -79,7 +86,7 @@ export function StatesLayer({
     <GeoJSON
       // GeoJSON's data, style and handlers are read once; remount when the
       // coverage answer arrives so states pick up their lit or grey state.
-      key={covered === null ? "unknown" : [...covered].sort().join(",")}
+      key={`${locale}:${covered === null ? "unknown" : [...covered].sort().join(",")}`}
       data={data}
       style={(feature) => ({
         className: `state-shape ${isOpen(feature?.properties.code ?? "") ? "is-open" : "is-soon"}`,

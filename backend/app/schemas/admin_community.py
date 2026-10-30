@@ -20,6 +20,8 @@ class StatsOut(BaseModel):
     photos: int
     open_reports: int
     pins_awaiting_review: int
+    # "Something's wrong with this lake" / "a lake is missing" (ADR 0039).
+    lake_reports_open: int = 0
 
 
 class ReportItemOut(BaseModel):

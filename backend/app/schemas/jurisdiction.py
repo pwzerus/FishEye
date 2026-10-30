@@ -19,3 +19,8 @@ class JurisdictionOut(BaseModel):
     bait_rules_sources: list[GuideSourceOut]
     # The bait rules contradict the guides' live-bait advice (California).
     bait_rules_on_every_bait_question: bool
+    # Where FishEye wrote the state's licence topic: the age a licence is
+    # needed from, that topic's id and the first-trip topic's (handbook ids).
+    license_from_age: int | None = None
+    license_topic: str | None = None
+    first_trip_topic: str | None = None

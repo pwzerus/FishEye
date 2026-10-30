@@ -517,3 +517,23 @@ def test_a_lone_letter_from_a_contraction_is_not_a_search_term():
     from app.services.rag.retriever import tokenize_query
 
     assert "s" not in tokenize_query("what's a good bait for channel cats")
+
+
+# The 2026-10-29 persona review: a visiting angler asking the rules in Chinese.
+@pytest.mark.parametrize(
+    "question",
+    ["在佐治亚可以同时用几根竿？", "一次能带走几条鱼", "鱼的尺寸有规定吗", "鲈鱼的限额是多少"],
+)
+def test_the_gate_admits_rules_questions_in_chinese(question):
+    assert is_on_topic(question)
+
+
+@pytest.mark.parametrize("question", ["旗竿有多高", "竹竿怎么做", "外卖可以带走吗", "执照怎么办理"])
+def test_rules_words_alone_stay_off_topic_in_chinese(question):
+    assert not is_on_topic(question)
+
+
+def test_a_chinese_question_about_keeping_fish_finds_georgias_limit_card(client):
+    body = client.post("/api/ask", json={"question": "在佐治亚一次能带走几条鱼？", "state": "GA"}).json()
+    assert body["trace"]["outcome"] == "ok"
+    assert "all-fish#care-possession-ga" in [c["id"] for c in body["citations"]]

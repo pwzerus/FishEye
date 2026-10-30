@@ -46,7 +46,7 @@ CATEGORIES: dict[str, str] = {
     "technique": "Casting, playing and landing a fish",
     "conditions": "Weather, water and where fish hold",
     "safety": "Staying safe on the water",
-    "rules": "Licence, and rules that follow you home",
+    "rules": "License, and rules that follow you home",
 }
 
 TOPICS: tuple[HandbookTopic, ...] = (
@@ -819,12 +819,12 @@ TOPICS: tuple[HandbookTopic, ...] = (
         category="technique",
         title="Your first trip in Texas",
         body=(
-            "Three things to sort out first: somewhere to go, a licence if you need one, and the "
+            "Three things to sort out first: somewhere to go, a license if you need one, and the "
             "rules for that water.",
             "TPWD runs free fishing events and intro classes, lists where to fish across the "
             "state, and publishes fishing and stocking reports that say what is biting where.",
             "The Outdoor Annual app holds the regulations, works offline, and can carry a digital "
-            "copy of your licence.",
+            "copy of your license.",
             "A rod and reel, a few hooks, split shot and bobbers, and a tub of worms is a complete "
             "beginner's kit. Some state parks lend tackle.",
         ),
@@ -836,7 +836,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
         category="technique",
         title="Your first trip in Georgia",
         body=(
-            "Three things to sort out first: somewhere to go, a licence if you need one, and the "
+            "Three things to sort out first: somewhere to go, a license if you need one, and the "
             "rules for that water.",
             "Georgia WRD has an interactive map of places to fish, including Public Fishing Areas, "
             "Wildlife Management Areas and state parks, and publishes fishing forecasts for the "
@@ -845,7 +845,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "are listed on WRD's site.",
             "You can borrow a rod, reel and tackle box for the day from the office at participating "
             "state parks. The regulations guide is free online, and in print at WRD offices and "
-            "licence sellers.",
+            "license sellers.",
         ),
         source_ids=("gawrd-angler", "gawrd-parkfishing"),
         region="GA",
@@ -855,12 +855,12 @@ TOPICS: tuple[HandbookTopic, ...] = (
         category="technique",
         title="Your first trip in California",
         body=(
-            "Three things to sort out first: somewhere to go, a licence if you need one, and the "
+            "Three things to sort out first: somewhere to go, a license if you need one, and the "
             "rules for that water.",
             "CDFW's Fishing in the City program runs short introductory clinics on safety, knots, "
             "rigging, casting and the rules, lends equipment to beginners, and stocks many urban "
             "lakes with rainbow trout and catfish before its clinics.",
-            "Anglers 15 and younger need no licence, and nobody needs one on Free Fishing Days.",
+            "Anglers 15 and younger need no license, and nobody needs one on Free Fishing Days.",
             "Before you buy minnows, read the bait rules: most inland waters don't allow fish as "
             "bait, so worms, insects and lures are the usual start.",
         ),
@@ -1040,17 +1040,17 @@ TOPICS: tuple[HandbookTopic, ...] = (
     HandbookTopic(
         id="rule-license",
         category="rules",
-        title="Do I need a fishing licence? (Texas)",
+        title="Do I need a fishing license? (Texas)",
         body=(
-            "In Texas, residents and non-residents need a fishing licence to fish public water, "
+            "In Texas, residents and non-residents need a fishing license to fish public water, "
             "and a resident taking fish, mussels, clams or crayfish needs a freshwater or "
             "saltwater endorsement with it.",
-            "No licence is needed for anyone under 17, resident or not; for Texas residents born "
+            "No license is needed for anyone under 17, resident or not; for Texas residents born "
             "before 1 January 1931; and for certain people with intellectual disabilities under "
             "the conditions TPWD sets out.",
             "You can also fish without one in Texas state parks.",
-            "A Lake Texoma licence covers both the Texas and Oklahoma water of that lake and "
-            "nothing else. Licence terms and fees change: TPWD's licence page is the authority.",
+            "A Lake Texoma license covers both the Texas and Oklahoma water of that lake and "
+            "nothing else. License terms and fees change: TPWD's license page is the authority.",
         ),
         source_ids=("tpwd-license", "tpwd-beginners"),
         region="TX",
@@ -1077,21 +1077,21 @@ TOPICS: tuple[HandbookTopic, ...] = (
     HandbookTopic(
         id="rule-license-ga",
         category="rules",
-        title="Do I need a fishing licence? (Georgia)",
+        title="Do I need a fishing license? (Georgia)",
         body=(
-            "In Georgia, anglers 16 and older need a current Georgia fishing licence with them, in "
+            "In Georgia, anglers 16 and older need a current Georgia fishing license with them, in "
             "fresh or salt water. Anyone helping an angler, for example by netting a fish, must be "
             "licensed too.",
-            "Nobody 15 or younger needs a fishing or trout licence; Georgia residents that age can "
-            "buy an optional youth licence that includes trout privileges.",
-            "No licence is needed to fish a private pond, or for a resident and their immediate "
+            "Nobody 15 or younger needs a fishing or trout license; Georgia residents that age can "
+            "buy an optional youth license that includes trout privileges.",
+            "No license is needed to fish a private pond, or for a resident and their immediate "
             "family fishing on their own land. A pond owned by a government is not private.",
             "From 16, fishing designated trout waters or keeping mountain trout also needs a trout "
-            "licence; in a state park's impounded waters you need one only to keep trout. Saltwater "
+            "license; in a state park's impounded waters you need one only to keep trout. Saltwater "
             "anglers 16 and older also need a free Saltwater Information Program (SIP) permit.",
             "On the lakes and rivers Georgia shares with Alabama and South Carolina, such as West "
-            "Point, Walter F. George, Hartwell and Clarks Hill, either state's licence is valid. "
-            "Licence terms and fees change: Georgia WRD's licence page is the authority.",
+            "Point, Walter F. George, Hartwell and Clarks Hill, either state's license is valid. "
+            "License terms and fees change: Georgia WRD's license page is the authority.",
         ),
         source_ids=("gawrd-license", "garegs-license", "garegs-bordering"),
         region="GA",
@@ -1116,17 +1116,17 @@ TOPICS: tuple[HandbookTopic, ...] = (
     HandbookTopic(
         id="rule-license-ca",
         category="rules",
-        title="Do I need a fishing licence? (California)",
+        title="Do I need a fishing license? (California)",
         body=(
-            "In California anyone 16 or older needs a sport fishing licence, kept in their "
-            "immediate possession while fishing. Under 16, no licence is needed.",
+            "In California anyone 16 or older needs a sport fishing license, kept in their "
+            "immediate possession while fishing. Under 16, no license is needed.",
             "Report cards are needed by anyone, whatever their age, fishing for steelhead or "
             "sturgeon (and salmon in the Klamath, Trinity and Smith rivers), even on Free Fishing "
             "Days.",
-            "Fishing with two rods in inland waters needs a Second Rod validation on the licence; "
+            "Fishing with two rods in inland waters needs a Second Rod validation on the license; "
             "anglers under 16 may use two rods without one.",
-            "No licence is needed to fish from a public pier in ocean waters, and none on CDFW's "
-            "Free Fishing Days. Licence terms and fees change: CDFW's licence page is the authority.",
+            "No license is needed to fish from a public pier in ocean waters, and none on CDFW's "
+            "Free Fishing Days. License terms and fees change: CDFW's license page is the authority.",
         ),
         source_ids=("cdfw-license", "cdfw-regs-2026", "cdfw-fitc"),
         region="CA",

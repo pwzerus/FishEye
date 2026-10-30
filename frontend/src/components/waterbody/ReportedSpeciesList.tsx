@@ -1,31 +1,34 @@
-import type { ReportedSpecies } from "@/lib/api/types";
-import { SpeciesHowTo } from "@/components/species/SpeciesHowTo";
+"use client";
 
-function plural(n: number, word: string) {
-  return `${n} ${word}${n === 1 ? "" : "s"}`;
-}
+import type { ReportedSpecies } from "@/lib/api/types";
+import { FishName } from "@/components/fish/FishName";
+import { SpeciesHowTo } from "@/components/species/SpeciesHowTo";
+import { useT } from "@/i18n/client";
+import { fishSlug } from "@/i18n/names";
 
 function ReportedItem({ s }: { s: ReportedSpecies }) {
+  const t = useT().lake;
   return (
     <li>
       <div className="species-row">
-        <strong>{s.common_name}</strong>
-        <span className="reported-badge">on record</span>
+        <strong>
+          <FishName slug={fishSlug(s.common_name)} english={s.common_name} />
+        </strong>
+        <span className="reported-badge">{t.onRecord}</span>
       </div>
       <p className="evidence">
-        {plural(s.records, "record")}
-        {s.last_year !== null ? ` · last recorded ${s.last_year}` : " · undated"}
+        {t.records(s.records)}
+        {s.last_year !== null ? t.lastRecorded(s.last_year) : t.undated}
       </p>
       <p className="evidence">{s.sources.map((src) => `${src.name} ${src.records}`).join(" · ")}</p>
       {s.weak && (
         <p className="weak-evidence">
-          Weak evidence: a single{" "}
-          {s.last_year !== null ? `record from ${s.last_year}` : "undated record"}.
+          {t.weakEvidence(s.last_year !== null ? t.recordFrom(s.last_year) : t.undatedRecord)}
         </p>
       )}
       {s.latest_record_url && (
         <a className="record-link" href={s.latest_record_url} target="_blank" rel="noreferrer">
-          See the latest record on GBIF
+          {t.latestOnGbif}
         </a>
       )}
       <SpeciesHowTo commonName={s.common_name} />
@@ -48,21 +51,20 @@ export function ReportedSpeciesList({
   reported: ReportedSpecies[];
   isOsm: boolean;
 }) {
+  const t = useT().lake;
   const items = isOsm ? reported : reported.filter((s) => !s.also_confirmed);
   if (!isOsm && items.length === 0) return null;
 
   return (
-    <section className="reported-species" aria-label="Fish on record">
-      <h3>{isOsm ? "Fish on record (not verified)" : "Also on record (not in the official survey)"}</h3>
+    <section className="reported-species" aria-label={t.fishOnRecord}>
+      <h3>{isOsm ? t.onRecordOsm : t.onRecordAlso}</h3>
       {items.length > 0 ? (
         <>
           <p className="reported-intro">
-            Recorded here by museum collections, wildlife surveys and iNaturalist users, via{" "}
+            {t.recordsIntro}{" "}
             <a href="https://www.gbif.org" target="_blank" rel="noreferrer">
-              GBIF
+              GBIF ↗
             </a>
-            . A record means someone found the fish here, not that an official survey confirms
-            it. Records near a lake can include its shoreline and the creeks that flow into it.
           </p>
           <ul className="species-list">
             {items.map((s) => (
@@ -71,10 +73,7 @@ export function ReportedSpeciesList({
           </ul>
         </>
       ) : (
-        <p className="muted">
-          No fish records for this lake yet, and no official survey. FishEye never guesses
-          which fish live somewhere.
-        </p>
+        <p className="muted">{t.noRecords}</p>
       )}
     </section>
   );

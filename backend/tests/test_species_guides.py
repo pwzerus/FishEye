@@ -6,6 +6,8 @@ as advice, so a setup without a source, a species the scraper can create
 but has no guide for, or a forage fish with rod-and-reel setups would all
 be real defects, not style issues.
 """
+import re
+
 from app.data_import.tpwd_lake_survey_scraper import (
     KNOWN_SPECIES,
     PLACEHOLDER_PROFILE,
@@ -141,3 +143,31 @@ def test_forage_fish_get_no_difficulty_rating(db_session):
     shad = upsert_species(db_session, "Gizzard Shad")
     assert shad.difficulty == "n/a"
     assert shad.scientific_name == "Dorosoma cepedianum"
+
+
+def test_a_general_summary_only_takes_texas_out():
+    """For anyone fishing outside Texas (2026-10-29 persona review): the same
+    sentences with the Texas-only claims removed, nothing added."""
+    from app.knowledge.species_guides import GENERAL_SUMMARIES, get_guide
+
+    def words(text: str) -> list[str]:
+        return re.findall(r"[a-z0-9']+", text.lower().replace("it eats", "eats"))
+
+    for slug, general in GENERAL_SUMMARIES.items():
+        guide = get_guide(slug)
+        assert guide is not None and "Texas" in guide.summary, slug
+        assert "Texas" not in general and "TPWD" not in general, slug
+        original = words(guide.summary)
+        # Every word of the general summary appears, in order, in the original.
+        at = 0
+        for w in words(general):
+            assert w in original[at:], (slug, w)
+            at = original.index(w, at) + 1
+    assert "guadalupe-bass" not in GENERAL_SUMMARIES  # it lives only in Texas
+
+
+def test_the_api_gives_the_general_summary_beside_the_texas_one(client):
+    bass = client.get("/api/species/guides/largemouth-bass").json()
+    assert bass["summary"].startswith("Texas's most sought-after")
+    assert bass["summary_general"].startswith("It hides in cover")
+    assert client.get("/api/species/guides/rainbow-trout").json()["summary_general"] is None

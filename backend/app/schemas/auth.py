@@ -42,6 +42,19 @@ class UserOut(BaseModel):
     has_password: bool
     google_connected: bool
     created_at: datetime
+    email_verified: bool = False
+    # True while the account must confirm its email before sharing or
+    # reporting catches (EMAIL_VERIFICATION=on, services/email_verification.py).
+    verification_required: bool = False
+
+
+class VerifyEmailIn(BaseModel):
+    token: str = Field(max_length=200)
+
+
+class VerifyEmailOut(BaseModel):
+    verified: bool
+    email: str
 
 
 class ProvidersOut(BaseModel):

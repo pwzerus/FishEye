@@ -26,6 +26,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from app.knowledge import plan_text
 from app.knowledge.species_guides import GUIDES, SpeciesGuide, get_guide, slugify
 from app.services import scoring
 from app.services.scoring import TimeWindow
@@ -147,30 +148,40 @@ def conditions_for(snapshot: WeatherSnapshot, window: TimeWindow) -> Conditions:
 # --- where ------------------------------------------------------------------
 
 
-def where_to_fish(c: Conditions) -> dict:
+def where_to_fish(c: Conditions, lang: str = "en") -> dict:
+    """Which bank, in English or, through knowledge/plan_text.py, in `lang`."""
+    t = plan_text.TEMPLATES.get(lang)
+    d = lambda code: plan_text.direction(code, lang)  # noqa: E731
     if c.wind_mph is None:
-        return {"shore": None, "text": "Start on points and around cover: docks, fallen trees, weed edges."}
+        text = "Start on points and around cover: docks, fallen trees, weed edges."
+        return {"shore": None, "text": t["start_cover"] if t else text}
     if c.too_windy:
         if c.wind_from:
-            return {
-                "shore": c.wind_from,
-                "text": f"Wind up to {c.wind_mph:.0f} mph. Fish the sheltered {c.wind_from} bank, "
-                "where the water is calmer and you can still cast.",
-            }
-        return {"shore": None, "text": f"Wind up to {c.wind_mph:.0f} mph. Look for a sheltered cove out of the wind."}
+            text = (
+                f"Wind up to {c.wind_mph:.0f} mph. Fish the sheltered {c.wind_from} bank, "
+                "where the water is calmer and you can still cast."
+            )
+            if t:
+                text = t["windy_shelter_dir"].format(mph=f"{c.wind_mph:.0f}", dir=d(c.wind_from))
+            return {"shore": c.wind_from, "text": text}
+        text = f"Wind up to {c.wind_mph:.0f} mph. Look for a sheltered cove out of the wind."
+        return {"shore": None, "text": t["windy_shelter"].format(mph=f"{c.wind_mph:.0f}") if t else text}
     if c.calm:
-        return {
-            "shore": None,
-            "text": "Little wind, so no bank stands out. Fish shade and cover: docks, fallen trees, weed edges.",
-        }
+        text = "Little wind, so no bank stands out. Fish shade and cover: docks, fallen trees, weed edges."
+        return {"shore": None, "text": t["calm"] if t else text}
     shore = scoring.downwind_shore(c.wind_from)
     if shore is None:
-        return {"shore": None, "text": "Fish the bank the wind is blowing into, starting on points and cover."}
-    return {
-        "shore": shore,
-        "text": f"Try the {shore} bank. The {c.wind_from} wind is pushing baitfish toward it, "
-        "so start on the points and cover along that side.",
-    }
+        text = "Fish the bank the wind is blowing into, starting on points and cover."
+        return {"shore": None, "text": t["into_wind"] if t else text}
+    # "Then": the plan's own window, whose forecast wind can differ from the
+    # wind shown under "Right now" (the 2026-10-29 walkthrough read NE against E).
+    text = (
+        f"Try the {shore} bank. The wind then is from the {c.wind_from} and pushes baitfish "
+        "toward it, so start on the points and cover along that side."
+    )
+    if t:
+        text = t["downwind"].format(shore=d(shore), from_=d(c.wind_from))
+    return {"shore": shore, "text": text}
 
 
 # --- what -------------------------------------------------------------------
@@ -557,39 +568,53 @@ def _choose(rules: tuple[Rule, ...], fallback: tuple[tuple[str, str], ...], c: C
     return picks
 
 
-def tackle_for(guide: SpeciesGuide, c: Conditions | None) -> dict:
+def _translated(picks: list[dict], lang: str) -> list[dict]:
+    return [{"name": plan_text.tr(p["name"], lang), "why": plan_text.tr(p["why"], lang)} for p in picks]
+
+
+def tackle_for(guide: SpeciesGuide, c: Conditions | None, lang: str = "en") -> dict:
     tackle = TACKLE.get(guide.common_name)
     if tackle is None:
         # A guide without rules yet: its own first lure and bait, said plainly.
         return {
-            "lures": [{"name": _display(n), "why": "A standard choice for this fish."} for n in guide.lures[:LURE_PICKS]],
-            "baits": [{"name": _display(n), "why": "A standard bait for this fish."} for n in guide.live_baits[:BAIT_PICKS]],
+            "lures": _translated(
+                [{"name": _display(n), "why": "A standard choice for this fish."} for n in guide.lures[:LURE_PICKS]], lang
+            ),
+            "baits": _translated(
+                [{"name": _display(n), "why": "A standard bait for this fish."} for n in guide.live_baits[:BAIT_PICKS]],
+                lang,
+            ),
             "lure_note": None,
         }
     bait_n = BAIT_PICKS if (tackle.lures or tackle.lure_fallback) else 2
     return {
-        "lures": _choose(tackle.lures, tackle.lure_fallback, c, LURE_PICKS),
-        "baits": _choose(tackle.baits, tackle.bait_fallback, c, bait_n),
-        "lure_note": tackle.lure_note,
+        "lures": _translated(_choose(tackle.lures, tackle.lure_fallback, c, LURE_PICKS), lang),
+        "baits": _translated(_choose(tackle.baits, tackle.bait_fallback, c, bait_n), lang),
+        "lure_note": plan_text.tr(tackle.lure_note, lang),
     }
 
 
 # --- heads-up ---------------------------------------------------------------
 
 
-def heads_up(c: Conditions) -> list[str]:
+def heads_up(c: Conditions, lang: str = "en") -> list[str]:
+    t = plan_text.TEMPLATES.get(lang)
     notes: list[str] = []
     if c.sky == "thunder":
-        notes.append("Thunderstorms in the forecast. Get off the water at the first rumble of thunder.")
+        notes.append(t["thunder"] if t else "Thunderstorms in the forecast. Get off the water at the first rumble of thunder.")
     if c.too_windy:
-        notes.append(f"Wind up to {c.wind_mph:.0f} mph: hard to cast, and risky in a small boat.")
+        mph = f"{c.wind_mph:.0f}"
+        notes.append(t["too_windy"].format(mph=mph) if t else f"Wind up to {mph} mph: hard to cast, and risky in a small boat.")
     if c.front:
+        drop = f"{c.front_drop_f:.0f}"
         notes.append(
-            f"The temperature drops {c.front_drop_f:.0f}°F in the next day as a front moves in. "
+            t["front"].format(drop=drop)
+            if t
+            else f"The temperature drops {drop}°F in the next day as a front moves in. "
             "Fish often feed before it, so sooner is better."
         )
     if c.sky != "thunder" and (c.rain_chance or 0) >= RAIN_LIKELY:
-        notes.append(f"Rain likely during this window ({c.rain_chance}% chance).")
+        notes.append(t["rain"].format(pct=c.rain_chance) if t else f"Rain likely during this window ({c.rain_chance}% chance).")
     return notes
 
 
@@ -618,15 +643,24 @@ def _window_out(w: TimeWindow | None) -> dict | None:
     return {"start_time": w.start_time, "end_time": w.end_time, "label": w.label}
 
 
-def _conditions_line(c: Conditions) -> str:
+def _conditions_line(c: Conditions, lang: str = "en") -> str:
+    t = plan_text.TEMPLATES.get(lang)
     parts = []
     if c.temperature is not None:
         parts.append(f"{c.temperature:.0f}°F")
     if c.forecast_text:
-        parts.append(c.forecast_text.lower())
+        parts.append(plan_text.forecast(c.forecast_text, lang) if t else c.forecast_text.lower())
     if c.wind_text:
-        parts.append(f"{c.wind_from + ' ' if c.wind_from else ''}wind {c.wind_text}")
-    return ", ".join(parts)
+        if t:
+            wind = plan_text.wind_speed(c.wind_text, lang)
+            parts.append(
+                t["wind_part"].format(dir=plan_text.direction(c.wind_from, lang), wind=wind)
+                if c.wind_from
+                else t["wind_part_nodir"].format(wind=wind)
+            )
+        else:
+            parts.append(f"{c.wind_from + ' ' if c.wind_from else ''}wind {c.wind_text}")
+    return (t["joiner"] if t else ", ").join(parts)
 
 
 def build_plan(
@@ -634,15 +668,18 @@ def build_plan(
     species: str | None,
     species_options: list[str],
     species_on_record: bool | None,
+    lang: str = "en",
 ) -> dict:
     """The lake page's plan. `species` must already be resolved (or None,
-    when there's no fish to plan for yet)."""
+    when there's no fish to plan for yet). `lang` is the site's language:
+    the plan's own sentences come back in it (knowledge/plan_text.py);
+    names of fish stay English, the site translates those itself."""
     windows = scoring.bite_windows(snapshot)
     chosen, other = _pick_window(windows)
     c = conditions_for(snapshot, chosen) if chosen is not None else None
 
     guide = get_guide(species) if species else None
-    tackle = tackle_for(guide, c) if guide is not None else {"lures": [], "baits": [], "lure_note": None}
+    tackle = tackle_for(guide, c, lang) if guide is not None else {"lures": [], "baits": [], "lure_note": None}
 
     return {
         "species": guide.common_name if guide else None,
@@ -650,14 +687,14 @@ def build_plan(
         "species_slug": slugify(guide.common_name) if guide else None,
         "species_options": species_options,
         "species_on_record": species_on_record if guide else None,
-        "where": where_to_fish(c) if c is not None else None,
+        "where": where_to_fish(c, lang) if c is not None else None,
         "when": _window_out(chosen),
         "also": _window_out(other),
-        "conditions": _conditions_line(c) if c is not None else None,
+        "conditions": _conditions_line(c, lang) if c is not None else None,
         "lures": tackle["lures"],
         "baits": tackle["baits"],
         "lure_note": tackle["lure_note"],
-        "heads_up": heads_up(c) if c is not None else [],
+        "heads_up": heads_up(c, lang) if c is not None else [],
     }
 
 

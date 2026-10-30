@@ -43,6 +43,10 @@ const EXPLORING_MAX_ZOOM = 18;
 export const SEARCH_ZOOM = 11;
 /** The person's own position: street level, the streets around them readable. */
 export const LOCATION_ZOOM = 15;
+/** Placing a catch: from this close a tap lands on a shoreline; from further
+ * out a fingertip covers a town. The 2026-10-29 walkthrough: "Share a catch"
+ * opened on the whole country, and one tap on Georgia put a catch in a field. */
+export const MIN_PLACE_ZOOM = 13;
 
 /**
  * How close "Use my location" zooms. Street level, unless the browser's fix
@@ -93,8 +97,9 @@ export function lakeDetailExitZoom(settledZoom: number): number {
   return settledZoom - LAKE_DETAIL_EXIT_STEPS + 1;
 }
 
-/** "Texas", "Texas and Oklahoma", "Texas, Oklahoma and Louisiana". */
-export function listStateNames(names: string[]): string {
+/** "Texas", "Texas and Oklahoma", "Texas, Oklahoma and Louisiana"; the
+ * separators are the language's (", " and " and ", or "、" and "和"). */
+export function listStateNames(names: string[], words: { sep: string; and: string } = { sep: ", ", and: " and " }): string {
   if (names.length <= 1) return names[0] ?? "";
-  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+  return `${names.slice(0, -1).join(words.sep)}${words.and}${names[names.length - 1]}`;
 }

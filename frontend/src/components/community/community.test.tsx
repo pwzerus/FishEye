@@ -33,6 +33,9 @@ function pin(overrides: Partial<PinSummary> = {}): PinSummary {
     id: 7,
     latitude: 32.8,
     longitude: -95.6,
+    location_shown: "exact",
+    share_exact: false,
+    public_place: "lake",
     title: "Riprap by the dam",
     species_slug: "largemouth-bass",
     species_label: "Largemouth Bass",
@@ -83,7 +86,7 @@ describe("PhotoPicker", () => {
     rerender(<PhotoPicker files={[file("a.jpg")]} onChange={onChange} max={2} maxMb={1} />);
     fireEvent.change(input, { target: { files: [file("b.jpg"), file("c.jpg")] } });
     expect(onChange.mock.lastCall?.[0]).toHaveLength(2);
-    expect(screen.getByText("Up to 2 photos per pin.")).toBeInTheDocument();
+    expect(screen.getByText("Up to 2 photos per catch.")).toBeInTheDocument();
   });
 
   it("removes a selected photo", () => {
@@ -139,6 +142,7 @@ describe("PinForm", () => {
     expect(vi.mocked(session.createPin).mock.calls[0][0]).toMatchObject({
       title: "Largemouth Bass", // no title typed: the fish's name
       species_slug: "largemouth-bass",
+      share_exact: false, // others see the lake, not the spot, unless chosen
       photos: [expect.objectContaining({ name: "catch.jpg" })],
     });
   });
@@ -220,6 +224,25 @@ describe("PinForm", () => {
     );
   });
 
+  it("keeps the exact spot to the angler unless they choose to share it", async () => {
+    const created = { ...pin({ is_mine: true }), note: null, photos: [], can_edit: true, can_report: false, reported_by_me: false };
+    vi.mocked(session.createPin).mockResolvedValue(created);
+    render(<PinForm point={{ latitude: 32.8, longitude: -95.6 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    await screen.findByRole("option", { name: "Bluegill" });
+    expect(screen.getByRole("checkbox", { name: /Show other anglers the exact spot/ })).not.toBeChecked();
+    // A private catch has no one to share the spot with.
+    fireEvent.click(screen.getByRole("radio", { name: /Only me/ }));
+    expect(screen.queryByRole("checkbox", { name: /exact spot/ })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("radio", { name: /Public/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Show other anglers the exact spot/ }));
+    fireEvent.change(screen.getByPlaceholderText("e.g. Rocks by the boat ramp"), { target: { value: "Creek mouth" } });
+    fireEvent.click(screen.getByRole("button", { name: "Share catch" }));
+    await waitFor(() =>
+      expect(vi.mocked(session.createPin).mock.calls[0][0]).toMatchObject({ visibility: "public", share_exact: true }),
+    );
+  });
+
   it("keeps the form and shows the error when saving fails", async () => {
     const { ApiError } = await import("@/lib/api/client");
     vi.mocked(session.createPin).mockRejectedValue(new ApiError("Photo 1: That file isn't a photo we can read.", 422));
@@ -269,6 +292,30 @@ describe("PinDetailView", () => {
     expect(screen.queryByRole("region", { name: "Moderation" })).not.toBeInTheDocument();
   });
 
+  it("names the lake, not coordinates, when the angler kept the spot to themselves", async () => {
+    const detail = {
+      ...pin({ location_shown: "lake", public_place: "lake", lake: { id: 3, name: "Lake Fork" } }),
+      note: null, photos: [], can_edit: false, can_report: true, reported_by_me: false,
+    };
+    vi.mocked(session.getPin).mockResolvedValue(detail);
+    renderApp(<PinDetailView pinId={7} />);
+    expect(await screen.findByText("Lake Fork, not the exact spot")).toBeInTheDocument();
+    expect(screen.queryByText("32.8000, -95.6000")).not.toBeInTheDocument();
+    expect(screen.queryByText("Others see")).not.toBeInTheDocument();
+  });
+
+  it("tells the owner what others see", async () => {
+    const detail = {
+      ...pin({ is_mine: true, public_place: "county", county_name: "Wood County", state_code: "TX" }),
+      note: null, photos: [], can_edit: true, can_report: false, reported_by_me: false,
+    };
+    vi.mocked(session.getPin).mockResolvedValue(detail);
+    renderApp(<PinDetailView pinId={7} />);
+    expect(await screen.findByText("32.8000, -95.6000")).toBeInTheDocument();
+    expect(screen.getByText("Others see")).toBeInTheDocument();
+    expect(screen.getByText("Somewhere in Wood County, TX")).toBeInTheDocument();
+  });
+
   it("lets the owner delete, but not edit, a catch a moderator hid", async () => {
     const detail = {
       ...pin({ status: "hidden", status_reason: "moderator", is_mine: true }),
@@ -304,7 +351,7 @@ describe("PinCard", () => {
     expect(screen.getByText("Only you")).toBeInTheDocument();
     expect(screen.getByText("Hidden")).toBeInTheDocument();
     expect(screen.getByText(/^You ·/)).toBeInTheDocument();
-    expect(screen.getByText("near Lake Fork")).toBeInTheDocument();
+    expect(screen.getByText("Lake Fork")).toBeInTheDocument();
   });
 
   it("formats calendar dates without shifting them a day", () => {
@@ -393,7 +440,7 @@ describe("CommunityFeed", () => {
     window.history.replaceState(null, "", "/community?state=TX");
     renderApp(<CommunityFeed />);
     await screen.findByText("No catches in Texas yet");
-    const links = screen.getAllByText("Pin a catch").map((el) => el.closest("a")?.getAttribute("href"));
+    const links = screen.getAllByText("Share a catch").map((el) => el.closest("a")?.getAttribute("href"));
     expect(links.every((h) => h === "/login?next=%2Fmap%3FaddPin%3D1")).toBe(true);
     expect(screen.getByRole("tab", { name: "My catches" })).toBeDisabled();
   });

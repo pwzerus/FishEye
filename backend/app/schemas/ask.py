@@ -25,6 +25,9 @@ class AskRequest(BaseModel):
     # other states are left out of the answer (docs/adr/0027); without it,
     # nothing is left out.
     state: str | None = Field(default=None, min_length=2, max_length=2)
+    # The site's language (en, zh, es, ko, ja): FishEye's own sentences in the
+    # answer come back in it, or in the question's (services/rag/replies.py).
+    lang: str | None = Field(default=None, max_length=8)
 
 
 class AskCitationOut(BaseModel):
@@ -79,3 +82,6 @@ class AskResponse(BaseModel):
     citations: list[AskCitationOut]
     trace: AskTraceOut
     ai: AiAllowanceOut
+    # Whose rules the answer is for: a state named in the question, else the
+    # one picked on the page, else None (services/rag/ask.answer_state).
+    state: str | None = None

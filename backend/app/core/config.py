@@ -78,6 +78,26 @@ class Settings(BaseSettings):
     max_photos_per_pin: int = 4
     # Distinct open reports that hide a pin until an admin looks at it.
     report_auto_hide_threshold: int = 3
+    # A new account shares at most this many catches a day for its first
+    # days (services/pins.check_new_account): an account made to spam can't
+    # post hundreds before a moderator looks. Admins are exempt.
+    new_account_days: int = 3
+    new_account_pins_per_day: int = 5
+    # Confirming the email address (services/email_verification.py). "off"
+    # until outgoing mail is set up; "on": an account confirms its address
+    # before it can share or report catches. Google sign-ins come confirmed.
+    email_verification: str = "off"
+    email_token_hours: int = 24
+    # Outgoing mail (services/mail.py). "console" only logs each message (for
+    # development); "smtp" sends it, e.g. through Amazon SES's SMTP endpoint
+    # or a mailbox's app password.
+    mail_backend: str = "console"
+    mail_from: str = "FishEye <no-reply@fisheyefishing.com>"
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_starttls: bool = True
     # The photo check on catches (services/fish_id.py, docs/adr/0037). "on":
     # a catch that names a species needs a photo the recognizer agrees with,
     # and waits (503) while the model isn't installed rather than go

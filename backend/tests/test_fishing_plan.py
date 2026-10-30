@@ -135,7 +135,8 @@ def test_no_weather_still_gives_standard_picks():
 def test_fish_the_bank_the_wind_blows_into():
     where = where_to_fish(cond(wind_mph=12, wind_from="SE"))
     assert where["shore"] == "NW"
-    assert "SE wind" in where["text"]
+    # The plan window's wind, said as such: it can differ from the wind now.
+    assert "The wind then is from the SE" in where["text"]
 
 
 def test_too_much_wind_sends_you_to_the_sheltered_bank():

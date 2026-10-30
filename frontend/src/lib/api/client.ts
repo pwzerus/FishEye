@@ -7,6 +7,7 @@ import type {
   GeocodeResult,
   HandbookTopic,
   Jurisdiction,
+  LakeMatch,
   RecommendationRequest,
   Shop,
   SpeciesGuide,
@@ -126,6 +127,22 @@ export function listStates(): Promise<StateCoverage[]> {
 export function geocodePlace(query: string): Promise<GeocodeResult> {
   const qs = new URLSearchParams({ q: query });
   return apiFetch<GeocodeResult>(`/api/geocode?${qs.toString()}`, { cache: "no-store" });
+}
+
+/** Lakes FishEye has whose names match: those in `stateCode` first, then
+ * the nearest to `near` (where the map is looking). */
+export function searchLakes(
+  query: string,
+  stateCode?: string | null,
+  near?: { latitude: number; longitude: number } | null,
+): Promise<LakeMatch[]> {
+  const qs = new URLSearchParams({ q: query });
+  if (stateCode) qs.set("state_code", stateCode);
+  if (near) {
+    qs.set("lat", String(near.latitude));
+    qs.set("lng", String(near.longitude));
+  }
+  return apiFetch<LakeMatch[]>(`/api/waterbodies/search?${qs.toString()}`, { cache: "no-store" });
 }
 
 export function getWaterbody(id: number): Promise<WaterbodyDetail> {

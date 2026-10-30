@@ -6,17 +6,33 @@ import { AskChat } from "./AskChat";
 
 vi.mock("@/lib/api/client", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api/client")>("@/lib/api/client");
-  return { ...actual, postAsk: vi.fn() };
+  return { ...actual, postAsk: vi.fn(), listJurisdictions: vi.fn() };
 });
 vi.mock("@/lib/api/session", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api/session")>("@/lib/api/session");
   return { ...actual, postAskSummary: vi.fn() };
 });
 vi.mock("next/navigation", () => ({ usePathname: () => "/ask" }));
-const { ApiError, postAsk } = await import("@/lib/api/client");
+const { ApiError, listJurisdictions, postAsk } = await import("@/lib/api/client");
 const { postAskSummary } = await import("@/lib/api/session");
 const mockedAsk = vi.mocked(postAsk);
 const mockedSummary = vi.mocked(postAskSummary);
+
+const AGENCY = { bait_rules: [], bait_rules_sources: [], bait_rules_on_every_bait_question: false };
+vi.mocked(listJurisdictions).mockResolvedValue([
+  {
+    ...AGENCY, code: "MN", name: "Minnesota", covered: false,
+    agency: "Minnesota Department of Natural Resources", agency_short: "Minnesota DNR",
+    limits_url: "https://www.dnr.state.mn.us/regulations/fishing/index.html",
+    license_url: "https://www.dnr.state.mn.us/licenses/fishing/index.html",
+  },
+  {
+    ...AGENCY, code: "GA", name: "Georgia", covered: true,
+    agency: "Georgia Wildlife Resources Division", agency_short: "Georgia WRD",
+    limits_url: "https://georgiawildlife.com/fishing/regulations",
+    license_url: "https://georgiawildlife.com/licenses-permits-passes",
+  },
+]);
 
 const SIGNED_OUT = { signed_in: false, limit: null, remaining: null };
 
@@ -137,7 +153,7 @@ describe("AskChat", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /Summarize with AI/ })[1]);
     expect(await screen.findByText("Use small live minnows.")).toBeInTheDocument();
     expect(screen.getByText("AI answer · checked")).toBeInTheDocument();
-    expect(mockedSummary).toHaveBeenCalledWith({
+    expect(mockedSummary).toHaveBeenCalledWith({ lang: "en",
       question: "what bait for crappie",
       species_slug: "white-crappie",
       state: null,
@@ -191,7 +207,7 @@ describe("AskChat", () => {
     expect(screen.getByText("what bait for crappie")).toBeInTheDocument();
     expect(await screen.findByText("Use small live minnows.")).toBeInTheDocument();
     expect(screen.getByText("AI answer · checked")).toBeInTheDocument();
-    expect(mockedAsk).toHaveBeenCalledWith({ question: "what bait for crappie", species_slug: null, state: null });
+    expect(mockedAsk).toHaveBeenCalledWith({ lang: "en", question: "what bait for crappie", species_slug: null, state: null });
 
     const fishLink = screen.getByText(/White Crappie · Live and natural bait/).closest("a");
     expect(fishLink).toHaveAttribute("href", "/fish/white-crappie#live_baits");
@@ -274,7 +290,7 @@ describe("AskChat", () => {
     render(<AskChat suggestions={SUGGESTIONS} />);
     fireEvent.click(screen.getByText("When do white bass run?"));
     await screen.findByText("Use small live minnows.");
-    expect(mockedAsk).toHaveBeenCalledWith({ question: "When do white bass run?", species_slug: null, state: null });
+    expect(mockedAsk).toHaveBeenCalledWith({ lang: "en", question: "When do white bass run?", species_slug: null, state: null });
     expect(screen.queryByText("What bait for crappie?")).not.toBeInTheDocument();
   });
 
@@ -283,7 +299,7 @@ describe("AskChat", () => {
     render(<AskChat initialQuestion="what do they eat" speciesSlug="blue-catfish" suggestions={SUGGESTIONS} />);
     await screen.findByText("Use small live minnows.");
     expect(mockedAsk).toHaveBeenCalledTimes(1);
-    expect(mockedAsk).toHaveBeenCalledWith({ question: "what do they eat", species_slug: "blue-catfish", state: null });
+    expect(mockedAsk).toHaveBeenCalledWith({ lang: "en", question: "what do they eat", species_slug: "blue-catfish", state: null });
   });
 
   it("ignores questions shorter than the API accepts", async () => {
@@ -301,7 +317,7 @@ describe("AskChat", () => {
       render(<AskChat suggestions={SUGGESTIONS} />);
       await askVia("what bait for crappie");
       await screen.findByText("From the guides");
-      expect(mockedAsk).toHaveBeenCalledWith({ question: "what bait for crappie", species_slug: null, state: "CO" });
+      expect(mockedAsk).toHaveBeenCalledWith({ lang: "en", question: "what bait for crappie", species_slug: null, state: "CO" });
     });
 
     it("marks a passage that states one state's rules", async () => {
@@ -326,6 +342,33 @@ describe("AskChat", () => {
       await askVia("do I need a licence");
       expect(await screen.findByText("Rules not written for your state")).toBeInTheDocument();
       expect(screen.getByText(/Colorado's fishing rules/)).toBeInTheDocument();
+    });
+
+    // The 2026-10-29 walkthrough: "the walleye limit in Minnesota" found no
+    // walleye guide and stopped there, with no word of Minnesota's rules.
+    it("ends an unanswered question about a state without rules on file at its agency", async () => {
+      const unguided = (state: string) =>
+        searchResult({
+          answer: "FishEye has no guide for walleye yet, so anything it told you about that fish would be guesswork.",
+          answer_source: "no_match",
+          citations: [],
+          state,
+          trace: { ...searchResult().trace, outcome: "unguided_fish" },
+        });
+      mockedAsk.mockResolvedValueOnce(unguided("MN"));
+      render(<AskChat suggestions={SUGGESTIONS} />);
+      await askVia("what's the walleye limit in Minnesota");
+      expect(await screen.findByRole("link", { name: "Fishing regulations ↗" })).toHaveAttribute(
+        "href",
+        "https://www.dnr.state.mn.us/regulations/fishing/index.html",
+      );
+      expect(screen.getByText("No guide for that fish")).toBeInTheDocument();
+
+      // Georgia's rules are on file: a walleye question there is about the fish.
+      mockedAsk.mockResolvedValueOnce(unguided("GA"));
+      await askVia("how do I catch walleye");
+      await waitFor(() => expect(screen.getAllByText("No guide for that fish")).toHaveLength(2));
+      expect(screen.getAllByRole("link", { name: "Fishing regulations ↗" })).toHaveLength(1);
     });
   });
 });

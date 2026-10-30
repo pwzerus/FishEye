@@ -1,3 +1,6 @@
+"use client";
+
+import { useT } from "@/i18n/client";
 import type { SpeciesPhoto } from "@/lib/api/types";
 
 /**
@@ -11,14 +14,15 @@ import type { SpeciesPhoto } from "@/lib/api/types";
  * advertise a gap.
  */
 export function HeroPhoto({ photo, name }: { photo: SpeciesPhoto | null; name: string }) {
+  const t = useT().fish;
   if (!photo) return null;
   return (
     <figure className="hero-photo">
-      <span className="hero-photo-label">Real photo</span>
+      <span className="hero-photo-label">{t.realPhoto}</span>
       <div className="hero-photo-frame">
         {/* Hot-linked from Wikimedia as served, next to its credit (ADR 0015). */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photo.url} alt={`Photo of a ${name}`} width={photo.width} height={photo.height} loading="lazy" />
+        <img src={photo.url} alt={t.photoOf(name)} width={photo.width} height={photo.height} loading="lazy" />
       </div>
       <figcaption>
         {photo.author} ·{" "}

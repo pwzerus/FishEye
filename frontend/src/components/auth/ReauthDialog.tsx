@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { Modal } from "@/components/ui/Modal";
+import { useT } from "@/i18n/client";
 import { ApiError } from "@/lib/api/client";
 import { googleStartUrl, reauth } from "@/lib/api/session";
 import { useAuth } from "./AuthProvider";
@@ -21,7 +22,7 @@ export function ReauthDialog({
   onClose,
   onConfirmed,
   returnTo = "/account",
-  action = "make this change",
+  action,
 }: {
   onClose: () => void;
   /** Runs after a successful password confirmation (e.g. retry the change). */
@@ -30,6 +31,8 @@ export function ReauthDialog({
   action?: string;
 }) {
   const { user, setUser } = useAuth();
+  const all = useT();
+  const t = all.auth;
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +44,7 @@ export function ReauthDialog({
     try {
       setUser(await reauth(password));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Couldn't confirm. Try again.");
+      setError(err instanceof ApiError ? err.message : t.confirmFailed);
       setBusy(false);
       return;
     }
@@ -56,29 +59,26 @@ export function ReauthDialog({
     <Modal
       open
       onClose={onClose}
-      title="Confirm it's you"
+      title={t.confirmTitle}
       footer={
         <>
           <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
-            Cancel
+            {all.common.cancel}
           </button>
           {withPassword ? (
             <button type="submit" form="reauth-form" className="btn btn-primary btn-sm" disabled={busy || !password}>
-              {busy ? "Checking…" : "Confirm"}
+              {busy ? t.checking : t.confirm}
             </button>
           ) : (
             <a className="btn btn-primary btn-sm btn-with-icon" href={googleStartUrl(returnTo)}>
-              <GoogleIcon /> Continue with Google
+              <GoogleIcon /> {t.google}
             </a>
           )}
         </>
       }
     >
       <div className="pin-form">
-        <p className="muted">
-          You signed in a while ago. To {action}, confirm it&apos;s you
-          {withPassword ? " with your password." : " by signing in with Google again, then try once more."}
-        </p>
+        <p className="muted">{t.confirmWith(action ?? t.actionDefault, withPassword)}</p>
         {withPassword && (
           <form
             id="reauth-form"
@@ -88,7 +88,7 @@ export function ReauthDialog({
             }}
           >
             <label className="field">
-              <span>Password</span>
+              <span>{t.password}</span>
               <input
                 type="password"
                 autoComplete="current-password"

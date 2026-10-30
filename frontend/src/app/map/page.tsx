@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+import { getT } from "@/i18n/server";
 import { Suspense } from "react";
 
 import { MapView } from "@/components/map/MapView";
@@ -12,10 +14,10 @@ import { listWaterbodies } from "@/lib/api/client";
 // (lib/api/client.ts), so this costs the backend almost nothing.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Map · FishEye",
-  description: "Lakes and ponds near you, with confirmed public access, species and sources.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: `${t.pages.map} · FishEye`, description: t.pages.mapDescription };
+}
 
 export default async function MapPage() {
   let backendError: string | null = null;

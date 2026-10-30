@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { PinCard } from "@/components/community/PinCard";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
+import { useT } from "@/i18n/client";
 import { ApiError } from "@/lib/api/client";
 import {
   changePassword,
@@ -17,6 +18,7 @@ import {
   googleStartUrl,
   isReauthRequired,
   listPins,
+  sendVerificationEmail,
   updateProfile,
 } from "@/lib/api/session";
 import type { PinSummary } from "@/lib/api/types";
@@ -36,14 +38,46 @@ interface ReauthRequest {
   retry?: () => Promise<void> | void;
 }
 
-const CALLBACK_ERRORS: Record<string, string> = {
-  google_in_use: "That Google account is connected to a different FishEye account.",
-  google_unverified: "That Google email address isn't verified.",
-  google_cancelled: "Connecting Google was cancelled.",
-  google_state: "That link expired. Try again.",
-  google_failed: "Connecting Google didn't complete. Try again.",
-  reauth_required: "For your security, confirm it's you before connecting Google.",
-};
+/** Until the address is confirmed, sharing and reporting catches wait
+ * (backend services/email_verification.py). */
+function VerifyEmailBanner({ email }: { email: string }) {
+  const toast = useToast();
+  const t = useT().auth;
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="verify-banner reveal" role="status">
+      <div>
+        <strong>{t.confirmEmail}</strong>
+        <p>{t.confirmEmailText(email)}</p>
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+      </div>
+      <button
+        type="button"
+        className="btn btn-primary btn-sm"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setError(null);
+          try {
+            await sendVerificationEmail();
+            toast(t.linkSent);
+          } catch (e) {
+            setError(e instanceof ApiError ? e.message : t.sendFailed);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? t.sending : t.sendLink}
+      </button>
+    </div>
+  );
+}
 
 function Section({ id, title, children, tone }: { id?: string; title: string; children: React.ReactNode; tone?: "danger" }) {
   return (
@@ -59,6 +93,8 @@ export function AccountView() {
   const router = useRouter();
   const params = useSearchParams();
   const toast = useToast();
+  const all = useT();
+  const t = all.auth;
   const [pins, setPins] = useState<PinSummary[] | null>(null);
   const [google, setGoogle] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
@@ -67,7 +103,7 @@ export function AccountView() {
   // ?error=reauth_required: confirm, then go straight back to Google.
   const [reauthFor, setReauthFor] = useState<ReauthRequest | null>(() =>
     params.get("error") === "reauth_required"
-      ? { action: "connect Google", retry: () => window.location.assign(googleStartUrl("/account")) }
+      ? { action: t.actionConnect, retry: () => window.location.assign(googleStartUrl("/account")) }
       : null,
   );
   const announced = useRef(false);
@@ -86,10 +122,10 @@ export function AccountView() {
   useEffect(() => {
     if (announced.current) return;
     announced.current = true;
-    if (params.get("connected") === "google") toast("Google connected");
+    if (params.get("connected") === "google") toast(t.googleConnected);
     const err = params.get("error");
-    if (err && err !== "reauth_required") toast(CALLBACK_ERRORS[err] ?? "That didn't work. Try again.", "error");
-  }, [params, toast]);
+    if (err && err !== "reauth_required") toast(t.callback[err] ?? t.didntWork, "error");
+  }, [params, toast, t]);
 
   if (loading || !user) {
     return (
@@ -119,7 +155,7 @@ export function AccountView() {
               <>
                 {" · "}
                 <Link href="/admin" className="text-link">
-                  Admin
+                  {all.account.admin}
                 </Link>
               </>
             )}
@@ -128,67 +164,69 @@ export function AccountView() {
         <div className="acct-stats">
           <div>
             <strong>{pins?.length ?? "–"}</strong>
-            <span>catches</span>
+            <span>{t.statCatches}</span>
           </div>
           <div>
             <strong>{counts.public}</strong>
-            <span>public</span>
+            <span>{t.statPublic}</span>
           </div>
           <div>
             <strong>{counts.private}</strong>
-            <span>only you</span>
+            <span>{t.statPrivate}</span>
           </div>
         </div>
       </header>
 
+      {user.verification_required && <VerifyEmailBanner email={user.email} />}
+
       <div className="acct-grid">
         <div className="acct-col">
-          <Section title="Profile">
+          <Section title={t.profile}>
             {/* Keyed on the saved name so the field resets after a save. */}
             <ProfileForm key={user.display_name} initial={user.display_name} />
           </Section>
 
-          <Section title="Sign-in methods">
+          <Section title={t.methods}>
             <ul className="method-list">
               <li>
                 <div>
-                  <strong>Password</strong>
-                  <span className="muted">{user.has_password ? "Set" : "Not set: you sign in with Google"}</span>
+                  <strong>{t.password}</strong>
+                  <span className="muted">{user.has_password ? t.set : t.notSet}</span>
                 </div>
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPwOpen(true)}>
-                  {user.has_password ? "Change" : "Set a password"}
+                  {user.has_password ? t.change : t.setPassword}
                 </button>
               </li>
               {(google || user.google_connected) && (
                 <li>
                   <div>
                     <strong>Google</strong>
-                    <span className="muted">{user.google_connected ? "Connected" : "Not connected"}</span>
+                    <span className="muted">{user.google_connected ? t.connected : t.notConnected}</span>
                   </div>
                   {user.google_connected ? (
                     <button
                       type="button"
                       className="btn btn-ghost btn-sm"
                       disabled={!user.has_password}
-                      title={user.has_password ? undefined : "Set a password first"}
+                      title={user.has_password ? undefined : t.passwordFirst}
                       onClick={async () => {
                         const run = async () => {
                           setUser(await disconnectGoogle());
-                          toast("Google disconnected", "info");
+                          toast(t.googleDisconnected, "info");
                         };
                         try {
                           await run();
                         } catch (err) {
-                          if (isReauthRequired(err)) setReauthFor({ action: "disconnect Google", retry: run });
-                          else toast(err instanceof ApiError ? err.message : "Couldn't disconnect", "error");
+                          if (isReauthRequired(err)) setReauthFor({ action: t.actionDisconnect, retry: run });
+                          else toast(err instanceof ApiError ? err.message : t.disconnectFailed, "error");
                         }
                       }}
                     >
-                      Disconnect
+                      {t.disconnect}
                     </button>
                   ) : (
                     <a className="btn btn-ghost btn-sm" href={googleStartUrl("/account")}>
-                      Connect
+                      {t.connect}
                     </a>
                   )}
                 </li>
@@ -196,27 +234,27 @@ export function AccountView() {
             </ul>
           </Section>
 
-          <Section title="Delete account" tone="danger">
-            <p className="muted">Deletes your account, every pin you made and all their photos. This can&apos;t be undone.</p>
+          <Section title={t.deleteAccount} tone="danger">
+            <p className="muted">{t.deleteText}</p>
             <button type="button" className="btn btn-danger btn-sm" onClick={() => setDelOpen(true)}>
-              Delete my account
+              {t.deleteMine}
             </button>
           </Section>
         </div>
 
-        <Section id="pins" title="My catches">
+        <Section id="pins" title={t.myCatches}>
           {pins === null ? (
             <div className="sk" style={{ height: 180 }} />
           ) : pins.length === 0 ? (
             <div className="empty-state compact">
-              <p className="muted">No catches yet. Open the map, pin where you fished and add a photo of the fish.</p>
+              <p className="muted">{t.noCatches}</p>
               <Link href="/map?addPin=1" className="btn btn-primary btn-sm">
-                Share a catch
+                {all.catch.shareTitle}
               </Link>
             </div>
           ) : (
             <>
-            <div className="acct-map" aria-label="Where you've pinned catches">
+            <div className="acct-map" aria-label={t.catchesMap}>
               <MyCatchesMap pins={pins} />
             </div>
             <ul className="pin-grid pin-grid-compact">
@@ -237,7 +275,7 @@ export function AccountView() {
           onClose={() => setPwOpen(false)}
           onReauth={() => {
             setPwOpen(false);
-            setReauthFor({ action: "set a password" });
+            setReauthFor({ action: t.actionPassword });
           }}
         />
       )}
@@ -247,11 +285,11 @@ export function AccountView() {
           onClose={() => setDelOpen(false)}
           onReauth={() => {
             setDelOpen(false);
-            setReauthFor({ action: "delete your account" });
+            setReauthFor({ action: t.actionDelete });
           }}
           onDeleted={async () => {
             await signOut().catch(() => undefined);
-            toast("Your account was deleted", "info");
+            toast(t.deleted, "info");
             router.replace("/");
           }}
         />
@@ -264,7 +302,7 @@ export function AccountView() {
             try {
               await reauthFor.retry?.();
             } catch (err) {
-              toast(err instanceof ApiError ? err.message : "That didn't work. Try again.", "error");
+              toast(err instanceof ApiError ? err.message : t.didntWork, "error");
             }
           }}
         />
@@ -276,6 +314,8 @@ export function AccountView() {
 function ProfileForm({ initial }: { initial: string }) {
   const { setUser } = useAuth();
   const toast = useToast();
+  const all = useT();
+  const t = all.auth;
   const [name, setName] = useState(initial);
   const [saving, setSaving] = useState(false);
   return (
@@ -286,19 +326,19 @@ function ProfileForm({ initial }: { initial: string }) {
         setSaving(true);
         try {
           setUser(await updateProfile(name));
-          toast("Name updated");
+          toast(t.nameUpdated);
         } catch (err) {
-          toast(err instanceof ApiError ? err.message : "Couldn't save", "error");
+          toast(err instanceof ApiError ? err.message : t.saveFailed, "error");
           setSaving(false);
         }
       }}
     >
       <label className="field">
-        <span>Display name</span>
+        <span>{t.displayName}</span>
         <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
       </label>
       <button type="submit" className="btn btn-primary btn-sm" disabled={saving || name.trim() === initial}>
-        Save
+        {all.common.save}
       </button>
     </form>
   );
@@ -315,6 +355,8 @@ function PasswordDialog({
 }) {
   const { setUser } = useAuth();
   const toast = useToast();
+  const all = useT();
+  const t = all.auth;
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [busy, setBusy] = useState(false);
@@ -323,11 +365,11 @@ function PasswordDialog({
     <Modal
       open
       onClose={onClose}
-      title={hasPassword ? "Change password" : "Set a password"}
+      title={hasPassword ? t.changePassword : t.setPassword}
       footer={
         <>
           <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
-            Cancel
+            {all.common.cancel}
           </button>
           <button
             type="button"
@@ -338,16 +380,16 @@ function PasswordDialog({
               setError(null);
               try {
                 setUser(await changePassword(next, hasPassword ? current : undefined));
-                toast("Password saved. Other devices were signed out.");
+                toast(t.passwordSaved);
                 onClose();
               } catch (err) {
                 if (isReauthRequired(err)) return onReauth();
-                setError(err instanceof ApiError ? err.message : "Couldn't save.");
+                setError(err instanceof ApiError ? err.message : t.saveFailed);
                 setBusy(false);
               }
             }}
           >
-            Save
+            {all.common.save}
           </button>
         </>
       }
@@ -355,13 +397,13 @@ function PasswordDialog({
       <div className="pin-form">
         {hasPassword && (
           <label className="field">
-            <span>Current password</span>
+            <span>{t.currentPassword}</span>
             <input type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
           </label>
         )}
         <div className="field">
           <label htmlFor="acct-new-password" className="field-label">
-            New password
+            {t.newPassword}
           </label>
           <input
             id="acct-new-password"
@@ -372,7 +414,7 @@ function PasswordDialog({
             onChange={(e) => setNext(e.target.value)}
           />
           <small id="acct-new-password-hint" className="hint">
-            At least 8 characters. Saving signs out your other devices.
+            {t.newPasswordHint}
           </small>
         </div>
         {error && (
@@ -396,6 +438,8 @@ function DeleteDialog({
   onDeleted: () => void;
   onReauth: () => void;
 }) {
+  const all = useT();
+  const t = all.auth;
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
@@ -406,11 +450,11 @@ function DeleteDialog({
       open
       tone="danger"
       onClose={onClose}
-      title="Delete your account?"
+      title={t.deleteTitle}
       footer={
         <>
           <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
-            Cancel
+            {all.common.cancel}
           </button>
           <button
             type="button"
@@ -424,28 +468,26 @@ function DeleteDialog({
                 onDeleted();
               } catch (err) {
                 if (isReauthRequired(err)) return onReauth();
-                setError(err instanceof ApiError ? err.message : "Couldn't delete.");
+                setError(err instanceof ApiError ? err.message : t.deleteFailed);
                 setBusy(false);
               }
             }}
           >
-            Delete everything
+            {t.deleteEverything}
           </button>
         </>
       }
     >
       <div className="pin-form">
-        <p>Your pins and photos are deleted with the account.</p>
+        <p>{t.deleteNote}</p>
         {hasPassword && (
           <label className="field">
-            <span>Password</span>
+            <span>{t.password}</span>
             <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </label>
         )}
         <label className="field">
-          <span>
-            Type <strong>DELETE</strong> to confirm
-          </span>
+          <span>{t.typeDelete}</span>
           <input value={confirm} onChange={(e) => setConfirm(e.target.value)} />
         </label>
         {error && (

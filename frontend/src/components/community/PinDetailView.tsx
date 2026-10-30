@@ -9,14 +9,16 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { FishArt } from "@/components/fish/FishArt";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
+import { useLocale, useLocaleTag, useT } from "@/i18n/client";
+import { localSpecies } from "@/i18n/names";
 import { ApiError } from "@/lib/api/client";
 import { addPhotos, deletePhoto, deletePin, getPin, getPinOptions, updatePin } from "@/lib/api/session";
 import { waterFor } from "@/lib/fishArt";
 import type { PinDetail, PinOptions, PinVisibility } from "@/lib/api/types";
 import { PhotoPicker } from "./PhotoPicker";
 import { AdminModeration } from "./AdminModeration";
-import { formatDay, PinBadges, SpeciesCheck, speciesCheckText } from "./PinCard";
-import { VisibilityToggle } from "./PinForm";
+import { formatDay, PhotoAtSpot, PinBadges, placeText, SpeciesCheck, speciesCheckShort } from "./PinCard";
+import { ShareSpotToggle, SpeciesOptions, VisibilityToggle } from "./PinForm";
 import { ReportDialog } from "./ReportDialog";
 
 const PinMiniMap = dynamic(() => import("./PinMiniMap"), {
@@ -25,27 +27,20 @@ const PinMiniMap = dynamic(() => import("./PinMiniMap"), {
 });
 
 function StatusBanner({ pin }: { pin: PinDetail }) {
-  if (pin.status === "removed")
-    return (
-      <div className="banner banner-danger">
-        A moderator removed this pin. Only you (and admins) can see it. It can&apos;t be edited, but you can delete it.
-      </div>
-    );
+  const t = useT().catch;
+  if (pin.status === "removed") return <div className="banner banner-danger">{t.removedBanner}</div>;
   if (pin.status === "hidden")
     return (
       <div className="banner banner-warn">
-        {pin.status_reason === "reports"
-          ? "Hidden after several reports, until a moderator reviews it."
-          : "A moderator hid this pin."}{" "}
-        Only you (and admins) can see it. It can&apos;t be edited until the review, but you can delete it.
+        {pin.status_reason === "reports" ? t.hiddenReportsBanner : t.hiddenModeratorBanner} {t.hiddenTail}
       </div>
     );
-  if (pin.visibility === "private" && pin.is_mine)
-    return <div className="banner banner-info">Only you can see this pin.</div>;
+  if (pin.visibility === "private" && pin.is_mine) return <div className="banner banner-info">{t.privateBanner}</div>;
   return null;
 }
 
 function Gallery({ pin, onOpen }: { pin: PinDetail; onOpen: (i: number) => void }) {
+  const t = useT().catch;
   const [active, setActive] = useState(0);
   const photo = pin.photos[Math.min(active, pin.photos.length - 1)];
   if (!photo) {
@@ -53,15 +48,15 @@ function Gallery({ pin, onOpen }: { pin: PinDetail; onOpen: (i: number) => void 
     return (
       <div className="gallery-empty" style={{ "--wa": wa, "--wb": wb } as React.CSSProperties}>
         {pin.species_slug ? <FishArt slug={pin.species_slug} uid={`pd-${pin.id}`} className="swimming" /> : null}
-        <span>No photos yet</span>
+        <span>{t.noPhotos}</span>
       </div>
     );
   }
   return (
     <div className="gallery">
-      <button type="button" className="gallery-main" onClick={() => onOpen(active)} aria-label="View full size">
+      <button type="button" className="gallery-main" onClick={() => onOpen(active)} aria-label={t.viewFull}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img key={photo.id} src={photo.url} alt={`Photo ${active + 1} of ${pin.title}`} />
+        <img key={photo.id} src={photo.url} alt={t.photoOf(active + 1, pin.title)} />
       </button>
       {pin.photos.length > 1 && (
         <div className="gallery-thumbs">
@@ -71,7 +66,7 @@ function Gallery({ pin, onOpen }: { pin: PinDetail; onOpen: (i: number) => void 
               type="button"
               className={i === active ? "gallery-thumb active" : "gallery-thumb"}
               onClick={() => setActive(i)}
-              aria-label={`Show photo ${i + 1}`}
+              aria-label={t.showPhoto(i + 1)}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p.thumb_url} alt="" />
@@ -87,6 +82,10 @@ export function PinDetailView({ pinId }: { pinId: number }) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const toast = useToast();
+  const all = useT();
+  const t = all.catch;
+  const tag = useLocaleTag();
+  const locale = useLocale();
   const [pin, setPin] = useState<PinDetail | null>(null);
   const [error, setError] = useState<{ status: number; message: string } | null>(null);
   const [lightbox, setLightbox] = useState<number | null>(null);
@@ -102,9 +101,9 @@ export function PinDetailView({ pinId }: { pinId: number }) {
         setError(null);
       })
       .catch((e: unknown) =>
-        setError(e instanceof ApiError ? { status: e.status, message: e.message } : { status: 0, message: "Couldn't load." }),
+        setError(e instanceof ApiError ? { status: e.status, message: e.message } : { status: 0, message: t.loadError }),
       );
-  }, [pinId]);
+  }, [pinId, t.loadError]);
 
   useEffect(() => {
     if (!authLoading) load();
@@ -113,12 +112,10 @@ export function PinDetailView({ pinId }: { pinId: number }) {
   if (error) {
     return (
       <div className="empty-state">
-        <h2>{error.status === 404 ? "This pin isn't here" : "Couldn't load this pin"}</h2>
-        <p className="muted">
-          {error.status === 404 ? "It may be private, removed, or never existed." : error.message}
-        </p>
+        <h2>{error.status === 404 ? t.notHere : t.couldntLoad}</h2>
+        <p className="muted">{error.status === 404 ? t.maybePrivate : error.message}</p>
         <Link href="/community" className="btn btn-primary btn-sm" transitionTypes={["nav-back"]}>
-          Back to community
+          {t.backToCatches}
         </Link>
       </div>
     );
@@ -136,12 +133,14 @@ export function PinDetailView({ pinId }: { pinId: number }) {
     );
   }
 
-  const when = formatDay(pin.caught_on);
+  const when = formatDay(pin.caught_on, tag);
+  const checkNote = speciesCheckShort(all, pin, locale);
+  const waterHref = pin.water?.kind === "lake" ? `/map?lake=${pin.water.id}` : null;
 
   return (
     <>
       <Link href="/community" className="back-link" transitionTypes={["nav-back"]}>
-        <span aria-hidden="true">←</span> Community
+        <span aria-hidden="true">←</span> {all.nav.catches}
       </Link>
       <StatusBanner pin={pin} />
 
@@ -152,13 +151,16 @@ export function PinDetailView({ pinId }: { pinId: number }) {
 
         <div className="pin-info">
           <div className="pin-tags reveal" style={{ "--i": 1 } as React.CSSProperties}>
-            {pin.species_label && <span className="tag tag-species">{pin.species_label}</span>}
+            {pin.species_label && (
+              <span className="tag tag-species">{localSpecies(pin.species_slug, pin.species_label, locale)}</span>
+            )}
             <SpeciesCheck pin={pin} />
+            <PhotoAtSpot pin={pin} />
             <PinBadges pin={pin} />
           </div>
-          {speciesCheckText(pin) && (
+          {checkNote && (
             <p className="pin-check-note muted reveal" style={{ "--i": 1 } as React.CSSProperties}>
-              {speciesCheckText(pin)}
+              {checkNote}
             </p>
           )}
           <h1 className="reveal" style={{ "--i": 2 } as React.CSSProperties}>
@@ -169,8 +171,8 @@ export function PinDetailView({ pinId }: { pinId: number }) {
               {pin.author.display_name.slice(0, 1).toUpperCase()}
             </span>
             <span>
-              {pin.is_mine ? "You" : pin.author.display_name}
-              {when && <> · caught {when}</>}
+              {pin.is_mine ? t.you : pin.author.display_name}
+              {when && <> · {t.caught(when)}</>}
             </span>
           </p>
           {pin.note && (
@@ -179,32 +181,62 @@ export function PinDetailView({ pinId }: { pinId: number }) {
             </p>
           )}
           <dl className="pin-facts reveal" style={{ "--i": 5 } as React.CSSProperties}>
-            {pin.lake && (
+            {(pin.water ?? pin.lake) && (
               <div>
-                <dt>Near</dt>
+                <dt>{t.factWater}</dt>
                 <dd>
-                  <Link href={`/map?lake=${pin.lake.id}`} className="text-link">
-                    {pin.lake.name}
-                  </Link>
+                  {pin.water ? (
+                    waterHref ? (
+                      <Link href={waterHref} className="text-link">
+                        {pin.water.name}
+                      </Link>
+                    ) : (
+                      pin.water.name
+                    )
+                  ) : (
+                    pin.lake && (
+                      <Link href={`/map?lake=${pin.lake.id}`} className="text-link">
+                        {pin.lake.name}
+                      </Link>
+                    )
+                  )}
                 </dd>
               </div>
             )}
             <div>
-              <dt>Location</dt>
+              <dt>{t.factLocation}</dt>
               <dd>
-                {pin.latitude.toFixed(4)}, {pin.longitude.toFixed(4)}
+                {pin.location_shown === "exact" ? (
+                  <>
+                    {pin.latitude.toFixed(4)}, {pin.longitude.toFixed(4)}
+                  </>
+                ) : (
+                  // The angler kept the spot to themselves (backend ADR 0038).
+                  <>{placeText(all, pin, pin.location_shown)}</>
+                )}
               </dd>
             </div>
+            {pin.is_mine && pin.visibility === "public" && (
+              <div>
+                <dt>{t.factOthersSee}</dt>
+                <dd>{placeText(all, pin, pin.public_place)}</dd>
+              </div>
+            )}
             <div>
-              <dt>Pinned</dt>
-              <dd>{formatDay(pin.created_at)}</dd>
+              <dt>{t.factShared}</dt>
+              <dd>{formatDay(pin.created_at, tag)}</dd>
             </div>
           </dl>
 
           <div className="pin-map reveal" style={{ "--i": 6 } as React.CSSProperties}>
-            <PinMiniMap lat={pin.latitude} lng={pin.longitude} isPrivate={pin.visibility === "private"} />
+            <PinMiniMap
+              lat={pin.latitude}
+              lng={pin.longitude}
+              isPrivate={pin.visibility === "private"}
+              place={pin.location_shown}
+            />
             <Link href={`/map?at=${pin.latitude},${pin.longitude}`} className="pin-map-open">
-              Open in map →
+              {t.openInMap}
             </Link>
           </div>
 
@@ -227,43 +259,47 @@ export function PinDetailView({ pinId }: { pinId: number }) {
                   }
                   try {
                     await navigator.clipboard.writeText(url);
-                    toast("Link copied");
+                    toast(t.linkCopied);
                   } catch {
-                    toast("Couldn't copy the link", "error");
+                    toast(t.copyFailed, "error");
                   }
                 }}
               >
-                Share
+                {t.share}
               </button>
             )}
             {pin.can_edit && (
               <>
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(true)}>
-                  Edit
+                  {t.edit}
                 </button>
+                {/* Back on the map, at the spot: tap the water it was really on. */}
+                <Link href={`/map?move=${pin.id}`} className="btn btn-ghost btn-sm">
+                  {t.move}
+                </Link>
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAdding(true)}>
-                  Photos
+                  {t.photos}
                 </button>
                 <button type="button" className="btn btn-ghost btn-sm btn-danger-text" onClick={() => setConfirmDelete(true)}>
-                  Delete
+                  {t.delete}
                 </button>
               </>
             )}
             {/* Locked for editing while moderated, but always the owner's to delete. */}
             {pin.is_mine && !pin.can_edit && (
               <button type="button" className="btn btn-ghost btn-sm btn-danger-text" onClick={() => setConfirmDelete(true)}>
-                Delete
+                {t.delete}
               </button>
             )}
             {!pin.is_mine && pin.can_report && (
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReporting(true)}>
-                Report
+                {t.report}
               </button>
             )}
-            {pin.reported_by_me && <span className="muted small">You reported this pin.</span>}
+            {pin.reported_by_me && <span className="muted small">{t.reportedByMe}</span>}
             {!user && !pin.is_mine && (
               <Link href={`/login?next=/community/${pin.id}`} className="muted small text-link">
-                Sign in to report
+                {t.signInToReport}
               </Link>
             )}
           </div>
@@ -277,17 +313,17 @@ export function PinDetailView({ pinId }: { pinId: number }) {
         {lightbox !== null && pin.photos[lightbox] && (
           <div className="lightbox">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={pin.photos[lightbox].url} alt={`Photo ${lightbox + 1} of ${pin.title}`} />
+            <img src={pin.photos[lightbox].url} alt={t.photoOf(lightbox + 1, pin.title)} />
             {pin.photos.length > 1 && (
               <div className="lightbox-nav">
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => setLightbox((lightbox + pin.photos.length - 1) % pin.photos.length)}>
-                  ← Prev
+                  {t.prev}
                 </button>
                 <span className="muted">
                   {lightbox + 1} / {pin.photos.length}
                 </span>
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => setLightbox((lightbox + 1) % pin.photos.length)}>
-                  Next →
+                  {t.next}
                 </button>
               </div>
             )}
@@ -300,7 +336,7 @@ export function PinDetailView({ pinId }: { pinId: number }) {
         open={reporting}
         onClose={() => setReporting(false)}
         onReported={(hidden) => {
-          toast(hidden ? "Thanks. The pin is hidden until a moderator reviews it." : "Thanks. A moderator will take a look.");
+          toast(hidden ? t.reportHidden : t.reportThanks);
           load();
         }}
       />
@@ -312,28 +348,22 @@ export function PinDetailView({ pinId }: { pinId: number }) {
           onSaved={(p) => {
             setPin(p);
             setEditing(false);
-            toast("Pin updated");
+            toast(t.updated);
           }}
         />
       )}
 
-      {adding && (
-        <PhotosDialog
-          pin={pin}
-          onClose={() => setAdding(false)}
-          onChanged={(p) => setPin(p)}
-        />
-      )}
+      {adding && <PhotosDialog pin={pin} onClose={() => setAdding(false)} onChanged={(p) => setPin(p)} />}
 
       <Modal
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
-        title="Delete this pin?"
+        title={t.deleteTitle}
         tone="danger"
         footer={
           <>
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setConfirmDelete(false)}>
-              Keep it
+              {t.keepIt}
             </button>
             <button
               type="button"
@@ -341,25 +371,27 @@ export function PinDetailView({ pinId }: { pinId: number }) {
               onClick={async () => {
                 try {
                   await deletePin(pin.id);
-                  toast("Pin deleted", "info");
+                  toast(t.deleted, "info");
                   router.push("/account#pins");
                 } catch (e) {
-                  toast(e instanceof ApiError ? e.message : "Couldn't delete", "error");
+                  toast(e instanceof ApiError ? e.message : t.deleteFailed, "error");
                 }
               }}
             >
-              Delete pin
+              {t.deleteCatch}
             </button>
           </>
         }
       >
-        <p>The pin and its photos are deleted for good. This can&apos;t be undone.</p>
+        <p>{t.deleteBody}</p>
       </Modal>
     </>
   );
 }
 
 function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () => void; onSaved: (p: PinDetail) => void }) {
+  const all = useT();
+  const t = all.catch;
   const [options, setOptions] = useState<PinOptions | null>(null);
   const [title, setTitle] = useState(pin.title);
   const [note, setNote] = useState(pin.note ?? "");
@@ -367,6 +399,7 @@ function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () 
   const [other, setOther] = useState(pin.species_slug ? "" : (pin.species_label ?? ""));
   const [caughtOn, setCaughtOn] = useState(pin.caught_on ?? "");
   const [visibility, setVisibility] = useState<PinVisibility>(pin.visibility);
+  const [shareExact, setShareExact] = useState(pin.share_exact);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -389,10 +422,11 @@ function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () 
             : { species_slug: species }),
         ...(caughtOn ? { caught_on: caughtOn } : { clear_caught_on: true }),
         visibility,
+        share_exact: shareExact,
       });
       onSaved(p);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Couldn't save.");
+      setError(e instanceof ApiError ? e.message : t.saveFailed);
       setBusy(false);
     }
   }
@@ -401,58 +435,53 @@ function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () 
     <Modal
       open
       onClose={onClose}
-      title="Edit pin"
+      title={t.editTitle}
       footer={
         <>
           <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
-            Cancel
+            {all.common.cancel}
           </button>
           <button type="button" className="btn btn-primary btn-sm" disabled={busy || title.trim().length < 3} onClick={save}>
-            {busy ? "Saving…" : "Save"}
+            {busy ? all.common.saving : all.common.save}
           </button>
         </>
       }
     >
       <div className="pin-form">
         <label className="field">
-          <span>Title</span>
+          <span>{t.title}</span>
           <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} />
         </label>
         <div className="field-row">
           <label className="field">
-            <span>Fish</span>
+            <span>{t.fish}</span>
             <select value={species} onChange={(e) => setSpecies(e.target.value)}>
-              <option value="">Not sure / none</option>
-              {options?.species.map((s) => (
-                <option key={s.slug} value={s.slug}>
-                  {s.label}
-                </option>
-              ))}
-              <option value="__other">Other…</option>
+              <SpeciesOptions options={options} otherValue="__other" />
             </select>
           </label>
           <label className="field">
-            <span>Date</span>
+            <span>{t.date}</span>
             <input type="date" value={caughtOn} onChange={(e) => setCaughtOn(e.target.value)} />
           </label>
         </div>
         {species === "__other" && (
           <label className="field">
-            <span>Which fish?</span>
+            <span>{t.whichFish}</span>
             <input value={other} onChange={(e) => setOther(e.target.value)} maxLength={60} />
           </label>
         )}
         {species !== (pin.species_slug ?? (pin.species_label ? "__other" : "")) && species !== "" && (
-          <p className="hint">A different fish is checked against the catch photo when you save.</p>
+          <p className="hint">{t.fishChangeNote}</p>
         )}
         <label className="field">
-          <span>Notes</span>
+          <span>{t.notes}</span>
           <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} />
         </label>
         <div className="field">
-          <span>Who can see it</span>
+          <span>{t.whoSees}</span>
           <VisibilityToggle value={visibility} onChange={setVisibility} />
         </div>
+        {visibility === "public" && <ShareSpotToggle value={shareExact} onChange={setShareExact} />}
         {error && (
           <p className="form-error" role="alert">
             {error}
@@ -464,6 +493,7 @@ function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () 
 }
 
 function PhotosDialog({ pin, onClose, onChanged }: { pin: PinDetail; onClose: () => void; onChanged: (p: PinDetail) => void }) {
+  const t = useT().catch;
   const [files, setFiles] = useState<File[]>([]);
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -477,7 +507,7 @@ function PhotosDialog({ pin, onClose, onChanged }: { pin: PinDetail; onClose: ()
       onChanged(p);
       setFiles([]);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Upload failed.");
+      setError(e instanceof ApiError ? e.message : t.uploadFailed);
     } finally {
       setProgress(null);
     }
@@ -487,15 +517,15 @@ function PhotosDialog({ pin, onClose, onChanged }: { pin: PinDetail; onClose: ()
     <Modal
       open
       onClose={onClose}
-      title="Photos"
+      title={t.photos}
       footer={
         <>
           <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
-            Done
+            {t.done}
           </button>
           {files.length > 0 && (
             <button type="button" className="btn btn-primary btn-sm" disabled={progress !== null} onClick={upload}>
-              {progress !== null ? `Uploading ${Math.round(progress * 100)}%` : `Upload ${files.length}`}
+              {progress !== null ? t.uploading(Math.round(progress * 100)) : t.uploadN(files.length)}
             </button>
           )}
         </>
@@ -506,16 +536,16 @@ function PhotosDialog({ pin, onClose, onChanged }: { pin: PinDetail; onClose: ()
           {pin.photos.map((p, i) => (
             <figure key={p.id} className="photo-thumb">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.thumb_url} alt={`Photo ${i + 1}`} />
+              <img src={p.thumb_url} alt={t.photoOf(i + 1, pin.title)} />
               <button
                 type="button"
                 className="photo-remove"
-                aria-label={`Delete photo ${i + 1}`}
+                aria-label={t.deletePhoto(i + 1)}
                 onClick={async () => {
                   try {
                     onChanged(await deletePhoto(pin.id, p.id));
                   } catch (e) {
-                    setError(e instanceof ApiError ? e.message : "Couldn't delete.");
+                    setError(e instanceof ApiError ? e.message : t.deleteFailed);
                   }
                 }}
               >
@@ -528,7 +558,7 @@ function PhotosDialog({ pin, onClose, onChanged }: { pin: PinDetail; onClose: ()
       {remaining > 0 ? (
         <PhotoPicker files={files} onChange={setFiles} max={remaining} maxMb={10} disabled={progress !== null} />
       ) : (
-        <p className="muted">This pin has the maximum of 4 photos. Delete one to add another.</p>
+        <p className="muted">{t.maxPhotos}</p>
       )}
       {error && (
         <p className="form-error" role="alert">

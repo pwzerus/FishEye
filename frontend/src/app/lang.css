@@ -1,0 +1,113 @@
+/* ==========================================================================
+   Languages: the header's language button, its menu, and the one-line
+   suggestion for browsers set to another of the site's languages
+   (components/LanguageMenu).
+   ========================================================================== */
+
+/* Korean wraps between words, as Korean is written, not inside one; a
+   word too long for its box (a chip, a narrow phone) still breaks. */
+:lang(ko) {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+/* Japanese keeps small kana and closing brackets off the start of a line. */
+:lang(ja) {
+  line-break: strict;
+}
+/* A status pill is capitalized word by word for English ("Reported, Not
+   Verified"); Spanish writes it as a sentence, as its strings already are. */
+.public-status:not(:lang(en)) {
+  text-transform: none;
+}
+/* Chinese, Japanese and Korean have no italics (a browser slants the
+   glyphs instead), so emphasis there stays upright. Latin scientific names
+   (.sci) keep theirs. */
+em:is(:lang(zh), :lang(ja), :lang(ko)),
+.side-panel .muted:is(:lang(zh), :lang(ja), :lang(ko)) {
+  font-style: normal;
+}
+
+.lang-menu {
+  position: relative;
+}
+.lang-btn {
+  height: 36px;
+  min-width: 36px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.lang-btn:hover,
+.lang-btn[aria-expanded="true"] {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.lang-pop {
+  min-width: 150px;
+}
+.lang-pop .menu-item.active::after {
+  content: "✓";
+  float: right;
+  color: var(--brand-strong);
+}
+@media (max-width: 520px) {
+  .lang-btn {
+    padding: 0 8px;
+  }
+  .lang-btn svg {
+    display: none;
+  }
+}
+
+.lang-suggest {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 10px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 10px 12px 10px 16px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  animation: pop-in 220ms var(--ease) both;
+}
+@media (max-width: 760px) {
+  /* Above the phone's bottom navigation. */
+  .lang-suggest {
+    bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+}
+
+/* A fish's (or a word's) English name after its name in the chosen
+   language: what signs, regulations and tackle shops use. */
+.name-en {
+  display: block;
+  font-size: 0.72em;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+.name-en-inline {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--muted);
+}

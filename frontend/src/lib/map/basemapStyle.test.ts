@@ -1,7 +1,7 @@
 import type { LayerSpecification, StyleSpecification } from "maplibre-gl";
 import { describe, expect, it } from "vitest";
 
-import { hideAirportIcons, isHiddenLayer, styleAttribution } from "./basemapStyle";
+import { hideAirportIcons, isHiddenLayer, styleAttribution, withLinkedAttributions } from "./basemapStyle";
 
 // The five airport-related layers of MapTiler streets-v4, as read from its
 // style.json (ids, types and source layers exactly as served), plus a few
@@ -88,5 +88,51 @@ describe("styleAttribution", () => {
   it("falls back rather than showing no credit", () => {
     const style = withSources({ a: { type: "vector" }, b: { type: "vector", attribution: "  " } });
     expect(styleAttribution(style, "fallback")).toBe("fallback");
+  });
+});
+
+describe("withLinkedAttributions", () => {
+  const credit = '<a href="https://www.maptiler.com/copyright/">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap contributors</a>';
+  const withSources = (sources: Record<string, unknown>) =>
+    ({ version: 8, sources, layers: [] }) as unknown as StyleSpecification;
+
+  it("credits MapTiler for a style that keeps its credit in the TileJSON (Satellite Hybrid)", async () => {
+    // The shape of hybrid-v4: both sources by url, no attribution in the style.
+    const style = withSources({
+      maptiler_planet: { type: "vector", url: "https://api.maptiler.com/tiles/v4/tiles.json" },
+      satellite: { type: "raster", url: "https://api.maptiler.com/tiles/satellite-v2/tiles.json" },
+    });
+    const fetched: string[] = [];
+    const resolved = await withLinkedAttributions(style, async (url) => {
+      fetched.push(url);
+      return { attribution: credit };
+    });
+    expect(fetched).toHaveLength(2);
+    expect(styleAttribution(resolved, "fallback")).toBe(credit);
+    expect(style.sources.satellite).not.toHaveProperty("attribution");
+  });
+
+  it("leaves a credit the style already names, and does not fetch for it", async () => {
+    const style = withSources({ a: { type: "vector", url: "https://x/tiles.json", attribution: "A" } });
+    let calls = 0;
+    const resolved = await withLinkedAttributions(style, async () => {
+      calls += 1;
+      return { attribution: "B" };
+    });
+    expect(calls).toBe(0);
+    expect(styleAttribution(resolved, "fallback")).toBe("A");
+  });
+
+  it("keeps the fallback when a TileJSON fails or names no credit", async () => {
+    const style = withSources({
+      a: { type: "vector", url: "https://x/a.json" },
+      b: { type: "vector", url: "https://x/b.json" },
+      c: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
+    });
+    const resolved = await withLinkedAttributions(style, async (url) => {
+      if (url.endsWith("a.json")) throw new Error("offline");
+      return {};
+    });
+    expect(styleAttribution(resolved, "fallback")).toBe("fallback");
   });
 });

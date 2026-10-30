@@ -3,8 +3,9 @@
 import L from "leaflet";
 import { Marker, Popup } from "react-leaflet";
 
+import { useT } from "@/i18n/client";
 import type { Shop } from "@/lib/api/types";
-import { SHOP_KIND_LABEL, directionsUrl } from "./shops";
+import { directionsUrl } from "./shops";
 import { displayLongitude, type StateRegion } from "./usStates";
 
 // A small square badge with a hook: not a lake's teardrop or a catch's round
@@ -19,6 +20,7 @@ const SHOP_ICON = L.divIcon({
 
 /** Bait and tackle shops in view, from OpenStreetMap. */
 export function ShopMarkers({ shops, region = null }: { shops: Shop[]; region?: StateRegion | null }) {
+  const t = useT().shops;
   return (
     <>
       {shops.map((s) => (
@@ -27,28 +29,28 @@ export function ShopMarkers({ shops, region = null }: { shops: Shop[]; region?: 
           position={[s.latitude, displayLongitude(s.longitude, region)]}
           icon={SHOP_ICON}
           // Leaflet gives a div icon no alt; its title is the marker's name.
-          title={`${s.name}, ${SHOP_KIND_LABEL[s.kind]}`}
+          title={`${s.name}, ${t[s.kind]}`}
           zIndexOffset={200}
         >
           <Popup className="shop-popup">
             <div className="shop-pop">
-              <span className="shop-pop-kind">{SHOP_KIND_LABEL[s.kind]}</span>
+              <span className="shop-pop-kind">{t[s.kind]}</span>
               <strong>{s.name}</strong>
               {s.address && <span>{s.address}</span>}
-              {s.opening_hours && <span className="shop-pop-hours">Hours: {s.opening_hours}</span>}
+              {s.opening_hours && <span className="shop-pop-hours">{t.hours(s.opening_hours)}</span>}
               <span className="shop-pop-links">
                 <a href={directionsUrl(s)} target="_blank" rel="noreferrer">
-                  Directions
+                  {t.directions}
                 </a>
-                {s.phone && <a href={`tel:${s.phone.replace(/[^\d+]/g, "")}`}>Call</a>}
+                {s.phone && <a href={`tel:${s.phone.replace(/[^\d+]/g, "")}`}>{t.call}</a>}
                 {s.website && (
                   <a href={s.website} target="_blank" rel="noreferrer nofollow">
-                    Website
+                    {t.website}
                   </a>
                 )}
               </span>
               <a className="shop-pop-source" href={s.osm_url} target="_blank" rel="noreferrer">
-                © OpenStreetMap contributors · check hours before you go
+                {t.source}
               </a>
             </div>
           </Popup>

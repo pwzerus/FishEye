@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 
+import { getT } from "@/i18n/server";
+
 import { CommunityFeed } from "@/components/community/CommunityFeed";
 import { PageTransition } from "@/components/motion/Transition";
-import { CATCHES_AVAILABLE, CATCHES_SOON } from "@/lib/features";
+import { CATCHES_AVAILABLE } from "@/lib/features";
 
-export const metadata: Metadata = {
-  title: "Community · FishEye",
-  description: "Where other anglers are catching fish, pinned and photographed by them.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: `${t.pages.community} · FishEye`, description: t.pages.communityDescription };
+}
 
-export default function CommunityPage() {
+export default async function CommunityPage() {
+  const t = await getT();
   return (
     <PageTransition>
       <main className="page-scroll community-page">
@@ -17,9 +20,9 @@ export default function CommunityPage() {
           <CommunityFeed />
         ) : (
           <section className="coming-soon" aria-labelledby="catches-soon">
-            <p className="field-kicker">CATCHES</p>
-            <h1 id="catches-soon">{CATCHES_SOON}</h1>
-            <p>Sharing where you caught a fish isn&apos;t open yet. Lakes, fish guides and Ask work as usual.</p>
+            <p className="field-kicker">{t.nav.catches}</p>
+            <h1 id="catches-soon">{t.common.catchesSoon}</h1>
+            <p>{t.feed.soonText}</p>
           </section>
         )}
       </main>

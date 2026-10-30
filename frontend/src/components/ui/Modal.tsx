@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
+import { useT } from "@/i18n/client";
+
 /**
  * A dialog built on <dialog>: the browser handles focus trapping, the
  * inert background and Escape. We add the open/close animation and
@@ -24,6 +26,7 @@ export function Modal({
   tone?: "default" | "danger";
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const t = useT();
 
   useEffect(() => {
     const d = ref.current;
@@ -54,7 +57,7 @@ export function Modal({
         <div className="modal-card">
           <header className="modal-head">
             <h2 id="modal-title">{title}</h2>
-            <button type="button" className="icon-btn" aria-label="Close" onClick={onClose}>
+            <button type="button" className="icon-btn" aria-label={t.common.close} onClick={onClose}>
               ×
             </button>
           </header>

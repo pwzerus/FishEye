@@ -92,6 +92,20 @@ class WaterbodyListItem(BaseModel):
     reported_species_count: int = 0
 
 
+class LakeMatchOut(BaseModel):
+    """A lake whose name matches a search (GET /api/waterbodies/search)."""
+
+    id: int
+    name: str
+    latitude: float
+    longitude: float
+    state_code: str
+    state_name: str
+    data_tier: str
+    # "Gwinnett County": tells apart lakes that share a name in one state.
+    county: str | None = None
+
+
 class AgencyRatingOut(BaseModel):
     label: str  # the agency's own species-group label
     rating: str  # Poor | Fair | Good | Excellent
@@ -150,6 +164,11 @@ class WaterbodyDetail(BaseModel):
     name: str
     latitude: float
     longitude: float
+    # Whose rules apply here ("GA"): the panel's rules row reads them.
+    state_code: str | None = None
+    # [south, west, north, east] of the water, for framing its map; None
+    # where no outline is on file (hand-curated lakes).
+    bounds: list[float] | None = None
     access_summary: str
     source_url: str
     source_updated_at: datetime

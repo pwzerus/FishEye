@@ -38,6 +38,12 @@ _NULLABLE_COLUMNS = (
     ("waterbodies", "public_land", "VARCHAR(16)"),
     ("waterbodies", "public_land_name", "VARCHAR(160)"),
     ("waterbodies", "public_land_manager", "VARCHAR(64)"),
+    # The water's bounding box, for framing a lake's map; the OSM importer
+    # fills them when re-run.
+    ("waterbodies", "bbox_south", "FLOAT"),
+    ("waterbodies", "bbox_west", "FLOAT"),
+    ("waterbodies", "bbox_north", "FLOAT"),
+    ("waterbodies", "bbox_east", "FLOAT"),
     ("source_records", "source_key", "VARCHAR(64)"),
     ("source_records", "title", "VARCHAR(256)"),
     ("source_records", "licence_class", "VARCHAR(16)"),
@@ -54,6 +60,31 @@ _NULLABLE_COLUMNS = (
     ("catch_pins", "state_code", "VARCHAR(2)"),
     ("catch_pins", "county_geoid", "VARCHAR(5)"),
     ("catch_pins", "county_name", "VARCHAR(64)"),
+    # Where others see a catch (ADR 0038); startup fills them for pins
+    # saved before (services/pins.fill_public_points).
+    ("catch_pins", "public_latitude", "FLOAT"),
+    ("catch_pins", "public_longitude", "FLOAT"),
+    ("catch_pins", "public_place", "VARCHAR(8)"),
+    # Confirmed email addresses (services/email_verification.py). TIMESTAMP:
+    # what DateTime is on PostgreSQL; SQLite takes any type name.
+    ("users", "email_verified_at", "TIMESTAMP"),
+    # Catches are on named water (ADR 0040); startup checks pins saved
+    # before against the shapes (services/pins.fill_water). The river link
+    # has no foreign key here: ALTER TABLE ADD COLUMN can't add one on
+    # SQLite. A river a re-import drops leaves a dangling id, which reads as
+    # no river and is checked again.
+    ("catch_pins", "river_id", "INTEGER"),
+    ("catch_pins", "water_distance_m", "FLOAT"),
+    ("catch_pins", "photo_at_spot", "BOOLEAN"),
+    ("pin_photos", "gps_latitude", "FLOAT"),
+    ("pin_photos", "gps_longitude", "FLOAT"),
+)
+
+# NOT NULL columns with a constant default, added since: (table, column,
+# DDL). FALSE, not 0: PostgreSQL won't take an integer for a BOOLEAN.
+_DEFAULTED_COLUMNS = (
+    # Pins saved before ADR 0038 get the new default: the spot isn't shared.
+    ("catch_pins", "share_exact", "BOOLEAN NOT NULL DEFAULT FALSE"),
 )
 
 _INDEXES = (
@@ -82,6 +113,10 @@ _OTHER_INDEXES = (
     "CREATE UNIQUE INDEX IF NOT EXISTS uq_source_records_source_key ON source_records (source_key)",
 )
 _PIN_PLACE_INDEX = "CREATE INDEX IF NOT EXISTS ix_catch_pins_place ON catch_pins (state_code, county_geoid)"
+_PIN_PUBLIC_POINT_INDEX = (
+    "CREATE INDEX IF NOT EXISTS ix_catch_pins_public_lat_lng ON catch_pins (public_latitude, public_longitude)"
+)
+_PIN_RIVER_INDEX = "CREATE INDEX IF NOT EXISTS ix_catch_pins_river_id ON catch_pins (river_id)"
 
 
 def ensure_waterbody_ranking_schema(engine: Engine) -> None:
@@ -94,7 +129,7 @@ def ensure_waterbody_ranking_schema(engine: Engine) -> None:
 
     columns = {
         table: {c["name"] for c in inspector.get_columns(table)}
-        for table in ("waterbodies", "source_records", "catch_pins")
+        for table in ("waterbodies", "source_records", "catch_pins", "users", "pin_photos")
         if inspector.has_table(table)
     }
     with engine.begin() as conn:
@@ -108,6 +143,10 @@ def ensure_waterbody_ranking_schema(engine: Engine) -> None:
             if table in columns and column not in columns[table]:
                 conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl_type}"))
                 logger.info("Added %s.%s.", table, column)
+        for table, column, ddl in _DEFAULTED_COLUMNS:
+            if table in columns and column not in columns[table]:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}"))
+                logger.info("Added %s.%s.", table, column)
         for _name, ddl in _INDEXES:
             conn.execute(text(ddl))
         if "source_records" in columns:
@@ -115,6 +154,8 @@ def ensure_waterbody_ranking_schema(engine: Engine) -> None:
                 conn.execute(text(ddl))
         if "catch_pins" in columns:
             conn.execute(text(_PIN_PLACE_INDEX))
+            conn.execute(text(_PIN_PUBLIC_POINT_INDEX))
+            conn.execute(text(_PIN_RIVER_INDEX))
 
 
 def prepare_database(engine: Engine) -> None:

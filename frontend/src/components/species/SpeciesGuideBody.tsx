@@ -1,4 +1,12 @@
+"use client";
+
 import type { GuideSource, SpeciesGuide, TackleSetup } from "@/lib/api/types";
+import { GuideSummary } from "@/components/fish/GuideSummary";
+import { LimitsNote } from "@/components/rules/RegionGate";
+import { useT } from "@/i18n/client";
+import { groupSetups } from "./setups";
+
+export { groupSetups };
 
 /**
  * Renders one species guide. Used in two places:
@@ -12,49 +20,34 @@ import type { GuideSource, SpeciesGuide, TackleSetup } from "@/lib/api/types";
  * say so, because a beginner can't tell otherwise.
  */
 
-const DIFFICULTY_LABEL: Record<string, string> = {
-  beginner: "Beginner-friendly",
-  intermediate: "Intermediate",
-  advanced: "Advanced",
-};
-
 export function DifficultyTag({ guide }: { guide: SpeciesGuide }) {
-  if (guide.role === "forage") return <span className="guide-tag guide-tag-forage">Bait fish</span>;
+  const t = useT().fish;
+  if (guide.role === "forage") return <span className="guide-tag guide-tag-forage">{t.baitFish}</span>;
   if (!guide.difficulty) return null;
-  return (
-    <span className={`guide-tag guide-tag-${guide.difficulty}`}>
-      {DIFFICULTY_LABEL[guide.difficulty]}
-    </span>
-  );
+  const label = { beginner: t.beginner, intermediate: t.intermediate, advanced: t.advanced }[guide.difficulty];
+  return <span className={`guide-tag guide-tag-${guide.difficulty}`}>{label}</span>;
 }
-
-const DIET_TYPE_LABEL: Record<SpeciesGuide["diet_type"], string> = {
-  carnivore: "Carnivore",
-  omnivore: "Omnivore",
-  filter_feeder: "Filter feeder",
-};
 
 /** What it eats, in one word: carnivore, omnivore, or (for shad) filter
  * feeder. Shown next to "What it eats" so it reads at a glance. */
 export function DietTypeTag({ guide }: { guide: SpeciesGuide }) {
-  return (
-    <span className={`guide-tag guide-tag-diet guide-tag-diet-${guide.diet_type}`}>
-      {DIET_TYPE_LABEL[guide.diet_type]}
-    </span>
-  );
+  const t = useT().fish;
+  const label = { carnivore: t.carnivore, omnivore: t.omnivore, filter_feeder: t.filterFeeder }[guide.diet_type];
+  return <span className={`guide-tag guide-tag-diet guide-tag-diet-${guide.diet_type}`}>{label}</span>;
 }
 
 function SourceLinks({ sources }: { sources: GuideSource[] }) {
+  const t = useT().fish;
   return (
     <p className="guide-setup-sources">
-      Source:{" "}
+      {t.source}{" "}
       {sources.map((s, i) => (
         <span key={s.url}>
           {i > 0 && " · "}
           <a href={s.url} target="_blank" rel="noreferrer">
             {s.label}
           </a>
-          {s.kind === "guide" && <span className="guide-source-kind"> (fishing guide site)</span>}
+          {s.kind === "guide" && <span className="guide-source-kind">{t.guideSite}</span>}
         </span>
       ))}
     </p>
@@ -62,33 +55,24 @@ function SourceLinks({ sources }: { sources: GuideSource[] }) {
 }
 
 function SetupCard({ setup }: { setup: TackleSetup }) {
+  const t = useT().fish;
   return (
     <li className="guide-setup">
-      <div className="guide-setup-name">{setup.name}</div>
-      <div className="guide-setup-when">{setup.use_when}</div>
+      <div className="guide-setup-name" lang="en">{setup.name}</div>
+      <div className="guide-setup-when" lang="en">{setup.use_when}</div>
       <dl className="guide-setup-specs">
-        <dt>Rod</dt>
-        <dd>{setup.rod}</dd>
-        <dt>Reel</dt>
-        <dd>{setup.reel}</dd>
-        <dt>Line</dt>
-        <dd>{setup.line}</dd>
-        <dt>Hook &amp; rig</dt>
-        <dd>{setup.terminal}</dd>
+        <dt>{t.rod}</dt>
+        <dd lang="en">{setup.rod}</dd>
+        <dt>{t.reel}</dt>
+        <dd lang="en">{setup.reel}</dd>
+        <dt>{t.line}</dt>
+        <dd lang="en">{setup.line}</dd>
+        <dt>{t.hookRig}</dt>
+        <dd lang="en">{setup.terminal}</dd>
       </dl>
       <SourceLinks sources={setup.sources} />
     </li>
   );
-}
-
-/** Lure setups and bait setups, grouped for the two sections below. A
- * setup naming both (method "either") appears in both groups, since the
- * text already says it works either way. */
-export function groupSetups(setups: TackleSetup[]) {
-  return {
-    lure: setups.filter((s) => s.method === "lure" || s.method === "either"),
-    bait: setups.filter((s) => s.method === "bait" || s.method === "either"),
-  };
 }
 
 function SetupGroup({ title, setups }: { title: string; setups: TackleSetup[] }) {
@@ -110,7 +94,7 @@ function Bullets({ title, items }: { title: string; items: string[] }) {
   return (
     <section className="guide-section">
       <h4>{title}</h4>
-      <ul>
+      <ul lang="en">
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}
@@ -127,47 +111,45 @@ export function SpeciesGuideBody({
   compact?: boolean;
 }) {
   const isForage = guide.role === "forage";
+  const t = useT().fish;
 
   return (
     <div className={compact ? "guide-body guide-body-compact" : "guide-body"}>
-      {!compact && <p className="guide-summary">{guide.summary}</p>}
+      {!compact && <p className="guide-summary" lang="en"><GuideSummary guide={guide} /></p>}
 
       {!compact && (
         <section className="guide-section">
           <h4>
-            What it eats <DietTypeTag guide={guide} />
+            {t.whatItEats} <DietTypeTag guide={guide} />
           </h4>
-          <p>{guide.diet}</p>
+          <p lang="en">{guide.diet}</p>
         </section>
       )}
 
-      {!compact && <Bullets title="How to recognise it" items={guide.identification} />}
-      {!compact && <Bullets title="Where and when" items={guide.where_and_when} />}
+      {!compact && <Bullets title={t.recognise} items={guide.identification} />}
+      {!compact && <Bullets title={t.whereWhen} items={guide.where_and_when} />}
 
       {isForage ? (
         <>
-          <Bullets title="How to get it" items={guide.how_to_get} />
-          <Bullets title="Use it as bait for" items={guide.bait_for} />
+          <Bullets title={t.howToGetShort} items={guide.how_to_get} />
+          <Bullets title={t.baitFor} items={guide.bait_for} />
         </>
       ) : (
         <>
-          <Bullets title="Live and natural bait" items={guide.live_baits} />
-          <Bullets title="Lures" items={guide.lures} />
-          <p className="guide-setups-intro">
-            Rod and reel setups, grouped by lure fishing (artificial baits) and bait
-            fishing (live or natural bait):
-          </p>
-          <SetupGroup title="Lure fishing" setups={groupSetups(guide.setups).lure} />
-          <SetupGroup title="Bait fishing" setups={groupSetups(guide.setups).bait} />
+          <Bullets title={t.liveBait} items={guide.live_baits} />
+          <Bullets title={t.lures} items={guide.lures} />
+          <p className="guide-setups-intro">{t.setupsNote}</p>
+          <SetupGroup title={t.lureFishing} setups={groupSetups(guide.setups).lure} />
+          <SetupGroup title={t.baitFishing} setups={groupSetups(guide.setups).bait} />
         </>
       )}
 
-      <Bullets title="Tips" items={guide.tips} />
+      <Bullets title={t.tips} items={guide.tips} />
 
       {!compact && guide.legal_notes.length > 0 && (
         <section className="guide-section guide-legal">
-          <h4>Bait rules</h4>
-          <ul>
+          <h4>{t.baitRules}</h4>
+          <ul lang="en">
             {guide.legal_notes.map((note) => (
               <li key={note}>{note}</li>
             ))}
@@ -175,24 +157,19 @@ export function SpeciesGuideBody({
         </section>
       )}
 
-      <p className="guide-limits">
-        Size and bag limits vary by species and lake.{" "}
-        <a href={guide.limits_url} target="_blank" rel="noreferrer">
-          Check TPWD&apos;s current limits
-        </a>{" "}
-        before you keep a fish.
-      </p>
+      {/* The chosen state's agency, not Texas's for everyone. */}
+      <LimitsNote className="guide-limits" texasUrl={guide.limits_url} />
 
       {!compact && (
         <section className="guide-section guide-sources">
-          <h4>Sources</h4>
+          <h4>{t.sources}</h4>
           <ul>
             {guide.sources.map((s) => (
               <li key={s.url}>
                 <a href={s.url} target="_blank" rel="noreferrer">
                   {s.label}
                 </a>
-                {s.kind === "guide" && <span className="guide-source-kind"> (fishing guide site)</span>}
+                {s.kind === "guide" && <span className="guide-source-kind">{t.guideSite}</span>}
               </li>
             ))}
           </ul>

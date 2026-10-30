@@ -23,6 +23,7 @@ from app.models.community import (
     PinReport,
     User,
 )
+from app.models.water import River
 from app.models.waterbody import Waterbody
 from app.schemas.pins import (
     FishCandidateOut,
@@ -35,15 +36,19 @@ from app.schemas.pins import (
     PinPhotoOut,
     PinSummaryOut,
     PinUpdateIn,
+    PinWaterOut,
     PlaceOut,
     PlacesOut,
     ReportIn,
     ReportOut,
+    WaterGroupOut,
     WhereOut,
+    WhereWaterOut,
 )
 from app.knowledge.jurisdictions import STATE_NAMES
-from app.services import audit, counties, fish_id
+from app.services import audit, counties, email_verification, fish_id, water
 from app.services import pins as svc
+from app.services.email_verification import VerificationError
 from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, group_label
 from app.services.media import PhotoRejected, clean_photo, get_store
 from app.services.pins import PinError
@@ -60,6 +65,15 @@ fish_id_by_user = RateLimiter(limit=60, window_seconds=60 * 60)
 
 def _raise(exc: PinError) -> NoReturn:
     raise HTTPException(status_code=exc.status, detail=exc.message) from exc
+
+
+def _verified(user: User) -> None:
+    """Sharing and reporting wait for a confirmed email address when
+    EMAIL_VERIFICATION is on (services/email_verification.py)."""
+    try:
+        email_verification.require_verified(user)
+    except VerificationError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.message) from exc
 
 
 def _throttle(limiter: RateLimiter, user: User) -> None:
@@ -86,13 +100,30 @@ def _group_label(pin: CatchPin) -> str | None:
     return group_label(CLAIM_GROUPS.get(pin.species_slug or "") or (claimed.group if claimed else None))
 
 
-def summary_fields(pin: CatchPin, user: User | None, lakes: dict[int, Waterbody]) -> dict:
-    lake = lakes.get(pin.waterbody_id) if pin.waterbody_id else None
+Waters = tuple[dict[int, Waterbody], dict[int, River]]
+
+
+def _water_out(pin: CatchPin, waters: Waters) -> PinWaterOut | None:
+    lakes, rivers = waters
+    if pin.waterbody_id in lakes:
+        return PinWaterOut(kind=water.LAKE, id=pin.waterbody_id, name=lakes[pin.waterbody_id].name)
+    if pin.river_id in rivers:
+        return PinWaterOut(kind=water.RIVER, id=pin.river_id, name=rivers[pin.river_id].name)
+    return None
+
+
+def summary_fields(pin: CatchPin, user: User | None, waters: Waters) -> dict:
+    lake = waters[0].get(pin.waterbody_id) if pin.waterbody_id else None
     first = pin.photos[0] if pin.photos else None
+    # Others see the public point unless the angler shared the spot (ADR 0038).
+    latitude, longitude, shown = svc.shown_point(pin, user)
     return {
         "id": pin.id,
-        "latitude": pin.latitude,
-        "longitude": pin.longitude,
+        "latitude": latitude,
+        "longitude": longitude,
+        "location_shown": shown,
+        "share_exact": pin.share_exact,
+        "public_place": svc.PLACE_EXACT if pin.share_exact else (pin.public_place or svc.PLACE_AREA),
         "title": pin.title,
         "species_slug": pin.species_slug,
         "species_label": svc.species_label(pin),
@@ -105,6 +136,8 @@ def summary_fields(pin: CatchPin, user: User | None, lakes: dict[int, Waterbody]
         "status_reason": pin.status_reason,
         "author": PinAuthorOut(id=pin.user.id, display_name=pin.user.display_name),
         "lake": PinLakeOut(id=lake.id, name=lake.name) if lake else None,
+        "water": _water_out(pin, waters),
+        "photo_at_spot": bool(pin.photo_at_spot),
         "state_code": pin.state_code,
         "county_geoid": pin.county_geoid,
         "county_name": pin.county_name,
@@ -114,11 +147,12 @@ def summary_fields(pin: CatchPin, user: User | None, lakes: dict[int, Waterbody]
     }
 
 
-def lakes_for(db: Session, pins: list[CatchPin]) -> dict[int, Waterbody]:
-    ids = {p.waterbody_id for p in pins if p.waterbody_id}
-    if not ids:
-        return {}
-    return {w.id: w for w in db.scalars(select(Waterbody).where(Waterbody.id.in_(ids)))}
+def waters_for(db: Session, pins: list[CatchPin]) -> Waters:
+    lake_ids = {p.waterbody_id for p in pins if p.waterbody_id}
+    river_ids = {p.river_id for p in pins if p.river_id}
+    lakes = {w.id: w for w in db.scalars(select(Waterbody).where(Waterbody.id.in_(lake_ids)))} if lake_ids else {}
+    rivers = {r.id: r for r in db.scalars(select(River).where(River.id.in_(river_ids)))} if river_ids else {}
+    return lakes, rivers
 
 
 def detail_out(db: Session, pin: CatchPin, user: User | None) -> PinDetailOut:
@@ -126,7 +160,7 @@ def detail_out(db: Session, pin: CatchPin, user: User | None) -> PinDetailOut:
         select(PinReport.id).where(PinReport.pin_id == pin.id, PinReport.reporter_id == user.id)
     ) is not None
     return PinDetailOut(
-        **summary_fields(pin, user, lakes_for(db, [pin])),
+        **summary_fields(pin, user, waters_for(db, [pin])),
         note=pin.note,
         photos=[
             PinPhotoOut(id=p.id, url=_media_url(p), thumb_url=_media_url(p, thumb=True), width=p.width, height=p.height)
@@ -216,16 +250,52 @@ def pin_places(
 def pin_where(
     lat: float = Query(ge=-90, le=90),
     lng: float = Query(ge=-180, le=180),
+    db: Session = Depends(get_db),
 ) -> WhereOut:
-    """The county a point is in: where "near me" opens the catches. Not
-    stored or logged."""
+    """The county a point is in: where "near me" opens the catches; and the
+    water a catch there would be on (ADR 0040), for the map while placing
+    one. Not stored or logged."""
     c = counties.county_at(lat, lng)
+    match = water.find_water(db, lat, lng)
     return WhereOut(
         state_code=c.state if c else None,
         state_name=STATE_NAMES.get(c.state, c.state) if c else None,
         county_geoid=c.geoid if c else None,
         county_name=c.name if c else None,
+        water=WhereWaterOut(kind=match.kind, id=match.id, name=match.name, distance_m=match.distance_m)
+        if match
+        else None,
+        water_required=water.data_ready(db, c.state if c else None),
     )
+
+
+@router.get("/pins/waters", response_model=list[WaterGroupOut])
+def pin_waters(
+    bbox: str,
+    species: str | None = None,
+    user: User | None = Depends(optional_user),
+    db: Session = Depends(get_db),
+) -> list[WaterGroupOut]:
+    """Other people's catches in view, counted per lake and per river in
+    each county (ADR 0040). The viewer's own catches come from /pins."""
+    box = _parse_bbox(bbox)
+    assert box is not None
+    out: list[WaterGroupOut] = []
+    for g in svc.water_groups(db, user, bbox=box, species=species):
+        counted: dict[str, int] = {}
+        for p in g.pins:
+            if (label := svc.species_label(p)) is not None:
+                counted[label] = counted.get(label, 0) + 1
+        with_photo = next((p for p in g.pins if p.photos), None)
+        out.append(WaterGroupOut(
+            kind=g.kind, id=g.id, state_code=g.state_code, county_geoid=g.county_geoid, name=g.name,
+            county_name=g.county_name,
+            latitude=g.latitude, longitude=g.longitude, count=len(g.pins),
+            latest_at=g.pins[0].created_at,
+            species=[label for label, _ in sorted(counted.items(), key=lambda kv: -kv[1])[:3]],
+            thumb_url=_media_url(with_photo.photos[0], thumb=True) if with_photo else None,
+        ))
+    return out
 
 
 @router.get("/pins", response_model=list[PinSummaryOut])
@@ -236,16 +306,17 @@ def list_pins(
     state: str | None = StateParam,
     county: str | None = CountyParam,
     lake: int | None = Query(default=None, ge=0),
+    river: int | None = Query(default=None, ge=1),
     limit: int = Query(default=200, ge=1, le=svc.MAX_LIST),
     user: User | None = Depends(optional_user),
     db: Session = Depends(get_db),
 ) -> list[PinSummaryOut]:
     pins = svc.list_pins(
         db, user, bbox=_parse_bbox(bbox), species=species, mine=mine,
-        state=state, county=county, lake=lake, limit=limit,
+        state=state, county=county, lake=lake, river=river, limit=limit,
     )
-    lakes = lakes_for(db, pins)
-    return [PinSummaryOut(**summary_fields(p, user, lakes)) for p in pins]
+    waters = waters_for(db, pins)
+    return [PinSummaryOut(**summary_fields(p, user, waters)) for p in pins]
 
 
 @router.get("/pins/{pin_id}", response_model=PinDetailOut)
@@ -273,10 +344,12 @@ def create_pin(
     species_other: str | None = Form(default=None, max_length=120),
     caught_on: date | None = Form(default=None),
     visibility: str = Form(default=VISIBILITY_PUBLIC),
+    share_exact: bool = Form(default=False),
     photos: list[UploadFile] | None = File(default=None),
     user: User = Depends(require_user),
     db: Session = Depends(get_db),
 ) -> PinDetailOut:
+    _verified(user)
     _throttle(create_by_user, user)
     uploads = _read_uploads(photos, get_settings().max_photos_per_pin)
     try:
@@ -289,6 +362,7 @@ def create_pin(
             species_other=species_other,
             caught_on=caught_on,
             visibility=visibility,
+            share_exact=share_exact,
         )
         pin = svc.create_pin(db, user, fields, uploads, get_store())
     except PinError as exc:
@@ -318,6 +392,8 @@ def update_pin(
     db: Session = Depends(get_db),
 ) -> PinDetailOut:
     pin = _owned_pin(db, pin_id, user)
+    if (payload.latitude is None) != (payload.longitude is None):
+        raise HTTPException(status_code=422, detail="Send both latitude and longitude, or neither.")
     # Species is one choice: a guide species, free text, or nothing. Setting
     # either kind replaces the other.
     slug, other = pin.species_slug, pin.species_other
@@ -339,6 +415,7 @@ def update_pin(
             if payload.clear_caught_on
             else (payload.caught_on if payload.caught_on is not None else pin.caught_on),
             visibility=payload.visibility or pin.visibility,
+            share_exact=pin.share_exact if payload.share_exact is None else payload.share_exact,
         )
     except PinError as exc:
         _raise(exc)
@@ -352,6 +429,15 @@ def update_pin(
     pin.title, pin.note = fields.title, fields.note
     pin.species_slug, pin.species_other = fields.species_slug, fields.species_other
     pin.caught_on, pin.visibility = fields.caught_on, fields.visibility
+    if payload.latitude is not None and payload.longitude is not None:
+        try:
+            svc.move_pin(db, pin, payload.latitude, payload.longitude)
+        except PinError as exc:
+            db.rollback()
+            _raise(exc)
+    if fields.share_exact != pin.share_exact:
+        pin.share_exact = fields.share_exact
+        svc.set_public_point(db, pin)
     db.commit()
     db.refresh(pin)
     return detail_out(db, pin, user)
@@ -418,6 +504,7 @@ def report_pin(
         pin = svc.get_visible_pin(db, pin_id, user)
     except PinError as exc:
         _raise(exc)
+    _verified(user)
     _throttle(report_by_user, user)
     try:
         hidden = svc.report_pin(db, pin, user, payload.reason, payload.detail)

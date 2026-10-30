@@ -3,8 +3,9 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { CircleMarker, MapContainer, Marker, Popup, ZoomControl, useMap, useMapEvents } from "react-leaflet";
-import { useEffect, useRef, useState } from "react";
+import { type RefObject, useEffect, useRef, useState } from "react";
 
+import { useT } from "@/i18n/client";
 import { ApiError, getWaterbody } from "@/lib/api/client";
 import type { WaterbodyDetail } from "@/lib/api/types";
 import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from "@/lib/map/tiles";
@@ -17,18 +18,48 @@ import { type MapViewState, lakeDetailExitZoom } from "./zoomPolicy";
 const ATTRACTOR_STYLE = { color: "#0f766e", fillColor: "#14b8a6", fillOpacity: 0.85, weight: 1 };
 
 const FIT_PADDING = 60;
-const SINGLE_POINT_ZOOM = 12;
+// Closer than this, a pond fills the screen and the land around it (roads,
+// parking) is cut off.
+const MAX_FIT_ZOOM = 16;
+
+/** The zoom to open a lake at when nothing says how big it is: the zoom the
+ * person was already at (they clicked it there, so it was in view), kept to
+ * lake scale. It used to be a fixed 12, about 15 km across: a small lake
+ * opened from close in became a dot in a city (2026-10-29 review). */
+export function fallbackLakeZoom(fromZoom: number | undefined): number {
+  return Math.min(MAX_FIT_ZOOM, Math.max(13, Math.round(fromZoom ?? 14)));
+}
+
+/** How many pixels at the bottom of the map `cover` hides: a phone's sheet
+ * lies over the map; beside it (desktop) or below it, it hides nothing. */
+export function coveredBottom(map: DOMRect, cover: DOMRect | null): number {
+  if (!cover || cover.left >= map.right || cover.right <= map.left) return 0;
+  return Math.max(0, Math.min(map.bottom, cover.bottom) - Math.max(map.top, cover.top));
+}
 
 /** Frames the lake, and reports the zoom it actually settles at so the
  * zoom-out exit below can be measured from there. Measured after the fit
  * rather than predicted before it: a prediction off by a level or two (the
  * map's size still settling, say) would close the lake the moment it opened
- * or never at all. */
+ * or never at all.
+ *
+ * What it frames, best first: the water's own box (`bounds`, from its
+ * OpenStreetMap outline) with its entrances; else the entrances and its
+ * centre; else the centre at the zoom the person came from.
+ *
+ * It frames the lake in the part of the map left visible above `cover`. On a
+ * phone the lake's sheet rises over half the map as the lake opens, and a lake
+ * centred on the whole map sat at the sheet's edge, half under it
+ * (2026-10-29 review). */
 function FitToLakeExtent({
   detail,
+  fromZoom,
+  cover,
   onSettled,
 }: {
   detail: WaterbodyDetail;
+  fromZoom?: number;
+  cover?: RefObject<HTMLElement | null>;
   onSettled: (zoom: number) => void;
 }) {
   const map = useMap();
@@ -37,19 +68,41 @@ function FitToLakeExtent({
       [detail.latitude, detail.longitude],
       ...detail.access_points.map((ap) => [ap.latitude, ap.longitude] as [number, number]),
     ];
-    const settle = () => onSettled(map.getZoom());
-    map.once("moveend", settle);
-    // A fit that changes nothing may not move the map; don't wait forever.
-    const fallback = setTimeout(settle, 1500);
-    if (points.length === 1) {
-      // Just the centroid — a fitBounds on a single point zooms in far
-      // too aggressively (or not at all), so set an explicit lake-scale
-      // zoom instead.
-      map.setView(points[0], SINGLE_POINT_ZOOM);
-    } else {
-      map.fitBounds(L.latLngBounds(points), { padding: [FIT_PADDING, FIT_PADDING] });
+    if (detail.bounds) {
+      const [south, west, north, east] = detail.bounds;
+      points.push([south, west], [north, east]);
     }
+    let cancelled = false;
+    let fallback: ReturnType<typeof setTimeout> | undefined;
+    const settle = () => onSettled(map.getZoom());
+    const fit = () => {
+      if (cancelled) return;
+      const hidden = coveredBottom(
+        map.getContainer().getBoundingClientRect(),
+        cover?.current?.getBoundingClientRect() ?? null,
+      );
+      map.once("moveend", settle);
+      // A fit that changes nothing may not move the map; don't wait forever.
+      fallback = setTimeout(settle, 1500);
+      if (points.length === 1) {
+        // Just the centre: a fitBounds on one point zooms all the way in.
+        // The map's middle moves down by half the hidden strip, so the lake
+        // sits in the middle of what shows.
+        const zoom = fallbackLakeZoom(fromZoom);
+        map.setView(map.unproject(map.project(points[0], zoom).add([0, hidden / 2]), zoom), zoom);
+      } else {
+        map.fitBounds(L.latLngBounds(points), {
+          paddingTopLeft: [FIT_PADDING, FIT_PADDING],
+          paddingBottomRight: [FIT_PADDING, FIT_PADDING + hidden],
+          maxZoom: MAX_FIT_ZOOM,
+        });
+      }
+    };
+    // Measured once the sheet has stopped rising, not partway up.
+    const rising = cover?.current?.getAnimations?.() ?? [];
+    Promise.all(rising.map((a) => a.finished)).then(fit, fit);
     return () => {
+      cancelled = true;
       map.off("moveend", settle);
       clearTimeout(fallback);
     };
@@ -109,16 +162,25 @@ function ExitWhenZoomedOut({
  */
 export default function LakeDetailMap({
   waterbodyId,
+  fromZoom,
+  cover,
   onExit = () => undefined,
   onViewChange = () => undefined,
 }: {
   waterbodyId: number;
+  // The overview's zoom when the lake was clicked, for a lake with no
+  // outline or entrances on file (fallbackLakeZoom).
+  fromZoom?: number;
+  // What may lie over the map's bottom: the lake's sheet on a phone.
+  cover?: RefObject<HTMLElement | null>;
   // Zoomed out far enough to leave the lake: MapView returns to the overview.
   onExit?: (view: MapViewState) => void;
   // Where the map is looking, so "← All lakes" has somewhere to return to
   // when the lake was opened from a link rather than from the overview.
   onViewChange?: (view: MapViewState) => void;
 }) {
+  const t = useT().map;
+  const lakeMapError = t.lakeMapError;
   const [detail, setDetail] = useState<WaterbodyDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [exitBelow, setExitBelow] = useState<number | null>(null);
@@ -137,22 +199,22 @@ export default function LakeDetailMap({
       })
       .catch((e: unknown) => {
         if (cancelled) return;
-        setError(e instanceof ApiError ? e.message : "Could not load this lake's map.");
+        setError(e instanceof ApiError ? e.message : lakeMapError);
       });
     return () => {
       cancelled = true;
     };
-  }, [waterbodyId]);
+  }, [waterbodyId, lakeMapError]);
 
   if (error) return <div className="map-loading panel-error">{error}</div>;
-  if (!detail) return <div className="map-loading">Loading lake map…</div>;
+  if (!detail) return <div className="map-loading">{t.loadingLakeMap}</div>;
 
   const isClosed = detail.public_access_status === "closed";
 
   return (
     <MapContainer
       center={[detail.latitude, detail.longitude]}
-      zoom={12}
+      zoom={fallbackLakeZoom(fromZoom)}
       minZoom={MAP_MIN_ZOOM}
       maxZoom={MAP_MAX_ZOOM}
       scrollWheelZoom
@@ -162,15 +224,20 @@ export default function LakeDetailMap({
     >
       <BaseMap />
       <ZoomControl position="bottomright" />
-      <FitToLakeExtent detail={detail} onSettled={(z) => setExitBelow(lakeDetailExitZoom(z))} />
+      <FitToLakeExtent
+        detail={detail}
+        fromZoom={fromZoom}
+        cover={cover}
+        onSettled={(z) => setExitBelow(lakeDetailExitZoom(z))}
+      />
       <ExitWhenZoomedOut exitBelow={exitBelow} onExit={onExit} onViewChange={onViewChange} />
-      <Marker position={[detail.latitude, detail.longitude]} icon={waterIcon()}>
+      <Marker position={[detail.latitude, detail.longitude]} icon={waterIcon()} title={`${detail.name}, ${t.lakeCenter}`}>
         <Popup>
           <strong>{detail.name}</strong>
-          <div style={{ fontSize: 12, color: "#6b7280" }}>lake center (approximate)</div>
+          <div style={{ fontSize: 12, color: "#6b7280" }}>{t.lakeCenterApprox}</div>
           {isClosed && (
             <div style={{ fontSize: 12, color: "#991b1b", fontWeight: 600 }}>
-              Closed to the public
+              {t.closedToPublic}
             </div>
           )}
         </Popup>
@@ -180,16 +247,21 @@ export default function LakeDetailMap({
           explicit rather than relying on that being true forever. */}
       {!isClosed &&
         detail.access_points.map((ap) => (
-          <Marker key={ap.id} position={[ap.latitude, ap.longitude]} icon={waterIcon(ap.public_status === "confirmed_public" ? "access" : "osm")}>
+          <Marker
+            key={ap.id}
+            position={[ap.latitude, ap.longitude]}
+            icon={waterIcon(ap.public_status === "confirmed_public" ? "access" : "osm")}
+            title={`${ap.name}, ${ap.public_status === "confirmed_public" ? t.publicEntrance : t.unverifiedEntrance}`}
+          >
             <Popup>
               <strong>{ap.name}</strong>
               <div style={{ fontSize: 12, color: "#6b7280" }}>
-                {ap.access_type.replace("_", " ")}
-                {ap.parking ? ", parking available" : ""}
+                {t.accessTypes[ap.access_type] ?? ap.access_type.replace("_", " ")}
+                {ap.parking ? t.parking : ""}
               </div>
               {ap.public_status === "osm_reported" && (
                 <div style={{ fontSize: 12, color: "#92400e" }}>
-                  Reported on OpenStreetMap, not verified. Check it&apos;s public before you go.
+                  {t.osmEntrance}
                 </div>
               )}
             </Popup>
@@ -199,15 +271,13 @@ export default function LakeDetailMap({
         (detail.fish_attractors ?? []).map((a) => (
           <CircleMarker key={`att-${a.id}`} center={[a.latitude, a.longitude]} radius={5} pathOptions={ATTRACTOR_STYLE}>
             <Popup>
-              <strong>Fish attractor</strong>
+              <strong>{t.attractor}</strong>
               <div style={{ fontSize: 12, color: "#6b7280" }}>
                 {a.attractor_type}
-                {a.placed_year ? `, placed ${a.placed_year}` : ""}
-                {a.depth_ft ? `, about ${Math.round(a.depth_ft)} ft deep` : ""}
+                {a.placed_year ? t.attractorPlaced(a.placed_year) : ""}
+                {a.depth_ft ? t.attractorDepth(Math.round(a.depth_ft)) : ""}
               </div>
-              <div style={{ fontSize: 12, color: "#6b7280" }}>
-                Sunk by the state agency to hold fish. Older ones may have broken down.
-              </div>
+              <div style={{ fontSize: 12, color: "#6b7280" }}>{t.attractorNote}</div>
             </Popup>
           </CircleMarker>
         ))}

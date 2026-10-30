@@ -279,6 +279,33 @@ If that proves too slow or too big, the lighter BioCLIP is built with
 `build_fish_id_model --model bioclip` (89 MB, about +115 MB of memory, 0.3 s),
 at the cost of accuracy (ADR 0037 has both measured).
 
+### Catches on named water (ADR 0040)
+
+The water shapes are prepared on your machine from the Geofabrik extracts
+(`python -m app.data_import.water_shapes --states all`, about 40 minutes)
+and imported on the server from the payloads, with no pyosmium or shapely
+there. Copy them up (99 MB):
+
+```
+ssh -i fisheye.pem ubuntu@<ELASTIC_IP> "mkdir -p ~/data/osm_cache"
+scp -i fisheye.pem osm_cache/*_water.json.gz ubuntu@<ELASTIC_IP>:~/data/osm_cache/
+```
+
+On the server, after the backup (`pg_dump`, above) and `git pull`:
+
+```bash
+$DC up --build -d backend frontend
+$DC exec -T backend mkdir -p /tmp/water
+for f in ~/data/osm_cache/*_water.json.gz; do $DC cp "$f" backend:/tmp/water/; done
+$DC exec -T backend python -m app.data_import.water_shapes --states all --import-only --out-dir /tmp/water
+# Catches saved before are linked to their water at startup:
+$DC restart backend
+```
+
+The database grows by about 220 MB (537,449 pieces). Until a state's shapes
+are imported, catches there work as before (no water check), so the order
+of the deploy and the import doesn't matter.
+
 ## 7. Try it on your phone
 
 Over mobile data, not Wi-Fi: use my location, open a state and a lake, read
@@ -307,9 +334,12 @@ its disk too, so back up first.
 
 ## What this does not do yet
 
-- **Managed database and backups.** The database is a container on the same
-  disk. The plan is RDS PostgreSQL + PostGIS, photos on S3.
-- **Email.** No password reset or verification; Google sign-in avoids both.
+- **Managed database.** The database is a container on the same disk. The
+  plan is RDS PostgreSQL + PostGIS, photos on S3. Until then, nightly
+  backups to S3 with a restore drill: `docs/backups.md`.
+- **Email.** No password reset yet. Address verification is built but off
+  (`EMAIL_VERIFICATION`, `MAIL_BACKEND` in `.env.example`) until a mail
+  service such as Amazon SES is set up; Google sign-in needs neither.
 
 ## Taking it down
 

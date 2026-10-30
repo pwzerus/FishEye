@@ -8,6 +8,7 @@ import { MapContainer, Marker, Popup, useMap } from "react-leaflet";
 
 import { BaseMap } from "@/components/map/BaseMap";
 import { catchIcon } from "@/components/map/catchIcon";
+import { useT } from "@/i18n/client";
 import type { PinSummary } from "@/lib/api/types";
 import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from "@/lib/map/tiles";
 
@@ -23,6 +24,7 @@ function FitAll({ pins }: { pins: PinSummary[] }) {
 
 /** Everywhere you've pinned a catch, on one map (the account page). */
 export default function MyCatchesMap({ pins }: { pins: PinSummary[] }) {
+  const t = useT().catch;
   return (
     <MapContainer
       center={[39.5, -98.35]}
@@ -49,11 +51,11 @@ export default function MyCatchesMap({ pins }: { pins: PinSummary[] }) {
               )}
               <strong>{p.title}</strong>
               <span>
-                {p.species_label ?? "Catch"}
-                {p.lake ? ` · near ${p.lake.name}` : ""}
-                {p.visibility === "private" ? " · only you" : ""}
+                {p.species_label ?? t.catch}
+                {p.water ? ` · ${p.water.name}` : p.lake ? ` · ${p.lake.name}` : ""}
+                {p.visibility === "private" ? ` · ${t.onlyYouShort}` : ""}
               </span>
-              <Link href={`/community/${p.id}`}>Open →</Link>
+              <Link href={`/community/${p.id}`}>{t.openShort}</Link>
             </div>
           </Popup>
         </Marker>

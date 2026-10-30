@@ -1,10 +1,15 @@
 import Link from "next/link";
 import { ActionIcon } from "@/components/ui/ActionIcon";
 import { FishArt } from "@/components/fish/FishArt";
+import { LegalLinks } from "@/components/legal/LegalPage";
 import { PageTransition } from "@/components/motion/Transition";
-import { listSpeciesGuides, listWaterbodies, getWaterbody } from "@/lib/api/client";
+import { listJurisdictions, listSpeciesGuides, listWaterbodies, getWaterbody } from "@/lib/api/client";
 import type { SpeciesGuide, WaterbodyDetail } from "@/lib/api/types";
 import { waterFor } from "@/lib/fishArt";
+import { FishNameParts } from "@/components/fish/FishName";
+import { getLocale } from "@/i18n/server";
+import { MESSAGES } from "@/i18n/messages";
+import { localFishName, localStateName } from "@/i18n/names";
 
 export const dynamic = "force-dynamic";
 
@@ -34,51 +39,68 @@ function WaterIllustration() {
   </svg>;
 }
 
+/** The lake on the front page: a different one each day, moving between the
+ * states FishEye has official lake data for, so the page isn't always the
+ * same Texas reservoir (the first verified lake by name, before). Only
+ * lakes with confirmed public access. */
+async function featuredLake(): Promise<{ lake: WaterbodyDetail; stateName: string; stateCode: string } | null> {
+  const states = (await listJurisdictions()).filter((j) => j.covered);
+  const day = Math.floor(Date.now() / 86_400_000);
+  for (let i = 0; i < states.length; i++) {
+    const state = states[(day + i) % states.length];
+    const open = (await listWaterbodies({ stateCode: state.code, tier: "verified", limit: 60 })).filter(
+      (item) => item.public_access_status === "open",
+    );
+    // A lake or reservoir makes a better first look than a pond.
+    const bigger = open.filter((item) => item.water_type !== "pond" && !/\bpond\b/i.test(item.name));
+    const pick = bigger.length ? bigger : open;
+    if (pick.length) return { lake: await getWaterbody(pick[day % pick.length].id), stateName: state.name, stateCode: state.code };
+  }
+  return null;
+}
+
 export default async function FieldHome() {
+  const locale = await getLocale();
+  const t = MESSAGES[locale].home;
   let guides: SpeciesGuide[] = [];
-  let lake: WaterbodyDetail | null = null;
-  const results = await Promise.allSettled([
-    listSpeciesGuides(),
-    listWaterbodies({ stateCode: "TX", tier: "verified", limit: 5 }).then(async (lakes) => {
-      const open = lakes.find((item) => item.public_access_status === "open");
-      return open ? getWaterbody(open.id) : null;
-    }),
-  ]);
+  let featured: { lake: WaterbodyDetail; stateName: string; stateCode: string } | null = null;
+  const results = await Promise.allSettled([listSpeciesGuides(), featuredLake()]);
   if (results[0].status === "fulfilled") guides = results[0].value;
-  if (results[1].status === "fulfilled") lake = results[1].value;
+  if (results[1].status === "fulfilled") featured = results[1].value;
+  const lake = featured?.lake ?? null;
   const starters = guides.filter((g) => g.difficulty === "beginner").slice(0, 4);
 
   return <PageTransition><main className="home field-home home-refined">
     <section className="field-hero">
       <div className="field-hero-copy">
-        <p className="field-kicker"><span /> YOUR FIRST CAST STARTS HERE</p>
-        <h1>Find your water.<br/><em>Make a day of it.</em></h1>
-        <p className="field-lede">Nearby lakes. The right bait. A simple plan.</p>
-        <div className="hero-actions"><Link href="/map" className="btn btn-primary"><ActionIcon name="pin"/> Find nearby water <ActionIcon name="arrow"/></Link><Link href="/fish" className="field-secondary">Choose a fish →</Link></div>
-        <p className="field-assurance">Free to explore · No account needed</p>
+        <p className="field-kicker"><span /> {t.kicker}</p>
+        <h1>{t.title1}<br/><em>{t.title2}</em></h1>
+        <p className="field-lede">{t.lede}</p>
+        <div className="hero-actions"><Link href="/map" className="btn btn-primary"><ActionIcon name="pin"/> {t.findWater} <ActionIcon name="arrow"/></Link><Link href="/start" className="field-secondary">{t.firstTime}</Link></div>
+        <p className="field-assurance">{t.assurance}</p>
       </div>
       <div className="field-product">
-        <div className="field-product-top"><ActionIcon name="map"/> Your next fishing day</div>
-        <div className="field-map-wrap"><WaterIllustration /><span className="field-map-note">Illustration · open the map for real locations</span>
-          <Link href={lake ? `/map?lake=${lake.id}` : "/map"} className="field-lake-card"><span className="field-lake-icon"><ActionIcon name="fish"/></span><span><span className="field-small-label">EXPLORE A LAKE</span><strong>{lake?.name ?? "Find a place to start"}</strong><span className="field-lake-meta">{lake ? `${lake.access_points.filter((a) => a.public_status === "confirmed_public").length} public entrances · ${lake.species.length} fish species` : "Lakes & public entrances"}</span></span><span className="field-card-arrow"><ActionIcon name="arrow"/></span></Link>
+        <div className="field-product-top"><ActionIcon name="map"/> {t.nextDay}</div>
+        <div className="field-map-wrap"><WaterIllustration /><span className="field-map-note">{t.illustration}</span>
+          <Link href={lake ? `/map?lake=${lake.id}` : "/map"} className="field-lake-card"><span className="field-lake-icon"><ActionIcon name="fish"/></span><span><span className="field-small-label">{t.exploreLake}</span><strong>{lake?.name ?? t.placeToStart}</strong><span className="field-lake-meta">{lake && featured ? t.lakeMeta(localStateName(featured.stateCode, featured.stateName, locale), lake.access_points.filter((a) => a.public_status === "confirmed_public").length, lake.species.length) : t.lakeMetaNone}</span></span><span className="field-card-arrow"><ActionIcon name="arrow"/></span></Link>
         </div>
       </div>
     </section>
-    <section className="home-actions" aria-label="What would you like to do?">
+    <section className="home-actions" aria-label={t.actions}>
       {([
-        { icon: "map", title: "Find water", text: "Lakes & public entrances", href: "/map" },
-        { icon: "fish", title: "Learn a fish", text: "Bait, gear & how to fish", href: "/fish" },
-        { icon: "ask", title: "Ask a question", text: "Answers with sources", href: "/ask" },
+        { icon: "map", title: t.actionMap, text: t.actionMapText, href: "/map" },
+        { icon: "fish", title: t.actionFish, text: t.actionFishText, href: "/fish" },
+        { icon: "ask", title: t.actionAsk, text: t.actionAskText, href: "/ask" },
       ] as const).map((action) => <Link key={action.href} href={action.href} className="home-action"><span className="home-action-icon"><ActionIcon name={action.icon}/></span><span><h2>{action.title}</h2><p>{action.text}</p></span><ActionIcon name="arrow"/></Link>)}
     </section>
-    {starters.length > 0 && <section className="field-starters"><div className="field-section-heading"><h2>Good first fish</h2><Link href="/fish" className="field-secondary">All fish →</Link></div><div className="field-fish-row">{starters.map((g) => <Link key={g.slug} href={`/fish/${g.slug}`} className="field-fish"><div style={{ background: `linear-gradient(140deg, ${waterFor(g.slug)[0]}, ${waterFor(g.slug)[1]})` }}><FishArt slug={g.slug} uid={`field-${g.slug}`} /></div><h3>{g.common_name} <span aria-hidden="true">↗</span></h3><span className="field-small-label">BEGINNER FRIENDLY</span></Link>)}</div></section>}
+    {starters.length > 0 && <section className="field-starters"><div className="field-section-heading"><h2>{t.firstFish}</h2><Link href="/fish" className="field-secondary">{t.allFish}</Link></div><div className="field-fish-row">{starters.map((g) => <Link key={g.slug} href={`/fish/${g.slug}`} className="field-fish"><div style={{ background: `linear-gradient(140deg, ${waterFor(g.slug)[0]}, ${waterFor(g.slug)[1]})` }}><FishArt slug={g.slug} uid={`field-${g.slug}`} /></div><h3><FishNameParts local={localFishName(g.slug, locale)} english={g.common_name} /> <span aria-hidden="true">↗</span></h3><span className="field-small-label">{t.beginner}</span></Link>)}</div></section>}
     <section className="home-feedback" aria-labelledby="home-feedback-title">
       <div>
-        <h2 id="home-feedback-title">Help us make FishEye better</h2>
-        <p>Found a lake we got wrong, or wish FishEye did something it doesn&apos;t? Tell us.</p>
+        <h2 id="home-feedback-title">{t.feedbackTitle}</h2>
+        <p>{t.feedbackText}</p>
       </div>
-      <a className="btn btn-primary" href={`mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent("FishEye feedback")}`}>Send feedback</a>
+      <a className="btn btn-primary" href={`mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(t.feedbackSubject)}`}>{t.feedbackSend}</a>
     </section>
-    <footer className="field-footer"><span>FishEye · Get outside.</span><details className="home-sources"><summary>Where our information comes from</summary><p>State wildlife agencies (facts with links to their pages), USGS (PAD-US public lands, Nonindigenous Aquatic Species), OpenStreetMap (© OpenStreetMap contributors), GBIF and the National Weather Service. Map reports are labelled separately from verified information. Always check local rules.</p></details></footer>
+    <footer className="field-footer"><span>{t.footer}</span><LegalLinks /><details className="home-sources"><summary>{t.sourcesTitle}</summary><p>{t.sources}</p></details></footer>
   </main></PageTransition>;
 }

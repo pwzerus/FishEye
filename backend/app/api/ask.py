@@ -65,9 +65,10 @@ def _allowance_out(db: Session, user: User | None) -> AiAllowanceOut:
     return AiAllowanceOut(signed_in=True, limit=a.limit, remaining=a.remaining)
 
 
-def _response(result: rag_ask.AskResult, ai: AiAllowanceOut) -> AskResponse:
+def _response(result: rag_ask.AskResult, ai: AiAllowanceOut, state: str | None = None) -> AskResponse:
     t = result.trace
     return AskResponse(
+        state=rag_ask.answer_state(result.question, state),
         question=result.question,
         answer=result.answer,
         answer_source=result.answer_source,
@@ -109,8 +110,9 @@ def search_guides(
     db: Session = Depends(get_db),
     user: User | None = Depends(optional_user),
 ) -> AskResponse:
-    result = rag_ask.search_guides(payload.question, species_slug=_slug(payload), state=_state(payload))
-    return _response(result, _allowance_out(db, user))
+    state = _state(payload)
+    result = rag_ask.search_guides(payload.question, species_slug=_slug(payload), state=state, lang=payload.lang)
+    return _response(result, _allowance_out(db, user), state)
 
 
 @router.get("/allowance", response_model=AiAllowanceOut)
@@ -141,7 +143,7 @@ def summarize(
     Like /advisor/explain, a model failure is not an error: the response is
     still 200, with `answer_source` "fallback" saying so."""
     slug, state = _slug(payload), _state(payload)
-    if not rag_ask.search_guides(payload.question, species_slug=slug, state=state).citations:
+    if not rag_ask.search_guides(payload.question, species_slug=slug, state=state, lang=payload.lang).citations:
         raise HTTPException(status_code=422, detail=NOT_A_FISHING_QUESTION)
 
     day = ai_quota.today()
@@ -155,7 +157,7 @@ def summarize(
             ),
         )
 
-    result = rag_ask.ask(payload.question, species_slug=slug, state=state)
+    result = rag_ask.ask(payload.question, species_slug=slug, state=state, lang=payload.lang)
     if result.answer_source != rag_ask.ANSWER_LLM or result.trace.cache_hit:
         ai_quota.give_back(db, user, day)
-    return _response(result, _allowance_out(db, user))
+    return _response(result, _allowance_out(db, user), state)

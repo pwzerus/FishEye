@@ -4,51 +4,60 @@ import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
 
 import { VT } from "@/components/motion/Transition";
+import { useLocale, useT } from "@/i18n/client";
+import type { Locale } from "@/i18n/config";
+import { localFishName } from "@/i18n/names";
+import { useSelectedState } from "@/lib/jurisdiction";
 import { waterFor } from "@/lib/fishArt";
 import type { SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
 import { FishArt } from "./FishArt";
+import { FishName } from "./FishName";
 
 type Filter = "all" | "beginner" | "intermediate" | "advanced" | "forage";
 
-const FILTERS: { id: Filter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "beginner", label: "Beginner-friendly" },
-  { id: "intermediate", label: "Intermediate" },
-  { id: "advanced", label: "Advanced" },
-  { id: "forage", label: "Bait fish" },
-];
-
-export const DIFFICULTY_LABEL: Record<string, string> = {
-  beginner: "Beginner-friendly",
-  intermediate: "Intermediate",
-  advanced: "Advanced",
-};
-
 export function Tag({ guide }: { guide: SpeciesGuide }) {
-  if (guide.role === "forage") return <span className="tag tag-forage">Bait fish</span>;
+  const t = useT().fish;
+  if (guide.role === "forage") return <span className="tag tag-forage">{t.baitFish}</span>;
   if (!guide.difficulty) return null;
-  return <span className={`tag tag-${guide.difficulty}`}>{DIFFICULTY_LABEL[guide.difficulty]}</span>;
+  const label = { beginner: t.beginner, intermediate: t.intermediate, advanced: t.advanced }[guide.difficulty];
+  return <span className={`tag tag-${guide.difficulty}`}>{label}</span>;
 }
 
-function matches(g: SpeciesGuide, filter: Filter, q: string): boolean {
+function matches(g: SpeciesGuide, filter: Filter, q: string, locale: Locale): boolean {
   if (filter === "forage" && g.role !== "forage") return false;
   if (filter !== "all" && filter !== "forage" && g.difficulty !== filter) return false;
   if (!q) return true;
-  const hay = `${g.common_name} ${g.scientific_name} ${g.summary}`.toLowerCase();
+  // A fish's name in the chosen language finds it too ("鲶", "bagre").
+  const hay = `${g.common_name} ${localFishName(g.slug, locale) ?? ""} ${g.scientific_name} ${g.summary}`.toLowerCase();
   return hay.includes(q.toLowerCase());
 }
 
 export function FishGrid({ guides, photos }: { guides: SpeciesGuide[]; photos: SpeciesPhotos }) {
+  const t = useT().fish;
+  const locale = useLocale();
+  const filters: { id: Filter; label: string }[] = [
+    { id: "all", label: t.all },
+    { id: "beginner", label: t.beginner },
+    { id: "intermediate", label: t.intermediate },
+    { id: "advanced", label: t.advanced },
+    { id: "forage", label: t.baitFish },
+  ];
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const q = useDeferredValue(query.trim());
-  const shown = useMemo(() => guides.filter((g) => matches(g, filter, q)), [guides, filter, q]);
+  // A fish that lives in one state only (the Guadalupe bass) is left out for
+  // anyone who chose another; with no state chosen, every fish shows.
+  const state = useSelectedState();
+  const shown = useMemo(
+    () => guides.filter((g) => (!state || !g.only_in_state || g.only_in_state === state) && matches(g, filter, q, locale)),
+    [guides, filter, q, state, locale],
+  );
 
   return (
     <section className="fish-grid-wrap">
       <div className="fish-toolbar reveal" style={{ "--i": 3 } as React.CSSProperties}>
-        <div className="segmented" role="tablist" aria-label="Filter fish">
-          {FILTERS.map((f) => (
+        <div className="segmented" role="tablist" aria-label={t.filter}>
+          {filters.map((f) => (
             <button
               key={f.id}
               type="button"
@@ -69,14 +78,14 @@ export function FishGrid({ guides, photos }: { guides: SpeciesGuide[]; photos: S
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search fish"
-            aria-label="Search fish"
+            placeholder={t.search}
+            aria-label={t.search}
           />
         </label>
       </div>
 
       {shown.length === 0 ? (
-        <p className="empty-note">No fish match that. Try another filter.</p>
+        <p className="empty-note">{t.noMatch}</p>
       ) : (
         // Keyed on the filter so the cards re-run their entrance when it changes.
         <ul className="fish-grid">
@@ -103,11 +112,13 @@ export function FishGrid({ guides, photos }: { guides: SpeciesGuide[]; photos: S
                   </div>
                   <div className="fish-card-body">
                     <div className="fish-card-top">
-                      <h2>{g.common_name}</h2>
+                      <h2>
+                        <FishName slug={g.slug} english={g.common_name} />
+                      </h2>
                       <Tag guide={g} />
                     </div>
                     <span className="fish-card-cta">
-                      Bait & gear <span aria-hidden="true">→</span>
+                      {t.baitGear} <span aria-hidden="true">→</span>
                     </span>
                   </div>
                 </Link>

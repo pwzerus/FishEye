@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 
+import { getT } from "@/i18n/server";
+import Link from "next/link";
+
 import { FishGrid } from "@/components/fish/FishGrid";
 import { Handbook } from "@/components/fish/Handbook";
 import { PageTransition } from "@/components/motion/Transition";
@@ -15,13 +18,14 @@ import type { HandbookTopic, SpeciesGuide, SpeciesPhotos } from "@/lib/api/types
 // (lib/api/client.ts), so this costs the backend almost nothing.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Fish guide · FishEye",
-  description:
-    "How to catch freshwater fish: what they eat, where they live, baits and why they work, tackle, knots, and cleaning your catch.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: `${t.pages.fish} · FishEye`, description: t.pages.fishDescription };
+}
 
 export default async function FishGuidePage() {
+  const t = (await getT()).fish;
+  const tr = (await getT()).stateRules;
   let guides: SpeciesGuide[] = [];
   let photos: SpeciesPhotos = {};
   let handbook: HandbookTopic[] = [];
@@ -33,7 +37,7 @@ export default async function FishGuidePage() {
       listHandbook().catch(() => []),
     ]);
   } catch {
-    backendError = "We couldn't load the guides. Please refresh to try again.";
+    backendError = t.loadError;
   }
 
   const baitRules = guides.find((g) => g.legal_notes.length > 0)?.legal_notes ?? [];
@@ -43,15 +47,15 @@ export default async function FishGuidePage() {
       <main className="page-scroll fish-index">
         <section className="page-intro">
           <p className="eyebrow reveal" style={{ "--i": 0 } as React.CSSProperties}>
-            Fish guide
+            {t.eyebrow}
           </p>
           <h1 className="reveal" style={{ "--i": 1 } as React.CSSProperties}>
-            Meet the fish
+            {t.title}
           </h1>
           <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
-            Pick a fish for bait and gear. Open the handbook for knots, casting and the basics.
+            {t.lede}
           </p>
-          <div className="guide-shortcuts"><a href="#fish-species">Fish species ↓</a><a href="#handbook">Fishing basics ↓</a></div>
+          <div className="guide-shortcuts"><a href="#fish-species">{t.toSpecies}</a><a href="#handbook">{t.toBasics}</a><Link href="/identify">{t.photoId}</Link></div>
           <StatePicker />
         </section>
 
@@ -65,7 +69,7 @@ export default async function FishGuidePage() {
 
         {baitRules.length > 0 && (
           <div className="rules-stack reveal" style={{ "--i": 6 } as React.CSSProperties}>
-            <BaitRules texasRules={baitRules} texasUrl={guides[0]?.limits_url ?? ""} suffix=", for every fish" />
+            <BaitRules texasRules={baitRules} texasUrl={guides[0]?.limits_url ?? ""} suffix={tr.forEveryFish} />
           </div>
         )}
       </main>

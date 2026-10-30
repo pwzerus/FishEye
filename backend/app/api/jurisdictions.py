@@ -28,6 +28,9 @@ def list_jurisdictions() -> list[JurisdictionOut]:
             bait_rules=list(j.bait_rules),
             bait_rules_sources=[source_out(s) for s in sources_for(j.bait_rules_source_ids)],
             bait_rules_on_every_bait_question=j.bait_rules_on_every_bait_question,
+            license_from_age=j.license_from_age,
+            license_topic=j.license_topic,
+            first_trip_topic=j.first_trip_topic,
         )
         for j in ordered
     ]

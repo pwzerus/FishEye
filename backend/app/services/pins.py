@@ -37,8 +37,9 @@ from app.models.community import (
     PinReport,
     User,
 )
+from app.models.water import River
 from app.models.waterbody import Waterbody
-from app.services import audit, counties, fish_id
+from app.services import audit, counties, fish_id, water
 from app.db.spatial import bbox_filter
 from app.services.geo import haversine_km
 from app.services.media import MediaStore, PhotoRejected, clean_photo, new_key
@@ -52,10 +53,16 @@ REPORT_REASONS = {
     "unsafe": "Unsafe or illegal",
     "other": "Something else",
 }
-# A pin this close to a lake's centre point is shown as "near <lake>". Lake
-# centres, not shorelines, so this is a hint for the UI, not a claim.
+# Before ADR 0040: a pin this close to a lake's centre point was shown as
+# "near <lake>". Still how a pin is linked in a state whose shapes aren't
+# imported yet, when no lake's box is near enough (services/water.py).
 LINK_RADIUS_KM = 3.0
 MAX_LIST = 500
+# A photo whose own GPS is this close to the pin's spot: "Photo taken here".
+PHOTO_AT_SPOT_M = 300.0
+NOT_ON_WATER = (
+    "Put the pin on the water: a lake, pond or river that has a name on the map, or its bank."
+)
 
 
 class PinError(Exception):
@@ -102,6 +109,7 @@ class PinFields:
     species_other: str | None
     caught_on: date | None
     visibility: str
+    share_exact: bool = False
 
 
 def _text(value: str | None, max_len: int) -> str | None:
@@ -135,6 +143,7 @@ def validate(
     species_other: str | None,
     caught_on: date | None,
     visibility: str,
+    share_exact: bool = False,
 ) -> PinFields:
     if not (math.isfinite(latitude) and math.isfinite(longitude)):
         raise PinError(422, "That location isn't valid.")
@@ -159,6 +168,7 @@ def validate(
         species_other=None if slug else _text(species_other, 60),
         caught_on=caught_on,
         visibility=visibility,
+        share_exact=bool(share_exact),
     )
 
 
@@ -175,6 +185,49 @@ def nearest_waterbody(db: Session, lat: float, lng: float) -> Waterbody | None:
         if km <= best_km:
             best, best_km = wb, km
     return best
+
+
+def water_required(db: Session, lat: float, lng: float) -> bool:
+    """Are this spot's state's shapes imported, so a catch here must be on
+    named water? Until they are, it needn't be (services/water.py)."""
+    county = counties.county_at(lat, lng)
+    return water.data_ready(db, county.state if county else None)
+
+
+def locate(db: Session, lat: float, lng: float) -> tuple[water.WaterMatch | None, bool]:
+    """The water a catch at this spot is on (ADR 0040), and whether the
+    spot's state is held to the rule. PinError when it is and the spot is
+    on no named water."""
+    match = water.find_water(db, lat, lng)
+    required = water_required(db, lat, lng)
+    if match is None and required:
+        raise PinError(422, NOT_ON_WATER)
+    return match, required
+
+
+def set_water(db: Session, pin: CatchPin, match: water.WaterMatch | None, checked: bool) -> None:
+    """Link the pin to its water. `checked`: the spot's state has its shapes
+    imported, so "no water" is a finding rather than a gap in the data."""
+    if match is None and not checked:
+        # No shapes here yet: the old link, by lake centre.
+        lake = nearest_waterbody(db, pin.latitude, pin.longitude)
+        pin.waterbody_id, pin.river_id, pin.water_distance_m = (lake.id if lake else None), None, None
+        return
+    pin.waterbody_id = match.id if match and match.kind == water.LAKE else None
+    pin.river_id = match.id if match and match.kind == water.RIVER else None
+    pin.water_distance_m = match.distance_m if match else -1.0
+
+
+def update_photo_at_spot(pin: CatchPin) -> None:
+    """True when one of the pin's photos was taken within PHOTO_AT_SPOT_M
+    of its spot, else None. A photo taken somewhere else (at home, later)
+    isn't held against anyone, so there is no "False"."""
+    near = [
+        haversine_km(pin.latitude, pin.longitude, p.gps_latitude, p.gps_longitude) * 1000 <= PHOTO_AT_SPOT_M
+        for p in pin.photos
+        if p.gps_latitude is not None and p.gps_longitude is not None
+    ]
+    pin.photo_at_spot = True if any(near) else None
 
 
 # ---------------------------------------------------------------- photos
@@ -210,6 +263,8 @@ def _attach(db: Session, pin: CatchPin, cleaned: list, store: MediaStore) -> Non
                     height=photo.height,
                     bytes=len(photo.full),
                     position=start + offset,
+                    gps_latitude=photo.gps[0] if photo.gps else None,
+                    gps_longitude=photo.gps[1] if photo.gps else None,
                 )
             )
         db.flush()
@@ -269,15 +324,37 @@ def recheck_species(db: Session, pin: CatchPin, species_slug: str | None, specie
 # ---------------------------------------------------------------- writes
 
 
+def check_new_account(db: Session, user: User) -> None:
+    """A new account shares at most `new_account_pins_per_day` catches in
+    any 24 hours for its first `new_account_days` days. Counted from the
+    database, so a restart doesn't reset it (the hourly limit in the API is
+    in memory). Admins are exempt."""
+    s = get_settings()
+    now = utcnow()
+    if user.is_admin or user.created_at <= now - timedelta(days=s.new_account_days):
+        return
+    shared = db.scalar(
+        select(func.count()).select_from(CatchPin)
+        .where(CatchPin.user_id == user.id, CatchPin.created_at >= now - timedelta(days=1))
+    ) or 0
+    if shared >= s.new_account_pins_per_day:
+        raise PinError(
+            429,
+            f"New accounts can share {s.new_account_pins_per_day} catches a day for their first "
+            f"{s.new_account_days} days. Try again tomorrow.",
+        )
+
+
 def create_pin(db: Session, user: User, fields: PinFields, uploads: list[bytes], store: MediaStore) -> CatchPin:
+    check_new_account(db, user)
     if len(uploads) > get_settings().max_photos_per_pin:
         raise PinError(422, f"A pin can have up to {get_settings().max_photos_per_pin} photos.")
     # Every photo is validated before anything is written, so one bad file
     # can't leave a half-created pin behind. The first is the catch's photo:
     # the one the species is checked against.
     cleaned = _clean_all(uploads)
+    match, required = locate(db, fields.latitude, fields.longitude)
     check = check_species(fields.species_slug, fields.species_other, cleaned[0].full if cleaned else None)
-    lake = nearest_waterbody(db, fields.latitude, fields.longitude)
     pin = CatchPin(
         user_id=user.id,
         latitude=fields.latitude,
@@ -288,16 +365,35 @@ def create_pin(db: Session, user: User, fields: PinFields, uploads: list[bytes],
         species_other=fields.species_other,
         caught_on=fields.caught_on,
         visibility=fields.visibility,
+        share_exact=fields.share_exact,
         status=PIN_PUBLISHED,
-        waterbody_id=lake.id if lake else None,
     )
+    set_water(db, pin, match, checked=required)
     set_place(pin)
+    set_public_point(db, pin)
     db.add(pin)
     db.flush()
     if cleaned:
         _attach(db, pin, cleaned, store)
     _record_check(pin, check, pin.photos[0] if pin.photos else None)
+    update_photo_at_spot(pin)
     return pin
+
+
+def move_pin(db: Session, pin: CatchPin, latitude: float, longitude: float) -> None:
+    """A new spot for a catch: on water, like a new one (ADR 0040), with
+    its county, public point and photo badge worked out again."""
+    if not (math.isfinite(latitude) and math.isfinite(longitude)) or not (
+        -90 <= latitude <= 90 and -180 <= longitude <= 180
+    ):
+        raise PinError(422, "That location isn't valid.")
+    match, required = locate(db, latitude, longitude)
+    pin.latitude, pin.longitude = round(latitude, 6), round(longitude, 6)
+    set_water(db, pin, match, checked=required)
+    set_place(pin)
+    set_public_point(db, pin)
+    update_photo_at_spot(pin)
+    pin.updated_at = utcnow()
 
 
 def add_photos(db: Session, pin: CatchPin, uploads: list[bytes], store: MediaStore) -> None:
@@ -307,6 +403,7 @@ def add_photos(db: Session, pin: CatchPin, uploads: list[bytes], store: MediaSto
     if len(pin.photos) + len(uploads) > limit:
         raise PinError(422, f"A pin can have up to {limit} photos.")
     _attach(db, pin, _clean_all(uploads), store)
+    update_photo_at_spot(pin)
     pin.updated_at = utcnow()
 
 
@@ -322,6 +419,7 @@ def delete_photo(db: Session, pin: CatchPin, photo_id: int, store: MediaStore) -
         )
     key = photo.storage_key
     pin.photos.remove(photo)
+    update_photo_at_spot(pin)
     db.flush()
     store.delete(key)
 
@@ -365,6 +463,97 @@ def fill_places(db: Session) -> int:
     return filled
 
 
+# ------------------------------------------------- where others see a catch
+
+
+PLACE_EXACT = "exact"
+PLACE_LAKE = "lake"
+# A river's point in the catch's county (models/water.RiverReach).
+PLACE_RIVER = "river"
+PLACE_COUNTY = "county"
+PLACE_AREA = "area"
+# Without a lake or a county, the spot to one decimal: a cell ~11 km tall.
+AREA_DECIMALS = 1
+
+
+def set_public_point(db: Session, pin: CatchPin) -> None:
+    """Where everyone but the owner and admins sees this catch (ADR 0038):
+    its lake's centre, or its river's point in its county (ADR 0040). Needs
+    the pin's water and county, so it runs after set_water and set_place."""
+    lake = db.get(Waterbody, pin.waterbody_id) if pin.waterbody_id else None
+    on_river = (
+        water.reach_point(db, pin.river_id, pin.county_geoid, (pin.latitude, pin.longitude))
+        if pin.river_id
+        else None
+    )
+    if pin.share_exact:
+        point, kind = (pin.latitude, pin.longitude), PLACE_EXACT
+    elif lake is not None:
+        point, kind = (lake.latitude, lake.longitude), PLACE_LAKE
+    elif on_river is not None:
+        point, kind = on_river, PLACE_RIVER
+    elif (middle := counties.centre(pin.county_geoid)) is not None:
+        point, kind = middle, PLACE_COUNTY
+    else:
+        point = (round(pin.latitude, AREA_DECIMALS), round(pin.longitude, AREA_DECIMALS))
+        kind = PLACE_AREA
+    pin.public_latitude, pin.public_longitude = point
+    pin.public_place = kind
+
+
+def sees_exact(pin: CatchPin, user: User | None) -> bool:
+    """The owner and admins (who moderate "wrong location" and "private
+    property" reports) see the exact spot; everyone else the public point."""
+    return user is not None and (user.id == pin.user_id or user.is_admin)
+
+
+def shown_point(pin: CatchPin, user: User | None) -> tuple[float, float, str]:
+    """(lat, lng, what it is) of this pin for this viewer."""
+    if pin.share_exact or sees_exact(pin, user):
+        return pin.latitude, pin.longitude, PLACE_EXACT
+    if pin.public_latitude is None or pin.public_longitude is None:
+        # Not filled in yet (fill_public_points runs at startup): never the
+        # exact spot instead.
+        return round(pin.latitude, AREA_DECIMALS), round(pin.longitude, AREA_DECIMALS), PLACE_AREA
+    return pin.public_latitude, pin.public_longitude, pin.public_place or PLACE_AREA
+
+
+def fill_public_points(db: Session) -> int:
+    """Gives pins saved before ADR 0038 their public point, and redoes the
+    rounded ones ("area"), which may have a county now. Runs at startup,
+    after fill_places."""
+    pins = db.scalars(
+        select(CatchPin).where(CatchPin.public_place.is_(None) | (CatchPin.public_place == PLACE_AREA))
+    ).all()
+    for pin in pins:
+        set_public_point(db, pin)
+    db.commit()
+    return len(pins)
+
+
+def fill_water(db: Session) -> int:
+    """Checks pins against the water shapes (ADR 0040) where those are
+    imported and the pin hasn't been checked since: pins saved before, and
+    a state's pins after its shapes are imported again. A pin on no water
+    keeps its spot and loses its lake link (that was a 3 km guess); it
+    still shows, at its county. Runs at startup, after fill_places."""
+    ready: dict[str, bool] = {}
+    checked = 0
+    pending = db.scalars(
+        select(CatchPin).where(CatchPin.water_distance_m.is_(None), CatchPin.state_code.is_not(None))
+    ).all()
+    for pin in pending:
+        if pin.state_code not in ready:
+            ready[pin.state_code] = water.data_ready(db, pin.state_code)
+        if not ready[pin.state_code]:
+            continue
+        set_water(db, pin, water.find_water(db, pin.latitude, pin.longitude), checked=True)
+        set_public_point(db, pin)
+        checked += 1
+    db.commit()
+    return checked
+
+
 def _visible(user: User | None, mine: bool):
     if mine:
         return CatchPin.user_id == (user.id if user else -1)
@@ -393,6 +582,7 @@ def list_pins(
     state: str | None = None,
     county: str | None = None,
     lake: int | None = None,
+    river: int | None = None,
     limit: int = 200,
 ) -> list[CatchPin]:
     if mine and user is None:
@@ -400,8 +590,17 @@ def list_pins(
     q = select(CatchPin).options(selectinload(CatchPin.photos), selectinload(CatchPin.user))
     q = q.where(_visible(user, mine))
     if bbox is not None:
+        # Each pin is placed where this viewer sees it (shown_point): a box
+        # around someone else's exact spot must not find their catch.
         west, south, east, north = bbox
-        q = q.where(CatchPin.latitude.between(south, north), CatchPin.longitude.between(west, east))
+        exact = CatchPin.latitude.between(south, north) & CatchPin.longitude.between(west, east)
+        public = CatchPin.public_latitude.between(south, north) & CatchPin.public_longitude.between(west, east)
+        if user is not None and user.is_admin:
+            q = q.where(exact)
+        elif user is not None:
+            q = q.where(((CatchPin.user_id == user.id) & exact) | ((CatchPin.user_id != user.id) & public))
+        else:
+            q = q.where(public)
     if species:
         q = q.where(CatchPin.species_slug == species)
     if state:
@@ -409,13 +608,19 @@ def list_pins(
     if county:
         q = q.where(CatchPin.county_geoid == county)
     if lake is not None:
-        # 0: the county's pins that aren't at a mapped lake.
-        q = q.where(CatchPin.waterbody_id == lake if lake else CatchPin.waterbody_id.is_(None))
+        # 0: the county's pins that aren't on mapped water.
+        q = q.where(
+            CatchPin.waterbody_id == lake
+            if lake
+            else CatchPin.waterbody_id.is_(None) & CatchPin.river_id.is_(None)
+        )
+    if river is not None:
+        q = q.where(CatchPin.river_id == river)
     q = q.order_by(CatchPin.created_at.desc(), CatchPin.id.desc()).limit(min(max(limit, 1), MAX_LIST))
     return list(db.scalars(q).all())
 
 
-NOT_AT_A_LAKE = "Not at a mapped lake"
+NOT_AT_A_LAKE = "Not on mapped water"
 
 
 def places(
@@ -428,9 +633,10 @@ def places(
     mine: bool = False,
 ) -> list[Place]:
     """One level down from where the angler is browsing, with how many
-    catches each has: states; a state's counties; a county's lakes (and,
-    as lake 0, its pins that aren't at a mapped lake). Counted over the
-    pins this user may see, so a private pin never shows up as a count."""
+    catches each has: states; a state's counties; a county's waters, lakes
+    by id and rivers as "r<id>" (and, as "0", its pins on no mapped water).
+    Counted over the pins this user may see, so a private pin never shows
+    up as a count."""
     if mine and user is None:
         return []
     where = [_visible(user, mine)]
@@ -440,13 +646,24 @@ def places(
     if county:
         where.append(CatchPin.county_geoid == county)
         rows = db.execute(
-            select(CatchPin.waterbody_id, Waterbody.name, n)
+            select(CatchPin.waterbody_id, Waterbody.name, CatchPin.river_id, River.name, n)
             .outerjoin(Waterbody, Waterbody.id == CatchPin.waterbody_id)
+            .outerjoin(River, River.id == CatchPin.river_id)
             .where(*where)
-            .group_by(CatchPin.waterbody_id, Waterbody.name)
+            .group_by(CatchPin.waterbody_id, Waterbody.name, CatchPin.river_id, River.name)
         ).all()
-        out = [Place(str(wid or 0), name or NOT_AT_A_LAKE, c) for wid, name, c in rows]
-        # Lakes by catches, then name; "not at a lake" last.
+        out: list[Place] = []
+        elsewhere = 0
+        for wid, lake_name, rid, river_name, c in rows:
+            if wid and lake_name:
+                out.append(Place(str(wid), lake_name, c))
+            elif rid and river_name:
+                out.append(Place(f"r{rid}", river_name, c))
+            else:
+                elsewhere += c
+        if elsewhere:
+            out.append(Place("0", NOT_AT_A_LAKE, elsewhere))
+        # Waters by catches, then name; "not on mapped water" last.
         return sorted(out, key=lambda p: (p.id == "0", -p.count, p.name))
     if state:
         where.append(CatchPin.state_code == state.upper())
@@ -460,6 +677,86 @@ def places(
     where.append(CatchPin.state_code.is_not(None))
     rows = db.execute(select(CatchPin.state_code, n).where(*where).group_by(CatchPin.state_code)).all()
     return sorted((Place(code, STATE_NAMES.get(code, code), c) for code, c in rows), key=lambda p: (-p.count, p.name))
+
+
+@dataclass
+class WaterGroup:
+    kind: str  # "lake" | "river" | "place"
+    id: int | None
+    # Of the newest catch, for "see them all" on the catches page (which
+    # browses by state and county).
+    state_code: str | None
+    county_geoid: str | None
+    name: str | None
+    county_name: str | None
+    latitude: float
+    longitude: float
+    pins: list[CatchPin]
+
+
+def water_groups(
+    db: Session,
+    user: User | None,
+    *,
+    bbox: tuple[float, float, float, float],
+    species: str | None = None,
+    limit: int = 2000,
+) -> list[WaterGroup]:
+    """Other people's public catches in view, one group per water (ADR
+    0040): a lake, a river within one county, or, for pins on no water, one
+    public point. The viewer's own pins are left out (the map draws those
+    one by one, at their real spots). Groups sit at their water's public
+    point, so the map shows "12 catches at Lake Lanier", never where."""
+    west, south, east, north = bbox
+    q = (
+        select(CatchPin)
+        .options(selectinload(CatchPin.photos))
+        .where(
+            CatchPin.visibility == VISIBILITY_PUBLIC,
+            CatchPin.status == PIN_PUBLISHED,
+            CatchPin.public_latitude.between(south, north),
+            CatchPin.public_longitude.between(west, east),
+        )
+    )
+    if user is not None:
+        q = q.where(CatchPin.user_id != user.id)
+    if species:
+        q = q.where(CatchPin.species_slug == species)
+    pins = db.scalars(q.order_by(CatchPin.created_at.desc(), CatchPin.id.desc()).limit(limit)).all()
+
+    by_key: dict[tuple, list[CatchPin]] = {}
+    for pin in pins:
+        if pin.waterbody_id:
+            key: tuple = ("lake", pin.waterbody_id)
+        elif pin.river_id:
+            key = ("river", pin.river_id, pin.county_geoid)
+        else:
+            key = ("place", pin.public_latitude, pin.public_longitude)
+        by_key.setdefault(key, []).append(pin)
+    lake_ids = [k[1] for k in by_key if k[0] == "lake"]
+    river_ids = list({k[1] for k in by_key if k[0] == "river"})
+    lakes = {w.id: w for w in db.scalars(select(Waterbody).where(Waterbody.id.in_(lake_ids)))} if lake_ids else {}
+    rivers = {r.id: r for r in db.scalars(select(River).where(River.id.in_(river_ids)))} if river_ids else {}
+
+    out: list[WaterGroup] = []
+    for key, members in by_key.items():
+        first = members[0]
+        place = (first.state_code, first.county_geoid)
+        if key[0] == "lake" and key[1] in lakes:
+            wb = lakes[key[1]]
+            out.append(WaterGroup("lake", wb.id, *place, wb.name, first.county_name, wb.latitude, wb.longitude, members))
+            continue
+        if key[0] == "river" and key[1] in rivers:
+            point = water.reach_point(db, key[1], key[2], (first.latitude, first.longitude))
+            if point is not None:
+                out.append(WaterGroup(
+                    "river", key[1], *place, rivers[key[1]].name, first.county_name, point[0], point[1], members
+                ))
+                continue
+        # On no water (or its water is gone): where everyone sees it.
+        lat, lng, _ = shown_point(first, None)
+        out.append(WaterGroup("place", None, *place, None, first.county_name, lat, lng, members))
+    return sorted(out, key=lambda g: -len(g.pins))
 
 
 def species_label(pin: CatchPin) -> str | None:

@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { FishArt } from "@/components/fish/FishArt";
+import { useLocale, useT } from "@/i18n/client";
+import type { Locale } from "@/i18n/config";
+import type { Messages } from "@/i18n/messages";
+import { localFishName, localStateName, localTopicTitle } from "@/i18n/names";
 import { ApiError, postAsk } from "@/lib/api/client";
 import { postAskSummary } from "@/lib/api/session";
 import { waterFor } from "@/lib/fishArt";
@@ -53,46 +57,100 @@ function citationHref(c: AskCitation): string {
 }
 
 function SourceBadge({ r }: { r: AskResponse }) {
+  const t = useT().ask;
   if (r.answer_source === "passages") {
-    return <span className="badge badge-ok">From the guides</span>;
+    return <span className="badge badge-ok">{t.fromGuides}</span>;
   }
   if (r.answer_source === "no_match") {
     // Three different reasons for an empty answer (backend ADR 0026).
     const label =
       r.trace.outcome === "off_topic"
-        ? "Not a fishing question"
+        ? t.offTopic
         : r.trace.outcome === "unguided_fish"
-          ? "No guide for that fish"
+          ? t.unguided
           : r.trace.outcome === "other_state"
-            ? "Rules not written for your state"
-            : "Not in the guides";
+            ? t.otherState
+            : t.notInGuides;
     return <span className="badge badge-muted">{label}</span>;
   }
   if (r.answer_source === "fallback") {
     return (
-      <span className="badge badge-warn" title="The AI summary couldn't be used, so this is the guide's own text">
-        Straight from the guides
+      <span className="badge badge-warn" title={t.fallbackTitle}>
+        {t.fallback}
       </span>
     );
   }
   if (r.trace.provider === "mock") {
     return (
-      <span className="badge badge-info" title="A stand-in that restates the guide passages">
-        Demo model
+      <span className="badge badge-info" title={t.demoTitle}>
+        {t.demo}
       </span>
     );
   }
-  return <span className="badge badge-ok">AI answer · checked</span>;
+  return <span className="badge badge-ok">{t.aiChecked}</span>;
+}
+
+/** A state's agency's own pages, so the answer ends in the rules rather than
+ * in "check elsewhere": under a rules question FishEye hasn't written up for
+ * that state, and under any fishing question the guides couldn't answer for a
+ * state whose rules FishEye hasn't written at all. "The walleye limit in
+ * Minnesota" found no walleye guide and said only that (2026-10-29 review). */
+function StateRulesLinks({ r }: { r: AskResponse }) {
+  const states = useJurisdictions();
+  const t = useT().ask;
+  if (!r.state || r.answer_source !== "no_match" || r.trace.outcome === "off_topic") return null;
+  const j = states?.find((x) => x.code === r.state);
+  if (!j || (r.trace.outcome !== "other_state" && j.covered)) return null;
+  if (!j.limits_url && !j.license_url) return null;
+  return (
+    <p className="state-rules-links">
+      <strong>{j.agency ?? j.name}:</strong>{" "}
+      {j.limits_url && (
+        <a href={j.limits_url} target="_blank" rel="noreferrer">
+          {t.regulations}
+        </a>
+      )}
+      {j.limits_url && j.license_url && " · "}
+      {j.license_url && (
+        <a href={j.license_url} target="_blank" rel="noreferrer">
+          {t.licenses}
+        </a>
+      )}
+    </p>
+  );
+}
+
+/** A quoted passage's heading in the reader's language: a guide's own
+ * sections (backend rag/chunking.py) and the Handbook's titles are
+ * translated; anything else (a state's bait rules) keeps the guide's
+ * English, as the passage itself does. */
+export function citationTitle(c: Pick<AskCitation, "section" | "title">, f: Messages["fish"], locale: Locale): string {
+  if (locale === "en") return c.title;
+  const sections: Record<string, string> = {
+    overview: f.tabOverview, diet: f.whatItEats, identification: f.recognise, habitat: f.habitat, habits: f.habits,
+    where_and_when: f.whereWhen, live_baits: f.liveBait, lures: f.lures, why_these_baits: f.whyBaits,
+    how_to_get: f.howToGet, bait_for: f.baitFor, tips: f.tips, eating: f.eating,
+  };
+  if (sections[c.section]) return sections[c.section];
+  if (c.section.startsWith("setup-")) {
+    // "Rod and reel setup — Cane pole": the setup's name is the guide's.
+    const name = c.title.split(" — ")[1];
+    return name ? `${f.setups} — ${name}` : f.setups;
+  }
+  return localTopicTitle(c.section, locale) ?? c.title;
 }
 
 function Citations({ items, compact }: { items: AskCitation[]; compact: boolean }) {
   const states = useJurisdictions();
+  const all = useT();
+  const t = all.ask;
+  const locale = useLocale();
   const [showAll, setShowAll] = useState(false);
   if (items.length === 0) return null;
   const shown = showAll ? items : items.slice(0, 2);
   return (
     <div className="citations">
-      <p className="citations-label">Sources</p>
+      <p className="citations-label">{t.sources}</p>
       <ul>
         {shown.map((c, i) => {
           const fish = c.species_slug !== "all-fish" ? c.species_slug : null;
@@ -109,15 +167,15 @@ function Citations({ items, compact }: { items: AskCitation[]; compact: boolean 
                 )}
                 <span className="citation-body">
                   <span className="citation-title">
-                    {c.species_name ? `${c.species_name} · ` : ""}
-                    {c.title}
+                    {c.species_name ? `${(fish && localFishName(fish, locale)) || c.species_name} · ` : ""}
+                    {citationTitle(c, all.fish, locale)}
                     {c.region !== "all" && (
                       <span className="badge badge-muted citation-region">
-                        {states?.find((j) => j.code === c.region)?.name ?? c.region} rules
+                        {t.stateRules(localStateName(c.region, states?.find((j) => j.code === c.region)?.name ?? c.region, locale))}
                       </span>
                     )}
                   </span>
-                  <span className="citation-excerpt">{c.excerpt}</span>
+                  <span className="citation-excerpt" lang="en">{c.excerpt}</span>
                   {c.sources[0] && <span className="citation-source">{c.sources[0].label}</span>}
                 </span>
               </Link>
@@ -125,7 +183,7 @@ function Citations({ items, compact }: { items: AskCitation[]; compact: boolean 
           );
         })}
       </ul>
-      {items.length > 2 && <button type="button" className="sources-expand" aria-expanded={showAll} onClick={() => setShowAll((value) => !value)}>{showAll ? "Fewer sources ↑" : `Show ${items.length - 2} more sources ↓`}</button>}
+      {items.length > 2 && <button type="button" className="sources-expand" aria-expanded={showAll} onClick={() => setShowAll((value) => !value)}>{showAll ? t.fewerSources : t.moreSources(items.length - 2)}</button>}
     </div>
   );
 }
@@ -145,6 +203,7 @@ function AiSummary({
   loginHref: string;
   disabled: boolean;
 }) {
+  const t = useT().ask;
   if (summary?.status === "done") {
     const r = summary.response;
     return (
@@ -163,7 +222,7 @@ function AiSummary({
   if (summary?.status === "loading") {
     return (
       <div className="ai-summary ai-summary-cta" aria-live="polite">
-        <span className="muted">Writing a summary of these passages…</span>
+        <span className="muted">{t.summarizing}</span>
       </div>
     );
   }
@@ -173,7 +232,7 @@ function AiSummary({
       <div className="ai-summary ai-summary-cta">
         {error}
         <p className="muted">
-          <Link href={loginHref}>Sign in</Link> for an AI summary.
+          {t.signInBefore}<Link href={loginHref}>{t.signInLink}</Link>{t.signInFor}
         </p>
       </div>
     );
@@ -182,22 +241,22 @@ function AiSummary({
     return (
       <div className="ai-summary ai-summary-cta">
         {error}
-        <p className="muted">You&apos;ve used today&apos;s AI summaries. Searching the guides stays free; summaries come back tomorrow.</p>
+        <p className="muted">{t.usedToday}</p>
       </div>
     );
   }
-  const left = ai?.remaining == null ? "" : ` (${ai.remaining} left today)`;
   return (
     <div className="ai-summary ai-summary-cta">
       {error}
       <button type="button" className="btn btn-ghost btn-sm" onClick={onRequest} disabled={disabled}>
-        Summarize with AI{left}
+        {t.summarize(ai?.remaining ?? null)}
       </button>
     </div>
   );
 }
 
 function Thinking() {
+  const t = useT().ask;
   return (
     <div className="msg msg-assistant msg-thinking" aria-live="polite">
       <span className="avatar" aria-hidden="true">
@@ -205,13 +264,13 @@ function Thinking() {
         <img src="/brand/fisheye-mark.svg" alt="" />
       </span>
       <div className="bubble-card">
-        <span className="sr-only">Looking through the guides…</span>
+        <span className="sr-only">{t.lookingThrough}</span>
         <span className="typing" aria-hidden="true">
           <span />
           <span />
           <span />
         </span>
-        <span className="thinking-text">Searching the guides</span>
+        <span className="thinking-text">{t.searching}</span>
       </div>
     </div>
   );
@@ -230,6 +289,10 @@ export function AskChat({
   initialQuestion?: string;
   suggestions: string[];
 }) {
+  const all = useT();
+  const t = all.ask;
+  const locale = useLocale();
+  const fishName = speciesSlug && speciesName ? (localFishName(speciesSlug, locale) ?? speciesName) : speciesName;
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -252,7 +315,7 @@ export function AskChat({
       setInput("");
       setBusy(true);
       try {
-        const response = await postAsk({ question: q, species_slug: speciesSlug ?? null, state });
+        const response = await postAsk({ question: q, species_slug: speciesSlug ?? null, state, lang: locale });
         setAi(response.ai);
         setTurns((t) => [...t, { id: nextId.current++, role: "assistant", response }]);
       } catch (e) {
@@ -264,7 +327,7 @@ export function AskChat({
         setBusy(false);
       }
     },
-    [busy, speciesSlug, state],
+    [busy, speciesSlug, state, locale],
   );
 
   const summarize = useCallback(
@@ -273,17 +336,17 @@ export function AskChat({
         setTurns((ts) => ts.map((t) => (t.id === turnId && t.role === "assistant" ? { ...t, summary } : t)));
       setSummary({ status: "loading" });
       try {
-        const response = await postAskSummary({ question, species_slug: speciesSlug ?? null, state });
+        const response = await postAskSummary({ question, species_slug: speciesSlug ?? null, state, lang: locale });
         setAi(response.ai);
         setSummary({ status: "done", response });
       } catch (e) {
-        const message = e instanceof ApiError ? e.message : "Couldn't reach FishEye's server.";
+        const message = e instanceof ApiError ? e.message : t.serverDown;
         if (e instanceof ApiError && e.status === 429) setAi((a) => (a ? { ...a, remaining: 0 } : a));
         if (e instanceof ApiError && e.status === 401) setAi({ signed_in: false, limit: null, remaining: null });
         setSummary({ status: "error", message });
       }
     },
-    [speciesSlug, state],
+    [speciesSlug, state, locale, t.serverDown],
   );
 
   useEffect(() => {
@@ -313,8 +376,8 @@ export function AskChat({
     <div className={compact ? "ask ask-compact" : "ask"}>
       {compact && (
         <div className="ask-compact-head">
-          <h2>Ask about {speciesName}</h2>
-          <p className="muted">Answers come from this fish&apos;s guide, with the passage cited.</p>
+          <h2>{t.askAbout(fishName ?? "")}</h2>
+          <p className="muted">{t.fishNote}</p>
         </div>
       )}
 
@@ -322,7 +385,7 @@ export function AskChat({
         {empty && (
           <div className="ask-empty">
             {!compact && (
-              <p className="muted">Try one of these, or ask your own:</p>
+              <p className="muted">{t.tryThese}</p>
             )}
             <div className="chip-row">
               {suggestions.map((s, i) => (
@@ -356,9 +419,9 @@ export function AskChat({
         <img src="/brand/fisheye-mark.svg" alt="" />
                 </span>
                 <div className="bubble-card bubble-error">
-                  <p>{turn.message ?? "Unable to connect right now. Please try again shortly."}</p>
+                  <p>{turn.message ?? t.unable}</p>
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => ask(turn.question)} disabled={busy}>
-                    Try again
+                    {all.common.tryAgain}
                   </button>
                 </div>
               </div>
@@ -375,11 +438,12 @@ export function AskChat({
                 <div className="bubble-meta">
                   <SourceBadge r={r} />
                 </div>
-                <div className="answer-text">
+                <div className="answer-text" lang={r.answer_source === "passages" ? "en" : undefined}>
       {r.answer.split("\n\n").map((para, i) => (
                     <p key={i}>{para}</p>
                   ))}
                 </div>
+                <StateRulesLinks r={r} />
                 <Citations items={r.citations} compact={compact} />
                 {r.answer_source === "passages" && (
                   <AiSummary
@@ -400,7 +464,7 @@ export function AskChat({
       </div>
 
       <div className="ask-composer">
-      {!compact && <StatePicker className="state-picker state-picker-ask" label="Rules for" />}
+      {!compact && <StatePicker className="state-picker state-picker-ask" label={t.rulesFor} />}
       <form
         className="ask-form"
         onSubmit={(e) => {
@@ -421,10 +485,10 @@ export function AskChat({
               void ask(input);
             }
           }}
-          placeholder={speciesName ? `Ask about ${speciesName.toLowerCase()}…` : "Ask about bait, rigs, where to look…"}
-          aria-label="Your question"
+          placeholder={fishName ? t.placeholderFish(fishName) : t.placeholder}
+          aria-label={t.yourQuestion}
         />
-        <button type="submit" className="send-btn" disabled={busy || input.trim().length < 3} aria-label="Send">
+        <button type="submit" className="send-btn" disabled={busy || input.trim().length < 3} aria-label={t.send}>
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
             <path d="M4 12l16-8-6 16-2.5-6.5L4 12z" fill="currentColor" />
           </svg>

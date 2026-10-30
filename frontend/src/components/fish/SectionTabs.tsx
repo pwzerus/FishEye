@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { useT } from "@/i18n/client";
+
 export interface SectionLink {
   id: string;
   label: string;
@@ -14,6 +16,7 @@ export interface SectionLink {
  */
 export function SectionTabs({ links }: { links: SectionLink[] }) {
   const [active, setActive] = useState(links[0]?.id);
+  const onThisPage = useT().fish.onThisPage;
   const navRef = useRef<HTMLElement>(null);
   const [pill, setPill] = useState<{ left: number; width: number } | null>(null);
 
@@ -44,7 +47,7 @@ export function SectionTabs({ links }: { links: SectionLink[] }) {
   }, [active]);
 
   return (
-    <nav ref={navRef} className="section-tabs" aria-label="On this page">
+    <nav ref={navRef} className="section-tabs" aria-label={onThisPage}>
       {pill && <span className="section-pill" style={{ left: pill.left, width: pill.width }} aria-hidden="true" />}
       {links.map((l) => (
         <a

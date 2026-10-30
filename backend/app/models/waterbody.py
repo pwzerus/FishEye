@@ -89,6 +89,15 @@ class Waterbody(Base):
     # lakes are always shown) and for OSM rows imported before this column
     # existed, which sort last until the importer is re-run.
     extent_km2: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
+    # The same box itself, so a lake's map can frame the whole water instead
+    # of guessing a zoom from its centre (a pond and a 100 km reservoir
+    # opened at the same zoom). From the OpenStreetMap importer; None for
+    # hand-curated rows and rows imported before it existed (the importer
+    # fills them when re-run).
+    bbox_south: Mapped[float | None] = mapped_column(Float, nullable=True)
+    bbox_west: Mapped[float | None] = mapped_column(Float, nullable=True)
+    bbox_north: Mapped[float | None] = mapped_column(Float, nullable=True)
+    bbox_east: Mapped[float | None] = mapped_column(Float, nullable=True)
     # California's own id for the water (CDFW's DFGWATERID, from its
     # California Lakes layer). What CDFW's stocking data is keyed on
     # (cdfw_import.py); None outside California and for lakes CDFW doesn't map.

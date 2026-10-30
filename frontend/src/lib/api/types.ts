@@ -53,6 +53,19 @@ export interface GeocodeResult {
   longitude: number;
 }
 
+/** A lake whose name matches a search (backend GET /api/waterbodies/search). */
+export interface LakeMatch {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  state_code: string;
+  state_name: string;
+  data_tier: DataTier;
+  // "Gwinnett County": Georgia alone has four Freeman Lakes.
+  county?: string | null;
+}
+
 export interface AccessPoint {
   id: number;
   name: string;
@@ -162,6 +175,11 @@ export interface WaterbodyDetail {
   name: string;
   latitude: number;
   longitude: number;
+  // Whose rules apply here ("GA").
+  state_code?: string | null;
+  // [south, west, north, east] of the water, for framing its map; null when
+  // no outline is on file (hand-curated lakes).
+  bounds?: number[] | null;
   access_summary: string;
   source_url: string;
   source_updated_at: string;
@@ -262,6 +280,9 @@ export interface RecommendationRequest {
   waterbody_id: number;
   target_species?: string;
   limit?: number;
+  // The plan's sentences in this language ("en", "zh", "es", "ko", "ja"); English for
+  // a backend that doesn't know it.
+  lang?: string;
 }
 
 export interface Factor {
@@ -447,6 +468,11 @@ export interface SpeciesGuide {
   role: "sport" | "forage";
   difficulty: "beginner" | "intermediate" | "advanced" | null;
   summary: string;
+  /** The summary without its Texas-only claims, for anyone fishing
+   * elsewhere; null where the summary says nothing about Texas. */
+  summary_general?: string | null;
+  /** The one state this fish lives in, where it lives in one only ("TX"). */
+  only_in_state?: string | null;
   diet: string;
   diet_type: "carnivore" | "omnivore" | "filter_feeder";
   where_and_when: string[];
@@ -490,6 +516,9 @@ export interface AskRequest {
   /** Two-letter code of the state the person is fishing in; other states'
    * rule passages are left out of the answer (backend ADR 0027). */
   state?: string | null;
+  /** The site's language ("en", "zh", "es", "ko", "ja"): FishEye's own sentences in the
+   * answer (no match, off topic) come back in it. */
+  lang?: string;
 }
 
 export interface AskCitation {
@@ -539,6 +568,9 @@ export interface AskResponse {
   citations: AskCitation[];
   trace: AskTrace;
   ai: AiAllowance;
+  // Whose rules it answers for: a state the question names, else the one
+  // picked, else null (backend services/rag/ask.answer_state).
+  state?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -554,6 +586,11 @@ export interface User {
   has_password: boolean;
   google_connected: boolean;
   created_at: string;
+  email_verified?: boolean;
+  // True while the account must confirm its email before sharing or
+  // reporting catches (backend services/email_verification.py; off until
+  // outgoing mail is set up).
+  verification_required?: boolean;
 }
 
 export interface AuthProviders {
@@ -590,10 +627,30 @@ export interface Shop {
   distance_km?: number | null;
 }
 
+/** What a catch's point is (backend ADR 0038): the spot itself, or where
+ * others see a catch whose spot wasn't shared: its lake's centre, its
+ * river's point in its county (ADR 0040), its county's, or the spot rounded
+ * to about 10 km. */
+export type PinPointKind = "exact" | "lake" | "river" | "county" | "area";
+
+/** The water a catch is on (backend ADR 0040): a lake on the map or a
+ * named river, stream or canal. */
+export interface PinWater {
+  kind: "lake" | "river";
+  id: number;
+  name: string;
+}
+
 export interface PinSummary {
   id: number;
+  // Where this viewer sees it: the spot for its owner and admins, and for
+  // everyone when the angler shared it; otherwise the public point.
   latitude: number;
   longitude: number;
+  location_shown: PinPointKind;
+  share_exact: boolean;
+  // What everyone else sees.
+  public_place: PinPointKind;
   title: string;
   species_slug: string | null;
   species_label: string | null;
@@ -611,6 +668,10 @@ export interface PinSummary {
   status_reason: string | null;
   author: { id: number; display_name: string };
   lake: { id: number; name: string } | null;
+  // The lake or river it's on; null for an old catch on neither.
+  water?: PinWater | null;
+  // A photo's own GPS puts it at the spot: "Photo taken here".
+  photo_at_spot?: boolean;
   // Where it is (Census counties): "TX", "48201", "Harris County".
   state_code?: string | null;
   county_geoid?: string | null;
@@ -621,7 +682,8 @@ export interface PinSummary {
 }
 
 /** GET /api/pins/places: one level of browsing catches by place. `id` is a
- * state code, a county GEOID, or a lake id ("0": not at a mapped lake). */
+ * state code, a county GEOID, a lake id, or "r<id>" for a river ("0": on no
+ * mapped water). */
 export interface PinPlace {
   id: string;
   name: string;
@@ -635,12 +697,35 @@ export interface PinPlaces {
   county_name?: string | null;
 }
 
-/** GET /api/pins/where: the county a point is in. */
+/** GET /api/pins/where: the county a point is in, and the water a catch
+ * there would be on. */
 export interface PinWhere {
   state_code: string | null;
   state_name: string | null;
   county_geoid: string | null;
   county_name: string | null;
+  water?: (PinWater & { distance_m: number }) | null;
+  // The state holds catches to named water: with no `water`, a catch here
+  // can't be saved.
+  water_required?: boolean;
+}
+
+/** GET /api/pins/waters: other people's catches in view, one group per lake,
+ * per river in a county, or (old catches on no water) per public point. */
+export interface WaterGroup {
+  kind: "lake" | "river" | "place";
+  id: number | null;
+  // The newest catch's state and county: where the catches page lists them.
+  state_code: string | null;
+  county_geoid: string | null;
+  name: string | null;
+  county_name: string | null;
+  latitude: number;
+  longitude: number;
+  count: number;
+  latest_at: string;
+  species: string[];
+  thumb_url: string | null;
 }
 
 /** POST /api/fish-id: what a catch photo shows (backend app/api/pins.py). */
@@ -690,6 +775,10 @@ export interface PinUpdate {
   species_other?: string;
   caught_on?: string;
   visibility?: PinVisibility;
+  share_exact?: boolean;
+  // A new spot (both together); it must be on water like a new catch's.
+  latitude?: number;
+  longitude?: number;
   clear_note?: boolean;
   clear_species?: boolean;
   clear_caught_on?: boolean;
@@ -710,6 +799,34 @@ export interface AdminStats {
   photos: number;
   open_reports: number;
   pins_awaiting_review: number;
+  lake_reports_open?: number;
+}
+
+/** "Something's wrong with this lake" / "a lake is missing" (backend ADR 0039). */
+export interface LakeReportInput {
+  reason: string; // a reason id from getLakeReportOptions, or "missing"
+  waterbody_id?: number;
+  name?: string;
+  latitude?: number;
+  longitude?: number;
+  detail?: string;
+}
+
+export interface AdminLakeReport {
+  id: number;
+  reason: string;
+  reason_label: string;
+  waterbody_id: number | null;
+  lake_name: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  state_code: string | null;
+  detail: string | null;
+  reporter: string | null; // null: sent signed out
+  status: "open" | "resolved";
+  resolution: "fixed" | "dismissed" | null;
+  created_at: string;
+  resolved_at: string | null;
 }
 
 export interface AdminReportGroup {
@@ -783,4 +900,9 @@ export interface Jurisdiction {
   /** The bait rules contradict the guides' live-bait advice (California):
    * the live-bait list carries a warning there. */
   bait_rules_on_every_bait_question: boolean;
+  /** Where FishEye wrote the state's licence topic: the age a licence is
+   * needed from, and the handbook ids of that topic and the first-trip one. */
+  license_from_age?: number | null;
+  license_topic?: string | null;
+  first_trip_topic?: string | null;
 }

@@ -95,6 +95,20 @@ describe("FishGrid", () => {
     expect(screen.getByText("Bluegill").closest("a")).toHaveAttribute("href", "/fish/bluegill");
   });
 
+  // The 2026-10-29 persona review: Georgia's list offered the Guadalupe bass.
+  it("leaves out a fish that lives only in another state", () => {
+    const withTexasOnly = [...guides, guide("guadalupe-bass", "Guadalupe Bass", { only_in_state: "TX" })];
+    window.localStorage.setItem("fisheye.state", "GA");
+    const { unmount } = render(<FishGrid guides={withTexasOnly} photos={{}} />);
+    expect(screen.queryByText("Guadalupe Bass")).not.toBeInTheDocument();
+    expect(screen.getByText("Bluegill")).toBeInTheDocument();
+    unmount();
+    window.localStorage.setItem("fisheye.state", "TX");
+    render(<FishGrid guides={withTexasOnly} photos={{}} />);
+    expect(screen.getByText("Guadalupe Bass")).toBeInTheDocument();
+    window.localStorage.removeItem("fisheye.state");
+  });
+
   it("filters by difficulty and by bait fish", () => {
     render(<FishGrid guides={guides} photos={{}} />);
     fireEvent.click(screen.getByRole("tab", { name: "Intermediate" }));

@@ -47,6 +47,7 @@ from app.services.rag.retriever import (
     split_species,
     unguided_fish_named,
 )
+from app.services.rag import es, ja, ko, replies
 
 DEFAULT_K = 4
 MAX_ATTEMPTS = 2
@@ -74,28 +75,31 @@ ANSWER_NO_MATCH = "no_match"
 # The passages themselves, no model involved: what everyone gets first
 # (search_guides below). A written answer is a separate, metered step.
 ANSWER_PASSAGES = "passages"
+PASSAGES_INTRO = "Here's what the FishEye guides say:"
+# The passages are in English; a question in Chinese is told so in Chinese.
+PASSAGES_INTRO_ZH = "以下是 FishEye 指南里的相关内容（原文为英文）："
 
-COVERAGE = (
-    "FishEye covers nineteen freshwater fish, most of them found across the U.S. (what each one "
-    "eats, where it lives, which baits work and why, rod-and-reel setups, and how to clean and "
-    "cook it) plus a handbook on baits, lures, tackle, knots, casting, weather and water, safety "
-    f"and caring for your catch. Fishing rules are written for {jurisdictions.covered_names()} so "
-    "far, and many examples of where fish live are Texas's; both differ by state."
-)
 # Three different admissions, because they are three different situations
-# and one "not covered" for all of them was misleading (docs/adr/0026).
-NO_MATCH_ANSWER = f"The FishEye guides don't cover that yet. {COVERAGE} Try asking about one of those."
-OFF_TOPIC_ANSWER = (
-    "That doesn't look like a fishing question to me — or I didn't understand it. "
-    f"{COVERAGE} Try naming a fish, a bait or a piece of tackle, in English or Chinese."
-)
+# and one "not covered" for all of them was misleading (docs/adr/0026). In
+# the asker's language: replies.py.
+COVERAGE = replies.coverage("en")
+NO_MATCH_ANSWER = replies.no_match("en")
+OFF_TOPIC_ANSWER = replies.off_topic("en")
 
 
 def unguided_fish_answer(name: str) -> str:
-    return (
-        f"FishEye has no guide for {name} yet, so anything it told you about that fish would "
-        f"be guesswork. {COVERAGE}"
-    )
+    return replies.unguided_fish(name, "en")
+
+
+def searchable(question: str) -> str:
+    """The question in the words the search is decided by: a Japanese,
+    Korean or Spanish one in English (ja.py, ko.py, es.py); any other as it
+    is. Japanese first: its kanji would otherwise read as Chinese."""
+    if ja.is_japanese(question):
+        return ja.to_english(question)
+    if ko.is_korean(question):
+        return ko.to_english(question)
+    return es.to_english(question) if es.is_spanish(question) else question
 
 SPECIES_VOCABULARY = tuple(sorted((g.common_name.lower() for g in GUIDES), key=len, reverse=True))
 
@@ -353,18 +357,22 @@ def search_guides(
     k: int = DEFAULT_K,
     retriever: Retriever | None = None,
     state: str | None = None,
+    lang: str | None = None,
 ) -> AskResult:
     """The retrieval half of `ask`, on its own: the passages that answer the
     question, best first, and no model call. An empty result is the same
     "not covered" answer `ask` gives, and is also what decides that a
     question isn't a fishing question and may not spend an AI summary
-    (api/ask.py)."""
+    (api/ask.py). `lang` is the site's language: FishEye's own sentences
+    come back in it, or in the question's (replies.py)."""
     question = " ".join(question.split())
+    query = searchable(question)
+    reply = replies.reply_lang(question, lang)
     retr = retriever or default_retriever()
     context = (species_slug,) if species_slug else None
-    state = jurisdictions.normalize(state)
-    hits, dropped = _search(retr, question, k, context, state)
-    named, _ = split_species(question)
+    state = answer_state(query, state)
+    hits, dropped = _search(retr, query, k, context, state)
+    named, _ = split_species(query)
     trace = AskTrace(
         trace_id=str(uuid.uuid4()),
         retriever=getattr(retr, "name", "bm25"),
@@ -372,9 +380,16 @@ def search_guides(
         retrieved=[{"id": h.passage.id, "score": round(h.score, 3)} for h in hits],
     )
     if not hits:
-        return _empty(question, context, retr, trace, state if dropped else None)
+        return _empty(question, context, retr, trace, state if dropped else None, query=query, lang=reply)
     passages = [h.passage for h in hits]
-    return AskResult(question, "Here's what the FishEye guides say:", ANSWER_PASSAGES, passages, trace)
+    return AskResult(question, replies.passages_intro(reply), ANSWER_PASSAGES, passages, trace)
+
+
+def answer_state(question: str, picked: str | None) -> str | None:
+    """Whose rules to answer with: a state the question names wins over the
+    one picked on the page ("license in Minnesota" from a Texan is about
+    Minnesota), then the picked one, else None (every state's, labelled)."""
+    return jurisdictions.state_in_question(question) or jurisdictions.normalize(picked)
 
 
 def _empty(
@@ -383,23 +398,28 @@ def _empty(
     retr: Retriever,
     trace: AskTrace,
     other_state: str | None = None,
+    query: str | None = None,
+    lang: str | None = None,
 ) -> AskResult:
     """The answer when nothing was retrieved: which of the kinds depends on
     why the retriever came back empty (docs/adr/0026), or on every hit
-    having been another state's rules (docs/adr/0027)."""
+    having been another state's rules (docs/adr/0027). `query` is what was
+    searched (a Spanish question's English words); `lang` the reply's."""
+    query = query or question
+    lang = lang or replies.reply_lang(question, None)
     if other_state:
         trace.outcome = OUTCOME_OTHER_STATE
-        return AskResult(question, jurisdictions.other_state_answer(other_state), ANSWER_NO_MATCH, [], trace)
-    why = retr.why_empty(question, context) if hasattr(retr, "why_empty") else EMPTY_NOT_COVERED
+        return AskResult(question, replies.other_state(other_state, lang), ANSWER_NO_MATCH, [], trace)
+    why = retr.why_empty(query, context) if hasattr(retr, "why_empty") else EMPTY_NOT_COVERED
     if why == EMPTY_OFF_TOPIC:
         trace.outcome = OUTCOME_OFF_TOPIC
-        answer = OFF_TOPIC_ANSWER
+        answer = replies.off_topic(lang)
     elif why == EMPTY_UNGUIDED_FISH:
         trace.outcome = OUTCOME_UNGUIDED_FISH
-        answer = unguided_fish_answer(unguided_fish_named(question) or "that fish")
+        answer = replies.unguided_fish(unguided_fish_named(query) or replies.THAT_FISH.get(lang, "that fish"), lang)
     else:
         trace.outcome = OUTCOME_NO_MATCH
-        answer = NO_MATCH_ANSWER
+        answer = replies.no_match(lang)
     return AskResult(question, answer, ANSWER_NO_MATCH, [], trace)
 
 
@@ -410,15 +430,19 @@ def ask(
     provider: LLMProvider | None = None,
     retriever: Retriever | None = None,
     state: str | None = None,
+    lang: str | None = None,
 ) -> AskResult:
-    """Never raises on model failure — falls back."""
+    """Never raises on model failure — falls back. The model sees the
+    question as asked, so it answers in its language; the search sees
+    `searchable(question)`."""
     question = " ".join(question.split())
+    query = searchable(question)
     retr = retriever or default_retriever()
     context = (species_slug,) if species_slug else None
-    state = jurisdictions.normalize(state)
-    hits, dropped = _search(retr, question, k, context, state)
+    state = answer_state(query, state)
+    hits, dropped = _search(retr, query, k, context, state)
 
-    named, _ = split_species(question)
+    named, _ = split_species(query)
     trace = AskTrace(
         trace_id=str(uuid.uuid4()),
         retriever=getattr(retr, "name", "bm25"),
@@ -428,7 +452,10 @@ def ask(
     passages = [h.passage for h in hits]
 
     if not passages:
-        return _empty(question, context, retr, trace, state if dropped else None)
+        return _empty(
+            question, context, retr, trace, state if dropped else None,
+            query=query, lang=replies.reply_lang(question, lang),
+        )
 
     key = _cache_key(question, passages)
     with _cache_lock:

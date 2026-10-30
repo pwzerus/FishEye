@@ -292,11 +292,13 @@ def google_sign_in(db: Session, profile: GoogleProfile, current: User | None) ->
         if by_sub is not None and by_sub.id != current.id:
             raise AuthError(409, "That Google account is connected to a different FishEye account.", "google_in_use")
         current.google_sub = profile.sub
+        _confirmed_by_google(current, profile)
         return current
     if by_sub is not None:
         if not by_sub.is_active:
             raise AuthError(403, "This account is suspended.", "suspended")
         by_sub.last_login_at = utcnow()
+        _confirmed_by_google(by_sub, profile)
         return by_sub
     if db.scalar(select(User.id).where(User.email == profile.email)) is not None:
         raise AuthError(409, "Sign in with your password, then connect Google from your account page.", "google_email_exists")
@@ -304,7 +306,20 @@ def google_sign_in(db: Session, profile: GoogleProfile, current: User | None) ->
         name = clean_display_name(profile.name)
     except AuthError:
         name = "Angler"
-    user = User(email=profile.email, display_name=name, google_sub=profile.sub, last_login_at=utcnow())
+    user = User(
+        email=profile.email,
+        display_name=name,
+        google_sub=profile.sub,
+        last_login_at=utcnow(),
+        email_verified_at=utcnow(),  # Google signs in verified addresses only
+    )
     db.add(user)
     db.flush()
     return user
+
+
+def _confirmed_by_google(user: User, profile: GoogleProfile) -> None:
+    """Google only signs in verified addresses (google_profile), so a
+    Google account with the same address confirms the FishEye one."""
+    if user.email == profile.email and user.email_verified_at is None:
+        user.email_verified_at = utcnow()

@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.api.auth_deps import require_admin, same_origin
 from app.api.deps import get_db
 from app.api.params import DbId
-from app.api.pins import lakes_for, summary_fields
+from app.api.pins import summary_fields, waters_for
 from app.db.types import utcnow
 from app.models.community import (
     PIN_HIDDEN,
@@ -32,10 +32,15 @@ from app.models.community import (
     VISIBILITY_PUBLIC,
     AuditLog,
     CatchPin,
+    LakeReport,
     PinPhoto,
     PinReport,
     User,
 )
+from app.models.waterbody import Waterbody
+from app.schemas.lake_reports import AdminLakeReportOut, LakeReportResolveIn
+from app.services import lake_reports as lake_report_service
+from app.services.lake_reports import LakeReportError
 from app.schemas.admin_community import (
     AdminPinOut,
     AdminPinPage,
@@ -89,7 +94,79 @@ def stats(_: User = Depends(require_admin), db: Session = Depends(get_db)) -> St
             select(func.count(func.distinct(PinReport.pin_id))).where(PinReport.status == REPORT_OPEN)
         )
         or 0,
+        lake_reports_open=db.scalar(
+            select(func.count()).select_from(LakeReport).where(LakeReport.status == REPORT_OPEN)
+        )
+        or 0,
     )
+
+
+# ------------------------------------------------------------ lake reports
+
+
+@router.get("/lake-reports", response_model=list[AdminLakeReportOut])
+def lake_report_queue(
+    status: str = Query(default=REPORT_OPEN, pattern=r"^(open|resolved)$"),
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> list[AdminLakeReportOut]:
+    """Open lake reports, oldest first (the queue); resolved, newest first."""
+    order = LakeReport.created_at.asc() if status == REPORT_OPEN else LakeReport.resolved_at.desc()
+    rows = db.scalars(select(LakeReport).where(LakeReport.status == status).order_by(order).limit(200)).all()
+    lakes = {
+        w.id: w
+        for w in db.scalars(select(Waterbody).where(Waterbody.id.in_({r.waterbody_id for r in rows if r.waterbody_id})))
+    }
+    reporters = {
+        u.id: u.display_name
+        for u in db.scalars(select(User).where(User.id.in_({r.reporter_id for r in rows if r.reporter_id})))
+    }
+    out = []
+    for r in rows:
+        lake = lakes.get(r.waterbody_id) if r.waterbody_id else None
+        out.append(
+            AdminLakeReportOut(
+                id=r.id,
+                reason=r.reason,
+                reason_label=lake_report_service.reason_label(r.reason),
+                waterbody_id=r.waterbody_id,
+                lake_name=lake.name if lake else r.name,
+                latitude=lake.latitude if lake else r.latitude,
+                longitude=lake.longitude if lake else r.longitude,
+                state_code=r.state_code,
+                detail=r.detail,
+                reporter=reporters.get(r.reporter_id) if r.reporter_id else None,
+                status=r.status,
+                resolution=r.resolution,
+                created_at=r.created_at,
+                resolved_at=r.resolved_at,
+            )
+        )
+    return out
+
+
+@router.post("/lake-reports/{report_id}/resolve", status_code=204, response_class=Response)
+def resolve_lake_report(
+    payload: LakeReportResolveIn,
+    report_id: DbId,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> Response:
+    """Fixed (the data was corrected by hand) or dismissed. Recorded in the
+    audit log either way."""
+    report = db.get(LakeReport, report_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="No such report.")
+    try:
+        lake_report_service.resolve(report, admin, payload.resolution)
+    except LakeReportError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.message) from exc
+    audit.record(
+        db, admin, f"lake_report.{payload.resolution}", "lake_report", report.id,
+        reason=report.reason, waterbody_id=report.waterbody_id, name=report.name, note=payload.note,
+    )
+    db.commit()
+    return Response(status_code=204)
 
 
 # ---------------------------------------------------------------- reports
@@ -108,7 +185,7 @@ def report_queue(admin: User = Depends(require_admin), db: Session = Depends(get
     for r in reports:
         groups.setdefault(r.pin_id, []).append(r)
     pins = {p.id: p for p in (reports_[0].pin for reports_ in groups.values())}
-    lakes = lakes_for(db, list(pins.values()))
+    lakes = waters_for(db, list(pins.values()))
     ordered = sorted(groups.items(), key=lambda kv: (-len(kv[1]), kv[1][0].created_at))
     return [
         ReportGroupOut(
@@ -169,7 +246,7 @@ def resolve_reports(
 
 
 def _admin_pin(db: Session, pin: CatchPin, admin: User, lakes=None) -> AdminPinOut:
-    lakes = lakes if lakes is not None else lakes_for(db, [pin])
+    lakes = lakes if lakes is not None else waters_for(db, [pin])
     return AdminPinOut(
         **summary_fields(pin, admin, lakes),
         open_reports=pin_service.open_report_count(db, pin.id),
@@ -205,7 +282,7 @@ def admin_pins(
         .offset((page - 1) * PAGE_SIZE)
         .limit(PAGE_SIZE)
     ).all()
-    lakes = lakes_for(db, list(pins))
+    lakes = waters_for(db, list(pins))
     return AdminPinPage(
         total=total, page=page, page_size=PAGE_SIZE, items=[_admin_pin(db, p, admin, lakes) for p in pins]
     )

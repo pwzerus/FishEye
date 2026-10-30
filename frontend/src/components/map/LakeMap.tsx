@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import L from "leaflet";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Circle,
   MapContainer,
@@ -18,11 +18,12 @@ import {
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 
-import type { PinSummary, Shop, WaterbodyListItem } from "@/lib/api/types";
+import type { PinSummary, Shop, WaterGroup, WaterbodyListItem } from "@/lib/api/types";
 import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from "@/lib/map/tiles";
 import { BaseMap } from "./BaseMap";
 import { waterIcon } from "./waterIcon";
-import { DraftMarker, PinMarkers, PlaceOnClick } from "./PinLayer";
+import { useT } from "@/i18n/client";
+import { DraftMarker, PinMarkers, PlaceOnClick, WaterGroupMarkers } from "./PinLayer";
 import { ShopMarkers } from "./ShopLayer";
 import { StatesLayer } from "./StatesLayer";
 import { displayLongitude, type StateRegion } from "./usStates";
@@ -96,7 +97,7 @@ function FlyToFocus({
   focusPoint,
   skipOnMount,
 }: {
-  focusPoint: { latitude: number; longitude: number; own?: { accuracy: number } } | null;
+  focusPoint: { latitude: number; longitude: number; own?: { accuracy: number }; zoom?: number } | null;
   skipOnMount: boolean;
 }) {
   const map = useMap();
@@ -112,7 +113,7 @@ function FlyToFocus({
     const at = L.latLng(focusPoint.latitude, focusPoint.longitude);
     const zoom = focusPoint.own
       ? locationZoom(map.getBoundsZoom(at.toBounds(focusPoint.own.accuracy * 2)))
-      : SEARCH_ZOOM;
+      : (focusPoint.zoom ?? SEARCH_ZOOM);
     map.flyTo(at, zoom);
   }, [focusPoint, map]);
   return null;
@@ -152,6 +153,7 @@ export function YouAreHere({
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
   const center: [number, number] = [at.latitude, displayLongitude(at.longitude, region)];
   const showAccuracy = at.accuracy / metresPerPixel(at.latitude, zoom) >= ACCURACY_MIN_PX;
+  const t = useT();
   return (
     <>
       {showAccuracy && (
@@ -164,7 +166,7 @@ export function YouAreHere({
       )}
       <Marker position={center} icon={YOU_ICON} interactive={false} keyboard={false} zIndexOffset={1000}>
         <Tooltip permanent direction="top" className="you-are-here">
-          You are here
+          {t.map.youAreHere}
         </Tooltip>
       </Marker>
     </>
@@ -300,6 +302,8 @@ function Freeze({ frozen }: { frozen: boolean }) {
  */
 function AllStatesControl({ onClick }: { onClick: () => void }) {
   const map = useMap();
+  const t = useT();
+  const { allStates, allStatesTitle } = t.map;
   const latest = useRef(onClick);
   useEffect(() => {
     latest.current = onClick;
@@ -309,11 +313,11 @@ function AllStatesControl({ onClick }: { onClick: () => void }) {
     control.onAdd = () => {
       const button = L.DomUtil.create("button", "map-toggle active all-states-control");
       button.type = "button";
-      button.title = "Back to the map of all states";
+      button.title = allStatesTitle;
       button.innerHTML =
         '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
         '<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z M9 3v15 M15 6v15" stroke-linejoin="round"/></svg>' +
-        "<span>All states</span>";
+        `<span>${allStates}</span>`;
       L.DomEvent.disableClickPropagation(button);
       L.DomEvent.on(button, "click", () => latest.current());
       return button;
@@ -322,7 +326,7 @@ function AllStatesControl({ onClick }: { onClick: () => void }) {
     return () => {
       control.remove();
     };
-  }, [map]);
+  }, [map, allStates, allStatesTitle]);
   return null;
 }
 
@@ -392,7 +396,21 @@ export function ZoomOutLimit({ onBlocked }: { onBlocked: () => void }) {
   return null;
 }
 
+/** The cluster bubble Leaflet.markercluster draws by default (same classes,
+ * so the same look), plus words for a screen reader: the bubble is a
+ * focusable button whose name is its text, and "12" alone says nothing. */
+export function clusterIcon(cluster: { getChildCount: () => number }, label = "lakes here. Zoom in to see them.") {
+  const n = cluster.getChildCount();
+  const size = n < 10 ? "small" : n < 100 ? "medium" : "large";
+  return L.divIcon({
+    html: `<div><span>${n}<span class="sr-only"> ${label}</span></span></div>`,
+    className: `marker-cluster marker-cluster-${size}`,
+    iconSize: L.point(40, 40),
+  });
+}
+
 function LakeMarker({ lake, onSelect, region }: { lake: WaterbodyListItem; onSelect: (id: number) => void; region?: StateRegion | null }) {
+  const t = useT().map;
   const isOsm = lake.data_tier === "osm";
   const reported = lake.reported_species_count ?? 0;
   const icon = waterIcon(isOsm ? reported > 0 ? "reported" : "osm" : "verified");
@@ -400,23 +418,26 @@ function LakeMarker({ lake, onSelect, region }: { lake: WaterbodyListItem; onSel
     <Marker
       position={[lake.latitude, displayLongitude(lake.longitude, region)]}
       icon={icon}
+      // Leaflet gives a div icon no alt; its title is the marker's name for
+      // a screen reader (Leaflet makes the marker a focusable button).
+      title={`${lake.name}, ${isOsm ? t.lakeUnverified : t.lakeVerified}`}
       eventHandlers={{ click: () => onSelect(lake.id) }}
     >
       <Popup>
         <strong>{lake.name}</strong>
         {isOsm ? (
           <div style={{ fontSize: 12, color: "#6b7280" }}>
-            {lake.public_access_status === "likely_private" ? "Probably private · " : ""}
-            {lake.water_type === "pond" ? "Pond · " : ""}Unverified map data
+            {lake.public_access_status === "likely_private" ? t.probablyPrivate : ""}
+            {lake.water_type === "pond" ? t.pond : ""}{t.unverifiedData}
             {reported > 0 && (
               <div style={{ color: "#92400e" }}>
-                {reported} fish species on record
+                {t.speciesOnRecord(reported)}
               </div>
             )}
           </div>
         ) : (
           lake.field_tested && (
-            <div style={{ fontSize: 12, color: "#2563eb" }}>Friend field-tested</div>
+            <div style={{ fontSize: 12, color: "#2563eb" }}>{t.fieldTested}</div>
           )
         )}
       </Popup>
@@ -432,9 +453,12 @@ export default function LakeMap({
   you = null,
   initialView = null,
   pins = [],
+  groups = [],
   shops = [],
   placing = false,
   draft = null,
+  draftLabel = null,
+  draftOff = false,
   onPlace,
   coveredStates = null,
   mode = "exploring",
@@ -448,18 +472,23 @@ export default function LakeMap({
   waterbodies: WaterbodyListItem[];
   onSelect: (id: number) => void;
   onViewportChange: (viewport: Viewport) => void;
-  focusPoint?: { latitude: number; longitude: number; own?: { accuracy: number } } | null;
+  focusPoint?: { latitude: number; longitude: number; own?: { accuracy: number }; zoom?: number } | null;
   // Where "Use my location" placed the person, marked while exploring.
   you?: { latitude: number; longitude: number; accuracy: number } | null;
   // Where to open the map; defaults to the whole country, where the states
   // layer is the way in.
   initialView?: { center: [number, number]; zoom: number } | null;
-  // Community pins in view, and the "add a pin" mode (MapView.tsx).
+  // Your own catches in view, one by one; everyone else's, one bubble per
+  // water (backend ADR 0040); and the "add a catch" mode (MapView.tsx).
   pins?: PinSummary[];
+  groups?: WaterGroup[];
   // Bait and tackle shops in view (ShopLayer.tsx).
   shops?: Shop[];
   placing?: boolean;
   draft?: { latitude: number; longitude: number } | null;
+  // The water the draft pin is on, or that it's on none (`draftOff`).
+  draftLabel?: string | null;
+  draftOff?: boolean;
   onPlace?: (lat: number, lng: number) => void;
   // State codes with lakes on file; null while unknown (StatesLayer.tsx).
   coveredStates?: Set<string> | null;
@@ -479,6 +508,11 @@ export default function LakeMap({
 }) {
   const verified = waterbodies.filter((w) => w.data_tier !== "osm");
   const osm = waterbodies.filter((w) => w.data_tier === "osm");
+  const clusterLabel = useT().map.clusterLakes;
+  const iconFor = useCallback(
+    (cluster: { getChildCount: () => number }) => clusterIcon(cluster, clusterLabel),
+    [clusterLabel],
+  );
 
   return (
     <MapContainer
@@ -528,19 +562,30 @@ export default function LakeMap({
         ))}
 
         {/* OSM lakes can number in the thousands in one view; clustering
-            keeps the map readable and the browser responsive. */}
-        <MarkerClusterGroup chunkedLoading showCoverageOnHover={false}>
+            keeps the map readable and the browser responsive. A new group per
+            state: Leaflet.markercluster builds its zoom levels once, from the
+            map's limits when it is added, and ViewLimits changes those limits
+            with the state. A group built before a state raised the floor
+            (Use my location, a search) filed a lake with no neighbour under a
+            level it never draws, so a lone lake had no marker. */}
+        <MarkerClusterGroup
+          key={region?.code ?? "no-state"}
+          chunkedLoading
+          showCoverageOnHover={false}
+          iconCreateFunction={iconFor}
+        >
           {osm.map((lake) => (
             <LakeMarker key={lake.id} lake={lake} onSelect={onSelect} region={region} />
           ))}
         </MarkerClusterGroup>
 
         <ShopMarkers shops={shops} region={region} />
+        <WaterGroupMarkers groups={groups} />
         <PinMarkers pins={pins} />
         </>
       )}
       {placing && onPlace && <PlaceOnClick onPlace={onPlace} />}
-      {draft && onPlace && <DraftMarker point={draft} onMove={onPlace} />}
+      {draft && onPlace && <DraftMarker point={draft} onMove={onPlace} label={draftLabel} off={draftOff} />}
     </MapContainer>
   );
 }

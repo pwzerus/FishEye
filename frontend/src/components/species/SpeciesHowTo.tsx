@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { useLocale, useT } from "@/i18n/client";
+import { localFishName } from "@/i18n/names";
 import { ApiError, getSpeciesGuide, speciesSlug } from "@/lib/api/client";
 import type { SpeciesGuide } from "@/lib/api/types";
 import { SpeciesGuideBody } from "./SpeciesGuideBody";
@@ -17,6 +19,8 @@ export function SpeciesHowTo({ commonName }: { commonName: string }) {
   const [guide, setGuide] = useState<SpeciesGuide | null>(null);
   const [error, setError] = useState<string | null>(null);
   const slug = speciesSlug(commonName);
+  const t = useT().lake;
+  const locale = useLocale();
 
   function toggle() {
     const next = !open;
@@ -27,9 +31,7 @@ export function SpeciesHowTo({ commonName }: { commonName: string }) {
         .then(setGuide)
         .catch((e: unknown) => {
           setError(
-            e instanceof ApiError && e.status === 404
-              ? "No guide for this species yet."
-              : "Couldn't load the guide. Try again in a moment.",
+            e instanceof ApiError && e.status === 404 ? t.noGuide : t.guideError,
           );
         });
     }
@@ -38,17 +40,17 @@ export function SpeciesHowTo({ commonName }: { commonName: string }) {
   return (
     <div className="species-howto">
       <button type="button" className="species-howto-toggle" onClick={toggle} aria-expanded={open}>
-        {open ? "Hide how to catch it" : "How to catch it"}
+        {open ? t.hideHowTo : t.howTo}
       </button>
       {open && (
         <div className="species-howto-content">
           {error && <p className="panel-error">{error}</p>}
-          {!error && !guide && <p className="muted">Loading guide…</p>}
+          {!error && !guide && <p className="muted">{t.loadingGuide}</p>}
           {guide && (
             <>
               <SpeciesGuideBody guide={guide} compact />
               <Link href={`/fish/${slug}`} className="species-howto-full">
-                Full {guide.common_name} guide →
+                {t.fullGuide(localFishName(guide.slug, locale) ?? guide.common_name)}
               </Link>
             </>
           )}

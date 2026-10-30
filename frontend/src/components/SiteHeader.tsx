@@ -5,9 +5,12 @@ import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
+import { LanguageMenu } from "@/components/LanguageMenu";
 import { AccountMenu } from "@/components/auth/AccountMenu";
 import { useToast } from "@/components/ui/Toast";
-import { CATCHES_AVAILABLE, CATCHES_SOON } from "@/lib/features";
+import { useT } from "@/i18n/client";
+import type { Messages } from "@/i18n/messages";
+import { CATCHES_AVAILABLE } from "@/lib/features";
 
 /**
  * The one piece of chrome that never moves. It lives in the root layout and
@@ -21,12 +24,12 @@ import { CATCHES_AVAILABLE, CATCHES_SOON } from "@/lib/features";
  */
 
 const NAV = [
-  { href: "/", label: "Home", icon: "home" },
-  { href: "/map", label: "Find water", icon: "map" },
-  { href: "/fish", label: "Fish guide", icon: "fish" },
-  { href: "/community", label: "Catches", icon: "community" },
-  { href: "/ask", label: "Ask", icon: "ask" },
-] as const;
+  { href: "/", label: "home", icon: "home" },
+  { href: "/map", label: "map", icon: "map" },
+  { href: "/fish", label: "fish", icon: "fish" },
+  { href: "/community", label: "catches", icon: "community" },
+  { href: "/ask", label: "ask", icon: "ask" },
+] as const satisfies readonly { href: string; label: keyof Messages["nav"]; icon: string }[];
 
 type NavItem = (typeof NAV)[number];
 
@@ -38,18 +41,20 @@ function unavailable(item: NavItem): boolean {
 
 function UnavailableNavItem({ item }: { item: NavItem }) {
   const toast = useToast();
+  const t = useT();
+  const label = t.nav[item.label];
   return (
     <button
       type="button"
       className="site-nav-link is-unavailable"
       aria-disabled="true"
-      aria-label={`${item.label} (unavailable)`}
-      title={CATCHES_SOON}
-      onClick={() => toast(CATCHES_SOON, "info")}
+      aria-label={t.nav.unavailable(label)}
+      title={t.common.catchesSoon}
+      onClick={() => toast(t.common.catchesSoon, "info")}
     >
       <NavIcon name={item.icon} />
-      <span>{item.label}</span>
-      <span className="nav-unavailable">Unavailable</span>
+      <span>{label}</span>
+      <span className="nav-unavailable">{t.common.unavailable}</span>
     </button>
   );
 }
@@ -120,6 +125,7 @@ function NavIcon({ name }: { name: (typeof NAV)[number]["icon"] }) {
 }
 
 export function SiteHeader() {
+  const t = useT();
   const mobile = useSyncExternalStore(watchMobile, mobileSnapshot, serverSnapshot);
   const pathname = usePathname() ?? "/";
   const current = sectionIndex(pathname);
@@ -131,7 +137,7 @@ export function SiteHeader() {
         <Link
           href="/"
           className="brand-link"
-          aria-label="FishEye home"
+          aria-label={t.nav.homeLink}
           transitionTypes={onRoot ? undefined : ["nav-back"]}
         >
           <picture>
@@ -143,7 +149,7 @@ export function SiteHeader() {
           <img src="/brand/fisheye-mark.svg" alt="" className="brand-mark" aria-hidden="true" />
         </Link>
         <div className="site-header-right">
-        <nav className="site-nav" aria-label="Main" hidden={mobile}>
+        <nav className="site-nav" aria-label={t.nav.main} hidden={mobile}>
           {NAV.map((item, i) => {
             if (unavailable(item)) return <UnavailableNavItem key={item.href} item={item} />;
             const active = i === current && (item.href !== "/" || onRoot);
@@ -154,20 +160,21 @@ export function SiteHeader() {
                 href={item.href}
                 className={`site-nav-link${active ? " active" : ""}${item.href === "/" ? " nav-home" : ""}`}
                 aria-current={active ? "page" : undefined}
-                aria-label={item.label}
+                aria-label={t.nav[item.label]}
                 transitionTypes={active ? undefined : [direction]}
               >
                 <NavIcon name={item.icon} />
-                <span>{item.label}</span>
+                <span>{t.nav[item.label]}</span>
               </Link>
             );
           })}
         </nav>
+        <LanguageMenu />
         <AccountMenu />
         </div>
       </div>
     </header>
-    {mobile && createPortal(<nav className="mobile-site-nav" aria-label="Main">{NAV.filter((item) => item.href !== '/').map((item) => unavailable(item) ? <UnavailableNavItem key={item.href} item={item} /> : <Link key={item.href} href={item.href} className={`site-nav-link${pathname.startsWith(item.href) ? ' active' : ''}`} aria-current={pathname.startsWith(item.href) ? 'page' : undefined} aria-label={item.label}><NavIcon name={item.icon}/><span>{item.label}</span></Link>)}</nav>, document.body)}
+    {mobile && createPortal(<nav className="mobile-site-nav" aria-label={t.nav.main}>{NAV.filter((item) => item.href !== '/').map((item) => unavailable(item) ? <UnavailableNavItem key={item.href} item={item} /> : <Link key={item.href} href={item.href} className={`site-nav-link${pathname.startsWith(item.href) ? ' active' : ''}`} aria-current={pathname.startsWith(item.href) ? 'page' : undefined} aria-label={t.nav[item.label]}><NavIcon name={item.icon}/><span>{t.nav[item.label]}</span></Link>)}</nav>, document.body)}
     </>
   );
 }

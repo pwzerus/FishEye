@@ -34,11 +34,15 @@ from app.schemas.auth import (
     RegisterIn,
     SessionOut,
     UserOut,
+    VerifyEmailIn,
+    VerifyEmailOut,
 )
-from app.services import audit
+from app.services import audit, email_verification
 from app.services import auth as auth_service
 from app.services import pins as pin_service
 from app.services.auth import AuthError
+from app.services.email_verification import VerificationError
+from app.services.mail import MailError
 from app.services.media import get_store
 
 router = APIRouter(prefix="/auth", tags=["auth"], dependencies=[Depends(same_origin)])
@@ -47,6 +51,10 @@ router = APIRouter(prefix="/auth", tags=["auth"], dependencies=[Depends(same_ori
 login_by_email = RateLimiter(limit=8, window_seconds=15 * 60)
 login_by_ip = RateLimiter(limit=40, window_seconds=15 * 60)
 register_by_ip = RateLimiter(limit=10, window_seconds=60 * 60)
+# Confirmation emails: a few per account an hour (each one is a message to a
+# real inbox); link checks per IP, so tokens can't be guessed at speed.
+verify_mail_by_user = RateLimiter(limit=5, window_seconds=60 * 60)
+verify_by_ip = RateLimiter(limit=30, window_seconds=15 * 60)
 
 OAUTH_COOKIE = "fm_oauth"
 OAUTH_COOKIE_TTL = 10 * 60
@@ -68,6 +76,8 @@ def user_out(user: User) -> UserOut:
         has_password=user.password_hash is not None,
         google_connected=user.google_sub is not None,
         created_at=user.created_at,
+        email_verified=user.email_verified_at is not None,
+        verification_required=email_verification.needs_verifying(user),
     )
 
 
@@ -108,10 +118,47 @@ def register(payload: RegisterIn, request: Request, response: Response, db: Sess
         user = auth_service.register(db, payload.email, payload.password, payload.display_name)
     except AuthError as exc:
         _raise(exc)
+    if email_verification.enabled():
+        try:
+            email_verification.send_link(db, user)
+        except MailError:
+            pass  # the account still works; the account page can send another
     token = auth_service.create_session(db, user, request.headers.get("user-agent"))
     db.commit()
     set_session_cookie(response, token)
     return user_out(user)
+
+
+@router.post("/verify-email/send", response_model=UserOut)
+def send_verification(user: User = Depends(require_user), db: Session = Depends(get_db)) -> UserOut:
+    """Email a new confirmation link (services/email_verification.py)."""
+    if user.email_verified_at is None:
+        key = str(user.id)
+        _throttle(verify_mail_by_user, key)
+        verify_mail_by_user.hit(key)
+        try:
+            email_verification.send_link(db, user)
+        except MailError:
+            db.rollback()
+            raise HTTPException(status_code=502, detail="We couldn't send the email. Try again later.") from None
+        db.commit()
+    return user_out(user)
+
+
+@router.post("/verify-email", response_model=VerifyEmailOut)
+def verify_email(payload: VerifyEmailIn, request: Request, db: Session = Depends(get_db)) -> VerifyEmailOut:
+    """Open from the emailed link; works without being signed in, since the
+    link may be opened on another device."""
+    ip = client_ip(request)
+    _throttle(verify_by_ip, ip)
+    verify_by_ip.hit(ip)
+    try:
+        user = email_verification.confirm(db, payload.token)
+    except VerificationError as exc:
+        db.commit()  # an expired link is deleted either way
+        raise HTTPException(status_code=exc.status, detail=exc.message) from exc
+    db.commit()
+    return VerifyEmailOut(verified=True, email=user.email)
 
 
 @router.post("/login", response_model=UserOut)

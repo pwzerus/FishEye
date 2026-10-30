@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useT } from "@/i18n/client";
+import { localStateName } from "@/i18n/names";
 import type { PinScope } from "@/lib/api/session";
 import type { PinPlaces } from "@/lib/api/types";
 
@@ -19,7 +21,8 @@ export function scopeFromUrl(search: string): PinScope | null {
   const lake = q.get("lake") ?? undefined;
   if (!state || !/^[A-Z]{2}$/.test(state)) return null;
   if (county && !/^\d{5}$/.test(county)) return { state };
-  return { state, county, lake: county && lake && /^\d+$/.test(lake) ? lake : undefined };
+  // A lake's id, or a river's as "r<id>" (backend /api/pins/places).
+  return { state, county, lake: county && lake && /^r?\d+$/.test(lake) ? lake : undefined };
 }
 
 export function scopeToSearch(scope: PinScope): string {
@@ -55,11 +58,6 @@ export function scopeTitle(scope: PinScope, names: ScopeNames): string | null {
   return null;
 }
 
-const LEVEL_HEADING = {
-  state: () => "Pick a state",
-  county: (n: ScopeNames) => `Counties${n.state ? ` in ${n.state}` : ""} with catches`,
-  lake: (n: ScopeNames) => `Lakes${n.county ? ` in ${n.county}` : ""}`,
-};
 
 /** Breadcrumb (All states › Texas › Harris County › Lake) and the places one
  * level down, each with its number of catches. */
@@ -80,10 +78,18 @@ export function PlaceBrowser({
   locating: boolean;
   locateError: string | null;
 }) {
-  const crumbs: { label: string; to: PinScope }[] = [{ label: "All states", to: {} }];
+  const all = useT();
+  const t = all.feed;
+  const locale = useLocale();
+  const heading = {
+    state: () => t.pickState,
+    county: (n: ScopeNames) => t.countiesIn(n.state ?? null),
+    lake: (n: ScopeNames) => t.watersIn(n.county ?? null),
+  };
+  const crumbs: { label: string; to: PinScope }[] = [{ label: t.allStates, to: {} }];
   if (scope.state) crumbs.push({ label: names.state ?? scope.state, to: { state: scope.state } });
-  if (scope.county) crumbs.push({ label: names.county ?? "County", to: { state: scope.state, county: scope.county } });
-  if (scope.lake) crumbs.push({ label: names.lake ?? "Lake", to: scope });
+  if (scope.county) crumbs.push({ label: names.county ?? t.county, to: { state: scope.state, county: scope.county } });
+  if (scope.lake) crumbs.push({ label: names.lake ?? t.water, to: scope });
 
   const pick = (id: string): PinScope => {
     if (!places) return scope;
@@ -94,9 +100,9 @@ export function PlaceBrowser({
   };
 
   return (
-    <section className="place-browser" aria-label="Where">
+    <section className="place-browser" aria-label={t.where}>
       <div className="place-browser-top">
-        <nav aria-label="Place" className="place-crumbs">
+        <nav aria-label={t.place} className="place-crumbs">
           <ol>
             {crumbs.map((c, i) => {
               const last = i === crumbs.length - 1;
@@ -119,7 +125,7 @@ export function PlaceBrowser({
             <circle cx="12" cy="12" r="3.5" />
             <path d="M12 2v3M12 19v3M2 12h3M19 12h3" strokeLinecap="round" />
           </svg>
-          {locating ? "Finding your county…" : "Near me"}
+          {locating ? t.findingCounty : t.nearMe}
         </button>
       </div>
       {locateError && (
@@ -130,9 +136,9 @@ export function PlaceBrowser({
 
       {places && (places.places.length > 0 || places.level === "state") && (
         <div className="place-level">
-          <h2 className="place-level-heading">{LEVEL_HEADING[places.level](names)}</h2>
+          <h2 className="place-level-heading">{heading[places.level](names)}</h2>
           {places.places.length === 0 ? (
-            <p className="muted">No catches shared yet. Be the first.</p>
+            <p className="muted">{t.noneYet}</p>
           ) : (
             <ul className="place-chips">
               {places.places.map((p) => {
@@ -145,8 +151,14 @@ export function PlaceBrowser({
                       aria-pressed={places.level === "lake" ? active : undefined}
                       onClick={() => onChange(pick(p.id))}
                     >
-                      <span>{p.name}</span>
-                      <span className="place-chip-count" aria-label={`${p.count} ${p.count === 1 ? "catch" : "catches"}`}>
+                      <span>
+                        {places.level === "state"
+                          ? localStateName(p.id, p.name, locale)
+                          : p.id === "0" && places.level === "lake"
+                            ? t.notOnWater
+                            : p.name}
+                      </span>
+                      <span className="place-chip-count" aria-label={all.catch.count(p.count)}>
                         {p.count}
                       </span>
                     </button>

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from sqlalchemy import Date, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -57,10 +57,14 @@ class User(Base):
     status: Mapped[str] = mapped_column(String(16), default=USER_ACTIVE)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     last_login_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    # When the address was confirmed (services/email_verification.py): by
+    # the emailed link, or by Google, which only signs in verified addresses.
+    email_verified_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
 
     sessions: Mapped[list[UserSession]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    email_tokens: Mapped[list[EmailToken]] = relationship(cascade="all, delete-orphan")
     pins: Mapped[list[CatchPin]] = relationship(
         back_populates="user", cascade="all, delete-orphan", foreign_keys="CatchPin.user_id"
     )
@@ -95,12 +99,61 @@ class UserSession(Base):
     user: Mapped[User] = relationship(back_populates="sessions")
 
 
+class LakeReport(Base):
+    """"Something's wrong with this lake" and "a lake is missing", sent from
+    the map by anyone, for an admin to check against a source (ADR 0039).
+    It never changes a lake by itself: it is a to-do for a person, like the
+    pins in this file, it never flows into the official tiers."""
+
+    __tablename__ = "lake_reports"
+    __table_args__ = _NO_ID_REUSE
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # services/lake_reports.REASONS, or "missing" for a lake not on the map.
+    reason: Mapped[str] = mapped_column(String(24))
+    waterbody_id: Mapped[int | None] = mapped_column(
+        ForeignKey("waterbodies.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    # A missing lake: its name and where it is.
+    name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    state_code: Mapped[str | None] = mapped_column(String(2), nullable=True)
+    detail: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Anyone may report; signed in, the report says who. No IP is kept.
+    reporter_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    status: Mapped[str] = mapped_column(String(16), default=REPORT_OPEN, index=True)
+    # "fixed" | "dismissed"
+    resolution: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    resolved_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class EmailToken(Base):
+    """A link emailed to confirm an address. As with sessions, the email
+    holds the token and the database only its SHA-256."""
+
+    __tablename__ = "email_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
 class CatchPin(Base):
     __tablename__ = "catch_pins"
     __table_args__ = (
         Index("ix_catch_pins_status_visibility", "status", "visibility"),
         Index("ix_catch_pins_lat_lng", "latitude", "longitude"),
         Index("ix_catch_pins_place", "state_code", "county_geoid"),
+        Index("ix_catch_pins_public_lat_lng", "public_latitude", "public_longitude"),
         _NO_ID_REUSE,
     )
 
@@ -129,11 +182,23 @@ class CatchPin(Base):
     status: Mapped[str] = mapped_column(String(16), default=PIN_PUBLISHED)
     # Why a pin isn't published: "reports" (auto-hidden) or "moderator".
     status_reason: Mapped[str | None] = mapped_column(String(32), nullable=True)
-    # Nearest lake at the time of pinning, if one is close. A hint for the
-    # UI, never evidence about the lake.
+    # The water the catch is on (ADR 0040): a lake, or a named river
+    # (services/water.py), never both. Where the catch is, never evidence
+    # about the lake. Pins saved before ADR 0040 may have neither, or a lake
+    # whose centre was merely within 3 km; startup checks them again
+    # (services/pins.fill_water).
     waterbody_id: Mapped[int | None] = mapped_column(
         ForeignKey("waterbodies.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    river_id: Mapped[int | None] = mapped_column(
+        ForeignKey("rivers.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    # Metres from the spot to that water's shore or line (0: on it); -1:
+    # checked, and not on any; None: not checked against the shapes yet.
+    water_distance_m: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # A photo's own GPS puts it within PHOTO_AT_SPOT_M of the spot: shown as
+    # "Photo taken here". None: no photo carried a location.
+    photo_at_spot: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     # Where the pin is, for browsing by state, county, lake: looked up from
     # the Census county outlines when it is saved (services/counties.py).
     # None outside the US or for a pin saved before this existed and not
@@ -141,6 +206,17 @@ class CatchPin(Base):
     state_code: Mapped[str | None] = mapped_column(String(2), nullable=True)
     county_geoid: Mapped[str | None] = mapped_column(String(5), nullable=True)
     county_name: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # Where everyone but the owner and admins sees the catch (ADR 0038): the
+    # exact spot only when the angler chose `share_exact`; otherwise the
+    # linked lake's centre, else the county's, else the spot rounded to 0.1°
+    # (~11 km). Stored rather than worked out per request so the map's bbox
+    # filter runs on it: filtering other people's pins by the exact spot
+    # would let anyone find it with smaller and smaller boxes.
+    share_exact: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    public_latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    public_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # What the public point is: "exact" | "lake" | "county" | "area".
+    public_place: Mapped[str | None] = mapped_column(String(8), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
 
@@ -165,6 +241,11 @@ class PinPhoto(Base):
     height: Mapped[int] = mapped_column(Integer)
     bytes: Mapped[int] = mapped_column(Integer)
     position: Mapped[int] = mapped_column(Integer, default=0)
+    # Where the photo says it was taken, read before the file's metadata is
+    # stripped (services/media.py). Only ever compared with the pin's own
+    # spot for "Photo taken here"; never sent to anyone, the owner included.
+    gps_latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    gps_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
     pin: Mapped[CatchPin] = relationship(back_populates="photos")

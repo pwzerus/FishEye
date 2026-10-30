@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 import { RegionGate } from "@/components/rules/RegionGate";
+import { useLocale, useT } from "@/i18n/client";
+import { localCategory, localTopicTitle } from "@/i18n/names";
 import type { HandbookTopic } from "@/lib/api/types";
 
 /**
@@ -16,6 +18,8 @@ import type { HandbookTopic } from "@/lib/api/types";
  * where they are (backend docs/adr/0027).
  */
 export function Handbook({ topics }: { topics: HandbookTopic[] }) {
+  const tr = useT().fish;
+  const locale = useLocale();
   useEffect(() => {
     const revealTarget = () => {
       let id: string;
@@ -33,16 +37,15 @@ export function Handbook({ topics }: { topics: HandbookTopic[] }) {
   for (const t of topics) {
     const last = groups[groups.length - 1];
     if (last && last.category === t.category) last.topics.push(t);
-    else groups.push({ category: t.category, label: t.category_label, topics: [t] });
+    else groups.push({ category: t.category, label: localCategory(t.category, locale) ?? t.category_label, topics: [t] });
   }
 
   return (
     <section id="handbook" className="handbook" aria-labelledby="handbook-title">
-      <h2 id="handbook-title">The angler&apos;s handbook</h2>
-      <p className="muted">
-        Pick a topic. Learn one thing. Try it outside.
-      </p>
-      <nav className="chip-row handbook-nav" aria-label="Handbook sections">
+      <h2 id="handbook-title">{tr.handbook}</h2>
+      <p className="muted">{tr.handbookLede}</p>
+      {locale !== "en" && <p className="hint">{tr.englishContent}</p>}
+      <nav className="chip-row handbook-nav" aria-label={tr.handbookSections}>
         {groups.map((g) => (
           <a key={g.category} className="chip" href={`#${g.category}`}>
             {g.label}
@@ -51,14 +54,23 @@ export function Handbook({ topics }: { topics: HandbookTopic[] }) {
       </nav>
       {groups.map((g) => (
         <details key={g.category} id={g.category} className="handbook-group">
-          <summary><h3>{g.label}</h3><span>{g.topics.length} topics</span></summary>
+          <summary><h3>{g.label}</h3><span>{tr.topics(g.topics.length)}</span></summary>
           <div className="handbook-grid">
             {g.topics.map((t) => {
               const card = (
                 <article key={t.id} id={t.id} className="handbook-card">
-                  <h4>{t.title}</h4>
+                  <h4>
+                    {localTopicTitle(t.id, locale) ?? t.title}
+                    {localTopicTitle(t.id, locale) && (
+                      <span className="name-en" lang="en">
+                        {t.title}
+                      </span>
+                    )}
+                  </h4>
                   {t.body.map((sentence) => (
-                    <p key={sentence}>{sentence}</p>
+                    <p key={sentence} lang="en">
+                      {sentence}
+                    </p>
                   ))}
                   <p className="handbook-sources">
                     {t.sources.map((s, i) => (

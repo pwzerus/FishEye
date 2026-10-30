@@ -20,7 +20,8 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.waterbody import AccessPoint, Species, Waterbody, WaterbodySpecies
+from app.knowledge.species_guides import lives_in, slugify
+from app.models.waterbody import AccessPoint, Species, State, Waterbody, WaterbodySpecies
 from app.services import fishing_plan, scoring
 from app.services.reported_species import reported_species
 from app.services.weather_adapter import WeatherSnapshot, get_weather
@@ -99,7 +100,9 @@ def _plan_species(
     on_record = official | reported
     guided = fishing_plan.sport_species_with_guides()
     from_lake = [name for name in guided if name in on_record]
-    options = from_lake or guided
+    # With no records, every guided fish that can live in this lake's state.
+    state = db.scalar(select(State.code).join(Waterbody, Waterbody.state_id == State.id).where(Waterbody.id == waterbody_id))
+    options = from_lake or [name for name in guided if lives_in(slugify(name), state)]
 
     if target_species and target_species in guided:
         chosen: str | None = target_species
@@ -115,6 +118,7 @@ def build_recommendations(
     limit: int = 5,
     weather: WeatherSnapshot | None = None,
     include_plan: bool = True,
+    lang: str = "en",
 ) -> dict:
     """Scores every confirmed-public access point on a waterbody and returns
     them ranked. `weather` is injectable so tests (and any future caller
@@ -187,7 +191,7 @@ def build_recommendations(
     plan = None
     if include_plan:
         plan_species, plan_options, plan_on_record = _plan_species(db, waterbody_id, target_species)
-        plan = fishing_plan.build_plan(snapshot, plan_species, plan_options, plan_on_record)
+        plan = fishing_plan.build_plan(snapshot, plan_species, plan_options, plan_on_record, lang)
 
     return {
         "waterbody_id": waterbody.id,

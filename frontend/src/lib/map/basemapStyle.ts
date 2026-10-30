@@ -64,3 +64,33 @@ export function styleAttribution(style: StyleSpecification, fallback: string): s
   }
   return seen.size ? [...seen].join(", ") : fallback;
 }
+
+/**
+ * A copy of `style` in which every source that names no credit of its own
+ * but points at a TileJSON (`url`) carries that TileJSON's `attribution`.
+ *
+ * Needed for styles that keep the credit only there: MapTiler's Satellite
+ * Hybrid declares both its sources by `url` alone, so styleAttribution found
+ * nothing and the map credited OpenStreetMap but not MapTiler, whose terms
+ * require "© MapTiler". A TileJSON that fails to load is skipped; the
+ * fallback credit still shows. Does not modify its argument.
+ */
+export async function withLinkedAttributions(
+  style: StyleSpecification,
+  fetchJson: (url: string) => Promise<unknown> = (url) => fetch(url).then((r) => (r.ok ? r.json() : null)),
+): Promise<StyleSpecification> {
+  const entries = await Promise.all(
+    Object.entries(style.sources ?? {}).map(async ([id, source]) => {
+      const s = source as { attribution?: unknown; url?: unknown };
+      if ((typeof s.attribution === "string" && s.attribution.trim()) || typeof s.url !== "string") return [id, source];
+      try {
+        const tileJson = (await fetchJson(s.url)) as { attribution?: unknown } | null;
+        const text = tileJson?.attribution;
+        return [id, typeof text === "string" && text.trim() ? { ...source, attribution: text } : source];
+      } catch {
+        return [id, source];
+      }
+    }),
+  );
+  return { ...style, sources: Object.fromEntries(entries) };
+}

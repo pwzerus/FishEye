@@ -96,3 +96,16 @@ that states a rule is tagged with a state and shown only where it applies.
   with four spare hits. Cheap and enough while regional passages are few;
   with many states' rules in the index, region should become a retrieval
   filter so each state's rules compete only with each other.
+
+## Update, 2026-10-29: a state named in the question
+
+The product review of 2026-10-28 asked "do I need a fishing license in
+Minnesota" with no state picked and got Texas's, Georgia's and
+California's licence rules: the question named a state, but only the
+picker set one. Now `jurisdictions.state_in_question` reads a state named
+in the question, in English or Chinese ("Minnesota", "明尼苏达", "得州"), and
+it wins over the picked state (`rag/ask.answer_state`): someone asking about
+Minnesota wants Minnesota's rules wherever they are. Rigs and fish named
+after a state (Texas rig, Kentucky bass) and Kansas City don't count, and a
+question naming two states names none. A question in Chinese gets the
+passages' intro and the other-state answer in Chinese.

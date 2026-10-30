@@ -6,24 +6,16 @@ import { useEffect, useState } from "react";
 
 import { FishArt } from "@/components/fish/FishArt";
 import { useToast } from "@/components/ui/Toast";
+import { useT } from "@/i18n/client";
 import { ApiError } from "@/lib/api/client";
 import { getProviders, googleStartUrl, login, register } from "@/lib/api/session";
+import { LEGAL } from "@/lib/legal";
 import { useAuth } from "./AuthProvider";
 
 type Mode = "signin" | "signup";
 
-// Errors the Google callback sends back as ?error=… (backend app/api/auth.py).
-const OAUTH_ERRORS: Record<string, string> = {
-  google_email_exists:
-    "There's already a FishEye account with that email. Sign in with your password, then connect Google from your account page.",
-  google_unverified: "Your Google email address isn't verified, so it can't be used here.",
-  google_in_use: "That Google account is connected to a different FishEye account.",
-  google_cancelled: "Google sign-in was cancelled.",
-  google_state: "That sign-in link expired. Try again.",
-  google_failed: "Google sign-in didn't complete. Try again.",
-  google_disabled: "Google sign-in isn't set up on this server.",
-  suspended: "This account is suspended.",
-};
+// Errors the Google callback sends back as ?error=… (backend app/api/auth.py)
+// are worded in t.auth.oauth.
 
 /** Only same-site paths — `next` comes from the URL, so it's untrusted. */
 export function safeNext(raw: string | null): string {
@@ -48,6 +40,7 @@ export function LoginForm() {
   const router = useRouter();
   const toast = useToast();
   const { user, loading, setUser } = useAuth();
+  const t = useT().auth;
   const next = safeNext(params.get("next"));
   const [mode, setMode] = useState<Mode>(params.get("mode") === "signup" ? "signup" : "signin");
   const [email, setEmail] = useState("");
@@ -57,7 +50,7 @@ export function LoginForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(() => {
     const code = params.get("error");
-    return code ? (OAUTH_ERRORS[code] ?? "Sign-in didn't complete. Try again.") : null;
+    return code ? (t.oauth[code] ?? t.signInFailed) : null;
   });
   const [google, setGoogle] = useState(false);
 
@@ -79,10 +72,10 @@ export function LoginForm() {
     try {
       const u = mode === "signin" ? await login(email, password) : await register(email, password, name);
       setUser(u);
-      toast(mode === "signin" ? `Welcome back, ${u.display_name}` : `Welcome to FishEye, ${u.display_name}`);
+      toast(mode === "signin" ? t.welcomeBack(u.display_name) : t.welcome(u.display_name));
       router.replace(next);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong. Try again.");
+      setError(err instanceof ApiError ? err.message : t.wrong);
       setBusy(false);
     }
   }
@@ -94,14 +87,10 @@ export function LoginForm() {
       <div className="auth-art" aria-hidden="true">
         <FishArt slug="bluegill" uid="auth-bg" className="swimming" />
       </div>
-      <h1>{mode === "signin" ? "Welcome back" : "Create your account"}</h1>
-      <p className="muted auth-sub">
-        {mode === "signin"
-          ? "Sign in to pin your catches and keep your spots."
-          : "Pin where you fished, add photos, and keep private spots private."}
-      </p>
+      <h1>{mode === "signin" ? t.titleSignIn : t.titleSignUp}</h1>
+      <p className="muted auth-sub">{mode === "signin" ? t.subSignIn : t.subSignUp}</p>
 
-      <div className="segmented auth-switch" role="tablist" aria-label="Sign in or create an account">
+      <div className="segmented auth-switch" role="tablist" aria-label={t.switchLabel}>
         <button
           type="button"
           role="tab"
@@ -112,7 +101,7 @@ export function LoginForm() {
             setError(null);
           }}
         >
-          Sign in
+          {t.signIn}
         </button>
         <button
           type="button"
@@ -124,17 +113,17 @@ export function LoginForm() {
             setError(null);
           }}
         >
-          Create account
+          {t.createAccount}
         </button>
       </div>
 
       {google && (
         <>
           <a className="btn btn-ghost btn-google" href={googleStartUrl(next)}>
-            <GoogleIcon /> Continue with Google
+            <GoogleIcon /> {t.google}
           </a>
           <div className="or-rule">
-            <span>or with email</span>
+            <span>{t.orEmail}</span>
           </div>
         </>
       )}
@@ -142,19 +131,19 @@ export function LoginForm() {
       <form className="auth-form" onSubmit={submit} noValidate>
         {mode === "signup" && (
           <label className="field">
-            <span>Display name</span>
+            <span>{t.displayName}</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoComplete="nickname"
               maxLength={40}
               required
-              placeholder="What other anglers see"
+              placeholder={t.displayNameHint}
             />
           </label>
         )}
         <label className="field">
-          <span>Email</span>
+          <span>{t.email}</span>
           <input
             type="email"
             value={email}
@@ -168,7 +157,7 @@ export function LoginForm() {
             sit outside it, so the accessible name is just "Password". */}
         <div className="field">
           <label htmlFor="auth-password" className="field-label">
-            Password
+            {t.password}
           </label>
           <div className="pw-wrap">
             <input
@@ -185,14 +174,14 @@ export function LoginForm() {
               type="button"
               className="pw-toggle"
               onClick={() => setShowPw((v) => !v)}
-              aria-label={showPw ? "Hide password" : "Show password"}
+              aria-label={showPw ? t.hidePassword : t.showPassword}
             >
-              {showPw ? "Hide" : "Show"}
+              {showPw ? t.hide : t.show}
             </button>
           </div>
           {mode === "signup" && (
             <small id="pw-hint" className={pwTooShort ? "hint hint-warn" : "hint"}>
-              At least 8 characters. A short phrase is easier to remember than symbols.
+              {t.pwHint}
             </small>
           )}
         </div>
@@ -205,18 +194,26 @@ export function LoginForm() {
 
         <button type="submit" className="btn btn-primary auth-submit" disabled={busy || !email || !password}>
           {busy ? <span className="spinner" aria-hidden="true" /> : null}
-          {mode === "signin" ? "Sign in" : "Create account"}
+          {mode === "signin" ? t.signIn : t.createAccount}
         </button>
       </form>
 
+      <p className="auth-legal muted">
+        {t.legal1(LEGAL.minimumAge)}
+        <Link href="/terms">{t.terms}</Link>
+        {t.and}
+        <Link href="/privacy">{t.privacy}</Link>
+        {t.legalEnd}
+      </p>
+
       <p className="auth-foot muted">
-        {mode === "signin" ? "New to FishEye? " : "Already have an account? "}
+        {mode === "signin" ? t.newHere : t.haveAccount}
         <button type="button" className="link-btn" onClick={() => setMode(mode === "signin" ? "signup" : "signin")}>
-          {mode === "signin" ? "Create an account" : "Sign in"}
+          {mode === "signin" ? t.createAnAccount : t.signIn}
         </button>
         {" · "}
         <Link href="/" className="text-link">
-          Back home
+          {t.backHome}
         </Link>
       </p>
     </div>

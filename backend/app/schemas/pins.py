@@ -13,6 +13,14 @@ class PinLakeOut(BaseModel):
     name: str
 
 
+class PinWaterOut(BaseModel):
+    """The water a catch is on (ADR 0040)."""
+
+    kind: str  # "lake" | "river"
+    id: int
+    name: str
+
+
 class PinPhotoOut(BaseModel):
     id: int
     url: str
@@ -23,8 +31,15 @@ class PinPhotoOut(BaseModel):
 
 class PinSummaryOut(BaseModel):
     id: int
+    # Where this viewer sees the catch (ADR 0038): the exact spot for its
+    # owner and admins, and for everyone when the angler shared it;
+    # otherwise the public point, which `location_shown` names.
     latitude: float
     longitude: float
+    location_shown: str  # "exact" | "lake" | "county" | "area"
+    share_exact: bool
+    # What everyone else sees: "exact" when shared, else lake/county/area.
+    public_place: str
     title: str
     species_slug: str | None
     species_label: str | None
@@ -40,6 +55,12 @@ class PinSummaryOut(BaseModel):
     status_reason: str | None
     author: PinAuthorOut
     lake: PinLakeOut | None
+    # The lake or river it's on; None for a pin saved before ADR 0040 that
+    # is on neither.
+    water: PinWaterOut | None = None
+    # One of its photos was taken within 300 m of the spot, by the photo's
+    # own GPS (services/pins.update_photo_at_spot).
+    photo_at_spot: bool = False
     # Where it is, for "Harris County, TX" (services/counties.py).
     state_code: str | None = None
     county_geoid: str | None = None
@@ -64,6 +85,10 @@ class PinUpdateIn(BaseModel):
     species_other: str | None = Field(default=None, max_length=120)
     caught_on: date | None = None
     visibility: str | None = None
+    share_exact: bool | None = None
+    # A new spot: both or neither. It must be on water, like a new pin's.
+    latitude: float | None = None
+    longitude: float | None = None
     # Explicit clears, since None means "unchanged" for the fields above.
     clear_note: bool = False
     clear_species: bool = False
@@ -126,8 +151,41 @@ class PlacesOut(BaseModel):
     county_name: str | None = None
 
 
+class WhereWaterOut(BaseModel):
+    kind: str  # "lake" | "river"
+    id: int
+    name: str
+    distance_m: float  # 0: on the water
+
+
 class WhereOut(BaseModel):
     state_code: str | None
     state_name: str | None
     county_geoid: str | None
     county_name: str | None
+    # The water a catch here would be on (ADR 0040), and whether this
+    # state holds catches to that: when True and `water` is None, a pin
+    # can't be saved here.
+    water: WhereWaterOut | None = None
+    water_required: bool = False
+
+
+class WaterGroupOut(BaseModel):
+    """Other people's catches on one water, for the map (ADR 0040): a lake,
+    a river within one county, or (pins saved before, on no water) one
+    public point."""
+
+    kind: str  # "lake" | "river" | "place"
+    id: int | None  # the lake's or river's id
+    # The newest catch's state and county: where the catches page lists
+    # them (it browses by county). A river's group is one county's.
+    state_code: str | None
+    county_geoid: str | None
+    name: str | None
+    county_name: str | None
+    latitude: float
+    longitude: float
+    count: int
+    latest_at: datetime
+    species: list[str]  # the most caught first, up to three
+    thumb_url: str | None

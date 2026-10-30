@@ -227,7 +227,7 @@ describe("WaterbodyPanel", () => {
     render(<WaterbodyPanel waterbodyId={1} />);
 
     await waitFor(() => expect(getWeather).toHaveBeenCalledWith(32.8, -95.6));
-    expect(postRecommendations).toHaveBeenCalledWith({ waterbody_id: 1, target_species: undefined });
+    expect(postRecommendations).toHaveBeenCalledWith({ waterbody_id: 1, target_species: undefined, lang: "en" });
   });
 
   it("shows current conditions once weather resolves", async () => {
@@ -308,7 +308,7 @@ describe("WaterbodyPanel", () => {
     fireEvent.change(select, { target: { value: "Bluegill" } });
 
     await waitFor(() =>
-      expect(postRecommendations).toHaveBeenLastCalledWith({ waterbody_id: 1, target_species: "Bluegill" }),
+      expect(postRecommendations).toHaveBeenLastCalledWith({ waterbody_id: 1, target_species: "Bluegill", lang: "en" }),
     );
   });
 
@@ -719,7 +719,7 @@ describe("WaterbodyPanel", () => {
       };
       vi.mocked(getWaterbody).mockResolvedValue(onForest);
       render(<WaterbodyPanel waterbodyId={32} />);
-      await waitFor(() => expect(screen.getByText("Unverified lake from CDFW's California Lakes map.")).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText(/Unverified lake from CDFW's California Lakes map\./)).toBeInTheDocument());
       expect(screen.getByText(/in Stanislaus National Forest \(Forest Service\), land open to the public/)).toBeInTheDocument();
       // On open public land, the private-pond warning doesn't apply.
       expect(screen.queryByText(/Many ponds are on private land/)).not.toBeInTheDocument();

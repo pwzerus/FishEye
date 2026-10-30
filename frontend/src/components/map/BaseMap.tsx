@@ -6,7 +6,7 @@ import type { StyleSpecification } from "maplibre-gl";
 import { useEffect, useState } from "react";
 import { TileLayer, useMap } from "react-leaflet";
 
-import { hideAirportIcons, styleAttribution } from "@/lib/map/basemapStyle";
+import { hideAirportIcons, styleAttribution, withLinkedAttributions } from "@/lib/map/basemapStyle";
 import { MAP_STYLE_URL, TILE_ATTRIBUTION, TILE_URL } from "@/lib/map/tiles";
 
 function hasWebGL(): boolean {
@@ -50,10 +50,12 @@ export function BaseMap() {
     (async () => {
       try {
         const [style, bridge] = await Promise.all([
-          fetch(MAP_STYLE_URL).then((r) => {
-            if (!r.ok) throw new Error(`basemap style: ${r.status}`);
-            return r.json() as Promise<StyleSpecification>;
-          }),
+          fetch(MAP_STYLE_URL)
+            .then((r) => {
+              if (!r.ok) throw new Error(`basemap style: ${r.status}`);
+              return r.json() as Promise<StyleSpecification>;
+            })
+            .then((s) => withLinkedAttributions(s)),
           import("@maplibre/maplibre-gl-leaflet"),
         ]);
         if (cancelled) return;

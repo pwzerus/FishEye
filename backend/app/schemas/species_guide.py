@@ -25,6 +25,11 @@ class SpeciesGuideOut(BaseModel):
     role: str  # "sport" | "forage"
     difficulty: str | None
     summary: str
+    # The summary without its Texas-only claims, for anyone fishing elsewhere;
+    # None where the summary says nothing about Texas.
+    summary_general: str | None = None
+    # The one state this fish lives in, where it lives in one only ("TX").
+    only_in_state: str | None = None
     diet: str
     diet_type: str  # "carnivore" | "omnivore" | "filter_feeder"
     where_and_when: list[str]

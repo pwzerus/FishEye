@@ -7,7 +7,9 @@ from fastapi import APIRouter, HTTPException
 
 from app.knowledge.angling_handbook import CATEGORIES, TOPICS
 from app.knowledge.species_guides import (
+    GENERAL_SUMMARIES,
     GUIDES,
+    ONLY_IN_STATE,
     TPWD_LIMITS_URL,
     Source,
     SpeciesGuide,
@@ -42,6 +44,8 @@ def to_out(guide: SpeciesGuide) -> SpeciesGuideOut:
         role=guide.role,
         difficulty=guide.difficulty,
         summary=guide.summary,
+        summary_general=GENERAL_SUMMARIES.get(guide.slug),
+        only_in_state=ONLY_IN_STATE.get(guide.slug),
         diet=guide.diet,
         diet_type=guide.diet_type,
         where_and_when=list(guide.where_and_when),

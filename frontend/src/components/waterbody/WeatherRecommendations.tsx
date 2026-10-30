@@ -4,6 +4,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ContentSkeleton } from "@/components/ui/ContentSkeleton";
 
+import { useLocale, useT } from "@/i18n/client";
+import type { Locale } from "@/i18n/config";
+import { LOCALE_TAGS } from "@/i18n/config";
+import { MESSAGES, type Messages } from "@/i18n/messages";
+import { fishSlug, localFishName } from "@/i18n/names";
+import { localDirection, localForecast, localWindSpeed } from "@/i18n/weather";
 import { ApiError, getWeather, postRecommendations } from "@/lib/api/client";
 import type { FishingPlan, PlanPick, PlanWindow, RecommendationResponse, Weather } from "@/lib/api/types";
 
@@ -25,15 +31,12 @@ function WeatherAlertBanner({ warnings }: { warnings: RecommendationResponse["sa
 }
 
 function CurrentWeather({ weather }: { weather: Weather }) {
+  const t = useT().plan;
+  const locale = useLocale();
   if (weather.source === "fallback") {
     // Never present fallback placeholders (null temperature, empty hourly)
     // as real readings — say plainly that the service is unavailable.
-    return (
-      <div className="weather-summary weather-unavailable">
-        Weather data is temporarily unavailable, so no readings are shown rather than
-        guessing.
-      </div>
-    );
+    return <div className="weather-summary weather-unavailable">{t.weatherDown}</div>;
   }
 
   const { current } = weather;
@@ -43,57 +46,68 @@ function CurrentWeather({ weather }: { weather: Weather }) {
         <span className="weather-temp">
           {current.temperature !== null ? `${Math.round(current.temperature)}°${current.temperature_unit}` : "—"}
         </span>
-        <span className="weather-forecast">{current.short_forecast}</span>
+        <span className="weather-forecast">{localForecast(current.short_forecast, locale)}</span>
       </div>
-      <div className="weather-wind">
-        Wind {current.wind_speed ?? "unknown"}
-        {current.wind_direction ? ` from the ${current.wind_direction}` : ""}
-      </div>
+      <div className="weather-wind">{t.wind(localWindSpeed(current.wind_speed, locale), localDirection(current.wind_direction, locale))}</div>
     </div>
   );
 }
+
+/** The languages that write the clock 24-hour, and how each joins two
+ * times into a range ("5:00〜8:00"). */
+const H24: Partial<Record<Locale, string>> = { zh: "–", ja: "〜", ko: "~" };
 
 /**
  * Clock time read straight off the ISO string, which carries the lake's own
  * UTC offset. Formatting through `Date` would convert to the viewer's zone:
  * someone in Michigan planning a Texas trip would see the dawn bite an hour
- * late.
+ * late. "6:30 PM" in English and Spanish ("p. m."), "18:30" in Chinese,
+ * Japanese and Korean.
  */
-export function lakeClock(iso: string): string {
+export function lakeClock(iso: string, locale: Locale = "en"): string {
   const m = /T(\d{2}):(\d{2})/.exec(iso);
   if (!m) return iso;
   const h = Number(m[1]);
+  if (H24[locale]) return `${h}:${m[2]}`;
   const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}${m[2] === "00" ? "" : `:${m[2]}`} ${h < 12 ? "AM" : "PM"}`;
+  const t = MESSAGES[locale].plan;
+  return `${h12}${m[2] === "00" ? "" : `:${m[2]}`} ${h < 12 ? t.am : t.pm}`;
 }
 
 /** "Today" / "Tomorrow" / weekday, judged in lake time too. */
-export function lakeDay(iso: string, now: Date = new Date()): string {
+export function lakeDay(iso: string, now: Date = new Date(), locale: Locale = "en"): string {
   const off = /([+-])(\d{2}):(\d{2})$/.exec(iso);
   const offsetMin = off ? (off[1] === "-" ? -1 : 1) * (Number(off[2]) * 60 + Number(off[3])) : 0;
   const lakeToday = new Date(now.getTime() + offsetMin * 60_000).toISOString().slice(0, 10);
   const date = iso.slice(0, 10);
-  if (date === lakeToday) return "Today";
+  const t = MESSAGES[locale].plan;
+  const cap = (s: string) => (locale === "en" ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+  if (date === lakeToday) return cap(t.today);
   const tomorrow = new Date(Date.parse(`${lakeToday}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
-  if (date === tomorrow) return "Tomorrow";
-  return new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: "long", timeZone: "UTC" });
+  if (date === tomorrow) return cap(t.tomorrow);
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString(LOCALE_TAGS[locale], { weekday: "long", timeZone: "UTC" });
 }
 
-/** "6–9 PM", or "11 AM–2 PM" when the window crosses noon. */
-export function lakeRange(startIso: string, endIso: string): string {
-  const start = lakeClock(startIso);
-  const end = lakeClock(endIso);
-  const [startTime, startHalf] = start.split(" ");
-  return startHalf === end.split(" ")[1] ? `${startTime}–${end}` : `${start}–${end}`;
+/** "6–9 PM", or "11 AM–2 PM" when the window crosses noon ("18:00–21:00"). */
+export function lakeRange(startIso: string, endIso: string, locale: Locale = "en"): string {
+  const start = lakeClock(startIso, locale);
+  const end = lakeClock(endIso, locale);
+  const sep = H24[locale];
+  if (sep) return `${start}${sep}${end}`;
+  const half = (s: string) => s.slice(s.indexOf(" ") + 1);
+  const time = (s: string) => s.slice(0, s.indexOf(" "));
+  return half(start) === half(end) ? `${time(start)}–${end}` : `${start}–${end}`;
 }
 
-function windowText(w: PlanWindow): string {
-  const bite = w.label === "morning" ? "Morning bite" : w.label === "evening" ? "Evening bite" : "Best window";
-  return `${bite}, ${lakeRange(w.start_time, w.end_time)} ${lakeDay(w.start_time).toLowerCase()}`;
+function windowText(w: PlanWindow, t: Messages["plan"], locale: Locale): string {
+  const bite = w.label === "morning" ? t.morningBite : w.label === "evening" ? t.eveningBite : t.bestWindow;
+  const day = lakeDay(w.start_time, new Date(), locale);
+  return t.window(bite, lakeRange(w.start_time, w.end_time, locale), locale === "en" ? day.toLowerCase() : day);
 }
 
-function shortWindowText(w: PlanWindow): string {
-  return `${lakeRange(w.start_time, w.end_time)} ${lakeDay(w.start_time).toLowerCase()}`;
+function shortWindowText(w: PlanWindow, t: Messages["plan"], locale: Locale): string {
+  const day = lakeDay(w.start_time, new Date(), locale);
+  return t.windowShort(lakeRange(w.start_time, w.end_time, locale), locale === "en" ? day.toLowerCase() : day);
 }
 
 function Picks({ picks }: { picks: PlanPick[] }) {
@@ -127,23 +141,24 @@ export function PlanCard({
   selectedSpecies?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const t = useT().plan;
+  const locale = useLocale();
+  const fish = (name: string) => localFishName(fishSlug(name), locale) ?? name;
   return (
-    <section className={`plan-card${expanded ? " plan-expanded" : ""}`} aria-label="Today's plan" aria-busy={updating}>
+    <section className={`plan-card${expanded ? " plan-expanded" : ""}`} aria-label={t.aria} aria-busy={updating}>
       <label className="plan-fish">
-        <span>Fishing for</span>
+        <span>{t.fishingFor}</span>
         <select value={selectedSpecies ?? plan.species ?? ""} disabled={updating} onChange={(e) => onSpeciesChange(e.target.value)}>
-          {plan.species === null && <option value="">Pick a fish</option>}
+          {plan.species === null && <option value="">{t.pickFish}</option>}
           {plan.species_options.map((name) => (
             <option key={name} value={name}>
-              {name}
+              {fish(name) === name ? name : `${fish(name)} · ${name}`}
             </option>
           ))}
         </select>
       </label>
-      {updating && <p className="plan-updating" role="status">Updating plan…</p>}
-      {plan.species && plan.species_on_record === false && (
-        <p className="plan-note">Not on record in this lake, so this is general advice for the fish.</p>
-      )}
+      {updating && <p className="plan-updating" role="status">{t.updating}</p>}
+      {plan.species && plan.species_on_record === false && <p className="plan-note">{t.notOnRecord}</p>}
 
       {plan.heads_up.length > 0 && (
         <ul className="plan-heads-up">
@@ -156,35 +171,35 @@ export function PlanCard({
       <dl className="plan-rows" id="plan-contents">
         {plan.where && (
           <div>
-            <dt>Where</dt>
+            <dt>{t.where}</dt>
             <dd className="plan-where">{plan.where.text}</dd>
           </div>
         )}
         {plan.when && (
           <div>
-            <dt>When</dt>
+            <dt>{t.when}</dt>
             <dd>
-              <span className="plan-window-short">{shortWindowText(plan.when)}</span><span className="plan-window-full">{windowText(plan.when)}</span>
-              {plan.also && <span className="plan-also"> · or {shortWindowText(plan.also)}</span>}
+              <span className="plan-window-short">{shortWindowText(plan.when, t, locale)}</span><span className="plan-window-full">{windowText(plan.when, t, locale)}</span>
+              {plan.also && <span className="plan-also">{t.or(shortWindowText(plan.also, t, locale))}</span>}
               {plan.conditions && <span className="plan-conditions">{plan.conditions}</span>}
             </dd>
           </div>
         )}
         {!plan.where && !plan.when && (
           <div>
-            <dt>When</dt>
-            <dd className="muted">No live forecast right now, so no bank or time to suggest.</dd>
+            <dt>{t.when}</dt>
+            <dd className="muted">{t.noForecast}</dd>
           </div>
         )}
         {plan.species ? (
           <>
             <div>
-              <dt>Lures</dt>
+              <dt>{t.lures}</dt>
               <dd>{plan.lures.length > 0 ? <Picks picks={plan.lures} /> : plan.lure_note}</dd>
             </div>
             {plan.baits.length > 0 && (
               <div>
-                <dt>Bait</dt>
+                <dt>{t.bait}</dt>
                 <dd>
                   <Picks picks={plan.baits} />
                 </dd>
@@ -192,10 +207,10 @@ export function PlanCard({
             )}
             {plan.species_slug && (
               <div>
-                <dt>Guide</dt>
+                <dt>{t.guide}</dt>
                 <dd>
                   <Link href={`/fish/${plan.species_slug}`} className="plan-guide-link">
-                    How to rig and fish for {plan.species}, with photos <span aria-hidden="true">→</span>
+                    {t.guideLink(fish(plan.species))} <span aria-hidden="true">→</span>
                   </Link>
                 </dd>
               </div>
@@ -203,12 +218,12 @@ export function PlanCard({
           </>
         ) : (
           <div>
-            <dt>Tackle</dt>
-            <dd className="muted">Pick a fish to see lures and bait for today.</dd>
+            <dt>{t.tackle}</dt>
+            <dd className="muted">{t.pickForTackle}</dd>
           </div>
         )}
       </dl>
-      <button type="button" className="plan-expand" aria-expanded={expanded} aria-controls="plan-contents" onClick={() => setExpanded((value) => !value)}>{expanded ? "Less detail ↑" : "Why this plan? More bait & gear ↓"}</button>
+      <button type="button" className="plan-expand" aria-expanded={expanded} aria-controls="plan-contents" onClick={() => setExpanded((value) => !value)}>{expanded ? t.less : t.more}</button>
     </section>
   );
 }
@@ -229,6 +244,9 @@ export function WeatherRecommendations({
   latitude: number;
   longitude: number;
 }) {
+  const all = useT();
+  const t = all.plan;
+  const locale = useLocale();
   const [weather, setWeather] = useState<Weather | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -248,7 +266,7 @@ export function WeatherRecommendations({
 
     Promise.all([
       getWeather(latitude, longitude),
-      postRecommendations({ waterbody_id: waterbodyId, target_species: species || undefined }),
+      postRecommendations({ waterbody_id: waterbodyId, target_species: species || undefined, lang: locale }),
     ])
       .then(([w, r]) => {
         if (cancelled) return;
@@ -259,27 +277,27 @@ export function WeatherRecommendations({
       })
       .catch((e: unknown) => {
         if (cancelled) return;
-        setError(e instanceof ApiError ? e.message : "Could not load today's plan.");
+        setError(e instanceof ApiError ? e.message : t.loadError);
         setLoadedKey(requestKey);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [waterbodyId, latitude, longitude, species, requestKey]);
+  }, [waterbodyId, latitude, longitude, species, requestKey, locale, t.loadError]);
 
   return (
     <div className="weather-recommendations">
-      <h3>Today&apos;s plan</h3>
+      <h3>{t.title}</h3>
 
-      {error && !loading && <div className="panel-error" role="alert"><p>{error}</p><button className="btn btn-ghost btn-sm" type="button" onClick={() => setAttempt((value) => value + 1)}>Try again</button></div>}
-      {loading && !recommendations && <ContentSkeleton label="Loading today's plan…" />}
+      {error && !loading && <div className="panel-error" role="alert"><p>{error}</p><button className="btn btn-ghost btn-sm" type="button" onClick={() => setAttempt((value) => value + 1)}>{all.common.tryAgain}</button></div>}
+      {loading && !recommendations && <ContentSkeleton label={t.loading} />}
 
       {recommendations && <WeatherAlertBanner warnings={recommendations.safety_warnings} />}
       {recommendations?.plan && (!error || loading) && <PlanCard plan={recommendations.plan} onSpeciesChange={setSpecies} updating={loading} selectedSpecies={species || undefined} />}
       {weather && (
         <>
-          <div className="plan-now-label">Right now</div>
+          <div className="plan-now-label">{t.rightNow}</div>
           <CurrentWeather weather={weather} />
         </>
       )}

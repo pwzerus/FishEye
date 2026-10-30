@@ -1,0 +1,80 @@
+/* The first-trip page (components/start/FirstTrip.tsx) and the Chinese
+   hints shown to Chinese-language browsers (lib/zh.ts). */
+
+.first-trip { max-width: 760px; margin: 0 auto; padding: 0 16px 48px; }
+.first-trip .page-intro { padding-top: 36px; }
+.first-trip .state-picker { justify-self: start; }
+
+.trip-steps { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 12px; }
+.trip-step {
+  display: grid; grid-template-columns: 32px 1fr; gap: 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 18px 20px;
+}
+.trip-step-n {
+  width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--brand); color: #fff; font-weight: 700; font-size: 14px;
+}
+.trip-step-body h2 { font-size: 18px; margin: 3px 0 6px; }
+.trip-step-body p { margin: 4px 0; color: var(--ink-2); line-height: 1.55; }
+.trip-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-top: 8px !important; }
+.trip-links a, .trip-step-body li a { color: var(--brand); font-weight: 600; }
+
+.trip-kit { list-style: none; padding: 0; margin: 6px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; }
+.trip-kit li { display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: start; line-height: 1.45; }
+.trip-kit input { width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--brand); }
+.trip-kit input:checked + span a { color: var(--muted); text-decoration: line-through; }
+.zh-hint { display: block; font-size: 12px; font-weight: 400; color: var(--muted); }
+/* A fish page's Chinese name, after its scientific one. */
+.zh-name { margin-left: 10px; font-style: normal; color: var(--ink-2); }
+
+.shop-list { list-style: none; margin: 0; padding: 0; }
+.shop-list li { font-size: 22px; font-weight: 650; padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--ink); }
+.shop-list li:last-child { border-bottom: none; }
+.shop-list li span { display: block; font-size: 15px; font-weight: 400; color: var(--muted); }
+
+.trip-spots { list-style: none; padding: 0; margin: 8px 0 0; }
+.trip-spots li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.trip-spots li:last-child { border-bottom: none; }
+
+.trip-rig { width: 300px; max-width: 100%; height: auto; display: block; margin: 4px 0 6px; }
+.trip-tips { margin: 4px 0 0; padding-left: 18px; color: var(--ink-2); line-height: 1.55; }
+.trip-tips li { margin: 3px 0; }
+.trip-ask { text-align: center; margin: 22px 0 0; }
+
+/* A lake's rules in a line (waterbody/LakeRulesRow.tsx). */
+.lake-rules { margin: 10px 0 4px; font-size: 13px; }
+.lake-rules p { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0; }
+.lake-rules strong { color: var(--ink); }
+.lake-rules a, .lake-rules .link-btn { color: var(--brand); font-weight: 600; font-size: 13px; }
+.lake-rules ul { margin: 6px 0 0; padding-left: 18px; color: var(--ink-2); line-height: 1.5; }
+.lake-rules li { margin: 3px 0; }
+
+/* A fingertip needs about 44px; a lake marker is 28px. Its tap area reaches
+   past its edge on touch screens, invisibly (the 2026-10-29 phone pass). */
+@media (pointer: coarse) {
+  .field-map-pin::before { content: ""; position: absolute; inset: -9px; }
+}
+
+/* The lake panel's last line: share a catch here · something wrong here? */
+.lake-report-line { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.map-missing { margin-top: 10px !important; font-size: 13px; }
+
+/* Lakes sharing the searched name (LocationSearchBar): pick one. */
+.location-search-choices {
+  flex-basis: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 6px; box-shadow: var(--shadow); font-size: 14px;
+}
+.location-search-choices ul { list-style: none; margin: 0; padding: 0; }
+.location-search-choices li button {
+  width: 100%; text-align: left; background: none; border: none; border-radius: 7px;
+  padding: 8px 10px; cursor: pointer; color: var(--ink); font: inherit; font-weight: 600;
+}
+.location-search-choices li button:hover, .location-search-choices li button:focus-visible { background: var(--surface-2); }
+.location-search-choices li span { font-weight: 400; color: var(--muted); margin-left: 6px; }
+.location-search-choices > .link-btn { margin: 4px 10px 4px; font-size: 13px; }
+
+@media (max-width: 760px) {
+  .trip-step { grid-template-columns: 1fr; gap: 8px; padding: 16px; }
+  .trip-kit { grid-template-columns: 1fr; }
+}

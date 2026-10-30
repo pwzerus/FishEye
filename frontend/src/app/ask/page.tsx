@@ -1,39 +1,36 @@
 import type { Metadata } from "next";
 
+import { getT } from "@/i18n/server";
+
 import { AskChat } from "@/components/ask/AskChat";
 import { PageTransition } from "@/components/motion/Transition";
 
-export const metadata: Metadata = {
-  title: "Ask · FishEye",
-  description: "Ask a fishing question. Answers come from FishEye's reviewed fish guides, with sources.",
-};
-
-const SUGGESTIONS = [
-  "What bait for crappie?",
-  "How do I tie a fishing knot?",
-  "What hook size for bluegill?",
-];
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: `${t.pages.ask} · FishEye`, description: t.pages.askDescription };
+}
 
 export default async function AskPage(props: PageProps<"/ask">) {
   const params = await props.searchParams;
   const q = typeof params.q === "string" ? params.q : undefined;
+  const t = (await getT()).ask;
 
   return (
     <PageTransition>
       <main className="page-scroll ask-page">
         <section className="page-intro page-intro-center">
           <p className="eyebrow reveal" style={{ "--i": 0 } as React.CSSProperties}>
-            Ask FishEye
+            {t.eyebrow}
           </p>
           <h1 className="reveal" style={{ "--i": 1 } as React.CSSProperties}>
-            Bait, gear or timing?
+            {t.title}
           </h1>
           <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
-            Ask in English or Chinese. Sources included.
+            {t.lede}
           </p>
         </section>
         <div className="reveal" style={{ "--i": 3 } as React.CSSProperties}>
-          <AskChat initialQuestion={q} suggestions={SUGGESTIONS} />
+          <AskChat initialQuestion={q} suggestions={t.suggestions} />
         </div>
       </main>
     </PageTransition>

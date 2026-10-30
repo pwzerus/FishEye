@@ -1,7 +1,8 @@
+import re
 from collections import defaultdict
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api import rate_limits
@@ -12,11 +13,13 @@ from app.schemas.waterbody import (
     DatasetSourceOut,
     EvidenceItemOut,
     AgencyProfileOut,
+    LakeMatchOut,
     SpeciesDetail,
     SpeciesSummaryOut,
     WaterbodyDetail,
     WaterbodyListItem,
 )
+from app.services import counties
 from app.services.geo import haversine_km
 from app.services.reported_species import reported_species, reported_species_counts
 
@@ -141,6 +144,58 @@ def list_waterbodies(
     ]
 
 
+def _words(text: str) -> list[str]:
+    return re.findall(r"[a-z0-9']+", text.lower())
+
+
+# Declared before /{waterbody_id}, which would otherwise take "search" for an id.
+@router.get("/search", response_model=list[LakeMatchOut])
+def search_waterbodies(
+    q: str = Query(..., min_length=2, max_length=80, description="a lake's name, e.g. 'Freeman Lake'"),
+    state_code: str | None = Query(None, description="the state being looked at; its lakes come first"),
+    lat: float | None = Query(None, description="where the map is looking; nearer lakes come first"),
+    lng: float | None = Query(None),
+    limit: int = Query(5, ge=1, le=10),
+    db: Session = Depends(get_db),
+) -> list[LakeMatchOut]:
+    """Lakes FishEye has, by name, for the search box. A place geocoder
+    sends "Freeman Lake" to whichever Freeman Lake it ranks first (one in
+    Kentucky, for someone looking at Georgia: the 2026-10-29 walkthrough).
+    Best first: the whole name, then names that start with the words, then
+    names holding them all; within each, the state being looked at, the
+    nearest to where the map is, the lakes FishEye verified, the biggest.
+    Each carries its county: Georgia alone has four Freeman Lakes."""
+    words = _words(q)
+    if not words:
+        return []
+    stmt = select(Waterbody).join(Waterbody.state).options(selectinload(Waterbody.state))
+    for word in words:
+        stmt = stmt.where(func.lower(Waterbody.name).contains(word))
+    # Enough to rank; a name every lake shares ("lake") is narrowed by the rest.
+    candidates = db.scalars(stmt.order_by(Waterbody.extent_km2.desc()).limit(200)).all()
+    wanted = " ".join(words)
+    picked = (state_code or "").upper()
+
+    def rank(w: Waterbody) -> tuple[int, int, float, int, float]:
+        name = " ".join(_words(w.name))
+        how = 0 if name == wanted else 1 if name.startswith(wanted) else 2
+        away = haversine_km(lat, lng, w.latitude, w.longitude) if lat is not None and lng is not None else 0.0
+        return (how, w.state.code != picked, away, w.data_tier != "verified", -w.extent_km2)
+
+    def county(w: Waterbody) -> str | None:
+        c = counties.county_at(w.latitude, w.longitude)
+        return c.name if c else None
+
+    return [
+        LakeMatchOut(
+            id=w.id, name=w.name, latitude=w.latitude, longitude=w.longitude,
+            state_code=w.state.code, state_name=w.state.name, data_tier=w.data_tier,
+            county=county(w),
+        )
+        for w in sorted(candidates, key=rank)[:limit]
+    ]
+
+
 @router.get("/{waterbody_id}", response_model=WaterbodyDetail)
 def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> WaterbodyDetail:
     wb = db.get(
@@ -153,6 +208,7 @@ def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> Waterbody
             selectinload(Waterbody.fish_attractors),
             selectinload(Waterbody.species_evidence).selectinload(SpeciesEvidence.source_record),
             selectinload(Waterbody.dataset_links).selectinload(WaterbodySource.source_record),
+            selectinload(Waterbody.state),
         ],
     )
     if wb is None:
@@ -176,11 +232,14 @@ def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> Waterbody
         )
         for link in sorted(wb.species_links, key=lambda link: link.species.common_name)
     ]
+    box = (wb.bbox_south, wb.bbox_west, wb.bbox_north, wb.bbox_east)
     return WaterbodyDetail(
         id=wb.id,
         name=wb.name,
         latitude=wb.latitude,
         longitude=wb.longitude,
+        state_code=wb.state.code,
+        bounds=list(box) if all(v is not None for v in box) else None,
         access_summary=wb.access_summary,
         source_url=wb.source_url,
         source_updated_at=wb.source_updated_at,

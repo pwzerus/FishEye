@@ -141,5 +141,9 @@ def test_an_old_database_gains_the_photo_check_columns_and_keeps_its_pins(old_en
     ensure_waterbody_ranking_schema(old_engine)  # idempotent
     cols = {c["name"] for c in inspect(old_engine).get_columns("catch_pins")}
     assert {"species_check", "species_check_confidence", "species_detected", "species_check_model", "species_check_photo_id"} <= cols
+    # And where others see it (ADR 0038): an old pin's spot isn't shared.
+    assert {"share_exact", "public_latitude", "public_longitude", "public_place"} <= cols
     with old_engine.connect() as conn:
         assert conn.execute(text("SELECT title, species_check FROM catch_pins")).one() == ("Old pin", None)
+        assert conn.execute(text("SELECT share_exact, public_place FROM catch_pins")).one() == (0, None)
+    assert "ix_catch_pins_public_lat_lng" in {i["name"] for i in inspect(old_engine).get_indexes("catch_pins")}

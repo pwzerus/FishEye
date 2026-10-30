@@ -29,6 +29,7 @@ def post_recommendations(
             waterbody_id=payload.waterbody_id,
             target_species=payload.target_species,
             limit=payload.limit,
+            lang=payload.lang,
         )
     except WaterbodyNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

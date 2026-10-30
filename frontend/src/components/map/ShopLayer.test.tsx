@@ -4,7 +4,8 @@ import { describe, expect, it } from "vitest";
 
 import type { Shop } from "@/lib/api/types";
 import { ShopMarkers } from "./ShopLayer";
-import { SHOP_KIND_LABEL, directionsUrl } from "./shops";
+import { MESSAGES } from "@/i18n/messages";
+import { directionsUrl } from "./shops";
 
 const SHOP: Shop = {
   id: 1,
@@ -29,7 +30,7 @@ describe("ShopMarkers", () => {
     const markers = container.querySelectorAll(".leaflet-marker-pane .shop-marker-wrap");
     expect(markers).toHaveLength(2);
     expect(markers[0].getAttribute("title")).toBe("Lake Sinclair Bait And Tackle, Bait & tackle");
-    expect(markers[1].getAttribute("title")).toBe(`Bass Pro Shops, ${SHOP_KIND_LABEL.store}`);
+    expect(markers[1].getAttribute("title")).toBe(`Bass Pro Shops, ${MESSAGES.en.shops.store}`);
   });
 
   it("gives directions to the shop's own point", () => {

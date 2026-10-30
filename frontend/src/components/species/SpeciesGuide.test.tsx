@@ -95,9 +95,10 @@ describe("SpeciesGuideBody", () => {
     expect(screen.getAllByText(/fishing guide site/)).toHaveLength(1);
   });
 
-  it("always links to TPWD's limits instead of stating them", () => {
+  it("links to the agencies' limits instead of stating them", () => {
+    // No state chosen and the state list not loaded: Texas's link, from the guide.
     render(<SpeciesGuideBody guide={bass} compact />);
-    expect(screen.getByRole("link", { name: /check tpwd's current limits/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /texas \(tpwd\)/i })).toHaveAttribute(
       "href",
       "https://tpwd.texas.gov/limits",
     );

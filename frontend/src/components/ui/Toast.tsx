@@ -3,6 +3,8 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
+import { useT } from "@/i18n/client";
+
 type Tone = "success" | "error" | "info";
 interface ToastItem {
   id: number;
@@ -19,6 +21,7 @@ const EXIT_MS = 220;
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
   const nextId = useRef(1);
+  const dismissLabel = useT().common.dismiss;
 
   const dismiss = useCallback((id: number) => {
     setItems((all) => all.map((t) => (t.id === id ? { ...t, leaving: true } : t)));
@@ -43,7 +46,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div key={t.id} className={`toast toast-${t.tone}${t.leaving ? " leaving" : ""}`}>
             <span className="toast-dot" aria-hidden="true" />
             <span>{t.text}</span>
-            <button type="button" className="toast-close" aria-label="Dismiss" onClick={() => dismiss(t.id)}>
+            <button type="button" className="toast-close" aria-label={dismissLabel} onClick={() => dismiss(t.id)}>
               ×
             </button>
           </div>

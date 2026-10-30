@@ -228,3 +228,31 @@ def test_bite_windows_come_back_in_lake_time_with_labels(client, seeded_lake, st
     assert evening["start_time"].endswith("-05:00")  # lake time, not converted to UTC
     assert evening["start_time"].startswith("2026-09-22T18:00")
     assert 0 < evening["score"] <= 1.2
+
+
+def test_a_lake_with_no_records_offers_only_fish_that_live_in_its_state(db_session):
+    """The 2026-10-29 persona review: a Georgia pond's "Fishing for" picker
+    offered the Guadalupe bass, a fish found only in Texas."""
+    from datetime import datetime, timezone
+
+    from app.models.waterbody import State, Waterbody
+    from app.services.recommendations import _plan_species
+
+    def pond(state: State) -> int:
+        wb = Waterbody(
+            state_id=state.id, name=f"{state.code} pond", latitude=33.9, longitude=-84.1, access_summary="",
+            source_url="https://www.openstreetmap.org/way/1", data_tier="osm", field_tested=False,
+            source_updated_at=datetime(2026, 9, 1, tzinfo=timezone.utc),
+        )
+        db_session.add(wb)
+        db_session.flush()
+        return wb.id
+
+    ga = State(name="Georgia", code="GA", official_source_url="https://georgiawildlife.com")
+    tx = State(name="Texas", code="TX", official_source_url="https://tpwd.texas.gov")
+    db_session.add_all([ga, tx])
+    db_session.flush()
+    _, in_georgia, _ = _plan_species(db_session, pond(ga), None)
+    _, in_texas, _ = _plan_species(db_session, pond(tx), None)
+    assert "Guadalupe Bass" not in in_georgia and "Largemouth Bass" in in_georgia
+    assert "Guadalupe Bass" in in_texas

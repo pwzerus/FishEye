@@ -73,7 +73,8 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.db.session import Base, SessionLocal, engine
+from app.db.session import SessionLocal, engine
+from app.db.upgrades import prepare_database
 from app.data_import import untyped_water
 from app.data_import.us_states import STATES as US_STATES
 from app.models.waterbody import AccessPoint, SpeciesOccurrence, State, Waterbody
@@ -125,6 +126,12 @@ def private_by_name(name: str) -> bool:
 
 def likely_private_by_name(name: str) -> bool:
     return bool(LIKELY_PRIVATE_NAME_RE.search(name)) and not PUBLIC_NAME_RE.search(name)
+
+def set_bbox(wb: Waterbody, bounds: Bounds) -> None:
+    """The water's box on the row, for framing its map (Waterbody.bbox_*)."""
+    wb.bbox_south, wb.bbox_west = bounds.south, bounds.west
+    wb.bbox_north, wb.bbox_east = bounds.north, bounds.east
+
 
 def osm_lake_summary(state_code: str) -> str:
     """Who to check with names the state's own agency (knowledge/jurisdictions.py,
@@ -666,6 +673,9 @@ def upsert(
                 if wb is not target and wb.data_tier != "verified":
                     absorb(wb, target, keep_access=False)
                     summary.lakes_replaced_by_verified += 1
+            # Except its box, which only frames the lake's map: the outline
+            # it is linked to is the best size on file for it.
+            set_bbox(target, lake.bounds)
             summary.lakes_linked_to_verified += 1
             continue
 
@@ -684,6 +694,10 @@ def upsert(
             if twin.osm_ref is None:
                 twin.osm_ref = lake.osm_ref
                 existing_by_ref[lake.osm_ref] = twin
+            if twin.osm_ref == lake.osm_ref:
+                # Its box frames the lake's map; the verified lake's own name
+                # and point stay as curated.
+                set_bbox(twin, lake.bounds)
             summary.lakes_linked_to_verified += 1
             continue
 
@@ -715,6 +729,7 @@ def upsert(
                 water_type=lake.water_type,
                 extent_km2=lake.bounds.area_km2(),
             )
+            set_bbox(wb, lake.bounds)
             db.add(wb)
             db.flush()
             existing_by_ref[lake.osm_ref] = wb
@@ -726,6 +741,7 @@ def upsert(
             wb.longitude = lake.longitude
             wb.water_type = lake.water_type
             wb.extent_km2 = lake.bounds.area_km2()
+            set_bbox(wb, lake.bounds)
             wb.source_url = f"https://www.openstreetmap.org/{lake.osm_ref}"
             wb.access_summary = (
                 OSM_POND_SUMMARY if lake.water_type == "pond" else osm_lake_summary(state_code)
@@ -844,7 +860,9 @@ def main(argv: list[str] | None = None) -> int:
             except OSError as exc:
                 print(f"warning: could not save the raw response to {args.save_raw} ({exc}); importing anyway", file=sys.stderr)
 
-    Base.metadata.create_all(bind=engine)
+    # Tables and any columns added since the database was made (the bbox_*
+    # it writes): create_all alone left an older database without them.
+    prepare_database(engine)
     db = SessionLocal()
     try:
         summary = run(code, payload, db)

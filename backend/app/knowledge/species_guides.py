@@ -2010,6 +2010,45 @@ GUIDES: tuple[SpeciesGuide, ...] = tuple(_with_details(g) for g in _BASE_GUIDES)
 _BY_SLUG = {g.slug: g for g in GUIDES}
 _BY_NAME = {g.common_name.lower(): g for g in GUIDES}
 
+# Guided fish that live in one state only, by that state's code: offered in
+# that state's lists alone (a Georgia lake's "Fishing for" picker offered the
+# Guadalupe bass, "found only in Texas" in its own guide's words).
+ONLY_IN_STATE: dict[str, str] = {"guadalupe-bass": "TX"}
+
+
+def lives_in(slug: str, state_code: str | None) -> bool:
+    """Can this fish be in water in that state? Unknown state: assume yes."""
+    home = ONLY_IN_STATE.get(slug)
+    return home is None or state_code is None or home == state_code.upper()
+
+
+# A guide's summary with only its Texas-only claims taken out, for someone
+# fishing anywhere else: "Texas's most sought-after freshwater fish" opened
+# the bass guide for an angler in Georgia (the 2026-10-29 persona review).
+# Nothing is added: what is left is the rest of the same sentences. Guides
+# whose summary says nothing about Texas, and the Guadalupe bass, which lives
+# only there, keep the one summary.
+GENERAL_SUMMARIES: dict[str, str] = {
+    "largemouth-bass": "It hides in cover and ambushes prey, so fish your bait close to logs, weeds and docks.",
+    "white-bass": (
+        "Schools chase shad in open water, and each spring they run up rivers and creeks to spawn: "
+        "the easiest time to catch a lot of them."
+    ),
+    "striped-bass": "Big, hard-fighting fish that roam open water in schools chasing shad. Usually fished from a boat.",
+    "channel-catfish": "The classic first fish: it eats almost anything.",
+    "blue-catfish": "It eats fish, so fresh cut shad is the bait to use, and it needs heavy tackle.",
+    "black-crappie": "Like white crappie but prefers clearer water. Fish it the same way.",
+    "bluegill": "Fairly easy to catch, curious and not picky, which makes it a great first fish.",
+    "flathead-catfish": (
+        "The one catfish that wants live fish. Fish a live sunfish next to heavy wood cover, "
+        "at dusk or after dark."
+    ),
+    "common-carp": (
+        "A big, hard-fighting fish. It rarely takes a lure: fish corn or dough on the bottom over a "
+        "spot you've baited."
+    ),
+}
+
 
 def get_guide(slug_or_name: str) -> SpeciesGuide | None:
     key = slug_or_name.strip()
