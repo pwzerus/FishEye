@@ -92,7 +92,11 @@ class HybridRetriever:
         return explain_empty(question, self.resolve(question)[0], species)
 
     def _qvec(self, question: str) -> np.ndarray:
-        return self.embedder.encode([question], kind="query")[0]
+        # A Chinese question with the glossary's English added, as the
+        # keyword side reads it: "鱼线怎么绑到渔轮上" alone is closest to the
+        # reel passages, not the arbor knot. On the eval (2026-10-30) this
+        # took Chinese hit@4 from 96% to 100% and moved nothing else.
+        return self.embedder.encode([zh.with_english(question)], kind="query")[0]
 
     def search(self, question: str, k: int = 4, species: tuple[str, ...] | None = None) -> list[ScoredPassage]:
         qvec = self._qvec(question)

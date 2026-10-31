@@ -4,7 +4,7 @@
 // session cookie (`credentials: "include"`) and are never cached — a
 // cached "who am I" or pin list would show one person's view to the next.
 // The cookie itself is httpOnly: this code never sees or stores the token.
-import { ApiError } from "./client";
+import { ApiError, noReason, unreachable } from "./client";
 import type {
   AiAllowance,
   AskRequest,
@@ -48,7 +48,7 @@ async function sfetch<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     res = await fetch(`${API_BASE_URL}${path}`, { ...init, credentials: "include", cache: "no-store" });
   } catch {
-    throw new ApiError("Couldn't reach FishEye's server. Is the backend running?", 0);
+    throw new ApiError(unreachable(), 0);
   }
   if (res.status === 204) return undefined as T;
   let body: unknown = null;
@@ -61,7 +61,7 @@ async function sfetch<T>(path: string, init?: RequestInit): Promise<T> {
     // Sensitive account changes need a recent sign-in; the server says so
     // with this header (exposed via CORS) so the UI can ask to confirm.
     const code = res.status === 403 && res.headers.get("x-reauth-required") === "1" ? "reauth_required" : undefined;
-    throw new ApiError(errorMessage(body, `Request failed (${res.status})`), res.status, code);
+    throw new ApiError(errorMessage(body, noReason(res.status)), res.status, code);
   }
   return body as T;
 }
@@ -199,7 +199,7 @@ function upload<T>(path: string, form: FormData, onProgress?: (fraction: number)
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total);
     };
-    xhr.onerror = () => reject(new ApiError("Couldn't reach FishEye's server. Is the backend running?", 0));
+    xhr.onerror = () => reject(new ApiError(unreachable(), 0));
     xhr.onload = () => {
       let body: unknown = null;
       try {

@@ -1,13 +1,16 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeUser, nav, renderApp } from "@/test-utils";
+import { makeUser, nav, renderApp, router } from "@/test-utils";
 
 // vi.mock is hoisted above imports, so the factory imports what it needs itself.
 vi.mock("next/navigation", async () => (await import("@/test-utils")).navigationMock());
 vi.mock("@/lib/api/session", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api/session")>("@/lib/api/session");
-  return { ...actual, getMe: vi.fn(), confirmEmail: vi.fn(), sendVerificationEmail: vi.fn(), listPins: vi.fn(), getProviders: vi.fn() };
+  return {
+    ...actual, getMe: vi.fn(), confirmEmail: vi.fn(), sendVerificationEmail: vi.fn(), listPins: vi.fn(), getProviders: vi.fn(),
+    deleteAccount: vi.fn(), logout: vi.fn(),
+  };
 });
 const session = await import("@/lib/api/session");
 const { ApiError } = await import("@/lib/api/client");
@@ -43,6 +46,15 @@ describe("VerifyEmail", () => {
     expect(screen.getByRole("link", { name: "Sign in to send a new link" })).toHaveAttribute("href", "/login?next=/account");
   });
 
+  it("says a used link's account is confirmed when it already is", async () => {
+    nav.search = new URLSearchParams("token=used");
+    vi.mocked(session.getMe).mockResolvedValue(makeUser({ email_verified: true }));
+    vi.mocked(session.confirmEmail).mockRejectedValue(new ApiError("This link has already been used or isn't valid.", 400));
+    renderApp(<VerifyEmail />);
+    expect(await screen.findByRole("heading", { name: "Email confirmed" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("doesn't call the server for a link without its code", async () => {
     renderApp(<VerifyEmail />);
     expect(await screen.findByRole("alert")).toHaveTextContent("missing its code");
@@ -68,5 +80,20 @@ describe("AccountView", () => {
     renderApp(<AccountView />);
     expect(await screen.findByRole("heading", { name: "Angler Amy" })).toBeInTheDocument();
     expect(screen.queryByText("Confirm your email address")).not.toBeInTheDocument();
+  });
+
+  it("goes home after deleting the account, not to the sign-in page", async () => {
+    nav.pathname = "/account";
+    router.replace.mockClear();
+    vi.mocked(session.getMe).mockResolvedValue(makeUser());
+    vi.mocked(session.deleteAccount).mockResolvedValue(undefined);
+    vi.mocked(session.logout).mockResolvedValue(undefined);
+    renderApp(<AccountView />);
+    fireEvent.click(await screen.findByRole("button", { name: "Delete my account" }));
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "pw-for-test" } });
+    fireEvent.change(screen.getByLabelText("Type DELETE to confirm"), { target: { value: "DELETE" } });
+    fireEvent.click(screen.getByRole("button", { name: "Delete everything" }));
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith("/"));
+    expect(router.replace).not.toHaveBeenCalledWith("/login?next=/account");
   });
 });

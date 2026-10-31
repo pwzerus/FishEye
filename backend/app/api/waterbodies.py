@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.api import rate_limits
 from app.api.deps import get_db
+from app.api.params import DbId
 from app.db.spatial import bbox_filter, radius_filter, radius_is_exact
 from app.models.waterbody import Species, SpeciesEvidence, Waterbody, WaterbodySource, WaterbodySpecies
 from app.schemas.waterbody import (
@@ -148,6 +149,15 @@ def _words(text: str) -> list[str]:
     return re.findall(r"[a-z0-9']+", text.lower())
 
 
+# Words most lake names carry one of. "lanier" means Lake Lanier as much as
+# Lanier Lake, so names are also compared without them.
+GENERIC_WATER_WORDS = frozenset({"lake", "lakes", "reservoir", "pond", "the", "of"})
+
+
+def _core(words: list[str]) -> str:
+    return " ".join(w for w in words if w not in GENERIC_WATER_WORDS)
+
+
 # Declared before /{waterbody_id}, which would otherwise take "search" for an id.
 @router.get("/search", response_model=list[LakeMatchOut])
 def search_waterbodies(
@@ -161,9 +171,12 @@ def search_waterbodies(
     """Lakes FishEye has, by name, for the search box. A place geocoder
     sends "Freeman Lake" to whichever Freeman Lake it ranks first (one in
     Kentucky, for someone looking at Georgia: the 2026-10-29 walkthrough).
-    Best first: the whole name, then names that start with the words, then
-    names holding them all; within each, the state being looked at, the
-    nearest to where the map is, the lakes FishEye verified, the biggest.
+    Best first: the whole name, then the same name give or take "lake" or
+    "reservoir", then names that start with the words, then names holding
+    them all; within each, the state being looked at, the lakes FishEye
+    verified, the nearest to where the map is, the biggest. "lanier" listed
+    five ponds and not Lake Lanier (2026-10-30): "Lanier Pond" starts with
+    the word, and a pond nearer the map beat the verified reservoir.
     Each carries its county: Georgia alone has four Freeman Lakes."""
     words = _words(q)
     if not words:
@@ -172,15 +185,20 @@ def search_waterbodies(
     for word in words:
         stmt = stmt.where(func.lower(Waterbody.name).contains(word))
     # Enough to rank; a name every lake shares ("lake") is narrowed by the rest.
-    candidates = db.scalars(stmt.order_by(Waterbody.extent_km2.desc()).limit(200)).all()
+    # "+ 0" keeps the database from walking the size index in order: cheap
+    # for "lake", but a rare name (the usual search) then visits every lake
+    # one row at a time (400 ms for "lanier" on the dev DB, 50 ms this way).
+    candidates = db.scalars(stmt.order_by((Waterbody.extent_km2 + 0).desc()).limit(200)).all()
     wanted = " ".join(words)
+    wanted_core = _core(words) or wanted
     picked = (state_code or "").upper()
 
-    def rank(w: Waterbody) -> tuple[int, int, float, int, float]:
-        name = " ".join(_words(w.name))
-        how = 0 if name == wanted else 1 if name.startswith(wanted) else 2
+    def rank(w: Waterbody) -> tuple[int, int, int, float, float]:
+        name_words = _words(w.name)
+        name = " ".join(name_words)
+        how = 0 if name == wanted else 1 if _core(name_words) == wanted_core else 2 if name.startswith(wanted) else 3
         away = haversine_km(lat, lng, w.latitude, w.longitude) if lat is not None and lng is not None else 0.0
-        return (how, w.state.code != picked, away, w.data_tier != "verified", -w.extent_km2)
+        return (how, w.state.code != picked, w.data_tier != "verified", away, -w.extent_km2)
 
     def county(w: Waterbody) -> str | None:
         c = counties.county_at(w.latitude, w.longitude)
@@ -197,7 +215,7 @@ def search_waterbodies(
 
 
 @router.get("/{waterbody_id}", response_model=WaterbodyDetail)
-def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> WaterbodyDetail:
+def get_waterbody(waterbody_id: DbId, db: Session = Depends(get_db)) -> WaterbodyDetail:
     wb = db.get(
         Waterbody,
         waterbody_id,
@@ -212,7 +230,7 @@ def get_waterbody(waterbody_id: int, db: Session = Depends(get_db)) -> Waterbody
         ],
     )
     if wb is None:
-        raise HTTPException(status_code=404, detail="waterbody not found")
+        raise HTTPException(status_code=404, detail="No such lake.")
 
     items: dict[int, list[EvidenceItemOut]] = defaultdict(list)
     for e in sorted(wb.species_evidence, key=lambda e: (-(e.year or 0), e.kind)):
@@ -288,10 +306,10 @@ def _sources(wb: Waterbody) -> list[DatasetSourceOut]:
 
 
 @router.get("/{waterbody_id}/species", response_model=list[SpeciesDetail])
-def get_waterbody_species(waterbody_id: int, db: Session = Depends(get_db)) -> list[Species]:
+def get_waterbody_species(waterbody_id: DbId, db: Session = Depends(get_db)) -> list[Species]:
     wb = db.get(Waterbody, waterbody_id, options=[selectinload(Waterbody.species_links)])
     if wb is None:
-        raise HTTPException(status_code=404, detail="waterbody not found")
+        raise HTTPException(status_code=404, detail="No such lake.")
     species_ids = [link.species_id for link in wb.species_links]
     if not species_ids:
         return []

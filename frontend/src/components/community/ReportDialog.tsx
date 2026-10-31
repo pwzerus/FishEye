@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { useAuth } from "@/components/auth/AuthProvider";
+import { VerifyEmailBanner } from "@/components/auth/VerifyEmailBanner";
 import { Modal } from "@/components/ui/Modal";
 import { useT } from "@/i18n/client";
 import { ApiError } from "@/lib/api/client";
@@ -20,6 +22,7 @@ export function ReportDialog({
 }) {
   const all = useT();
   const t = all.catch;
+  const { user } = useAuth();
   const [reasons, setReasons] = useState<{ id: string; label: string }[]>([]);
   const [reason, setReason] = useState("");
   const [detail, setDetail] = useState("");
@@ -64,6 +67,7 @@ export function ReportDialog({
         </>
       }
     >
+      {user?.verification_required && <VerifyEmailBanner email={user.email} />}
       <p className="muted">{t.reportNote}</p>
       <div className="radio-list" role="radiogroup" aria-label={t.reason}>
         {reasons.map((r) => (

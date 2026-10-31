@@ -35,8 +35,12 @@ class Settings(BaseSettings):
     # docs/adr/0009-geocoding.md for why this app never calls Nominatim
     # from the browser.
     nominatim_user_agent: str = "fisheye (github.com/pwzerus/FishEye)"
-    # Wikimedia's API policy asks for an identifying User-Agent too.
-    wikimedia_user_agent: str = "fisheye/0.1 (github.com/pwzerus/FishEye)"
+    # Wikimedia's API policy asks for an identifying User-Agent too, and
+    # enforces it: the bare GitHub one got 403 "Please respect our robot
+    # policy" (2026-10-30), so 7 of the 19 guide fish had no photo. This is
+    # the project's public contact, as the importers send
+    # (data_import/provenance.py), which Wikimedia accepts.
+    wikimedia_user_agent: str = "FishEye/1.0 (+https://fisheyefishing.com; feedback.fisheyefishing@gmail.com)"
     # Real fish photos on the guide pages (services/species_photos.py).
     # False = illustrations only, and no calls to Wikipedia.
     species_photos_enabled: bool = True

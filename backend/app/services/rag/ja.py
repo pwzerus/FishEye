@@ -90,7 +90,7 @@ GLOSSARY: dict[str, str] = {
     "ドラグ": "drag", "タモ網": "net", "たも網": "net", "タモ": "net", "網": "net",
     # doing it
     "釣り方": "how catch", "釣るには": "how catch", "釣る方法": "how catch",
-    "釣れる": "catch", "釣れ": "catch", "釣る": "catch", "釣った": "catch", "釣り": "fishing", "釣": "catch",
+    "釣れる": "catch fish", "釣れ": "catch fish", "釣る": "catch", "釣った": "catch", "釣り": "fishing", "釣": "catch",
     "投げ方": "how cast", "キャスト": "cast", "投げる": "cast",
     "さばき方": "clean fillet", "さばく": "clean", "捌く": "clean", "三枚におろす": "fillet", "おろし方": "fillet",
     "下処理": "clean", "皮をはぐ": "skin", "皮を剥ぐ": "skin", "ウロコ": "scale", "鱗": "scale",
@@ -111,7 +111,7 @@ GLOSSARY: dict[str, str] = {
     "朝": "morning", "夕マズメ": "dusk evening", "夕まずめ": "dusk evening", "夕方": "evening",
     "冬": "winter", "夏": "summer", "春": "spring", "秋": "fall", "風": "wind", "雨": "rain", "前線": "front",
     "濁り": "muddy water", "水深": "depth deep", "深場": "deep", "深さ": "depth", "季節": "season", "時期": "season",
-    "時間帯": "time", "産卵": "spawn",
+    "一日のうち": "time of day", "一日": "day", "時間帯": "time of day", "何時": "what time", "産卵": "spawn",
     # asking
     "どうして": "why", "なぜ": "why", "どうやって": "how", "どうすれば": "how", "どう": "how",
     "何匹": "how many", "何尾": "how many", "何": "what", "なに": "what", "どんな": "what",

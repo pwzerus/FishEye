@@ -115,7 +115,12 @@ function AccessPointList({ points, emptyText }: { points: AccessPoint[]; emptyTe
   const t = all.lake;
   const kindOf = (ap: AccessPoint) => all.map.accessTypes[ap.access_type] ?? ap.access_type.replace("_", " ");
   const [showAll, setShowAll] = useState(false);
-  const shown = showAll ? points : points.slice(0, ACCESS_SHOWN_AT_FIRST);
+  // Confirmed public access first: a lake with 57 of them listed five
+  // unverified OpenStreetMap ramps before any (the API's order is import order).
+  const ordered = [...points].sort(
+    (a, b) => Number(a.public_status !== "confirmed_public") - Number(b.public_status !== "confirmed_public"),
+  );
+  const shown = showAll ? ordered : ordered.slice(0, ACCESS_SHOWN_AT_FIRST);
   const hidden = points.length - shown.length;
   return (
     <ul className="access-list">
@@ -192,6 +197,8 @@ export function WaterbodyPanel({
   const [detail, setDetail] = useState<WaterbodyDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [failedId, setFailedId] = useState<number | null>(null);
+  // No such lake (a stale or mistyped link): trying again can't help.
+  const [gone, setGone] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [tab, setTab] = useState<"access" | "fish" | "sources">("access");
   const [reporting, setReporting] = useState(false);
@@ -215,12 +222,29 @@ export function WaterbodyPanel({
       .catch((e: unknown) => {
         if (cancelled) return;
         setError(e instanceof ApiError ? e.message : t.loadError);
+        setGone(e instanceof ApiError && e.status === 404);
         setFailedId(waterbodyId);
       });
     return () => {
       cancelled = true;
     };
   }, [waterbodyId, attempt, t.loadError]);
+
+  // The tab names the open lake (a reload or a shared link gets it from the
+  // map page's metadata); the map's own title comes back when it closes.
+  // Only while the title is still the lake's: leaving the map for another
+  // page, that page has already put up its own, and the Catches page was
+  // titled "Map" after a lake had been open.
+  const shownName = waterbodyId !== null && detail?.id === waterbodyId ? detail.name : null;
+  const mapTitle = `${all.pages.map} · FishEye`;
+  useEffect(() => {
+    if (!shownName) return;
+    const lakeTitle = `${shownName} · FishEye`;
+    document.title = lakeTitle;
+    return () => {
+      if (document.title === lakeTitle) document.title = mapTitle;
+    };
+  }, [shownName, mapTitle]);
 
   if (waterbodyId === null) {
     return (
@@ -249,7 +273,7 @@ export function WaterbodyPanel({
   }
 
   if (loading) return <ContentSkeleton label={t.loading} />;
-  if (error && failedId === waterbodyId) return <div className="panel-empty panel-error" role="alert"><p>{error}</p><button type="button" className="btn btn-ghost btn-sm" onClick={() => { setError(null); setAttempt((value) => value + 1); }}>{all.common.tryAgain}</button></div>;
+  if (error && failedId === waterbodyId) return <div className="panel-empty panel-error" role="alert"><p>{error}</p>{!gone && <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setError(null); setAttempt((value) => value + 1); }}>{all.common.tryAgain}</button>}</div>;
   if (!detail) return null;
 
   const isClosed = detail.public_access_status === "closed";

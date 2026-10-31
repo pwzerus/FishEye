@@ -16,7 +16,11 @@ import type { FishIdResult } from "@/lib/api/types";
 const MIN_FISH = 0.5;
 const SURE = 0.8;
 // Smaller shares than this aren't worth showing as a possibility.
-const SHOWN = 0.05;
+const SHOWN = 0.1;
+// Below this the likeliest fish doesn't stand out (a blurred or far-off fish,
+// a photo of something else the model calls fish-like): it says it can't
+// tell, rather than offer a 6% guess as "most likely".
+const UNCLEAR = 0.2;
 
 type State =
   | { kind: "idle" }
@@ -142,7 +146,13 @@ function Answer({ result }: { result: FishIdResult }) {
   }
   const fish = result.candidates.filter((c) => c.probability >= SHOWN).slice(0, 3);
   const top = fish[0];
-  if (!top) return null;
+  if (!top || top.probability < UNCLEAR) {
+    return (
+      <p className="identify-verdict" role="status">
+        {t.unclear}
+      </p>
+    );
+  }
   const sure = top.probability >= SURE;
   return (
     <div className="identify-answer" role="status">

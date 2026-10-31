@@ -39,7 +39,7 @@ const TABS = [
   { id: "overview", label: "Overview" },
   { id: "reports", label: "Reports" },
   { id: "lakes", label: "Lake reports" },
-  { id: "pins", label: "Pins" },
+  { id: "pins", label: "Catches" },
   { id: "users", label: "Users" },
   { id: "audit", label: "Audit log" },
   { id: "data", label: "Data refresh" },
@@ -221,7 +221,7 @@ function Overview({ onGo }: { onGo: (tab: TabId) => void }) {
           tone={(stats.lake_reports_open ?? 0) > 0 ? "warn" : undefined}
           onClick={() => onGo("lakes")}
         />
-        <StatCard label="Pins" value={stats.pins} sub={`+${stats.pins_new_7d} this week`} onClick={() => onGo("pins")} />
+        <StatCard label="Catches" value={stats.pins} sub={`+${stats.pins_new_7d} this week`} onClick={() => onGo("pins")} />
         <StatCard label="Public / only-me" value={`${stats.pins_public} / ${stats.pins_private}`} sub={`${stats.photos} photos`} />
         <StatCard label="Hidden / removed" value={`${stats.pins_hidden} / ${stats.pins_removed}`} onClick={() => onGo("pins")} />
         <StatCard label="Users" value={stats.users} sub={`+${stats.users_new_7d} new, ${stats.users_active_7d} active this week`} onClick={() => onGo("users")} />
@@ -272,15 +272,15 @@ function Reports({ confirmThen }: { confirmThen: (p: Pending) => void }) {
 
   const act = (g: AdminReportGroup, action: "dismiss" | "hide" | "remove") => {
     const copy = {
-      dismiss: { title: "Dismiss these reports?", body: "The pin stays up (and comes back if the reports had hidden it).", confirm: "Dismiss", danger: false },
-      hide: { title: "Hide this pin?", body: "Only its owner and admins will see it. You can restore it later.", confirm: "Hide pin", danger: false },
-      remove: { title: "Remove this pin?", body: "Removed pins are hidden from everyone but admins, and the owner can't edit them (only delete them). Reversible from the Pins tab.", confirm: "Remove pin", danger: true },
+      dismiss: { title: "Dismiss these reports?", body: "The catch stays up (and comes back if the reports had hidden it).", confirm: "Dismiss", danger: false },
+      hide: { title: "Hide this catch?", body: "Only its owner and admins will see it. You can restore it later.", confirm: "Hide catch", danger: false },
+      remove: { title: "Remove this catch?", body: "Removed catches are hidden from everyone but admins, and the owner can't edit them (only delete them). Reversible from the Catches tab.", confirm: "Remove catch", danger: true },
     }[action];
     confirmThen({
       ...copy,
       run: async () => {
         await adminResolve(g.pin.id, action);
-        toast(action === "dismiss" ? "Reports dismissed" : action === "hide" ? "Pin hidden" : "Pin removed");
+        toast(action === "dismiss" ? "Reports dismissed" : action === "hide" ? "Catch hidden" : "Catch removed");
         load();
       },
     });
@@ -470,7 +470,7 @@ function Pins({ confirmThen }: { confirmThen: (p: Pending) => void }) {
 
   const setPinStatus = (p: AdminPin, s: "published" | "hidden" | "removed") =>
     confirmThen({
-      title: s === "published" ? "Restore this pin?" : s === "hidden" ? "Hide this pin?" : "Remove this pin?",
+      title: s === "published" ? "Restore this catch?" : s === "hidden" ? "Hide this catch?" : "Remove this catch?",
       body:
         s === "published"
           ? "It becomes visible again (to everyone, if it's public)."
@@ -479,7 +479,7 @@ function Pins({ confirmThen }: { confirmThen: (p: Pending) => void }) {
       danger: s === "removed",
       run: async () => {
         await adminSetPinStatus(p.id, s);
-        toast("Pin updated");
+        toast("Catch updated");
         load();
       },
     });
@@ -527,7 +527,7 @@ function Pins({ confirmThen }: { confirmThen: (p: Pending) => void }) {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Pin</th>
+                  <th>Catch</th>
                   <th>Author</th>
                   <th>Status</th>
                   <th className="num">Reports</th>
@@ -584,12 +584,12 @@ function Pins({ confirmThen }: { confirmThen: (p: Pending) => void }) {
                           onClick={() =>
                             confirmThen({
                               title: "Delete permanently?",
-                              body: "The pin and its photo files are deleted for good. Use this only for content that must not be kept.",
+                              body: "The catch and its photo files are deleted for good. Use this only for content that must not be kept.",
                               confirm: "Delete forever",
                               danger: true,
                               run: async () => {
                                 await adminPurgePin(p.id);
-                                toast("Pin deleted", "info");
+                                toast("Catch deleted", "info");
                                 load();
                               },
                             })
@@ -604,7 +604,7 @@ function Pins({ confirmThen }: { confirmThen: (p: Pending) => void }) {
                 {data.items.length === 0 && (
                   <tr>
                     <td colSpan={6} className="muted">
-                      No pins match.
+                      No catches match.
                     </td>
                   </tr>
                 )}
@@ -673,7 +673,7 @@ function Users({ meId, confirmThen }: { meId: number; confirmThen: (p: Pending) 
                   <th>User</th>
                   <th>Role</th>
                   <th>Status</th>
-                  <th className="num">Pins</th>
+                  <th className="num">Catches</th>
                   <th className="num">Reports against</th>
                   <th>Last sign-in</th>
                   <th aria-label="Actions" />
@@ -705,7 +705,7 @@ function Users({ meId, confirmThen }: { meId: number; confirmThen: (p: Pending) 
                               <button
                                 type="button"
                                 className="btn btn-ghost btn-xs"
-                                onClick={() => change(u, { role: "admin" }, `Make ${u.display_name} an admin?`, "Admins can moderate every pin and manage every account, including yours.")}
+                                onClick={() => change(u, { role: "admin" }, `Make ${u.display_name} an admin?`, "Admins can moderate every catch and manage every account, including yours.")}
                               >
                                 Make admin
                               </button>
@@ -713,7 +713,7 @@ function Users({ meId, confirmThen }: { meId: number; confirmThen: (p: Pending) 
                               <button
                                 type="button"
                                 className="btn btn-ghost btn-xs"
-                                onClick={() => change(u, { role: "user" }, `Remove admin from ${u.display_name}?`, "They keep their account and pins.")}
+                                onClick={() => change(u, { role: "user" }, `Remove admin from ${u.display_name}?`, "They keep their account and catches.")}
                               >
                                 Remove admin
                               </button>
@@ -723,7 +723,7 @@ function Users({ meId, confirmThen }: { meId: number; confirmThen: (p: Pending) 
                                 type="button"
                                 className="btn btn-ghost btn-xs btn-danger-text"
                                 onClick={() =>
-                                  change(u, { status: "suspended" }, `Suspend ${u.display_name}?`, "They're signed out everywhere immediately and can't sign in until reactivated. Their pins stay as they are.", true)
+                                  change(u, { status: "suspended" }, `Suspend ${u.display_name}?`, "They're signed out everywhere immediately and can't sign in until reactivated. Their catches stay as they are.", true)
                                 }
                               >
                                 Suspend
@@ -756,15 +756,18 @@ function Users({ meId, confirmThen }: { meId: number; confirmThen: (p: Pending) 
 // ------------------------------------------------------------------- audit
 
 const ACTION_LABEL: Record<string, string> = {
-  "pin.auto_hidden": "Auto-hid pin after reports",
-  "pin.published": "Restored pin",
-  "pin.hidden": "Hid pin",
-  "pin.removed": "Removed pin",
-  "pin.purged": "Permanently deleted pin",
+  "pin.auto_hidden": "Auto-hid catch after reports",
+  "pin.published": "Restored catch",
+  "pin.hidden": "Hid catch",
+  "pin.removed": "Removed catch",
+  "pin.purged": "Permanently deleted catch",
   "reports.dismissed": "Dismissed reports",
-  "reports.hidden": "Hid pin (reports)",
-  "reports.removed": "Removed pin (reports)",
+  "reports.hidden": "Hid catch (reports)",
+  "reports.removed": "Removed catch (reports)",
+  "lake_report.fixed": "Fixed a lake report",
+  "lake_report.dismissed": "Dismissed a lake report",
   "user.updated": "Changed user",
+  "user.deleted": "Deleted their account",
   "user.created_admin_cli": "Created admin (command line)",
   "user.role_cli": "Changed role (command line)",
 };
@@ -804,10 +807,10 @@ function AuditTable({ rows }: { rows: AuditEntry[] }) {
               <td className="small">
                 {r.target_type === "pin" ? (
                   <Link href={`/community/${r.target_id}`} className="text-link">
-                    pin #{r.target_id}
+                    catch #{r.target_id}
                   </Link>
                 ) : (
-                  `${r.target_type} #${r.target_id}`
+                  `${r.target_type.replace("_", " ")} #${r.target_id}`
                 )}
               </td>
               <td className="muted small">{detailText(r.detail)}</td>

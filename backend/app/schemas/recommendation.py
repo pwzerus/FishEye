@@ -4,7 +4,9 @@ from pydantic import BaseModel, Field
 
 
 class RecommendationRequest(BaseModel):
-    waterbody_id: int
+    # Bounded like api/params.DbId: an id past the database's integer
+    # range was a 500, not a 422.
+    waterbody_id: int = Field(ge=1, le=2**31 - 1)
     target_species: str | None = Field(
         default=None,
         description="common_name, e.g. 'Largemouth Bass'. Omitted means "

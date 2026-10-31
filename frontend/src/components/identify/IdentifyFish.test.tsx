@@ -63,6 +63,14 @@ describe("IdentifyFish", () => {
     vi.mocked(session.identifyFish).mockResolvedValueOnce(result(0.1, [BASS]));
     choose(container);
     expect(await screen.findByText(/doesn't look like a photo of a fish/)).toBeInTheDocument();
-    await waitFor(() => expect(session.identifyFish).toHaveBeenCalledTimes(2));
+
+    // A fish, but no species stands out: no "most likely" 6% guess.
+    vi.mocked(session.identifyFish).mockResolvedValueOnce(
+      result(0.7, [{ ...BASS, probability: 0.06 }, { slug: "spotted-bass", label: "Spotted Bass", probability: 0.05, in_guides: true }]),
+    );
+    choose(container);
+    expect(await screen.findByText(/can't tell which fish this is/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Largemouth Bass" })).not.toBeInTheDocument();
+    await waitFor(() => expect(session.identifyFish).toHaveBeenCalledTimes(3));
   });
 });

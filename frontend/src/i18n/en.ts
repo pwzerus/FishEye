@@ -22,7 +22,10 @@ const en = {
     miles: (n: string) => `${n} mi`,
     unavailable: "Unavailable",
     catchesSoon: "Catches are coming soon",
-    serverDown: "Couldn't reach FishEye's server. Is the backend running?",
+    serverDown: "Couldn't reach FishEye. Check your connection and try again.",
+    // When the server gives no reason of its own (lib/api/client.ts).
+    requestFailed: "Something went wrong on our side. Try again in a moment.",
+    tooManyRequests: "Too many requests. Please wait a moment and try again.",
     listSep: ", ",
     listAnd: " and ",
   },
@@ -124,6 +127,7 @@ const en = {
     verifyEmail: "Confirm your email",
   },
   map: {
+    backendDown: "We couldn't load the map right now. Please refresh in a moment.",
     loadingMap: "Loading map…",
     loadingLakeMap: "Loading lake map…",
     loadingLakes: "Loading lakes…",
@@ -305,7 +309,7 @@ const en = {
     uploading: (pct: number) => `Uploading ${pct}%`,
     checkingSaving: "Checking and saving…",
     submit: "Share catch",
-    speciesError: "Couldn't load the species list. Is the backend running?",
+    speciesError: "Couldn't load the list of fish. Try again in a moment.",
     saveError: "Couldn't save the catch. Try again.",
     // The photo check, shown under the photo.
     checking: "Checking which fish this is… (a few seconds)",
@@ -447,7 +451,7 @@ const en = {
   lake: {
     welcomeKicker: "FIND WATER",
     welcomeTitle: "Where to?",
-    welcomeText: "Search a place or choose a highlighted state.",
+    welcomeText: "Search a place or choose a state on the map.",
     exploreCity: "Explore a city",
     how1: "1 · Pick a lake",
     how2: "2 · Check entrances",
@@ -630,7 +634,7 @@ const en = {
     toBasics: "Fishing basics ↓",
     photoId: "Not sure what you caught? Photo ID →",
     loadError: "We couldn't load the guides. Please refresh to try again.",
-    backendDown: "Could not reach the backend API. Is it running? See backend/README.md.",
+    backendDown: "Couldn't load the fish guides right now. Try again in a moment.",
     englishContent: "The guide's text below is in English for now; names and headings are translated.",
     filter: "Filter fish",
     all: "All",
@@ -830,6 +834,8 @@ const en = {
     signInFailed: "Sign-in didn't complete. Try again.",
     welcomeBack: (name: string) => `Welcome back, ${name}`,
     welcome: (name: string) => `Welcome to FishEye, ${name}`,
+    welcomeConfirm: (name: string) =>
+      `Welcome to FishEye, ${name}. Open the link we emailed you to start sharing catches.`,
     wrong: "Something went wrong. Try again.",
     titleSignIn: "Welcome back",
     titleSignUp: "Create your account",
@@ -952,6 +958,7 @@ const en = {
     noFish: "This doesn't look like a photo of a fish. Try one with the whole fish in view.",
     looksLike: "This looks like a ",
     looksLikeEnd: ".",
+    unclear: "We can't tell which fish this is from this photo. Try one that shows the whole fish, side-on, in good light.",
     notSure: "Not sure. It's most likely one of these; compare them with the guides:",
     howTo: (fish: string) => `How to catch, handle and cook a ${fish.toLowerCase()} →`,
     caution:

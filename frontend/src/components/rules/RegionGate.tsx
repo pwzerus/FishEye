@@ -153,7 +153,7 @@ export function BaitRules({
               {j.bait_rules_sources.map((s, i) => (
                 <span key={s.url}>
                   {i > 0 && " · "}
-                  <a href={s.url} target="_blank" rel="noreferrer">
+                  <a href={s.url} target="_blank" rel="noreferrer" lang="en">
                     {s.label}
                   </a>
                 </span>

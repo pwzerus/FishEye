@@ -150,6 +150,9 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   const [missingAt, setMissingAt] = useState<[number, number] | null>(null);
   // Pans can overlap: only the newest request's answer is shown.
   const latestRequest = useRef(0);
+  // When the lakes last failed to load and the person was told (see
+  // handleViewportChange): once is enough while they pan around.
+  const lakesFailedNotice = useRef(0);
   // Which states have lakes on file: lights them on the national map and
   // names them when a search lands somewhere empty. null = not known (yet).
   const [coverage, setCoverage] = useState<{ codes: Set<string>; states: [string, string][] } | null>(null);
@@ -227,6 +230,18 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   useEffect(() => {
     if (!authLoading && showPins) loadPins(lastBbox.current);
   }, [user, authLoading, showPins, loadPins]);
+
+  // The open lake is in the address (?lake=), so a reload keeps it and a
+  // copied link opens it; closing the lake takes it out. Read only on first
+  // render (selectedId above), so changing it sets nothing else off.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const wanted = selectedId ? String(selectedId) : null;
+    if (url.searchParams.get("lake") === wanted) return;
+    if (wanted) url.searchParams.set("lake", wanted);
+    else url.searchParams.delete("lake");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }, [selectedId]);
 
   // ?addPin=1 without an account: sign in first, then come back to place it.
   useEffect(() => {
@@ -427,8 +442,13 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
       })
       .catch((e: unknown) => {
         // Keep what's on screen rather than blanking the map over a
-        // transient error.
+        // transient error, but say so: with the server down, a state
+        // opened with no lakes and no reason, as if it had none.
         console.error("viewport lake query failed:", e instanceof ApiError ? e.message : e);
+        if (requestId === latestRequest.current && Date.now() - lakesFailedNotice.current > 30_000) {
+          lakesFailedNotice.current = Date.now();
+          toast(e instanceof ApiError ? e.message : all.common.serverDown, "error");
+        }
       })
       .finally(() => {
         if (requestId === latestRequest.current) setLoading(false);

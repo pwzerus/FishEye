@@ -26,18 +26,31 @@ export function Modal({
   tone?: "default" | "danger";
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const returnTo = useRef<HTMLElement | null>(null);
   const t = useT();
 
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
     if (open && !d.open) {
+      returnTo.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       if (typeof d.showModal === "function") d.showModal();
       else d.setAttribute("open", "");
     } else if (!open && d.open) {
       if (typeof d.close === "function") d.close();
       else d.removeAttribute("open");
     }
+  }, [open]);
+
+  // Focus goes back to what opened the dialog. The browser does that when a
+  // dialog is closed, but most callers take it out of the page instead
+  // ({open && <Dialog/>}), and keyboard users were left at the top of it.
+  useEffect(() => {
+    if (!open) return;
+    return () => {
+      const el = returnTo.current;
+      if (el?.isConnected) el.focus();
+    };
   }, [open]);
 
   return (

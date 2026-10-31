@@ -180,7 +180,13 @@ export function PlanCard({
             <dt>{t.when}</dt>
             <dd>
               <span className="plan-window-short">{shortWindowText(plan.when, t, locale)}</span><span className="plan-window-full">{windowText(plan.when, t, locale)}</span>
-              {plan.also && <span className="plan-also">{t.or(shortWindowText(plan.also, t, locale))}</span>}
+              {plan.also && (
+                // A window sooner than the one planned around ("or 5–8 PM
+                // today" under "5–8 AM tomorrow") shows even when collapsed.
+                <span className={Date.parse(plan.also.start_time) < Date.parse(plan.when.start_time) ? "plan-also plan-also-sooner" : "plan-also"}>
+                  {t.or(shortWindowText(plan.also, t, locale))}
+                </span>
+              )}
               {plan.conditions && <span className="plan-conditions">{plan.conditions}</span>}
             </dd>
           </div>

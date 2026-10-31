@@ -16,6 +16,15 @@ interface ToastItem {
 const ToastContext = createContext<((text: string, tone?: Tone) => void) | null>(null);
 const VISIBLE_MS = 3800;
 const EXIT_MS = 220;
+// Kana, CJK ideographs, Hangul syllables.
+const CJK_RE = /[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/g;
+
+// A longer message stays up long enough to read: about 15 characters a
+// second, a Chinese, Japanese or Korean character counting as three.
+function visibleMs(text: string): number {
+  const wide = text.match(CJK_RE)?.length ?? 0;
+  return Math.max(VISIBLE_MS, 1000 + ((text.length + 2 * wide) / 15) * 1000);
+}
 
 /** Small confirmations ("Pin saved"). Announced politely to screen readers. */
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -32,7 +41,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     (text: string, tone: Tone = "success") => {
       const id = nextId.current++;
       setItems((all) => [...all.slice(-2), { id, tone, text, leaving: false }]);
-      setTimeout(() => dismiss(id), VISIBLE_MS);
+      setTimeout(() => dismiss(id), visibleMs(text));
     },
     [dismiss],
   );

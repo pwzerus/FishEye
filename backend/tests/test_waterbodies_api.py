@@ -129,6 +129,31 @@ def test_lake_search_puts_the_state_being_looked_at_first(client, db_session):
     assert client.get("/api/waterbodies/search", params={"q": "Atlanta"}).json() == []
 
 
+def test_lake_search_finds_the_reservoir_by_its_own_name(client, db_session):
+    """2026-10-30: "lanier" listed five small ponds and not Lake Lanier.
+    "Lanier Pond" started with the word, and ponds nearer the map came
+    before the verified reservoir."""
+    from app.models.waterbody import State
+
+    ga = State(name="Georgia", code="GA", official_source_url="https://georgiawildlife.com")
+    al = State(name="Alabama", code="AL", official_source_url="https://www.outdooralabama.com")
+    db_session.add_all([ga, al])
+    db_session.flush()
+    _lake(db_session, ga, "Lanier Lake", at=(32.7, -83.4))
+    _lake(db_session, ga, "Lanier Pond", at=(32.4, -82.1))
+    _lake(db_session, ga, "Laniers Millpond", at=(32.8, -83.5))
+    _lake(db_session, al, "Lanier Lake", at=(32.9, -85.3))
+    _lake(db_session, ga, "Lake Lanier", tier="verified", km2=150, at=(34.2, -83.9))
+    db_session.commit()
+
+    params = {"q": "lanier", "state_code": "GA", "lat": 32.6, "lng": -83.4}
+    found = [m["name"] for m in client.get("/api/waterbodies/search", params=params).json()]
+    assert found[0] == "Lake Lanier"
+    # The same name give or take "lake" or "pond" before a longer name.
+    assert found.index("Laniers Millpond") > found.index("Lanier Pond")
+    assert client.get("/api/waterbodies/search", params={"q": "lake lanier"}).json()[0]["name"] == "Lake Lanier"
+
+
 def test_lake_search_tells_apart_lakes_sharing_a_name_in_one_state(client, db_session):
     """Georgia has four Freeman Lakes: the one nearest the map comes first,
     and each says which county it is in."""

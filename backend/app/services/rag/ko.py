@@ -39,7 +39,8 @@ STATE_NAMES: dict[str, str] = {
 # Korean phrase -> the English words the guides use for it ("" drops it).
 GLOSSARY: dict[str, str] = {
     # not fishing, though they contain a fishing word
-    "찌개": "", "방법": "", "시간": "time", "추천": "best",
+    "찌개": "", "방법": "", "하루 중": "time of day", "시간대": "time of day", "몇 시": "what time",
+    "하루": "day", "시간": "time", "추천": "best",
     # fish
     "큰입배스": "largemouth bass", "큰입우럭": "largemouth bass", "라지마우스": "largemouth bass",
     "작은입배스": "smallmouth bass", "작은입우럭": "smallmouth bass", "스몰마우스": "smallmouth bass",

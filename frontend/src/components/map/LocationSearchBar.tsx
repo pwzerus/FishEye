@@ -10,8 +10,10 @@ import { kmApart } from "@/lib/geo";
 import { useJurisdictions } from "@/lib/jurisdiction";
 
 // A search for water, which FishEye may have by name ("Freeman Lake"). A
-// town or a ZIP goes straight to the place geocoder.
+// town or a ZIP goes to the place geocoder, unless a lake FishEye verified
+// has the very name typed (see handleSubmit).
 const WATER = /\b(lake|lakes|pond|reservoir|res|creek|river|lagoon|bayou|slough|tank)\b/i;
+const ZIP = /^\d{5}(-\d{4})?$/;
 
 // The lake names are OpenStreetMap's, in English: "Lago Lanier" is searched
 // as "Lake Lanier", "Río Grande" as "River Grande" (the search matches each
@@ -30,6 +32,11 @@ export function inEnglish(query: string): string {
 
 const words = (text: string) => (text.toLowerCase().match(/[a-z0-9']+/g) ?? []).sort().join(" ");
 
+// A name without the word for the water: "lanier" is Lake Lanier's.
+const GENERIC = new Set(["lake", "lakes", "reservoir", "pond", "the", "of"]);
+const core = (text: string) =>
+  (text.toLowerCase().match(/[a-z0-9']+/g) ?? []).filter((w) => !GENERIC.has(w)).sort().join(" ");
+
 /** "Freeman Lake, GA" → the name and the state: a state's name at the end,
  * or its two-letter code after a comma or in capitals. */
 export function splitState(query: string, states: { code: string; name: string }[]): { name: string; state: string | null } {
@@ -47,6 +54,9 @@ export function splitState(query: string, states: { code: string; name: string }
 // A lake this close to where the map is looking is the one meant, even if
 // the state has others of that name.
 const NEAR_KM = 30;
+// A place this close to a lake of its name shows that lake once the map is
+// there (Waco and Lake Waco), so the place search answers for both.
+const PLACE_SHOWS_LAKE_KM = 40;
 
 /** The lake a search clearly meant: the only one of that name in the state
  * being looked at (or anywhere, when no state is), or the only one of them
@@ -138,14 +148,35 @@ export function LocationSearchBar({
         else setChoices(found);
         return;
       }
+    } else if (onLake && !ZIP.test(trimmed)) {
+      // "lanier" means Lake Lanier, but the place search sent it to Lanier
+      // County, 300 km away. A lake FishEye verified by that very name is
+      // offered (the place a click away) when the place found is far from
+      // it. "waco" still goes to Waco: Lake Waco is on the map right there.
+      const { name, state } = splitState(trimmed, states ?? []);
+      const placeRequest = geocodePlace(typed);
+      const [found, place] = await Promise.all([
+        searchLakes(name, state ?? stateCode, near).catch(() => [] as LakeMatch[]),
+        placeRequest.catch(() => null),
+      ]);
+      const named = found.filter((m) => core(m.name) === core(name));
+      const verified = named.filter((m) => m.data_tier === "verified");
+      if (verified.length > 0 && !(place && verified.some((m) => kmApart(place, m) <= PLACE_SHOWS_LAKE_KM))) {
+        setSearching(false);
+        setChoices(named);
+        return;
+      }
+      // The place search has already answered (or failed): no second request.
+      searchPlaces(typed, placeRequest);
+      return;
     }
     searchPlaces(typed);
   }
 
-  function searchPlaces(trimmed: string) {
+  function searchPlaces(trimmed: string, request = geocodePlace(trimmed)) {
     setChoices(null);
     setSearching(true);
-    geocodePlace(trimmed)
+    request
       .then((result) => {
         onLocate({
           latitude: result.latitude,

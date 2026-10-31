@@ -4,10 +4,23 @@ import { getT } from "@/i18n/server";
 import { notFound } from "next/navigation";
 
 import { PinDetailView } from "@/components/community/PinDetailView";
+import { getPublicPin } from "@/lib/api/client";
 import { PageTransition } from "@/components/motion/Transition";
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata(props: PageProps<"/community/[id]">): Promise<Metadata> {
   const t = await getT();
+  // A public catch's link is titled with the catch and its water, in a tab
+  // and in a shared link's preview; any other keeps the plain title.
+  const pinId = Number((await props.params).id);
+  if (Number.isInteger(pinId) && pinId > 0) {
+    try {
+      const pin = await getPublicPin(pinId);
+      const water = pin.water?.name ?? pin.lake?.name;
+      return { title: [pin.title, water, "FishEye"].filter(Boolean).join(" · ") };
+    } catch {
+      // Not public, or not there: the plain title.
+    }
+  }
   return { title: `${t.pages.catch} · FishEye` };
 }
 

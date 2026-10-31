@@ -30,6 +30,8 @@ FISHING_TERMS = (
     # 2026-10-29 persona review asked Georgia's rod rule in Chinese and was
     # told it wasn't a fishing question.
     "竿", "限额",
+    # The two reels by their usual names; "纺车轮怎么绕线" was turned away.
+    "纺车轮", "水滴轮",
 )
 
 # Chinese term -> the English words the guides use for it.
@@ -88,6 +90,22 @@ GLOSSARY: dict[str, str] = {
     "帕洛马结": "palomar knot",
     "克林奇结": "improved clinch knot",
     "结": "knot",
+    "绑鱼钩": "knot improved clinch palomar",
+    "鱼钩怎么绑": "knot improved clinch palomar",
+    "钩怎么绑": "knot improved clinch palomar",
+    # Line onto the reel (the arbor knot), not a reel question. 上线 is also
+    # "to go online", but the glossary only ranks: whether a question is
+    # about fishing at all is is_on_topic's call, and 上线 isn't in it.
+    "绑到渔轮": "arbor knot line reel spool",
+    "绑在渔轮": "arbor knot line reel spool",
+    "绑到轮上": "arbor knot line reel spool",
+    "绕线": "arbor knot line reel spool",
+    "上线": "arbor knot line spool",
+    "线杯结": "arbor knot",
+    "绑钩": "knot improved clinch palomar",
+    "绑线": "line knot",
+    "打结": "knot",
+    "绑": "knot",
     "放流": "release",
     "保鲜": "keep fresh ice cooler",
     "冰": "ice",

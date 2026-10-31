@@ -1,9 +1,12 @@
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api import (
     admin,
@@ -26,8 +29,10 @@ from app.core.config import get_settings
 from app.db.session import Base, engine
 from app.db.spatial import ensure_spatial_schema
 from app.db.upgrades import ensure_waterbody_ranking_schema
+from app.knowledge import error_text
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -65,6 +70,14 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         from app.services.rag.retriever import default_retriever
 
         default_retriever()
+    # New accounts can't share catches until they open the emailed link, so
+    # with no mail server every new account is stuck. Said once, at start.
+    if settings.email_verification == "on" and settings.mail_backend != "smtp":
+        logger.warning(
+            "EMAIL_VERIFICATION=on but MAIL_BACKEND=%s: confirmation links are only written to this log, "
+            "never emailed. Set MAIL_BACKEND=smtp and the SMTP_* settings to send them.",
+            settings.mail_backend,
+        )
     yield
 
 app = FastAPI(
@@ -81,16 +94,26 @@ app = FastAPI(
 
 # Multipart bodies are parsed before any dependency runs — including
 # require_user — so without a cap anyone could make the server buffer an
-# arbitrarily large upload. Uploads go only to /api/pins; nothing else
-# accepts bodies anywhere near this size.
+# arbitrarily large upload. A catch's photos go to /api/pins, and one photo
+# to /api/fish-id (the photo check, as sent from a phone: full size);
+# nothing else accepts bodies anywhere near these sizes.
 MAX_UPLOAD_BODY = settings.max_photos_per_pin * settings.max_photo_bytes + 1024 * 1024
+MAX_PHOTO_BODY = settings.max_photo_bytes + 1024 * 1024
 MAX_OTHER_BODY = 256 * 1024
+
+
+def body_limit(path: str) -> int:
+    if path.startswith(f"{settings.api_prefix}/pins"):
+        return MAX_UPLOAD_BODY
+    if path == f"{settings.api_prefix}/fish-id":
+        return MAX_PHOTO_BODY
+    return MAX_OTHER_BODY
 
 
 @app.middleware("http")
 async def limit_body_size(request: Request, call_next):  # type: ignore[no-untyped-def]
     if request.method in ("POST", "PUT", "PATCH", "DELETE"):
-        limit = MAX_UPLOAD_BODY if request.url.path.startswith(f"{settings.api_prefix}/pins") else MAX_OTHER_BODY
+        limit = body_limit(request.url.path)
         length = request.headers.get("content-length")
         is_multipart = request.headers.get("content-type", "").startswith("multipart/")
         # A chunked body has no length to check up front, and browsers never
@@ -103,8 +126,22 @@ async def limit_body_size(request: Request, call_next):  # type: ignore[no-untyp
             except ValueError:
                 return JSONResponse({"detail": "Bad Content-Length."}, status_code=400)
             if too_big:
-                return JSONResponse({"detail": "That upload is too large."}, status_code=413)
+                detail = error_text.tr("That upload is too large.", request.cookies.get(error_text.LANG_COOKIE))
+                return JSONResponse({"detail": detail}, status_code=413)
     return await call_next(request)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def refuse_in_their_language(request: Request, exc: StarletteHTTPException):  # type: ignore[no-untyped-def]
+    """The site shows a refusal's message as it comes ("Email or password
+    is incorrect."), so it is said in the language the visitor chose
+    (knowledge/error_text.py); English when it has no translation."""
+    lang = request.cookies.get(error_text.LANG_COOKIE)
+    if lang and isinstance(exc.detail, str):
+        detail = error_text.tr(exc.detail, lang)
+        if detail != exc.detail:
+            exc = StarletteHTTPException(exc.status_code, detail, exc.headers)
+    return await http_exception_handler(request, exc)
 
 
 app.add_middleware(

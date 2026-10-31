@@ -130,7 +130,7 @@ describe("PinForm", () => {
         : idResult([LARGEMOUTH]),
     );
     const onCreated = vi.fn();
-    const { container } = render(<PinForm point={{ latitude: 32.8, longitude: -95.6 }} onCreated={onCreated} onCancel={vi.fn()} />);
+    const { container } = renderApp(<PinForm point={{ latitude: 32.8, longitude: -95.6 }} onCreated={onCreated} onCancel={vi.fn()} />);
     await screen.findByRole("option", { name: "Bluegill" });
 
     choosePhoto(container);
@@ -156,7 +156,7 @@ describe("PinForm", () => {
           })
         : idResult([CATFISH], { status: "confirmed", accepted: true, message: "Photo check: this looks like a Channel Catfish." }),
     );
-    const { container } = render(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    const { container } = renderApp(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
     await screen.findByRole("option", { name: "Bluegill" });
     fireEvent.change(screen.getByLabelText("Fish"), { target: { value: "largemouth-bass" } });
     choosePhoto(container);
@@ -178,7 +178,7 @@ describe("PinForm", () => {
           })
         : idResult([LARGEMOUTH], { status: "group", accepted: true, message: "Photo check: this looks like a black bass." }),
     );
-    const { container } = render(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    const { container } = renderApp(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
     await screen.findByRole("option", { name: "Bluegill" });
     fireEvent.change(screen.getByLabelText("Fish"), { target: { value: "largemouth-bass" } });
     choosePhoto(container);
@@ -191,7 +191,7 @@ describe("PinForm", () => {
 
   it("offers what the photo looks like when the angler isn't sure", async () => {
     vi.mocked(session.identifyFish).mockResolvedValue(idResult([{ ...LARGEMOUTH, probability: 0.42 }, { ...CATFISH, probability: 0.3 }]));
-    const { container } = render(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    const { container } = renderApp(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
     await screen.findByRole("option", { name: "Bluegill" });
     choosePhoto(container);
     // Under the bar for filling it in: offered, not chosen.
@@ -202,7 +202,7 @@ describe("PinForm", () => {
   });
 
   it("asks for a photo before sharing a named fish", async () => {
-    render(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    renderApp(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
     await screen.findByRole("option", { name: "Bluegill" });
     fireEvent.change(screen.getByLabelText("Fish"), { target: { value: "bluegill" } });
     expect(screen.getByText(/Add a photo of the fish/)).toBeInTheDocument();
@@ -212,7 +212,7 @@ describe("PinForm", () => {
   it("shares a spot with no fish named, with its privacy", async () => {
     const created = { ...pin({ is_mine: true, visibility: "private" }), note: null, photos: [], can_edit: true, can_report: false, reported_by_me: false };
     vi.mocked(session.createPin).mockResolvedValue(created);
-    render(<PinForm point={{ latitude: 32.8, longitude: -95.6 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    renderApp(<PinForm point={{ latitude: 32.8, longitude: -95.6 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
     await screen.findByRole("option", { name: "Bluegill" });
     fireEvent.change(screen.getByPlaceholderText("e.g. Rocks by the boat ramp"), { target: { value: "Creek mouth" } });
     fireEvent.click(screen.getByRole("radio", { name: /Only me/ }));
@@ -227,7 +227,7 @@ describe("PinForm", () => {
   it("keeps the exact spot to the angler unless they choose to share it", async () => {
     const created = { ...pin({ is_mine: true }), note: null, photos: [], can_edit: true, can_report: false, reported_by_me: false };
     vi.mocked(session.createPin).mockResolvedValue(created);
-    render(<PinForm point={{ latitude: 32.8, longitude: -95.6 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    renderApp(<PinForm point={{ latitude: 32.8, longitude: -95.6 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
     await screen.findByRole("option", { name: "Bluegill" });
     expect(screen.getByRole("checkbox", { name: /Show other anglers the exact spot/ })).not.toBeChecked();
     // A private catch has no one to share the spot with.
@@ -246,7 +246,7 @@ describe("PinForm", () => {
   it("keeps the form and shows the error when saving fails", async () => {
     const { ApiError } = await import("@/lib/api/client");
     vi.mocked(session.createPin).mockRejectedValue(new ApiError("Photo 1: That file isn't a photo we can read.", 422));
-    render(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    renderApp(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
     fireEvent.change(screen.getByPlaceholderText("e.g. Rocks by the boat ramp"), { target: { value: "Pier" } });
     fireEvent.click(screen.getByRole("button", { name: "Share catch" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Photo 1");
@@ -256,7 +256,7 @@ describe("PinForm", () => {
   it("takes the date from the photo, and offers to move the pin to where it was taken", async () => {
     vi.mocked(session.identifyFish).mockResolvedValue(idResult([LARGEMOUTH]));
     const onMove = vi.fn();
-    const { container } = render(
+    const { container } = renderApp(
       <PinForm point={{ latitude: 33.9, longitude: -84.2 }} onCreated={vi.fn()} onCancel={vi.fn()} onMove={onMove} />,
     );
     const photo = new File([fixtureBytes(JPEG_WITH_EXIF)], "phone.jpg", { type: "image/jpeg" });
@@ -268,8 +268,21 @@ describe("PinForm", () => {
   });
 
   it("has nothing to share before a title, a photo or a fish", () => {
-    render(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    renderApp(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
     expect(screen.getByRole("button", { name: "Share catch" })).toBeDisabled();
+  });
+
+  it("says to confirm the email address before the form is filled in, not after", async () => {
+    vi.mocked(session.getMe).mockResolvedValue(makeUser({ verification_required: true }));
+    renderApp(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    expect(await screen.findByText("Confirm your email address")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send a new link" })).toBeEnabled();
+  });
+
+  it("shows no such notice to a confirmed account", async () => {
+    renderApp(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    await waitFor(() => expect(session.getMe).toHaveBeenCalled());
+    expect(screen.queryByText("Confirm your email address")).not.toBeInTheDocument();
   });
 });
 

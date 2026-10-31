@@ -21,6 +21,7 @@
 .home-sources p { padding-top: 12px; font-size: 12px; line-height: 1.8; }
 .plan-card:not(.plan-expanded) .plan-why, .plan-card:not(.plan-expanded) .plan-also, .plan-card:not(.plan-expanded) .plan-conditions, .plan-card:not(.plan-expanded) .plan-picks li:nth-child(n+2), .plan-card:not(.plan-expanded) .plan-rows > div:has(.plan-guide-link) { display: none; }
 .plan-card:not(.plan-expanded) .plan-where { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.plan-card:not(.plan-expanded) .plan-also.plan-also-sooner { display:inline; }
 .plan-window-full { display:none; }
 .plan-expanded .plan-window-short { display:none; }
 .plan-expanded .plan-window-full { display:inline; }

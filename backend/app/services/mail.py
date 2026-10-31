@@ -39,7 +39,10 @@ def send(to: str, subject: str, text: str) -> None:
     msg.set_content(text)
     if s.mail_backend != "smtp":
         outbox.append(msg)
-        logger.info("Mail not sent (MAIL_BACKEND=%s) to %s: %s\n%s", s.mail_backend, to, subject, text)
+        # A warning, not info: nothing turns on the app's INFO logging, so
+        # at info this never showed, and the log is the only place the
+        # message (in development, the confirmation link) can be read.
+        logger.warning("Mail not sent (MAIL_BACKEND=%s) to %s: %s\n%s", s.mail_backend, to, subject, text)
         return
     if not s.smtp_host:
         raise MailError("MAIL_BACKEND=smtp needs SMTP_HOST.")

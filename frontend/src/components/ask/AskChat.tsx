@@ -176,7 +176,7 @@ function Citations({ items, compact }: { items: AskCitation[]; compact: boolean 
                     )}
                   </span>
                   <span className="citation-excerpt" lang="en">{c.excerpt}</span>
-                  {c.sources[0] && <span className="citation-source">{c.sources[0].label}</span>}
+                  {c.sources[0] && <span className="citation-source" lang="en">{c.sources[0].label}</span>}
                 </span>
               </Link>
             </li>

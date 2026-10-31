@@ -5,7 +5,7 @@ import { Suspense } from "react";
 
 import { MapView } from "@/components/map/MapView";
 import { PageTransition } from "@/components/motion/Transition";
-import { listWaterbodies } from "@/lib/api/client";
+import { getWaterbody, listWaterbodies } from "@/lib/api/client";
 
 // Render on each request, not once during `next build`. A build made
 // without the API running (a Docker image, CI) would otherwise bake in the
@@ -14,12 +14,24 @@ import { listWaterbodies } from "@/lib/api/client";
 // (lib/api/client.ts), so this costs the backend almost nothing.
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({ searchParams }: PageProps<"/map">): Promise<Metadata> {
   const t = await getT();
+  // A link to a lake (?lake=, MapView keeps it in the address) is titled
+  // with the lake, in a tab and in a shared link's preview.
+  const lakeId = Number((await searchParams).lake);
+  if (Number.isInteger(lakeId) && lakeId > 0) {
+    try {
+      const lake = await getWaterbody(lakeId);
+      return { title: `${lake.name} · FishEye`, description: t.pages.mapDescription };
+    } catch {
+      // No such lake: the map's own title.
+    }
+  }
   return { title: `${t.pages.map} · FishEye`, description: t.pages.mapDescription };
 }
 
 export default async function MapPage() {
+  const t = await getT();
   let backendError: string | null = null;
 
   try {
@@ -33,7 +45,7 @@ export default async function MapPage() {
   } catch {
     // Backend not reachable (not running yet, wrong URL, etc): degrade to a
     // clear message instead of a Next.js error page.
-    backendError = "We couldn't load the map right now. Please refresh in a moment.";
+    backendError = t.map.backendDown;
   }
 
   return (

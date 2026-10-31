@@ -18,13 +18,13 @@ import {
   googleStartUrl,
   isReauthRequired,
   listPins,
-  sendVerificationEmail,
   updateProfile,
 } from "@/lib/api/session";
 import type { PinSummary } from "@/lib/api/types";
 import { initials } from "./AccountMenu";
 import { useAuth } from "./AuthProvider";
 import { ReauthDialog } from "./ReauthDialog";
+import { VerifyEmailBanner } from "./VerifyEmailBanner";
 
 // Leaflet needs `window`: the map loads in the browser only.
 const MyCatchesMap = dynamic(() => import("@/components/community/MyCatchesMap"), {
@@ -36,47 +36,6 @@ const MyCatchesMap = dynamic(() => import("@/components/community/MyCatchesMap")
 interface ReauthRequest {
   action: string;
   retry?: () => Promise<void> | void;
-}
-
-/** Until the address is confirmed, sharing and reporting catches wait
- * (backend services/email_verification.py). */
-function VerifyEmailBanner({ email }: { email: string }) {
-  const toast = useToast();
-  const t = useT().auth;
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  return (
-    <div className="verify-banner reveal" role="status">
-      <div>
-        <strong>{t.confirmEmail}</strong>
-        <p>{t.confirmEmailText(email)}</p>
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
-      </div>
-      <button
-        type="button"
-        className="btn btn-primary btn-sm"
-        disabled={busy}
-        onClick={async () => {
-          setBusy(true);
-          setError(null);
-          try {
-            await sendVerificationEmail();
-            toast(t.linkSent);
-          } catch (e) {
-            setError(e instanceof ApiError ? e.message : t.sendFailed);
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        {busy ? t.sending : t.sendLink}
-      </button>
-    </div>
-  );
 }
 
 function Section({ id, title, children, tone }: { id?: string; title: string; children: React.ReactNode; tone?: "danger" }) {
@@ -107,9 +66,12 @@ export function AccountView() {
       : null,
   );
   const announced = useRef(false);
+  // Deleting the account signs out too, which isn't a reason to be sent to
+  // sign in again: that redirect won the race with "home" after a deletion.
+  const deleted = useRef(false);
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/login?next=/account");
+    if (!loading && !user && !deleted.current) router.replace("/login?next=/account");
   }, [loading, user, router]);
 
   useEffect(() => {
@@ -288,6 +250,7 @@ export function AccountView() {
             setReauthFor({ action: t.actionDelete });
           }}
           onDeleted={async () => {
+            deleted.current = true;
             await signOut().catch(() => undefined);
             toast(t.deleted, "info");
             router.replace("/");

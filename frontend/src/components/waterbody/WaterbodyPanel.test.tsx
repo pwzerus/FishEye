@@ -148,7 +148,7 @@ describe("WaterbodyPanel", () => {
 
   it("shows the empty-state prompt when nothing is selected", () => {
     render(<WaterbodyPanel waterbodyId={null} />);
-    expect(screen.getByText(/search a place or choose a highlighted state/i)).toBeInTheDocument();
+    expect(screen.getByText(/search a place or choose a state on the map/i)).toBeInTheDocument();
   });
 
   it("retries a failed lake without reloading the map", async () => {
@@ -183,6 +183,24 @@ describe("WaterbodyPanel", () => {
     expect(screen.getByText("confirmed")).toBeInTheDocument();
   });
 
+  it("names the open lake in the tab, and gives the map its title back when it closes", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    const page = render(<WaterbodyPanel waterbodyId={1} />);
+    await waitFor(() => expect(document.title).toBe("Lake Fork · FishEye"));
+    page.rerender(<WaterbodyPanel waterbodyId={null} />);
+    expect(document.title).toBe("Map · FishEye");
+  });
+
+  it("leaves another page's title alone when the map goes away", async () => {
+    vi.mocked(getWaterbody).mockResolvedValue(mockDetail);
+    const page = render(<WaterbodyPanel waterbodyId={1} />);
+    await waitFor(() => expect(document.title).toBe("Lake Fork · FishEye"));
+    // Navigating to Catches: Next puts up that page's title, then the map unmounts.
+    document.title = "Catches · FishEye";
+    page.unmount();
+    expect(document.title).toBe("Catches · FishEye");
+  });
+
   it("gives each keyed part of the panel its own key (React warns when siblings share one)", async () => {
     // The access list and the weather block are both keyed by lake so they
     // reset when the lake changes; with the same bare id they collided.
@@ -194,6 +212,13 @@ describe("WaterbodyPanel", () => {
     const keyWarnings = errors.mock.calls.filter((call) => String(call[0]).includes("same key"));
     errors.mockRestore();
     expect(keyWarnings).toEqual([]);
+  });
+
+  it("offers no retry for a lake that doesn't exist", async () => {
+    vi.mocked(getWaterbody).mockRejectedValue(new ApiError("No such lake.", 404));
+    render(<WaterbodyPanel waterbodyId={999} />);
+    await waitFor(() => expect(screen.getByText("No such lake.")).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: /try again/i })).not.toBeInTheDocument();
   });
 
   it("surfaces the API's own error message when the fetch fails", async () => {

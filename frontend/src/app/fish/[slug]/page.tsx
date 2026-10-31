@@ -63,7 +63,7 @@ function Sources({ sources, t }: { sources: GuideSource[]; t: Messages["fish"] }
       {sources.map((s, i) => (
         <span key={s.url}>
           {i > 0 && " · "}
-          <a href={s.url} target="_blank" rel="noreferrer">
+          <a href={s.url} target="_blank" rel="noreferrer" lang="en">
             {s.label}
           </a>
           {s.kind === "guide" && <span className="muted">{t.guideSite}</span>}
@@ -293,7 +293,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
               <ul className="source-list">
                 {guide.sources.map((s) => (
                   <li key={s.url}>
-                    <a href={s.url} target="_blank" rel="noreferrer">
+                    <a href={s.url} target="_blank" rel="noreferrer" lang="en">
                       {s.label}
                     </a>
                     {s.kind === "guide" && <span className="muted">{t.guideSite}</span>}

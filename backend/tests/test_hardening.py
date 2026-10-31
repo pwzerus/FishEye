@@ -231,6 +231,16 @@ def test_out_of_range_ids_are_422_not_500(make_client, pin_id):
     assert c.delete(f"/api/pins/1/photos/{pin_id}").status_code == 422
 
 
+def test_a_lake_id_past_the_integer_range_is_422_not_500(make_client):
+    c = make_client()
+    huge = "99999999999999999999"
+    assert c.get(f"/api/waterbodies/{huge}").status_code == 422
+    assert c.get(f"/api/waterbodies/{huge}/species").status_code == 422
+    assert c.get("/api/pins", params={"lake": huge}).status_code == 422
+    assert c.get("/api/pins", params={"river": huge}).status_code == 422
+    assert c.post("/api/recommendations", json={"waterbody_id": int(huge)}).status_code == 422
+
+
 # ------------------------------------------------------------- photos
 
 
@@ -286,6 +296,32 @@ def test_oversized_bodies_are_refused_before_they_are_read(make_client):
     assert big_upload.status_code == 413
     bad = c.post("/api/auth/login", content=b"{}", headers={"content-type": "application/json", "content-length": "lots"})
     assert bad.status_code == 400
+
+
+def test_a_full_size_phone_photo_reaches_the_photo_check(make_client):
+    """/api/fish-id takes one photo as the phone took it (the 2026-10-30
+    test pass found it held to the 256 KB cap for JSON: every real photo was
+    refused before the check ran)."""
+    import io
+    import os
+
+    from PIL import Image
+
+    from app.main import MAX_PHOTO_BODY
+
+    c = make_client()
+    signup(c)
+    buf = io.BytesIO()
+    Image.frombytes("RGB", (1200, 900), os.urandom(1200 * 900 * 3)).save(buf, "JPEG", quality=95)
+    assert buf.tell() > 1024 * 1024  # a photo, not a thumbnail
+    resp = c.post("/api/fish-id", files={"photo": ("catch.jpg", buf.getvalue(), "image/jpeg")})
+    assert resp.status_code != 413, resp.text
+    too_big = c.post(
+        "/api/fish-id",
+        content=b"--x--",
+        headers={"content-type": "multipart/form-data; boundary=x", "content-length": str(MAX_PHOTO_BODY + 1)},
+    )
+    assert too_big.status_code == 413
 
 
 def test_chunked_bodies_without_a_length_are_refused(make_client):

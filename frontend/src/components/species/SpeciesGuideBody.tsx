@@ -44,7 +44,7 @@ function SourceLinks({ sources }: { sources: GuideSource[] }) {
       {sources.map((s, i) => (
         <span key={s.url}>
           {i > 0 && " · "}
-          <a href={s.url} target="_blank" rel="noreferrer">
+          <a href={s.url} target="_blank" rel="noreferrer" lang="en">
             {s.label}
           </a>
           {s.kind === "guide" && <span className="guide-source-kind">{t.guideSite}</span>}
@@ -166,7 +166,7 @@ export function SpeciesGuideBody({
           <ul>
             {guide.sources.map((s) => (
               <li key={s.url}>
-                <a href={s.url} target="_blank" rel="noreferrer">
+                <a href={s.url} target="_blank" rel="noreferrer" lang="en">
                   {s.label}
                 </a>
                 {s.kind === "guide" && <span className="guide-source-kind">{t.guideSite}</span>}

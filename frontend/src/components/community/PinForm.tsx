@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { useAuth } from "@/components/auth/AuthProvider";
+import { VerifyEmailBanner } from "@/components/auth/VerifyEmailBanner";
 import { useLocale, useT } from "@/i18n/client";
 import { MESSAGES, type Messages } from "@/i18n/messages";
 import { localFishName } from "@/i18n/names";
@@ -295,6 +297,7 @@ export function PinForm({
   const all = useT();
   const t = all.catch;
   const locale = useLocale();
+  const { user } = useAuth();
   const [options, setOptions] = useState<PinOptions | null>(null);
   const [title, setTitle] = useState("");
   const [species, setSpecies] = useState("");
@@ -443,6 +446,7 @@ export function PinForm({
         <h2>{t.shareTitle}</h2>
         <WaterLine water={water} onMissingWater={onMissingWater} />
       </header>
+      {user?.verification_required && <VerifyEmailBanner email={user.email} />}
 
       <div className="field">
         <span>{t.photoLabel}</span>

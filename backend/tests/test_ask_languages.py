@@ -82,7 +82,7 @@ def test_japanese_and_korean_are_told_apart(question, lang):
 
 def test_japanese_and_korean_questions_are_searched_in_the_guides_words():
     assert ja.to_english("ブルーギルの針のサイズは？") == "bluegill hook size"
-    assert ja.to_english("Lake Lanierでバスは釣れる？") == "lake lanier bass catch"
+    assert ja.to_english("Lake Lanierでバスは釣れる？") == "lake lanier bass catch fish"
     assert ko.to_english("블루길 바늘 크기는요?") == "bluegill hook size"
     # A stew isn't a bobber, and nothing Korean reaches the Chinese rules.
     assert ko.to_english("김치찌개 만드는 방법") == ""

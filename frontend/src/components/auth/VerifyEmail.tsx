@@ -37,18 +37,24 @@ export function VerifyEmail() {
       );
   }, [token, refresh, t.checkFailed]);
 
+  // A link opened twice (tapped again, or opened by a mail app first) fails
+  // the second time, but the signed-in account it was for is confirmed: say
+  // so, rather than "that link didn't work".
+  const shown: State =
+    state.kind === "failed" && user?.email_verified ? { kind: "done", email: user.email } : state;
+
   return (
     <div className="auth-card verify-card reveal">
-      {state.kind === "checking" && (
+      {shown.kind === "checking" && (
         <>
           <h1>{t.confirming}</h1>
           <p className="muted">{t.oneMoment}</p>
         </>
       )}
-      {state.kind === "done" && (
+      {shown.kind === "done" && (
         <>
           <h1>{t.confirmed}</h1>
-          <p className="muted">{t.confirmedText(state.email)}</p>
+          <p className="muted">{t.confirmedText(shown.email)}</p>
           <div className="verify-actions">
             <Link href="/map" className="btn btn-primary">
               {all.catch.shareTitle}
@@ -65,11 +71,11 @@ export function VerifyEmail() {
           </div>
         </>
       )}
-      {state.kind === "failed" && (
+      {shown.kind === "failed" && (
         <>
           <h1>{t.linkFailed}</h1>
           <p className="form-error" role="alert">
-            {state.message}
+            {shown.message}
           </p>
           <div className="verify-actions">
             <Link href={user ? "/account" : "/login?next=/account"} className="btn btn-primary">

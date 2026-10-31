@@ -20,11 +20,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: "FishEye", description: t.meta.description };
 }
 
+// The site is light in either system mode (preview.css sets color-scheme:
+// light), so the phone's browser bar takes the header's colour in both; a
+// dark-mode navy here sat above a cream page.
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f8f8" },
-    { media: "(prefers-color-scheme: dark)", color: "#07141b" },
-  ],
+  themeColor: "#f7f8f2",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

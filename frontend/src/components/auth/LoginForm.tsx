@@ -72,7 +72,8 @@ export function LoginForm() {
     try {
       const u = mode === "signin" ? await login(email, password) : await register(email, password, name);
       setUser(u);
-      toast(mode === "signin" ? t.welcomeBack(u.display_name) : t.welcome(u.display_name));
+      if (mode === "signin") toast(t.welcomeBack(u.display_name));
+      else toast(u.verification_required ? t.welcomeConfirm(u.display_name) : t.welcome(u.display_name));
       router.replace(next);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t.wrong);

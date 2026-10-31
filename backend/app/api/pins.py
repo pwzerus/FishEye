@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.api.auth_deps import optional_user, require_user, same_origin
 from app.api.deps import get_db
-from app.api.params import DbId
+from app.api.params import MAX_ID, DbId
 from app.core.config import get_settings
 from app.core.security import RateLimiter
 from app.models.community import (
@@ -55,7 +55,7 @@ from app.services.pins import PinError
 
 router = APIRouter(tags=["pins"], dependencies=[Depends(same_origin)])
 
-UNDER_MODERATION = "This pin is under moderation, so it can't be changed until a moderator reviews it. You can still delete it."
+UNDER_MODERATION = "This catch is under moderation, so it can't be changed until a moderator reviews it. You can still delete it."
 
 create_by_user = RateLimiter(limit=30, window_seconds=60 * 60)
 report_by_user = RateLimiter(limit=20, window_seconds=60 * 60)
@@ -193,7 +193,7 @@ def _read_uploads(files: list[UploadFile] | None, room: int) -> list[bytes]:
     each capped: never more than `room` photos of max_photo_bytes in memory."""
     parts = [f for f in files or [] if f.filename]
     if len(parts) > room:
-        raise HTTPException(status_code=422, detail=f"A pin can have up to {get_settings().max_photos_per_pin} photos.")
+        raise HTTPException(status_code=422, detail=f"A catch can have up to {get_settings().max_photos_per_pin} photos.")
     out: list[bytes] = []
     cap = get_settings().max_photo_bytes
     for f in parts:
@@ -305,8 +305,8 @@ def list_pins(
     mine: bool = False,
     state: str | None = StateParam,
     county: str | None = CountyParam,
-    lake: int | None = Query(default=None, ge=0),
-    river: int | None = Query(default=None, ge=1),
+    lake: int | None = Query(default=None, ge=0, le=MAX_ID),
+    river: int | None = Query(default=None, ge=1, le=MAX_ID),
     limit: int = Query(default=200, ge=1, le=svc.MAX_LIST),
     user: User | None = Depends(optional_user),
     db: Session = Depends(get_db),
@@ -376,9 +376,9 @@ def create_pin(
 def _owned_pin(db: Session, pin_id: int, user: User) -> CatchPin:
     pin = db.get(CatchPin, pin_id)
     if pin is None or not svc.can_view(pin, user):
-        raise HTTPException(status_code=404, detail="No such pin.")
+        raise HTTPException(status_code=404, detail="No such catch.")
     if pin.user_id != user.id:
-        raise HTTPException(status_code=403, detail="Only the person who pinned this can change it.")
+        raise HTTPException(status_code=403, detail="Only the person who shared this catch can change it.")
     if not svc.can_edit(pin, user):
         raise HTTPException(status_code=409, detail=UNDER_MODERATION)
     return pin
@@ -447,7 +447,7 @@ def update_pin(
 def delete_pin(pin_id: DbId, user: User = Depends(require_user), db: Session = Depends(get_db)) -> Response:
     pin = db.get(CatchPin, pin_id)
     if pin is None or not svc.can_view(pin, user) or pin.user_id != user.id:
-        raise HTTPException(status_code=404, detail="No such pin.")
+        raise HTTPException(status_code=404, detail="No such catch.")
     # An owner can always take their own catch down, even while it is
     # hidden or removed (it can't be edited then: see svc.can_edit). The
     # reports go with it, so deleting one that was moderated or reported
@@ -515,7 +515,7 @@ def report_pin(
         # Two identical reports raced past the duplicate check; the unique
         # constraint caught the second.
         db.rollback()
-        raise HTTPException(status_code=409, detail="You've already reported this pin.") from None
+        raise HTTPException(status_code=409, detail="You've already reported this catch.") from None
     db.commit()
     return ReportOut(received=True, pin_hidden=hidden)
 

@@ -15,12 +15,12 @@ export function LegalPage({ title, lede, children }: { title: string; lede: stri
         <article>
           <header className="legal-head">
             <p className="eyebrow">FishEye</p>
-            <h1>{title}</h1>
-            <p className="lede">{lede}</p>
+            <h1 lang="en">{title}</h1>
+            <p className="lede" lang="en">{lede}</p>
             <p className="legal-updated muted">{t.updated(LEGAL.updated)}</p>
             {t.englishOnly && <p className="hint">{t.englishOnly}</p>}
           </header>
-          {children}
+          <div lang="en">{children}</div>
         </article>
         <LegalLinks />
       </main>

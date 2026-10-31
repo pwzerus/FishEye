@@ -92,7 +92,7 @@ def can_edit(pin: CatchPin, user: User | None) -> bool:
 def get_visible_pin(db: Session, pin_id: int, user: User | None) -> CatchPin:
     pin = db.get(CatchPin, pin_id)
     if pin is None or not can_view(pin, user):
-        raise PinError(404, "No such pin.")
+        raise PinError(404, "No such catch.")
     return pin
 
 
@@ -151,7 +151,7 @@ def validate(
         raise PinError(422, "That location isn't valid.")
     clean_title = " ".join((title or "").split())
     if not 3 <= len(clean_title) <= 80:
-        raise PinError(422, "Give the pin a title of 3 to 80 characters.")
+        raise PinError(422, "Give the catch a title of 3 to 80 characters.")
     slug = claimed_species(species_slug, species_other)
     if visibility not in (VISIBILITY_PUBLIC, VISIBILITY_PRIVATE):
         raise PinError(422, "Visibility is public or private.")
@@ -248,7 +248,7 @@ def _attach(db: Session, pin: CatchPin, cleaned: list, store: MediaStore) -> Non
     already written are deleted so no orphan files are left behind."""
     limit = get_settings().max_photos_per_pin
     if len(pin.photos) + len(cleaned) > limit:
-        raise PinError(422, f"A pin can have up to {limit} photos.")
+        raise PinError(422, f"A catch can have up to {limit} photos.")
     saved: list[str] = []
     try:
         start = max((p.position for p in pin.photos), default=-1) + 1
@@ -348,7 +348,7 @@ def check_new_account(db: Session, user: User) -> None:
 def create_pin(db: Session, user: User, fields: PinFields, uploads: list[bytes], store: MediaStore) -> CatchPin:
     check_new_account(db, user)
     if len(uploads) > get_settings().max_photos_per_pin:
-        raise PinError(422, f"A pin can have up to {get_settings().max_photos_per_pin} photos.")
+        raise PinError(422, f"A catch can have up to {get_settings().max_photos_per_pin} photos.")
     # Every photo is validated before anything is written, so one bad file
     # can't leave a half-created pin behind. The first is the catch's photo:
     # the one the species is checked against.
@@ -401,7 +401,7 @@ def add_photos(db: Session, pin: CatchPin, uploads: list[bytes], store: MediaSto
         raise PinError(422, "Choose at least one photo.")
     limit = get_settings().max_photos_per_pin
     if len(pin.photos) + len(uploads) > limit:
-        raise PinError(422, f"A pin can have up to {limit} photos.")
+        raise PinError(422, f"A catch can have up to {limit} photos.")
     _attach(db, pin, _clean_all(uploads), store)
     update_photo_at_spot(pin)
     pin.updated_at = utcnow()
@@ -414,8 +414,8 @@ def delete_photo(db: Session, pin: CatchPin, photo_id: int, store: MediaStore) -
     if photo.id == pin.species_check_photo_id and (pin.species_slug or pin.species_other):
         raise PinError(
             409,
-            "This is the photo that shows your fish, so it stays while the pin names a species. "
-            "Change the fish to “Not sure” first, or delete the pin.",
+            "This is the photo that shows your fish, so it stays while the catch names a species. "
+            "Change the fish to “Not sure” first, or delete the catch.",
         )
     key = photo.storage_key
     pin.photos.remove(photo)
@@ -779,14 +779,14 @@ def report_pin(db: Session, pin: CatchPin, reporter: User, reason: str, detail: 
     if reason not in REPORT_REASONS:
         raise PinError(422, "Pick a reason.")
     if pin.user_id == reporter.id:
-        raise PinError(422, "You can't report your own pin.")
+        raise PinError(422, "You can't report your own catch.")
     if pin.visibility != VISIBILITY_PUBLIC or pin.status == PIN_REMOVED:
-        raise PinError(404, "No such pin.")
+        raise PinError(404, "No such catch.")
     existing = db.scalar(
         select(PinReport).where(PinReport.pin_id == pin.id, PinReport.reporter_id == reporter.id)
     )
     if existing is not None:
-        raise PinError(409, "You've already reported this pin. A moderator will look at it.")
+        raise PinError(409, "You've already reported this catch. A moderator will look at it.")
     db.add(PinReport(pin_id=pin.id, reporter_id=reporter.id, reason=reason, detail=_text(detail, 500)))
     db.flush()
     threshold = get_settings().report_auto_hide_threshold

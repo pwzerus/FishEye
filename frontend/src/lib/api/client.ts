@@ -1,3 +1,5 @@
+import { LOCALE_COOKIE, isLocale, type Locale } from "@/i18n/config";
+import { MESSAGES } from "@/i18n/messages";
 import type {
   AdvisorRequest,
   AdvisorResponse,
@@ -8,6 +10,7 @@ import type {
   HandbookTopic,
   Jurisdiction,
   LakeMatch,
+  PinDetail,
   RecommendationRequest,
   Shop,
   SpeciesGuide,
@@ -38,6 +41,30 @@ function apiBaseUrl(): string {
   return PUBLIC_API_BASE_URL;
 }
 
+/** The visitor's language in the browser (the language menu's cookie);
+ * English on the server, where pages say their own failures. */
+function browserLocale(): Locale {
+  if (typeof document === "undefined") return "en";
+  const value = document.cookie
+    .split("; ")
+    .find((c) => c.startsWith(`${LOCALE_COOKIE}=`))
+    ?.slice(LOCALE_COOKIE.length + 1);
+  return isLocale(value) ? value : "en";
+}
+
+/** When the server can't be reached at all (no signal at the lake). */
+export function unreachable(): string {
+  return MESSAGES[browserLocale()].common.serverDown;
+}
+
+/** What to show when the server gave no reason of its own (a 500, a proxy's
+ * page): never the request's path and status, in the visitor's language.
+ * The server's own reasons come translated (backend knowledge/error_text.py). */
+export function noReason(status: number): string {
+  const t = MESSAGES[browserLocale()].common;
+  return status === 429 ? t.tooManyRequests : t.requestFailed;
+}
+
 class ApiError extends Error {
   constructor(
     message: string,
@@ -63,11 +90,12 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     // message says whether to wait a moment or come back later, so show it.
     const body = (await res.json().catch(() => null)) as { detail?: unknown } | null;
     const message =
-      typeof body?.detail === "string" ? body.detail : "Too many requests. Please wait a moment and try again.";
+      typeof body?.detail === "string" ? body.detail : noReason(429);
     throw new ApiError(message, 429, "rate_limited");
   }
   if (!res.ok) {
-    throw new ApiError(`${path} failed with ${res.status}`, res.status);
+    const body = (await res.json().catch(() => null)) as { detail?: unknown } | null;
+    throw new ApiError(typeof body?.detail === "string" ? body.detail : noReason(res.status), res.status);
   }
   return res.json() as Promise<T>;
 }
@@ -145,8 +173,27 @@ export function searchLakes(
   return apiFetch<LakeMatch[]>(`/api/waterbodies/search?${qs.toString()}`, { cache: "no-store" });
 }
 
+// A lake's panel and its map both ask for the lake when it opens: in the
+// browser they share one request (and a reopened lake is reused for half a
+// minute). On the server every call fetches.
+const LAKE_REUSE_MS = 30_000;
+const lakeRequests = new Map<number, { at: number; request: Promise<WaterbodyDetail> }>();
+
 export function getWaterbody(id: number): Promise<WaterbodyDetail> {
-  return apiFetch<WaterbodyDetail>(`/api/waterbodies/${id}`);
+  if (typeof window === "undefined") return apiFetch<WaterbodyDetail>(`/api/waterbodies/${id}`);
+  const recent = lakeRequests.get(id);
+  if (recent && Date.now() - recent.at < LAKE_REUSE_MS) return recent.request;
+  const request = apiFetch<WaterbodyDetail>(`/api/waterbodies/${id}`);
+  lakeRequests.set(id, { at: Date.now(), request });
+  request.catch(() => lakeRequests.delete(id));
+  return request;
+}
+
+/** A catch as a signed-out visitor sees it, for the server's page title:
+ * a private or hidden catch is a 404 here, so nothing of it can leak into
+ * a title. Not cached, so a catch hidden a moment ago isn't still named. */
+export function getPublicPin(id: number): Promise<PinDetail> {
+  return apiFetch<PinDetail>(`/api/pins/${id}`, { next: { revalidate: 0 } });
 }
 
 export function getWeather(lat: number, lng: number): Promise<Weather> {
