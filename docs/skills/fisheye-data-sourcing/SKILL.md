@@ -41,7 +41,11 @@ Not legal advice. It encodes a careful reading of each source's terms as of
    such fact carries `source_url` linking to the original page, opened in a
    new tab (never in an iframe). Evidence text shown to users is written by
    us from the facts, e.g. "TPWD's 2022 survey recorded Blue Catfish in this
-   lake." followed by the link.
+   lake." followed by the link. Where the source is the evidence (a lake's
+   species, a state's rule) the link sits beside the fact. Guide and handbook
+   text is advice written from many pages: the facts' records name their
+   pages (`source_ids`), and the links are on `/sources`, one tap from each
+   page (ADR 0043).
 
 4. **Prefer the most official, most structured channel.** Order: official
    bulk download or API > official GIS service (ArcGIS REST, WFS) > the
@@ -63,7 +67,8 @@ Not legal advice. It encodes a careful reading of each source's terms as of
    - CC BY: credit as the source asks (CDFW: https://www.wildlife.ca.gov/Data/BIOS/Citing-BIOS) on the lake's Sources tab and on the site's data-sources page.
    - ODbL (OpenStreetMap): show "© OpenStreetMap contributors" wherever OSM data appears. If we ever hand our combined lake database to others, the OSM-derived part must be offered under ODbL. Showing it in the app is fine.
    - PD: credit anyway ("Data: USGS").
-   - RESTRICTED: credit "Data: <agency>" next to the link.
+   - RESTRICTED: credit "Data: <agency>" next to the link, or by name on `/sources` for guide and handbook text.
+   - Photos keep their credit beside the photo, and the map its OSM line. These don't move to `/sources`.
 
 8. **Personal data stays out.** No angler names, no user-identifying info
    from any third party, even when the page shows it.

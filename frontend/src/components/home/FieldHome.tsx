@@ -101,6 +101,6 @@ export default async function FieldHome() {
       </div>
       <a className="btn btn-primary" href={`mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(t.feedbackSubject)}`}>{t.feedbackSend}</a>
     </section>
-    <footer className="field-footer"><span>{t.footer}</span><LegalLinks /><details className="home-sources"><summary>{t.sourcesTitle}</summary><p>{t.sources}</p></details></footer>
+    <footer className="field-footer"><span>{t.footer}</span><LegalLinks /></footer>
   </main></PageTransition>;
 }

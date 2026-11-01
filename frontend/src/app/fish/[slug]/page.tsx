@@ -22,7 +22,7 @@ import { groupSetups } from "@/components/species/setups";
 import type { Messages } from "@/i18n/messages";
 import { ApiError, getSpeciesGuide, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
 import { waterFor } from "@/lib/fishArt";
-import type { GuideSource, SpeciesGuide, TackleSetup } from "@/lib/api/types";
+import type { SpeciesGuide, TackleSetup } from "@/lib/api/types";
 
 /**
  * Pre-render every fish page. Besides being faster, it's what makes the
@@ -58,23 +58,6 @@ export async function generateMetadata(props: PageProps<"/fish/[slug]">): Promis
   }
 }
 
-function Sources({ sources, t }: { sources: GuideSource[]; t: Messages["fish"] }) {
-  return (
-    <p className="source-note">
-      {t.source}{" "}
-      {sources.map((s, i) => (
-        <span key={s.url}>
-          {i > 0 && " · "}
-          <a href={s.url} target="_blank" rel="noreferrer" lang="en">
-            {s.label}
-          </a>
-          {s.kind === "guide" && <span className="muted">{t.guideSite}</span>}
-        </span>
-      ))}
-    </p>
-  );
-}
-
 function SetupCard({ setup, index, t }: { setup: TackleSetup; index: number; t: Messages["fish"] }) {
   return (
     <article id={`setup-${index}`} className="setup-card">
@@ -103,7 +86,6 @@ function SetupCard({ setup, index, t }: { setup: TackleSetup; index: number; t: 
           <dd lang="en">{setup.terminal}</dd>
         </div>
       </dl>
-      <Sources sources={setup.sources} t={t} />
     </article>
   );
 }
@@ -295,19 +277,9 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
               <LimitsNote className="limits-note" texasUrl={guide.limits_url} />
             )}
 
-            <section id="sources" className="guide-block">
-              <h2>{t.sources}</h2>
-              <ul className="source-list">
-                {guide.sources.map((s) => (
-                  <li key={s.url}>
-                    <a href={s.url} target="_blank" rel="noreferrer" lang="en">
-                      {s.label}
-                    </a>
-                    {s.kind === "guide" && <span className="muted">{t.guideSite}</span>}
-                  </li>
-                ))}
-              </ul>
-            </section>
+            <p className="sources-link">
+              <Link href={`/sources#fish-${guide.slug}`}>{t.sources}</Link>
+            </p>
           </div>
 
           <aside id="ask" className="guide-aside">

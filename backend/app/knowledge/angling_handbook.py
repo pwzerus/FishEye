@@ -104,8 +104,8 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "bluegill in summer and late fall. Grasshoppers falling from the bank are a summer "
             "staple for river bass.",
             "How to hook a cricket: push the point slowly into the area just behind the head, not "
-            "deep (Take Me Fishing). Or thread the hook through the rear of the body: a hook "
-            "through the front kills an insect quickly (Texas A&M AgriLife).",
+            "deep. Or thread the hook through the rear of the body: a hook through the front "
+            "kills an insect quickly.",
         ),
         source_ids=("tamu-baits", "tmf-live-bait", "tamu-hook-bait", "flyfisherman-gdb"),
     ),

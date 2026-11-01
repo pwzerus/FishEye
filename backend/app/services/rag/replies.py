@@ -10,6 +10,7 @@ Japanese is told apart from Chinese by its kana, so it is asked first.
 from __future__ import annotations
 
 from app.knowledge import jurisdictions
+from app.knowledge.species_guides import GUIDES
 from app.services.rag import es, ja, ko
 from app.services.rag.zh import has_chinese
 
@@ -52,19 +53,26 @@ def _state_name(code: str, lang: str) -> str:
     return j.name
 
 
+def _states(n: int, dc: bool, lang: str) -> str:
+    if lang == "zh":
+        return f"{n}个州" + ("和华盛顿特区" if dc else "")
+    if lang == "ja":
+        return f"{n}州" + ("とワシントンD.C." if dc else "")
+    if lang == "ko":
+        return f"{n}개 주" + ("와 워싱턴 D.C." if dc else "")
+    if lang == "es":
+        return f"{n} estados" + (" y Washington D. C." if dc else "")
+    return f"{n} states" + (" and Washington, D.C." if dc else "")
+
+
+def _licensed(lang: str) -> str:
+    return _states(*jurisdictions.license_count(), lang)
+
+
 def _covered(lang: str) -> str:
     names = [_state_name(c.code, lang) for c in jurisdictions.covered()]
     if len(names) > 5:  # how many, not a list of forty names
-        n, dc = jurisdictions.covered_count()
-        if lang == "zh":
-            return f"{n}个州" + ("和华盛顿特区" if dc else "")
-        if lang == "ja":
-            return f"{n}州" + ("とワシントンD.C." if dc else "")
-        if lang == "ko":
-            return f"{n}개 주" + ("와 워싱턴 D.C." if dc else "")
-        if lang == "es":
-            return f"{n} estados" + (" y Washington D. C." if dc else "")
-        return jurisdictions.covered_names()
+        return _states(*jurisdictions.covered_count(), lang)
     if lang in ("zh", "ja"):
         return "、".join(names)
     if lang == "ko":
@@ -74,41 +82,56 @@ def _covered(lang: str) -> str:
     return jurisdictions.covered_names()
 
 
+def _rules_written(lang: str) -> str:
+    """Bait and license rules are written for different states, so "each"
+    when the counts match, and not one number for both."""
+    bait, lic = _covered(lang), _licensed(lang)
+    same = bait == lic
+    if lang == "ko":
+        return f"지금까지 미끼 규정과 면허 규정은 각각 {bait}까지" if same else f"지금까지 미끼 규정은 {bait}, 면허 규정은 {lic}까지"
+    if lang == "ja":
+        return f"今のところ、エサとライセンスの規則はそれぞれ{bait}の分" if same else f"今のところ、エサの規則は{bait}、ライセンスの規則は{lic}の分"
+    if lang == "zh":
+        return f"饵料规定和执照规定目前各整理了{bait}" if same else f"目前整理了{bait}的饵料规定和{lic}的执照规定"
+    if lang == "es":
+        return f"Por ahora hay reglas de carnada y de licencia de {bait}, cada una" if same else f"Por ahora hay reglas de carnada de {bait} y de licencia de {lic}"
+    return f"Bait rules and license rules are each written for {bait} so far" if same else f"Bait rules are written for {bait} so far and license rules for {lic}"
+
+
 def coverage(lang: str) -> str:
+    fish = len(GUIDES)
+    rules = _rules_written(lang)
     if lang == "ko":
         return (
-            "FishEye에는 민물고기 19종의 가이드(대부분 미국 전역에 사는 어종으로, 먹이, 사는 곳, 잘 먹히는 미끼와 "
+            f"FishEye에는 민물고기 {fish}종의 가이드(대부분 미국 전역에 사는 어종으로, 먹이, 사는 곳, 잘 먹히는 미끼와 "
             "그 이유, 낚싯대와 릴 구성, 손질과 요리법)와, 미끼, 루어, 장비, 매듭, 캐스팅, 날씨와 물, 안전, 잡은 "
-            f"물고기 다루기에 대한 핸드북이 있어요. 낚시 규정은 지금까지 {_covered(lang)}의 규정을 정리했고, 물고기가 "
-            "사는 곳의 예시는 텍사스주 것이 많아요. 둘 다 주마다 달라요."
+            f"물고기 다루기에 대한 핸드북이 있어요. {rules} 정리했고, 물고기가 사는 곳의 예시는 텍사스주 것이 많아요. 둘 다 주마다 달라요."
         )
     if lang == "ja":
         return (
-            "FishEyeには、淡水魚19種のガイド（多くは全米にいる魚で、何を食べ、どこにいるか、効くエサとその理由、"
+            f"FishEyeには、淡水魚{fish}種のガイド（多くは全米にいる魚で、何を食べ、どこにいるか、効くエサとその理由、"
             "竿とリールの組み合わせ、さばき方と料理）と、エサ、ルアー、道具、結び方、投げ方、天気と水、安全、"
-            f"釣った魚の扱いについてのハンドブックがあります。釣りの規則は今のところ{_covered(lang)}の分を掲載していて、"
+            f"釣った魚の扱いについてのハンドブックがあります。{rules}を掲載していて、"
             "魚の生息場所の例にはテキサス州のものが多くあります。どちらも州によって違います。"
         )
     if lang == "zh":
         return (
-            "FishEye 现有十九种淡水鱼的指南（大多在全美都有：吃什么、住在哪、什么饵管用和为什么、竿轮搭配、"
+            f"FishEye 现有 {fish} 种淡水鱼的指南（大多在全美都有：吃什么、住在哪、什么饵管用和为什么、竿轮搭配、"
             "怎么处理和烹饪），以及一本关于饵料、拟饵、装备、绳结、抛投、天气水情、安全和处理渔获的手册。"
-            f"钓鱼规定目前整理了{_covered(lang)}，很多栖息地的例子来自得克萨斯州；这两样都因州而异。"
+            f"{rules}，很多栖息地的例子来自得克萨斯州；这两样都因州而异。"
         )
     if lang == "es":
         return (
-            "FishEye tiene guías de diecinueve peces de agua dulce, casi todos presentes en todo EE. UU. (qué "
+            f"FishEye tiene guías de {fish} peces de agua dulce, casi todos presentes en todo EE. UU. (qué "
             "comen, dónde viven, qué carnadas funcionan y por qué, equipos de caña y carrete, y cómo limpiarlos "
             "y cocinarlos), y un manual sobre carnadas, señuelos, equipo, nudos, lances, clima y agua, seguridad "
-            f"y cuidado de tu captura. Por ahora las reglas de pesca están escritas para {_covered(lang)}, y "
-            "muchos ejemplos de dónde viven los peces son de Texas; ambas cosas cambian según el estado."
+            f"y cuidado de tu captura. {rules}, y muchos ejemplos de dónde viven los peces son de Texas; ambas cosas cambian según el estado."
         )
     return (
-        "FishEye covers nineteen freshwater fish, most of them found across the U.S. (what each one "
+        f"FishEye covers {fish} freshwater fish, most of them found across the U.S. (what each one "
         "eats, where it lives, which baits work and why, rod-and-reel setups, and how to clean and "
         "cook it) plus a handbook on baits, lures, tackle, knots, casting, weather and water, safety "
-        f"and caring for your catch. Fishing rules are written for {jurisdictions.covered_names()} so "
-        "far, and many examples of where fish live are Texas's; both differ by state."
+        f"and caring for your catch. {rules}, and many examples of where fish live are Texas's; both differ by state."
     )
 
 

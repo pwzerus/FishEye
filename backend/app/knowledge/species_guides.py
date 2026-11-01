@@ -357,12 +357,12 @@ def slugify(name: str) -> str:
 # condition and exception, because a looser summary would be wrong.
 BAIT_RULES = (
     "It is unlawful to use any game fish, or part of a game fish, as bait. Nongame "
-    "fish, such as shad, are legal bait (TPWD).",
+    "fish, such as shad, are legal bait.",
     "Live bait may not be carried away from the lake where it was caught, in or "
     "aboard a boat, in that lake's water. Keeping it in lake water while you fish "
-    "from a boat on that same lake is allowed (TPWD).",
+    "from a boat on that same lake is allowed.",
     "Store-bought live bait that has touched water from a public lake or river may "
-    "only be used on that same water (TPWD).",
+    "only be used on that same water.",
 )
 
 _CRAPPIE_SETUPS = (
@@ -1110,7 +1110,7 @@ _BASE_GUIDES: tuple[SpeciesGuide, ...] = (
             "The upper jaw sticks out well past the lower jaw (threadfin shad's doesn't).",
         ),
         how_to_get=(
-            "A cast net. TPWD allows cast nets up to 14 ft across, for nongame fish and "
+            "A cast net. Texas allows cast nets up to 14 ft across, for nongame fish and "
             "other aquatic life such as crabs, crayfish and shrimp (not game fish).",
             "A smaller mesh (about 3/8 in) keeps shad from getting stuck in the net in shallow "
             "water; heavier nets sink faster in deep winter water.",
@@ -1153,7 +1153,7 @@ _BASE_GUIDES: tuple[SpeciesGuide, ...] = (
             "A clearly yellow tail; anglers call them \"yellowtails.\"",
         ),
         how_to_get=(
-            "A cast net, up to 14 ft across per TPWD. Cast nets are legal for nongame fish "
+            "A cast net, up to 14 ft across in Texas. Cast nets are legal for nongame fish "
             "and other aquatic life, not game fish.",
             "Look around marinas and dock lights early in the morning.",
             "Keep them alive in an aerated bait tank.",
@@ -1210,8 +1210,7 @@ _DETAILS: dict[str, dict[str, tuple[str, ...]]] = {
             "live shiners, soft-plastic crayfish, crankbaits and swimbaits.",
             "It ambushes from cover, so a bait has to pass close to the log, weed edge or dock it's "
             "hiding in.",
-            "Lures work best when they resemble fish, crayfish, worms, insects or frogs (Missouri "
-            "Dept. of Conservation).",
+            "Lures work best when they resemble fish, crayfish, worms, insects or frogs.",
         ),
         eating=(
             "Fillet it: cut behind the gill cover down to the backbone, run the knife along the "
@@ -1258,7 +1257,7 @@ _DETAILS: dict[str, dict[str, tuple[str, ...]]] = {
             "the top catch fish one after another.",
             "Bottom fishing with live bait at night also works.",
         ),
-        eating=("Superb table fare (TPWD).",),
+        eating=("Superb table fare.",),
         sources=(),
     ),
     "striped-bass": dict(
@@ -1280,7 +1279,7 @@ _DETAILS: dict[str, dict[str, tuple[str, ...]]] = {
             "too large for most other fish. That's why live shad and big shad-colored slabs, "
             "swimbaits and pencil poppers are the standard baits.",
         ),
-        eating=("Prized for its flavorful flesh (Missouri Dept. of Conservation).",),
+        eating=("Prized for its flavorful flesh.",),
         sources=("mdc-striper-fg",),
     ),
     "hybrid-striped-bass": dict(
@@ -1305,7 +1304,7 @@ _DETAILS: dict[str, dict[str, tuple[str, ...]]] = {
             "It hits hard and can break light line or wreck lures, so use heavier tackle than for "
             "white bass.",
         ),
-        eating=("Considered excellent eating (Missouri Dept. of Conservation).",),
+        eating=("Considered excellent eating.",),
         sources=("mdc-hybrid-fg",),
     ),
     "channel-catfish": dict(
@@ -1350,7 +1349,7 @@ _DETAILS: dict[str, dict[str, tuple[str, ...]]] = {
             "Shad is its preferred food, so fresh cut shad (or skipjack herring) on a circle hook is "
             "the standard bait.",
         ),
-        eating=("An excellent food fish (TPWD). Skin it like other catfish.",),
+        eating=("An excellent food fish. Skin it like other catfish.",),
         sources=("odwc-catfish",),
     ),
     "white-crappie": dict(
@@ -1420,8 +1419,7 @@ _DETAILS: dict[str, dict[str, tuple[str, ...]]] = {
             "a piece of worm, a cricket, a mealworm, a tiny jig.",
             "A lively cricket is hard for a hungry bluegill to resist, especially big bluegill in "
             "summer and late fall.",
-            "Its small mouth is why the hook and bait must be small: TPWD suggests hooks size 6–14 "
-            "for sunfish.",
+            "Its small mouth is why the hook and bait must be small: hooks size 6–14 for sunfish.",
         ),
         eating=(
             "Scale it and cook it whole, or fillet it with the panfish method in the handbook.",
@@ -1445,7 +1443,7 @@ _DETAILS: dict[str, dict[str, tuple[str, ...]]] = {
             "almost never bites a hook and is caught with a cast net instead.",
             "It's food for most game fish, which is why it makes good bait, often as cut bait.",
         ),
-        eating=("Generally considered worthless as food (TPWD).",),
+        eating=("Generally considered worthless as food.",),
         sources=(),
     ),
     "threadfin-shad": dict(
@@ -1677,7 +1675,7 @@ _NEW_GUIDES: tuple[SpeciesGuide, ...] = (
             "No bite in 30 minutes? Move. Approach cover quietly.",
             "Below dams, the current can be dangerous.",
         ),
-        eating=("The belly meat is especially good eating (Oklahoma Dept. of Wildlife Conservation).",),
+        eating=("The belly meat is especially good eating.",),
         source_ids=("tpwd-flc", "odwc-catfish", "mdc-bigcat", "mdc-flathead", "tpwd-cat-id"),
     ),
     SpeciesGuide(
@@ -1938,7 +1936,7 @@ _NEW_GUIDES: tuple[SpeciesGuide, ...] = (
             "Set the hook with a medium pull, not a hard jerk.",
             "Land trout with a net: they can break the line when lifted out of the water.",
         ),
-        eating=("Bring ice and get the fish on it soon after catching (TPWD).",),
+        eating=("Bring ice and get the fish on it soon after catching.",),
         source_ids=("tpwd-rbt", "tpwd-trout-2025", "odwc-trout", "mdc-trout", "tpwmag-trout-2005", "tamu-baits"),
     ),
     SpeciesGuide(
@@ -2092,7 +2090,7 @@ _NEW_GUIDES: tuple[SpeciesGuide, ...] = (
             "Set the drag properly and take your time: carp make long runs. Land it with a net.",
             "A hair rig also makes release easier, because the fish isn't hooked deeply.",
         ),
-        eating=("Flavor depends on the water it came from (TPWD).",),
+        eating=("Flavor depends on the water it came from.",),
         source_ids=("tpwd-crp", "nydec-carp", "mdc-bait-lures"),
     ),
     # Fish of the northern and western states (2026-11-01): the waters and
@@ -2139,8 +2137,7 @@ _NEW_GUIDES: tuple[SpeciesGuide, ...] = (
         where_and_when=(
             "May and June are the best months in Minnesota, when fish are shallow and near shore. "
             "Further south, spring comes earlier.",
-            "Fish at first and last light. In Pennsylvania's advice: morning and late day in spring, "
-            "at night in summer.",
+            "Fish at first and last light: morning and late day in spring, at night in summer.",
             "In fall, troll near shallow weedlines, gravel bars and points.",
             "A bobber over rocky reefs and humps works through the year.",
             "Seasons differ by state and by water: check your state's rules before you go.",
@@ -2340,7 +2337,7 @@ _NEW_GUIDES: tuple[SpeciesGuide, ...] = (
         ),
         where_and_when=(
             "If a spot gives nothing after a few tries, move: you're looking for a school.",
-            "Pennsylvania's advice: afternoons in March and April, then early morning and late evening in summer.",
+            "In Pennsylvania, afternoons in March and April, then early morning and late evening in summer.",
             "In winter, through the ice. Ice must be at least 4 in thick to walk on.",
         ),
         live_baits=("Worms", "Grubs", "Minnows"),
@@ -2416,9 +2413,9 @@ _NEW_GUIDES: tuple[SpeciesGuide, ...] = (
             "Small high-elevation streams hold many fish, usually under 14 in; some lakes hold fish over 18 in.",
         ),
         where_and_when=(
-            "For a lot of bites, try a small high-elevation stream: California reports more than two fish an hour.",
+            "For a lot of bites, try a small high-elevation stream: more than two fish an hour in California.",
             "For a bigger fish, try a lake known for them.",
-            "Pennsylvania's trout advice: midday in spring, early morning and early evening in summer.",
+            "Best times: midday in spring, early morning and early evening in summer.",
             "Rules vary a lot: some California waters have bonus limits, and New York has proposed "
             "new rules for Adirondack brook trout ponds. Check your state's rules before you go.",
         ),
@@ -2482,9 +2479,9 @@ _NEW_GUIDES: tuple[SpeciesGuide, ...] = (
             "It usually lives about 4 years, sometimes 8 or more.",
         ),
         where_and_when=(
-            "Small high-elevation streams for fast action: California reports more than two fish an hour.",
+            "Small high-elevation streams for fast action: more than two fish an hour in California.",
             "Larger rivers and reservoirs fed by spawning streams for fish over 18 in.",
-            "Pennsylvania's trout advice: midday in spring, early morning and early evening in summer.",
+            "Best times: midday in spring, early morning and early evening in summer.",
             "Fish logs, undercut banks and the deep water below riffles.",
         ),
         live_baits=("Worms", "Minnows, where your state allows them", "Salmon eggs", "Corn", "Prepared dough baits"),

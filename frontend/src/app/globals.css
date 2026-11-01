@@ -965,20 +965,8 @@
   margin: 0;
 }
 
-.guide-setup-sources {
-  margin-top: 6px;
-  font-size: 11px;
-  color: #6b7280;
-}
-
-.guide-setup-sources a,
-.guide-sources a,
 .guide-limits a {
   text-decoration: underline;
-}
-
-.guide-source-kind {
-  color: #b45309;
 }
 
 .guide-limits {

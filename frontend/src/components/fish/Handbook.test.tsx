@@ -47,12 +47,10 @@ describe("Handbook", () => {
     expect(container.querySelectorAll("#baits article")).toHaveLength(2);
   });
 
-  it("names each topic's sources as links", () => {
+  it("has one link to the sources page instead of a list under each topic", () => {
     render(<Handbook topics={topics} />);
-    expect(screen.getAllByRole("link", { name: "TPWD: catch and release tips" })[0]).toHaveAttribute(
-      "href",
-      "https://tpwd.texas.gov/cr",
-    );
+    expect(screen.queryByRole("link", { name: "TPWD: catch and release tips" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Sources" })).toHaveAttribute("href", "/sources#handbook");
   });
 
   it("renders nothing without topics", () => {

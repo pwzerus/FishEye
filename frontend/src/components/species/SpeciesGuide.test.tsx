@@ -90,9 +90,11 @@ describe("SpeciesGuideBody", () => {
     expect(screen.getByText("Plastic grub on a 1/8–1/4 oz jighead.")).toBeInTheDocument();
   });
 
-  it("labels a fishing-guide source so it isn't mistaken for an agency", () => {
+  it("links to the sources page instead of listing them", () => {
     render(<SpeciesGuideBody guide={bass} />);
-    expect(screen.getAllByText(/fishing guide site/)).toHaveLength(1);
+    expect(screen.queryByRole("link", { name: "MDC" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/fishing guide site/)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Sources" }).getAttribute("href")).toMatch(/^\/sources#fish-/);
   });
 
   it("links to the agencies' limits instead of stating them", () => {

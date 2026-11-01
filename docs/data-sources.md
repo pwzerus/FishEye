@@ -9,6 +9,9 @@ was last imported. The machine-readable half is `DATASETS` in
 `source_records` row carrying its licence class, licence and citation, and
 every species fact and lake credit links to it.
 
+What readers see of this register is `/sources` (ADR 0043), built from the
+same records.
+
 Classes: **PD** public domain · **OPEN** licence allows commercial use ·
 **RESTRICTED** facts + link only · (NC and FORBIDDEN sources are never imported).
 

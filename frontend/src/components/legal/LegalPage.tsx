@@ -28,7 +28,7 @@ export function LegalPage({ title, lede, children }: { title: string; lede: stri
   );
 }
 
-/** The three pages, for footers and the sign-up form. */
+/** The policies and the sources, for footers and the sign-up form. */
 export function LegalLinks({ className = "legal-links" }: { className?: string }) {
   const t = useT().legal;
   return (
@@ -36,6 +36,7 @@ export function LegalLinks({ className = "legal-links" }: { className?: string }
       <Link href="/privacy">{t.privacy}</Link>
       <Link href="/terms">{t.terms}</Link>
       <Link href="/copyright">{t.copyright}</Link>
+      <Link href="/sources">{t.sources}</Link>
       <a href={`mailto:${LEGAL.contactEmail}`}>{t.contact}</a>
     </nav>
   );

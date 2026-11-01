@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import Link from "next/link";
 import { RegionGate } from "@/components/rules/RegionGate";
 import { useLocale, useT } from "@/i18n/client";
 import { localCategory, localTopicTitle } from "@/i18n/names";
 import type { HandbookTopic } from "@/lib/api/types";
+import { useRevealHash } from "@/lib/useRevealHash";
 
 /**
  * The angler's handbook (backend app/knowledge/angling_handbook.py): baits,
@@ -20,18 +21,7 @@ import type { HandbookTopic } from "@/lib/api/types";
 export function Handbook({ topics }: { topics: HandbookTopic[] }) {
   const tr = useT().fish;
   const locale = useLocale();
-  useEffect(() => {
-    const revealTarget = () => {
-      let id: string;
-      try { id = decodeURIComponent(window.location.hash.slice(1)); } catch { return; }
-      const target = document.getElementById(id);
-      const group = target?.closest<HTMLDetailsElement>("details.handbook-group");
-      if (group) { group.open = true; target?.scrollIntoView({ block: "start", behavior: "instant" }); }
-    };
-    revealTarget();
-    window.addEventListener("hashchange", revealTarget);
-    return () => window.removeEventListener("hashchange", revealTarget);
-  }, []);
+  useRevealHash();
   if (topics.length === 0) return null;
   const groups: { category: string; label: string; topics: HandbookTopic[] }[] = [];
   for (const t of topics) {
@@ -72,16 +62,20 @@ export function Handbook({ topics }: { topics: HandbookTopic[] }) {
                       {sentence}
                     </p>
                   ))}
-                  <p className="handbook-sources">
-                    {t.sources.map((s, i) => (
-                      <span key={s.url}>
-                        {i > 0 && " · "}
-                        <a href={s.url} target="_blank" rel="noreferrer" lang="en">
-                          {s.label}
-                        </a>
-                      </span>
-                    ))}
-                  </p>
+                  {/* A state's rule keeps its official page beside it, to check
+                      it against; the rest are on /sources (docs/adr/0043). */}
+                  {t.region !== "all" && (
+                    <p className="handbook-sources">
+                      {t.sources.map((s, i) => (
+                        <span key={s.url}>
+                          {i > 0 && " · "}
+                          <a href={s.url} target="_blank" rel="noreferrer" lang="en">
+                            {s.label}
+                          </a>
+                        </span>
+                      ))}
+                    </p>
+                  )}
                 </article>
               );
               return t.region === "all" ? (
@@ -95,6 +89,9 @@ export function Handbook({ topics }: { topics: HandbookTopic[] }) {
           </div>
         </details>
       ))}
+      <p className="sources-link">
+        <Link href="/sources#handbook">{tr.sources}</Link>
+      </p>
     </section>
   );
 }

@@ -343,6 +343,17 @@ def _search(
     return local, foreign and not local
 
 
+def _only_the_rule(hits: list[ScoredPassage]) -> list[ScoredPassage]:
+    """When the best match is a rule (a license, clean drain dry), the question
+    is about that rule, and what ranks below it only shares a word: "a license"
+    in the ice fishing kit list. Bait rules aren't included: under "can I use
+    minnows" the guides on fishing minnows belong too."""
+    if not hits or not hits[0].passage.section.startswith("rule-"):
+        return hits
+    kind = _rule_kind(hits[0].passage.section)
+    return [h for h in hits if _rule_kind(h.passage.section) == kind]
+
+
 def _rule_kind(section: str) -> str:
     """"rule-license-ga" and "rule-license" are one kind of rule; so are
     "bait_rules-co" and "bait_rules" (Texas's carry no suffix)."""
@@ -395,6 +406,7 @@ def search_guides(
     context = (species_slug,) if species_slug else None
     state = answer_state(query, state)
     hits, dropped = _search(retr, query, k, context, state)
+    hits = _only_the_rule(hits)
     named, _ = split_species(query)
     trace = AskTrace(
         trace_id=str(uuid.uuid4()),
@@ -464,6 +476,7 @@ def ask(
     context = (species_slug,) if species_slug else None
     state = answer_state(query, state)
     hits, dropped = _search(retr, query, k, context, state)
+    hits = _only_the_rule(hits)
 
     named, _ = split_species(query)
     trace = AskTrace(

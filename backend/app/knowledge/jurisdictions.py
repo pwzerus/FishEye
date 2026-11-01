@@ -649,6 +649,12 @@ def covered_count() -> tuple[int, bool]:
     return len(codes - {"DC"}), "DC" in codes
 
 
+def license_count() -> tuple[int, bool]:
+    """How many states have their license rule written, and whether DC does."""
+    codes = {j.code for j in JURISDICTIONS.values() if j.license_topic}
+    return len(codes - {"DC"}), "DC" in codes
+
+
 def bait_rules_section(code: str) -> str:
     """The passage section (and page anchor) for a state's bait rules.
     Texas keeps the "bait_rules" it had before there were two states, which

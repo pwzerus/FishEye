@@ -1,6 +1,8 @@
 "use client";
 
-import type { GuideSource, SpeciesGuide, TackleSetup } from "@/lib/api/types";
+import Link from "next/link";
+
+import type { SpeciesGuide, TackleSetup } from "@/lib/api/types";
 import { GuideSummary } from "@/components/fish/GuideSummary";
 import { LimitsNote } from "@/components/rules/RegionGate";
 import { useT } from "@/i18n/client";
@@ -36,24 +38,6 @@ export function DietTypeTag({ guide }: { guide: SpeciesGuide }) {
   return <span className={`guide-tag guide-tag-diet guide-tag-diet-${guide.diet_type}`}>{label}</span>;
 }
 
-function SourceLinks({ sources }: { sources: GuideSource[] }) {
-  const t = useT().fish;
-  return (
-    <p className="guide-setup-sources">
-      {t.source}{" "}
-      {sources.map((s, i) => (
-        <span key={s.url}>
-          {i > 0 && " · "}
-          <a href={s.url} target="_blank" rel="noreferrer" lang="en">
-            {s.label}
-          </a>
-          {s.kind === "guide" && <span className="guide-source-kind">{t.guideSite}</span>}
-        </span>
-      ))}
-    </p>
-  );
-}
-
 function SetupCard({ setup }: { setup: TackleSetup }) {
   const t = useT().fish;
   return (
@@ -70,7 +54,6 @@ function SetupCard({ setup }: { setup: TackleSetup }) {
         <dt>{t.hookRig}</dt>
         <dd lang="en">{setup.terminal}</dd>
       </dl>
-      <SourceLinks sources={setup.sources} />
     </li>
   );
 }
@@ -161,19 +144,9 @@ export function SpeciesGuideBody({
       <LimitsNote className="guide-limits" texasUrl={guide.limits_url} />
 
       {!compact && (
-        <section className="guide-section guide-sources">
-          <h4>{t.sources}</h4>
-          <ul>
-            {guide.sources.map((s) => (
-              <li key={s.url}>
-                <a href={s.url} target="_blank" rel="noreferrer" lang="en">
-                  {s.label}
-                </a>
-                {s.kind === "guide" && <span className="guide-source-kind">{t.guideSite}</span>}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <p className="sources-link">
+          <Link href={`/sources#fish-${guide.slug}`}>{t.sources}</Link>
+        </p>
       )}
     </div>
   );
