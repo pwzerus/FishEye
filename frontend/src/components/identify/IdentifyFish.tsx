@@ -9,7 +9,7 @@ import { useLocale, useT } from "@/i18n/client";
 import { localFishName } from "@/i18n/names";
 import { ApiError } from "@/lib/api/client";
 import { identifyFish } from "@/lib/api/session";
-import type { FishIdResult } from "@/lib/api/types";
+import type { FishCandidate, FishIdResult } from "@/lib/api/types";
 
 // The photo check's own thresholds (backend services/fish_id.Policy): below
 // MIN_FISH the photo isn't of a fish; a species this sure is named outright.
@@ -29,6 +29,14 @@ type State =
   | { kind: "error"; message: string };
 
 const percent = (p: number) => `${Math.round(p * 100)}%`;
+
+/** The fish a photo shows clearly enough to talk about, if any: what Ask
+ * offers to tell you more about (components/ask/AskChat.tsx). */
+export function likelyFish(result: FishIdResult): FishCandidate | null {
+  if (!result.available || (result.fish_probability ?? 0) < MIN_FISH) return null;
+  const top = result.candidates[0];
+  return top && top.probability >= UNCLEAR ? top : null;
+}
 
 /** "What fish is this?" from one photo (backend /api/fish-id, ADR 0037):
  * the same model as the catch check, on FishEye's own server. The photo is
@@ -121,12 +129,13 @@ export function IdentifyFish() {
           {state.message}
         </p>
       )}
-      {state.kind === "done" && <Answer result={state.result} />}
+      {state.kind === "done" && <FishIdAnswer result={state.result} />}
     </div>
   );
 }
 
-function Answer({ result }: { result: FishIdResult }) {
+/** What the photo check found, in words; also shown in Ask. */
+export function FishIdAnswer({ result }: { result: FishIdResult }) {
   const t = useT().identify;
   const locale = useLocale();
   const name = (slug: string, label: string) => localFishName(slug, locale) ?? label;

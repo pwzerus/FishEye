@@ -808,6 +808,11 @@ const ja: Messages = {
     placeholderFish: (fish: string) => `${fish}について質問…`,
     placeholder: "エサ、仕掛け、狙う場所などを質問…",
     yourQuestion: "質問",
+    photo: "写真で魚を調べる",
+    yourPhoto: "あなたの写真",
+    photoNeedsAccount: "写真で魚を調べるには、無料のFishEyeアカウントが必要です。",
+    photoHint: "カメラを押して、写真の魚が何かを調べることもできます。",
+    photoQuestions: (fish: string) => [`${fish}の釣り方は？`, `${fish}に合うエサは？`],
     send: "送信",
   },
   auth: {

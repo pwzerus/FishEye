@@ -148,6 +148,11 @@ def _score(retr: Retriever, cases: tuple[RagCase, ...], k: int) -> tuple[SetScor
 
 def run(retriever: Retriever | None = None, k: int = rag.DEFAULT_K) -> RagReport:
     retr = retriever or default_retriever()
+    # As Ask searches for someone who hasn't picked a state: the cases are
+    # state-less questions (rag/regional.py, jurisdictions.applies).
+    from app.services.rag import regional
+
+    retr = regional.for_state(retr, None) or retr
     main_score, results = _score(retr, CASES, k)
     chinese, _ = _score(retr, ZH_CASES, k)
     paraphrase, _ = _score(retr, PARAPHRASE_CASES, k)

@@ -818,6 +818,12 @@ const en = {
     placeholderFish: (fish: string) => `Ask about ${fish.toLowerCase()}…`,
     placeholder: "Ask about bait, rigs, where to look…",
     yourQuestion: "Your question",
+    // Photo ID in Ask (components/ask/AskChat.tsx).
+    photo: "Identify a fish from a photo",
+    yourPhoto: "Your photo",
+    photoNeedsAccount: "Identifying a fish from a photo needs a free FishEye account.",
+    photoHint: "Or tap the camera to find out which fish is in a photo.",
+    photoQuestions: (fish: string) => [`How do I catch ${fish.toLowerCase()}?`, `What bait for ${fish.toLowerCase()}?`],
     send: "Send",
   },
   auth: {

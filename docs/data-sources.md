@@ -307,6 +307,32 @@ Unchanged (ADR 0012): CC0 and CC BY records only in a commercial build
 - Refresh: agencies move pages; re-check the list yearly, or when a report
   says a link is dead.
 
+### Bait rules for 43 more states and DC — RESTRICTED (facts + link)
+
+- What: each state's rules on what may be used as bait in fresh water (live
+  fish, game fish, crayfish, moving bait between waters, releasing it), 2 to
+  4 short sentences per state (`knowledge/jurisdictions.py`
+  `STATE_BAIT_RULES`), each citing the page read (`species_guides.SOURCES`,
+  ids `bait-<code>`). Shown on the bait-rules card and in Ask, only to
+  someone who picked or named that state.
+- Sources: the agency's own pages (myfwc.com, mdc.mo.gov, maine.gov,
+  in.gov, mass.gov, dnr.state.mn.us, dnr.wisconsin.gov, gf.nd.gov,
+  wildlife.utah.gov, doee.dc.gov, agfc.com), the state's administrative code
+  (Kentucky 301 KAR 1:130, Washington WAC 220-310-070), and for the rest the
+  state's official regulations guide on eRegulations (published for the
+  agency). Agency and state-code pages are treated as RESTRICTED, like
+  TPWD's: facts paraphrased in FishEye's own words, never copied, with the
+  link.
+- How collected (2026-11-01): one page at a time in a browser, reading only
+  the bait passages; nothing stored but the paraphrase and the URL. Search
+  results were used only to find pages, never as the source.
+- Not written: Alaska, Delaware, Hawaii (rules found only in PDFs or not at
+  all), Montana (2026 regulations PDF too large to read), South Dakota
+  (handbook link returns 404). They keep the "check the agency" answer.
+- Refresh: bait rules change most years (invasive species, VHS); re-read
+  each state's page before each season, and when a state's page says it
+  changed.
+
 ## Not used
 
 - **CDFW BIOS ds583 and ds2880**: marked "CDFW staff only". FORBIDDEN.

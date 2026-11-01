@@ -787,6 +787,11 @@ const zh: Messages = {
     placeholderFish: (fish: string) => `问一个关于${fish}的问题…`,
     placeholder: "问饵料、钓组、去哪里找鱼…",
     yourQuestion: "你的问题",
+    photo: "拍照识鱼",
+    yourPhoto: "你的照片",
+    photoNeedsAccount: "拍照识鱼需要一个免费的 FishEye 账户。",
+    photoHint: "也可以点相机，拍张照看看是什么鱼。",
+    photoQuestions: (fish: string) => [`怎么钓${fish}？`, `钓${fish}用什么饵？`],
     send: "发送",
   },
   auth: {

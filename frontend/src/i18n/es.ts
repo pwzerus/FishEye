@@ -801,6 +801,11 @@ const es: Messages = {
     placeholderFish: (fish: string) => `Pregunta sobre ${fish.toLowerCase()}…`,
     placeholder: "Pregunta sobre carnada, aparejos, dónde buscar…",
     yourQuestion: "Tu pregunta",
+    photo: "Identificar un pez con una foto",
+    yourPhoto: "Tu foto",
+    photoNeedsAccount: "Para identificar un pez con una foto necesitas una cuenta gratuita de FishEye.",
+    photoHint: "O toca la cámara para saber qué pez sale en una foto.",
+    photoQuestions: (fish: string) => [`¿Cómo pesco ${fish}?`, `¿Qué carnada uso para ${fish}?`],
     send: "Enviar",
   },
   auth: {

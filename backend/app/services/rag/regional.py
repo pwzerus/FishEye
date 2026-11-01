@@ -21,14 +21,19 @@ from app.knowledge import jurisdictions
 from app.services.rag.retriever import BM25Retriever, Retriever
 
 _UNCOVERED = "*"
+_NO_STATE = ""
 _views: weakref.WeakKeyDictionary[object, dict[str, Retriever]] = weakref.WeakKeyDictionary()
 _lock = threading.Lock()
 
 
-def for_state(retr: Retriever, state: str) -> Retriever | None:
-    """`retr` restricted to what applies in `state`, or None for a
-    retriever it doesn't know how to restrict (the caller then filters)."""
-    group = state if (j := jurisdictions.get(state)) and j.covered else _UNCOVERED
+def for_state(retr: Retriever, state: str | None) -> Retriever | None:
+    """`retr` restricted to what applies in `state` (None: no state given,
+    jurisdictions.applies), or None for a retriever it doesn't know how
+    to restrict (the caller then filters)."""
+    if state is None:
+        group = _NO_STATE
+    else:
+        group = state if (j := jurisdictions.get(state)) and j.covered else _UNCOVERED
     with _lock:
         cached = _views.get(retr, {}).get(group)
     if cached is not None:
@@ -40,7 +45,7 @@ def for_state(retr: Retriever, state: str) -> Retriever | None:
     return view
 
 
-def _build(retr: Retriever, state: str) -> Retriever | None:
+def _build(retr: Retriever, state: str | None) -> Retriever | None:
     passages = getattr(retr, "passages", None)
     if passages is None:
         return None

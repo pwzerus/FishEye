@@ -309,7 +309,12 @@ def _search(
     full index had other states' passages, which is what tells "nothing in
     the guides" from "only another state's rules"."""
     if state is None:
-        return retr.search(question, k=k, species=context), False
+        view = regional.for_state(retr, None)
+        if view is None:
+            hits = [h for h in retr.search(question, k=k + 4, species=context)
+                    if jurisdictions.applies(h.passage.region, None)][:k]
+            return hits, False
+        return view.search(question, k=k, species=context), False
     full = retr.search(question, k=k, species=context)
     foreign = any(not jurisdictions.applies(h.passage.region, state) for h in full)
     view = regional.for_state(retr, state)
@@ -319,11 +324,23 @@ def _search(
     else:
         local = view.search(question, k=k, species=context)
     if full and not jurisdictions.applies(full[0].passage.region, state):
-        if not any(h.passage.region == state for h in local):
+        own = [h for h in local if h.passage.region == state]
+        # A state with only its bait rules written doesn't answer a licence
+        # question with them: its own rule must be the same kind.
+        if own and not jurisdictions.rules_written_in_full(state):
+            kind = _rule_kind(full[0].passage.section)
+            own = [h for h in own if _rule_kind(h.passage.section) == kind]
+        if not own:
             return [], True
     if local:
         local = _with_required_bait_rules(retr, local, question, state, k)
     return local, foreign and not local
+
+
+def _rule_kind(section: str) -> str:
+    """"rule-license-ga" and "rule-license" are one kind of rule; so are
+    "bait_rules-co" and "bait_rules" (Texas's carry no suffix)."""
+    return re.sub(r"-[a-z]{2}$", "", section)
 
 
 _BAIT_QUESTION_RE = re.compile(

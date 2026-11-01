@@ -22,10 +22,24 @@ def _ids(result):
 # ---------------------------------------------------------------- registry
 
 
-def test_every_state_is_listed_and_three_are_covered():
+def test_every_state_is_listed_and_most_have_their_bait_rules():
     assert len(j.JURISDICTIONS) == 51  # 50 states and DC
-    assert {c for c, v in j.JURISDICTIONS.items() if v.covered} == {"CA", "GA", "TX"}
-    assert j.covered_names() == "California, Georgia and Texas"
+    # Not found in a page that could be read and checked (2026-11-01).
+    assert {c for c, v in j.JURISDICTIONS.items() if not v.covered} == {"AK", "DE", "HI", "MT", "SD"}
+    assert j.covered_names() == "45 states and Washington, D.C."
+
+
+def test_every_written_state_cites_its_own_agency_page():
+    from app.knowledge.species_guides import SOURCES
+
+    for code in j.STATE_BAIT_RULES:
+        state = j.JURISDICTIONS[code]
+        assert state.bait_rules and state.bait_rules_source_ids == (f"bait-{code.lower()}",), code
+        source = SOURCES[state.bait_rules_source_ids[0]]
+        assert source.url.startswith("https://") and source.label.startswith(state.agency_short), code
+        assert all(rule.endswith((".", ")")) for rule in state.bait_rules), code
+    # Where live fish are mostly banned as bait, every bait question shows the rules.
+    assert j.get("NV").bait_rules_on_every_bait_question and not j.get("MO").bait_rules_on_every_bait_question
 
 
 def test_a_covered_state_names_its_agency_and_pages():
@@ -44,11 +58,11 @@ def test_a_state_without_written_rules_still_names_its_agency_and_pages():
     """Every state's agency and its regulations and licence pages are on
     file (opened and checked 2026-10-29); "covered" still means FishEye has
     written that state's rules."""
-    co = j.get("CO")
-    assert not co.covered
-    assert (co.agency, co.agency_short) == ("Colorado Parks and Wildlife", "CPW")
-    assert co.limits_url.startswith("https://cpw.state.co.us/")
-    assert co.agency_label == "CPW"
+    mt = j.get("MT")
+    assert not mt.covered
+    assert (mt.agency, mt.agency_short) == ("Montana Fish, Wildlife & Parks", "Montana FWP")
+    assert mt.limits_url.startswith("https://fwp.mt.gov/")
+    assert mt.agency_label == "Montana FWP"
     for code, state in j.JURISDICTIONS.items():
         assert state.agency and state.agency_short, code
         assert state.limits_url.startswith("https://") and state.license_url.startswith("https://"), code
@@ -137,10 +151,10 @@ def test_an_untagged_passage_never_states_a_texas_rule():
 
 
 def test_a_rules_question_from_another_state_is_not_answered_with_texas_rules():
-    result = rag_ask.search_guides(RULE_QUESTION, state="CO")
+    result = rag_ask.search_guides(RULE_QUESTION, state="MT")
     assert result.citations == []
     assert result.trace.outcome == rag_ask.OUTCOME_OTHER_STATE
-    assert "Colorado" in result.answer and "California, Georgia and Texas" in result.answer
+    assert "Montana" in result.answer and "45 states and Washington, D.C." in result.answer
 
 
 @pytest.mark.parametrize(
@@ -173,16 +187,20 @@ def test_a_state_named_in_a_question_is_recognised(question, want):
 
 def test_a_state_named_in_the_question_wins_over_the_one_picked():
     """The 2026-10-28 review: a Minnesota licence question was answered with
-    Texas's, Georgia's and California's rules."""
+    Texas's, Georgia's and California's rules. (Minnesota has its bait rules
+    now; Montana has none written.)"""
     for picked in (None, "TX"):
-        result = rag_ask.search_guides("do I need a fishing license in Minnesota", state=picked)
+        result = rag_ask.search_guides("do I need a fishing license in Montana", state=picked)
         assert result.citations == [], picked
         assert result.trace.outcome == rag_ask.OUTCOME_OTHER_STATE
-        assert "Minnesota" in result.answer
+        assert "Montana" in result.answer
     # Named in Chinese, answered in Chinese.
-    result = rag_ask.search_guides("明尼苏达钓鱼需要执照吗")
+    result = rag_ask.search_guides("蒙大拿钓鱼需要执照吗")
     assert result.citations == [] and result.trace.outcome == rag_ask.OUTCOME_OTHER_STATE
-    assert "明尼苏达" in result.answer and "FishEye 还没有整理这个州的规定" in result.answer
+    assert "蒙大拿" in result.answer and "FishEye 还没有整理这个州的规定" in result.answer
+    # A state with only its bait rules written says so for a licence question.
+    result = rag_ask.search_guides("do I need a fishing license in Minnesota")
+    assert result.citations == [] and "some of Minnesota's fishing rules" in result.answer
     # A covered state named in the question gets its own rules, whatever was picked.
     ids = _ids(rag_ask.search_guides("do I need a fishing license in Georgia", state="TX"))
     assert ids and ids[0] == "all-fish#rule-license-ga", ids
@@ -237,10 +255,14 @@ def test_each_state_searches_its_own_index():
     from app.services.rag.retriever import bm25_retriever
 
     full = bm25_retriever()
-    ga, co, ak = (regional.for_state(full, s) for s in ("GA", "CO", "AK"))
+    ga, co, mt, ak = (regional.for_state(full, s) for s in ("GA", "CO", "MT", "AK"))
     assert {p.region for p in ga.passages} == {"all", "GA"}
-    assert {p.region for p in co.passages} == {"all"}
-    assert co is ak  # every state without rules shares one view
+    assert {p.region for p in co.passages} == {"all", "CO"}
+    assert {p.region for p in mt.passages} == {"all"}
+    assert mt is ak  # every state without rules shares one view
+    # No state picked: the three states written up first, none of the
+    # bait-rules-only ones (they'd answer every bait question).
+    assert {p.region for p in regional.for_state(full, None).passages} == {"all", "CA", "GA", "TX"}
     assert regional.for_state(full, "GA") is ga  # built once
 
 
@@ -303,7 +325,7 @@ def test_how_to_questions_get_the_same_answer_in_every_state():
     # differ a little, so the order below the top can shift; what is shown
     # is the same guidance. California adds its bait rules (ADR 0030).
     q = "what bait works for crappie"
-    answers = {s: _ids(rag_ask.search_guides(q, state=s)) for s in ("TX", "CO", "GA")}
+    answers = {s: _ids(rag_ask.search_guides(q, state=s)) for s in ("TX", "MT", "GA")}
     assert len({tuple(a[:2]) for a in answers.values()}) == 1
     for a in answers.values():
         assert all(i.split("#")[0] in ("white-crappie", "black-crappie") for i in a), a
@@ -312,20 +334,31 @@ def test_how_to_questions_get_the_same_answer_in_every_state():
 def test_what_ranks_below_another_states_rule_is_not_shown_as_an_answer():
     # The licence passage is the best match; the rest are filler. Showing
     # the filler would read as an answer to "do I need a licence".
-    assert rag_ask.search_guides(RULE_QUESTION, state="CO").citations == []
+    assert rag_ask.search_guides(RULE_QUESTION, state="MT").citations == []
 
 
 def test_a_state_never_sees_passages_of_another_state():
     for q in ("can I use live bait or a cast net", "what should I put in my tackle box", "kids life jacket"):
-        for p in rag_ask.search_guides(q, state="CO").citations:
+        for p in rag_ask.search_guides(q, state="MT").citations:
             assert p.region == j.REGION_ALL, (q, p.id)
+        for p in rag_ask.search_guides(q, state="CO").citations:
+            assert p.region in (j.REGION_ALL, "CO"), (q, p.id)
+
+
+def test_a_state_with_bait_rules_gets_them_for_a_bait_question():
+    # Colorado bans live fish as bait in much of the state, against the
+    # guides' live-minnow advice: the rules come with any bait question.
+    ids = _ids(rag_ask.search_guides("what bait for trout", state="CO"))
+    assert "all-fish#bait_rules-co" in ids, ids
+    ids = _ids(rag_ask.search_guides("can I use goldfish as bait", state="MI"))
+    assert "all-fish#bait_rules-mi" in ids, ids
 
 
 def test_the_other_state_answer_names_who_to_ask_and_what_is_covered():
-    text = j.other_state_answer("OK")
-    # Oklahoma's own agency, by name, spelled out once.
-    assert "check ODWC (Oklahoma Department of Wildlife Conservation) for the current ones" in text
-    assert "California, Georgia and Texas" in text
+    text = j.other_state_answer("SD")
+    # South Dakota's own agency, by name, spelled out once.
+    assert "check SD GFP (South Dakota Game, Fish and Parks) for the current ones" in text
+    assert "45 states and Washington, D.C." in text
 
 
 # ------------------------------------------------------------------- API
@@ -334,15 +367,16 @@ def test_the_other_state_answer_names_who_to_ask_and_what_is_covered():
 def test_jurisdictions_endpoint_lists_covered_states_first(client):
     body = client.get("/api/jurisdictions").json()
     assert len(body) == 51
-    assert [s["code"] for s in body[:3]] == ["CA", "GA", "TX"]
-    assert all(s["covered"] and s["bait_rules"] and s["bait_rules_sources"] for s in body[:3])
-    assert body[2]["agency_short"] == "TPWD"
-    colorado = next(s for s in body if s["code"] == "CO")
+    covered = [s for s in body if s["covered"]]
+    assert body[: len(covered)] == covered and len(covered) == 46
+    assert all(s["bait_rules"] and s["bait_rules_sources"] for s in covered)
+    montana = next(s for s in body if s["code"] == "MT")
     # Not covered (no rules written), but its agency's own pages are linked.
-    assert colorado["covered"] is False and colorado["limits_url"].startswith("https://cpw.state.co.us/")
-    assert colorado["bait_rules"] == []
-    assert colorado["license_from_age"] is None and colorado["license_topic"] is None
-    assert {s["code"]: s["license_from_age"] for s in body[:3]} == {"CA": 16, "GA": 16, "TX": 17}
+    assert montana["covered"] is False and montana["limits_url"].startswith("https://fwp.mt.gov/")
+    assert montana["bait_rules"] == []
+    assert montana["license_from_age"] is None and montana["license_topic"] is None
+    ages = {s["code"]: s["license_from_age"] for s in body if s["license_from_age"] is not None}
+    assert ages == {"CA": 16, "GA": 16, "TX": 17}
 
 
 @pytest.mark.parametrize("code", ["CA", "GA", "TX"])

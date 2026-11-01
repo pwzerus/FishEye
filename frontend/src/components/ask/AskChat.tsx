@@ -5,16 +5,17 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { FishArt } from "@/components/fish/FishArt";
+import { FishIdAnswer, likelyFish } from "@/components/identify/IdentifyFish";
 import { useLocale, useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages";
 import { localFishName, localStateName, localTopicTitle } from "@/i18n/names";
 import { ApiError, postAsk } from "@/lib/api/client";
-import { postAskSummary } from "@/lib/api/session";
+import { identifyFish, postAskSummary } from "@/lib/api/session";
 import { waterFor } from "@/lib/fishArt";
 import { useJurisdictions, useSelectedState } from "@/lib/jurisdiction";
 import { StatePicker } from "@/components/ui/StatePicker";
-import type { AiAllowance, AskCitation, AskResponse } from "@/lib/api/types";
+import type { AiAllowance, AskCitation, AskResponse, FishIdResult } from "@/lib/api/types";
 
 /**
  * Q&A over the fish guides (backend services/rag/ask.py), in two steps
@@ -35,6 +36,10 @@ import type { AiAllowance, AskCitation, AskResponse } from "@/lib/api/types";
  * the checks it passed, the trace id) is for developers: it stays in the API
  * response and the server's logs, and none of it is shown here.
  *
+ * A photo can be asked about too: "what fish is this?" goes to the same
+ * photo check as /identify (backend /api/fish-id, an account needed), and
+ * the answer offers the questions to ask next about that fish.
+ *
  * History lives in component state only: a conversation here is scratch
  * work, not something to persist.
  */
@@ -44,8 +49,16 @@ type Summary =
   | { status: "done"; response: AskResponse }
   | { status: "error"; message: string };
 
+type PhotoCheck =
+  | { status: "checking" }
+  | { status: "done"; result: FishIdResult }
+  | { status: "signin" }
+  | { status: "error"; message: string };
+
 type Turn =
   | { id: number; role: "user"; text: string }
+  | { id: number; role: "photo"; src: string }
+  | { id: number; role: "fish-id"; check: PhotoCheck }
   | { id: number; role: "assistant"; response: AskResponse; summary?: Summary }
   | { id: number; role: "error"; question: string; message?: string };
 
@@ -306,6 +319,9 @@ export function AskChat({
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const asked = useRef(false);
+  const photoInput = useRef<HTMLInputElement>(null);
+  const photoUrls = useRef<string[]>([]);
+  const [checkingPhoto, setCheckingPhoto] = useState(false);
 
   const ask = useCallback(
     async (question: string) => {
@@ -329,6 +345,39 @@ export function AskChat({
     },
     [busy, speciesSlug, state, locale],
   );
+
+  const identify = useCallback(
+    async (file: File | undefined) => {
+      if (!file) return;
+      const src = URL.createObjectURL(file);
+      photoUrls.current.push(src);
+      const photoId = nextId.current++;
+      const answerId = nextId.current++;
+      const setCheck = (check: PhotoCheck) =>
+        setTurns((ts) => ts.map((t) => (t.id === answerId && t.role === "fish-id" ? { ...t, check } : t)));
+      setTurns((ts) => [
+        ...ts,
+        { id: photoId, role: "photo", src },
+        { id: answerId, role: "fish-id", check: { status: "checking" } },
+      ]);
+      setCheckingPhoto(true);
+      try {
+        setCheck({ status: "done", result: await identifyFish(file) });
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 401) setCheck({ status: "signin" });
+        else setCheck({ status: "error", message: e instanceof ApiError ? e.message : all.identify.checkFailed });
+      } finally {
+        setCheckingPhoto(false);
+      }
+    },
+    [all.identify.checkFailed],
+  );
+
+  // The photos in the thread are this page's own copies; let them go.
+  useEffect(() => {
+    const urls = photoUrls.current;
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
+  }, []);
 
   const summarize = useCallback(
     async (turnId: number, question: string) => {
@@ -400,6 +449,7 @@ export function AskChat({
                 </button>
               ))}
             </div>
+            {!compact && <p className="muted ask-photo-hint">{t.photoHint}</p>}
           </div>
         )}
 
@@ -408,6 +458,58 @@ export function AskChat({
             return (
               <div key={turn.id} className="msg msg-user">
                 <div className="bubble-user">{turn.text}</div>
+              </div>
+            );
+          }
+          if (turn.role === "photo") {
+            return (
+              <div key={turn.id} className="msg msg-user">
+                {/* The person's own photo, shown back from the device. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img className="bubble-photo" src={turn.src} alt={t.yourPhoto} />
+              </div>
+            );
+          }
+          if (turn.role === "fish-id") {
+            const check = turn.check;
+            const fish = check.status === "done" ? likelyFish(check.result) : null;
+            const name = fish ? (localFishName(fish.slug, locale) ?? fish.label) : "";
+            return (
+              <div key={turn.id} className="msg msg-assistant">
+                <span className="avatar" aria-hidden="true">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG mark, nothing to optimize */}
+                  <img src="/brand/fisheye-mark.svg" alt="" />
+                </span>
+                <div className="bubble-card">
+                  {check.status === "checking" && (
+                    <p className="fish-check is-checking" role="status">
+                      <span className="fish-check-spinner" aria-hidden="true" /> {all.identify.checking}
+                    </p>
+                  )}
+                  {check.status === "signin" && (
+                    <>
+                      <p>{t.photoNeedsAccount}</p>
+                      <Link href={loginHref} className="btn btn-primary btn-sm">
+                        {t.signInLink}
+                      </Link>
+                    </>
+                  )}
+                  {check.status === "error" && (
+                    <p className="form-error" role="alert">
+                      {check.message}
+                    </p>
+                  )}
+                  {check.status === "done" && <FishIdAnswer result={check.result} />}
+                  {fish?.in_guides && (
+                    <div className="chip-row">
+                      {t.photoQuestions(name).map((q) => (
+                        <button key={q} type="button" className="chip" disabled={busy} onClick={() => ask(q)}>
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           }
@@ -472,6 +574,36 @@ export function AskChat({
           void ask(input);
         }}
       >
+        {!compact && (
+          <>
+            <input
+              ref={photoInput}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden="true"
+              aria-label={t.photo}
+              onChange={(e) => {
+                void identify(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              className="photo-btn"
+              disabled={checkingPhoto}
+              aria-label={t.photo}
+              title={t.photo}
+              onClick={() => photoInput.current?.click()}
+            >
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+                <circle cx="12" cy="13" r="3.5" />
+              </svg>
+            </button>
+          </>
+        )}
         <textarea
           ref={inputRef}
           rows={1}

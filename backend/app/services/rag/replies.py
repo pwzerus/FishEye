@@ -54,6 +54,17 @@ def _state_name(code: str, lang: str) -> str:
 
 def _covered(lang: str) -> str:
     names = [_state_name(c.code, lang) for c in jurisdictions.covered()]
+    if len(names) > 5:  # how many, not a list of forty names
+        n, dc = jurisdictions.covered_count()
+        if lang == "zh":
+            return f"{n}个州" + ("和华盛顿特区" if dc else "")
+        if lang == "ja":
+            return f"{n}州" + ("とワシントンD.C." if dc else "")
+        if lang == "ko":
+            return f"{n}개 주" + ("와 워싱턴 D.C." if dc else "")
+        if lang == "es":
+            return f"{n} estados" + (" y Washington D. C." if dc else "")
+        return jurisdictions.covered_names()
     if lang in ("zh", "ja"):
         return "、".join(names)
     if lang == "ko":

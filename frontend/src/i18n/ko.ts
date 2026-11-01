@@ -808,6 +808,11 @@ const ko: Messages = {
     placeholderFish: (fish: string) => `${fish}에 대해 물어보세요…`,
     placeholder: "미끼, 채비, 찾아볼 곳 등을 물어보세요…",
     yourQuestion: "질문",
+    photo: "사진으로 물고기 알아보기",
+    yourPhoto: "내 사진",
+    photoNeedsAccount: "사진으로 물고기를 알아보려면 무료 FishEye 계정이 필요해요.",
+    photoHint: "카메라를 눌러 사진 속 물고기가 무엇인지 알아볼 수도 있어요.",
+    photoQuestions: (fish: string) => [`${fish} 어떻게 잡아요?`, `${fish} 미끼는 뭐가 좋아요?`],
     send: "보내기",
   },
   auth: {

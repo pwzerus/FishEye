@@ -175,3 +175,9 @@ button:active:not(:disabled), .btn:active { translate:0 1px; }
 @media (max-width: 760px) {
   .map-container .map-fabs .fab-unavailable { display: none; }
 }
+/* Photo ID in Ask: the camera beside the question box, and the photo sent. */
+.ask-form .photo-btn { flex:none; width:42px; height:42px; margin-left:-8px; border-radius:50%; border:1px solid var(--line); background:transparent; color:var(--brand); display:grid; place-items:center; cursor:pointer; transition:border-color var(--dur), background var(--dur); }
+.ask-form .photo-btn:hover:not(:disabled) { border-color:var(--brand); background:var(--brand-soft); }
+.ask-form .photo-btn:disabled { opacity:.4; cursor:not-allowed; }
+.bubble-photo { display:block; max-width:min(260px, 70%); max-height:320px; margin-left:auto; border-radius:16px; object-fit:cover; }
+.ask-photo-hint { margin-top:10px; font-size:13px; }
