@@ -926,6 +926,43 @@ const es: Messages = {
     linkFailed: "Ese enlace no funcionó",
     signInToSend: "Inicia sesión para enviar un enlace nuevo",
   },
+  baitTip: {
+    whyFish: (fish: string) => `Por qué funciona con ${fish}`,
+    whyItWorks: "Por qué funciona",
+    howToUse: "Cómo se usa",
+    catches: "Sirve para",
+    alsoCatches: "También sirve para",
+    shopsOnMap: "Tiendas de carnada y pesca en el mapa →",
+    readMore: "Más en el manual →",
+    askMore: "Pregunta sobre esto →",
+    askQuestion: (bait: string) => `¿Cómo se pesca con ${bait.toLowerCase()}?`,
+    mentioned: "Carnadas y señuelos aquí:",
+  },
+  lakeAnswer: {
+    badge: "De los datos de lagos de FishEye",
+    onRecord: "Peces registrados",
+    reported: "También reportados aquí:",
+    noFish: "FishEye aún no tiene peces registrados en este lago. Eso no significa que no haya.",
+    asked: (fish: string, status: "on_record" | "reported" | "no_record") =>
+      status === "on_record"
+        ? `${fish}: registrado aquí.`
+        : status === "reported"
+          ? `${fish}: reportado aquí, sin confirmación de una agencia estatal.`
+          : `${fish}: sin registro aquí todavía. Eso no significa que no haya.`,
+    accessPoints: (n: number) => `${n} ${n === 1 ? "punto" : "puntos"} de acceso`,
+    attractors: (n: number) => `${n} ${n === 1 ? "atractor" : "atractores"} de peces`,
+    openLake: "Abrir este lago en el mapa →",
+    agencyPage: "La página de la agencia estatal →",
+    sameName: "Otros lagos con este nombre:",
+    closed: "Cerrado al público.",
+    likelyPrivate: "Probablemente privado: compruébalo antes de ir.",
+    near: (place: string) => `cerca de ${place}`,
+    inState: (state: string) => `en ${state}`,
+    or: " o ",
+    listTitle: (fish: string, where: string) => `Lagos con registro de ${fish} ${where}:`,
+    listTitleNoFish: (where: string) => `Lagos con registros ${where}:`,
+    listNone: (fish: string, where: string) => `FishEye aún no tiene lagos con registro de ${fish} ${where}.`,
+  },
   identify: {
     eyebrow: "Identificar con foto",
     title: "¿Qué pez es este?",

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { BaitChips, BaitText } from "@/components/baits/BaitTip";
+import { LakeAnswer } from "@/components/ask/LakeAnswer";
 import { FishArt } from "@/components/fish/FishArt";
 import { FishIdAnswer, likelyFish } from "@/components/identify/IdentifyFish";
 import { useLocale, useT } from "@/i18n/client";
@@ -70,7 +72,11 @@ function citationHref(c: AskCitation): string {
 }
 
 function SourceBadge({ r }: { r: AskResponse }) {
-  const t = useT().ask;
+  const all = useT();
+  const t = all.ask;
+  if (r.answer_source === "lakes") {
+    return <span className="badge badge-ok">{all.lakeAnswer.badge}</span>;
+  }
   if (r.answer_source === "passages") {
     return <span className="badge badge-ok">{t.fromGuides}</span>;
   }
@@ -226,7 +232,9 @@ function AiSummary({
         </div>
         <div className="answer-text">
           {r.answer.split("\n\n").map((para, i) => (
-            <p key={i}>{para}</p>
+            <p key={i}>
+              <BaitText text={para} fish={r.citations[0]?.species_slug ?? null} />
+            </p>
           ))}
         </div>
       </div>
@@ -540,13 +548,21 @@ export function AskChat({
                 <div className="bubble-meta">
                   <SourceBadge r={r} />
                 </div>
-                <div className="answer-text" lang={r.answer_source === "passages" ? "en" : undefined}>
-      {r.answer.split("\n\n").map((para, i) => (
-                    <p key={i}>{para}</p>
-                  ))}
-                </div>
+                {r.lakes && <LakeAnswer lakes={r.lakes} />}
+                {r.answer && (
+                  <div className="answer-text" lang={r.answer_source === "passages" ? "en" : undefined}>
+                    {r.answer.split("\n\n").map((para, i) => (
+                      <p key={i}>{para}</p>
+                    ))}
+                  </div>
+                )}
                 <StateRulesLinks r={r} />
                 <Citations items={r.citations} compact={compact} />
+                <BaitChips
+                  texts={r.citations.map((c) => c.excerpt)}
+                  fish={speciesSlug ?? r.citations.find((c) => c.species_slug !== "all-fish")?.species_slug ?? null}
+                  label={all.baitTip.mentioned}
+                />
                 {r.answer_source === "passages" && (
                   <AiSummary
                     summary={turn.summary}

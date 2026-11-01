@@ -61,6 +61,9 @@ GLOSSARY: dict[str, str] = {
     "스레드핀 섀드": "threadfin shad", "섀드": "shad",
     "월아이": "walleye", "강꼬치고기": "northern pike", "노던파이크": "northern pike", "파이크": "northern pike",
     "옐로퍼치": "yellow perch", "틸라피아": "tilapia",
+    "브룩송어": "brook trout", "브룩 송어": "brook trout", "골든송어": "golden trout",
+    "컷스로트송어": "cutthroat trout", "컷스로트": "cutthroat trout", "코카니연어": "kokanee", "코카니": "kokanee",
+    "브라운불헤드": "brown bullhead", "불헤드": "bullhead",
     # bait
     "생미끼": "live bait", "미끼": "bait", "떡밥": "dough bait", "밑밥": "chum", "집어제": "chum",
     "냄새 미끼": "stink bait", "줄지렁이": "worm", "지렁이": "worm worms nightcrawler", "나이트크롤러": "nightcrawler",

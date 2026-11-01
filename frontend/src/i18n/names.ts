@@ -14,6 +14,15 @@ import type { Locale } from "./config";
  */
 export const FISH_NAMES: Record<Exclude<Locale, "en">, Record<string, string>> = {
   zh: {
+    "walleye": "大眼鲈",
+    "northern-pike": "白斑狗鱼",
+    "yellow-perch": "黄金鲈",
+    "brook-trout": "溪红点鲑",
+    "brown-trout": "褐鳟",
+    "golden-trout": "金鳟",
+    "cutthroat-trout": "切喉鳟",
+    "kokanee-salmon": "科卡尼鲑",
+    "brown-bullhead": "云斑鮰",
     "largemouth-bass": "大口黑鲈",
     "smallmouth-bass": "小口黑鲈",
     "spotted-bass": "斑点黑鲈",
@@ -35,6 +44,15 @@ export const FISH_NAMES: Record<Exclude<Locale, "en">, Record<string, string>> =
     "threadfin-shad": "线鳍鲥",
   },
   es: {
+    "walleye": "Walleye",
+    "northern-pike": "Lucio norteño",
+    "yellow-perch": "Perca amarilla",
+    "brook-trout": "Trucha de arroyo",
+    "brown-trout": "Trucha marrón",
+    "golden-trout": "Trucha dorada",
+    "cutthroat-trout": "Trucha degollada",
+    "kokanee-salmon": "Salmón kokanee",
+    "brown-bullhead": "Bagre torito",
     "largemouth-bass": "Lobina negra",
     "smallmouth-bass": "Lobina de boca chica",
     "spotted-bass": "Lobina manchada",
@@ -58,6 +76,15 @@ export const FISH_NAMES: Record<Exclude<Locale, "en">, Record<string, string>> =
   // Korean anglers' names: 배스, 블루길 and 무지개송어 as they say them;
   // American fish Korea doesn't have, written as they sound.
   ko: {
+    "walleye": "월아이",
+    "northern-pike": "노던파이크",
+    "yellow-perch": "옐로퍼치",
+    "brook-trout": "브룩송어",
+    "brown-trout": "브라운송어",
+    "golden-trout": "골든송어",
+    "cutthroat-trout": "컷스로트송어",
+    "kokanee-salmon": "코카니연어",
+    "brown-bullhead": "브라운불헤드",
     "largemouth-bass": "큰입배스",
     "smallmouth-bass": "작은입배스",
     "spotted-bass": "스포티드배스",
@@ -81,6 +108,15 @@ export const FISH_NAMES: Record<Exclude<Locale, "en">, Record<string, string>> =
   // Japanese anglers' names: ラージマウスバス, ニジマス, コイ; the rest in
   // katakana, as Japanese bass and trout anglers write them.
   ja: {
+    "walleye": "ウォールアイ",
+    "northern-pike": "ノーザンパイク",
+    "yellow-perch": "イエローパーチ",
+    "brook-trout": "ブルックトラウト",
+    "brown-trout": "ブラウントラウト",
+    "golden-trout": "ゴールデントラウト",
+    "cutthroat-trout": "カットスロートトラウト",
+    "kokanee-salmon": "ヒメマス",
+    "brown-bullhead": "ブラウンブルヘッド",
     "largemouth-bass": "ラージマウスバス",
     "smallmouth-bass": "スモールマウスバス",
     "spotted-bass": "スポッテッドバス",
@@ -128,6 +164,8 @@ export const GROUP_NAMES: Record<Exclude<Locale, "en">, Record<string, string>> 
 
 export const HANDBOOK_CATEGORIES: Record<Exclude<Locale, "en">, Record<string, string>> = {
   zh: {
+    "rigs": "钓组和铅头钩",
+    "methods": "各种钓法",
     baits: "活饵和天然饵",
     lures: "拟饵",
     tackle: "竿、轮、线和终端钓组",
@@ -141,6 +179,8 @@ export const HANDBOOK_CATEGORIES: Record<Exclude<Locale, "en">, Record<string, s
     rules: "执照，以及回家也要守的规定",
   },
   es: {
+    "rigs": "Aparejos y jigs",
+    "methods": "Formas de pescar",
     baits: "Carnada viva y natural",
     lures: "Señuelos",
     tackle: "Cañas, carretes, línea y aparejos",
@@ -154,6 +194,8 @@ export const HANDBOOK_CATEGORIES: Record<Exclude<Locale, "en">, Record<string, s
     rules: "Licencia, y reglas que te llevas a casa",
   },
   ko: {
+    "rigs": "채비와 지그",
+    "methods": "낚시 방법",
     baits: "생미끼와 천연 미끼",
     lures: "루어",
     tackle: "낚싯대, 릴, 낚싯줄, 채비",
@@ -167,6 +209,8 @@ export const HANDBOOK_CATEGORIES: Record<Exclude<Locale, "en">, Record<string, s
     rules: "면허, 그리고 집에 가져간 뒤의 규정",
   },
   ja: {
+    "rigs": "仕掛けとジグ",
+    "methods": "釣り方いろいろ",
     baits: "生きエサと天然のエサ",
     lures: "ルアー",
     tackle: "竿・リール・ライン・仕掛け",
@@ -183,6 +227,28 @@ export const HANDBOOK_CATEGORIES: Record<Exclude<Locale, "en">, Record<string, s
 
 export const HANDBOOK_TITLES: Record<Exclude<Locale, "en">, Record<string, string>> = {
   zh: {
+    "rule-clean-drain-dry-us": "清洁、排水、晾干：阻止入侵物种",
+    "rule-clean-drain-dry-mn": "清洁、排水、晾干（明尼苏达）",
+    "care-advisories": "食用提示：这片水的鱼能吃吗？",
+    "rig-jigs": "铅头钩",
+    "rig-texas": "德州钓组",
+    "rig-wacky": "Wacky 钓组",
+    "rig-ned": "Ned 钓组",
+    "rig-drop-shot": "倒钓钓组",
+    "rig-slip-bobber": "游动浮漂",
+    "rig-bottom": "游动铅沉底钓组",
+    "knot-tips": "怎么保持线的强度",
+    "knot-surgeons-loop": "外科医环结",
+    "knot-joining": "两段线怎么接：血结和外科医结",
+    "method-trolling": "拖钓",
+    "method-ice": "冰钓",
+    "method-stream": "怎么看河流和溪流",
+    "method-fly": "飞钓入门",
+    "method-night": "黄昏和夜钓",
+    "method-kayak": "皮划艇和小船钓鱼",
+    "timing-through-year": "一年中鱼都去哪儿",
+    "timing-spawn-north": "北方鱼的产卵水温",
+    "safe-ice": "冰面安全",
     "bait-worms": "蚯蚓和大夜蚯蚓",
     "bait-minnows": "活小鱼（米诺鱼）",
     "bait-insects": "蟋蟀、蚱蜢等昆虫",
@@ -260,6 +326,28 @@ export const HANDBOOK_TITLES: Record<Exclude<Locale, "en">, Record<string, strin
     "cook-freezing": "冷冻渔获",
   },
   es: {
+    "rule-clean-drain-dry-us": "Limpiar, drenar y secar: frenar especies invasoras",
+    "rule-clean-drain-dry-mn": "Limpiar, drenar y secar (Minnesota)",
+    "care-advisories": "Avisos: ¿se puede comer el pescado de esta agua?",
+    "rig-jigs": "Jigs",
+    "rig-texas": "Aparejo Texas",
+    "rig-wacky": "Aparejo Wacky",
+    "rig-ned": "Aparejo Ned",
+    "rig-drop-shot": "Drop shot",
+    "rig-slip-bobber": "Flotador corredizo",
+    "rig-bottom": "Aparejo de fondo con plomo corredizo",
+    "knot-tips": "Mantener fuerte el hilo",
+    "knot-surgeons-loop": "Lazo de cirujano",
+    "knot-joining": "Unir dos hilos: nudo de sangre y de cirujano",
+    "method-trolling": "Curricán",
+    "method-ice": "Pesca en hielo",
+    "method-stream": "Cómo leer un río o arroyo",
+    "method-fly": "Pesca con mosca: lo básico",
+    "method-night": "Pescar al atardecer y de noche",
+    "method-kayak": "Pescar desde kayak o bote pequeño",
+    "timing-through-year": "Dónde están los peces durante el año",
+    "timing-spawn-north": "Temperaturas de desove de peces del norte",
+    "safe-ice": "Seguridad en el hielo",
     "bait-worms": "Lombrices",
     "bait-minnows": "Pececillos vivos (minnows)",
     "bait-insects": "Grillos, chapulines y otros insectos",
@@ -337,6 +425,28 @@ export const HANDBOOK_TITLES: Record<Exclude<Locale, "en">, Record<string, strin
     "cook-freezing": "Congelar tu captura",
   },
   ko: {
+    "rule-clean-drain-dry-us": "세척, 배수, 건조: 침입종 막기",
+    "rule-clean-drain-dry-mn": "세척, 배수, 건조 (미네소타)",
+    "care-advisories": "어류 섭취 권고: 이 물의 물고기를 먹어도 될까요?",
+    "rig-jigs": "지그",
+    "rig-texas": "텍사스 리그",
+    "rig-wacky": "와키 리그",
+    "rig-ned": "네드 리그",
+    "rig-drop-shot": "다운샷",
+    "rig-slip-bobber": "슬립 찌",
+    "rig-bottom": "슬라이딩 싱커 바닥 채비",
+    "knot-tips": "줄 강도 지키기",
+    "knot-surgeons-loop": "서전스 루프",
+    "knot-joining": "두 줄 잇기: 블러드와 서전스 노트",
+    "method-trolling": "트롤링",
+    "method-ice": "얼음낚시",
+    "method-stream": "강과 계류 읽는 법",
+    "method-fly": "플라이 낚시 기초",
+    "method-night": "해 질 녘과 밤낚시",
+    "method-kayak": "카약과 작은 배 낚시",
+    "timing-through-year": "일 년 동안 물고기가 있는 곳",
+    "timing-spawn-north": "북부 물고기의 산란 수온",
+    "safe-ice": "얼음 안전",
     "bait-worms": "지렁이와 큰 지렁이(나이트크롤러)",
     "bait-minnows": "작은 물고기(미노우, 샤이너)",
     "bait-insects": "귀뚜라미, 메뚜기 등 곤충",
@@ -414,6 +524,28 @@ export const HANDBOOK_TITLES: Record<Exclude<Locale, "en">, Record<string, strin
     "cook-freezing": "조과 냉동하기",
   },
   ja: {
+    "rule-clean-drain-dry-us": "洗う・抜く・乾かす：外来種を広げない",
+    "rule-clean-drain-dry-mn": "洗う・抜く・乾かす（ミネソタ）",
+    "care-advisories": "魚の摂取勧告：この水域の魚は食べられる？",
+    "rig-jigs": "ジグ",
+    "rig-texas": "テキサスリグ",
+    "rig-wacky": "ワッキーリグ",
+    "rig-ned": "ネコリグ・ネッドリグ",
+    "rig-drop-shot": "ダウンショット",
+    "rig-slip-bobber": "遊動ウキ",
+    "rig-bottom": "中通しオモリの底釣り仕掛け",
+    "knot-tips": "糸の強度を保つ",
+    "knot-surgeons-loop": "サージェンスループ",
+    "knot-joining": "2本の糸をつなぐ：ブラッドとサージェンス",
+    "method-trolling": "トローリング",
+    "method-ice": "氷上釣り",
+    "method-stream": "川と渓流の読み方",
+    "method-fly": "フライフィッシングの基本",
+    "method-night": "夕暮れと夜の釣り",
+    "method-kayak": "カヤックや小舟での釣り",
+    "timing-through-year": "一年を通して魚がいる場所",
+    "timing-spawn-north": "北部の魚の産卵水温",
+    "safe-ice": "氷上の安全",
     "bait-worms": "ミミズとドバミミズ",
     "bait-minnows": "小魚（ミノー、シャイナー）",
     "bait-insects": "コオロギ、バッタなどの虫",
@@ -503,8 +635,20 @@ export function localFishName(slug: string, locale: Locale): string | null {
   return locale === "en" ? null : (FISH_NAMES[locale][slug] ?? null);
 }
 
+const LICENSE_TITLE: Record<Exclude<Locale, "en">, (state: string) => string> = {
+  zh: (s) => `钓鱼需要执照吗？（${s}）`,
+  es: (s) => `¿Necesito licencia de pesca? (${s})`,
+  ko: (s) => `낚시 면허가 필요한가요? (${s})`,
+  ja: (s) => `釣りのライセンスは必要？（${s}）`,
+};
+
 export function localTopicTitle(id: string, locale: Locale): string | null {
-  return locale === "en" ? null : (HANDBOOK_TITLES[locale][id] ?? null);
+  if (locale === "en") return null;
+  const written = HANDBOOK_TITLES[locale][id];
+  if (written) return written;
+  const license = id.match(/^rule-license-([a-z]{2})$/);
+  const state = license && STATE_NAMES[locale][license[1].toUpperCase()];
+  return state ? LICENSE_TITLE[locale](state) : null;
 }
 
 export function localCategory(id: string, locale: Locale): string | null {

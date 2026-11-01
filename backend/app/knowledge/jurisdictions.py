@@ -27,7 +27,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from app.knowledge.species_guides import BAIT_RULES, TPWD_LIMITS_URL
+from app.knowledge.species_guides import BAIT_RULES, SOURCES, TPWD_LIMITS_URL, Source
+from app.knowledge.state_licenses import STATE_LICENSES, license_age
 
 REGION_ALL = "all"
 
@@ -575,6 +576,8 @@ def _uncovered(code: str, name: str) -> Jurisdiction:
         bait_rules=bait,
         bait_rules_source_ids=(f"bait-{code.lower()}",) if bait else (),
         bait_rules_on_every_bait_question=code in _LIVE_FISH_LIMITED,
+        license_from_age=license_age(code),
+        license_topic=f"rule-license-{code.lower()}" if code in STATE_LICENSES else None,
     )
 
 
@@ -582,6 +585,17 @@ JURISDICTIONS: dict[str, Jurisdiction] = {
     code: _COVERED.get(code) or _uncovered(code, name)
     for code, name in sorted(STATE_NAMES.items(), key=lambda kv: kv[1])
 }
+
+
+# Who needs a license, per state: its page, named after the agency.
+SOURCES.update(
+    {
+        f"license-{code.lower()}": Source(
+            f"license-{code.lower()}", f"{JURISDICTIONS[code].agency_label}: fishing license rules", entry.url, "agency"
+        )
+        for code, entry in STATE_LICENSES.items()
+    }
+)
 
 
 def normalize(code: str | None) -> str | None:

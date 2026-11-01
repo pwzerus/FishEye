@@ -11,7 +11,7 @@ from PIL import Image
 from app.knowledge.species_guides import GUIDES
 from app.services import fish_id
 from app.services.fish_id import CONFIRMED, GROUP, MISMATCH, NO_FISH, OTHER, UNSURE, Candidate, Identification, check_claim
-from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, CLASSES, GUIDE
+from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, CLASSES, GUIDE, GUIDED_SINCE_BUILD
 from tests.conftest import signup
 
 
@@ -47,9 +47,9 @@ def test_a_look_alike_is_accepted_as_its_group_not_as_the_species():
 
 
 def test_a_fish_with_no_guide_is_named_and_refused():
-    v = check_claim(ident(walleye=0.9), "largemouth-bass")
+    v = check_claim(ident(sauger=0.9), "largemouth-bass")
     assert v.status == OTHER and not v.accepted
-    assert "Walleye" in v.message and "Other" in v.message
+    assert "Sauger" in v.message and "Other" in v.message
 
 
 def test_an_angler_holding_the_fish_still_counts():
@@ -85,7 +85,8 @@ def test_other_needs_a_fish_and_not_plainly_a_guide_species():
 
 def test_every_guide_species_can_be_checked():
     for g in GUIDES:
-        assert (g.slug in BY_SLUG and BY_SLUG[g.slug].kind == GUIDE) or g.slug in CLAIM_GROUPS, g.slug
+        known = g.slug in BY_SLUG and (BY_SLUG[g.slug].kind == GUIDE or g.slug in GUIDED_SINCE_BUILD)
+        assert known or g.slug in CLAIM_GROUPS, g.slug
 
 
 def test_every_look_alike_group_says_what_it_is():

@@ -53,9 +53,9 @@ def test_every_guide_has_habitat_habits_and_why_its_baits_work():
         assert guide.identification, guide.common_name
 
 
-def test_eighteen_guides_six_of_them_new():
+def test_the_guides_include_those_added_later():
     names = {g.common_name for g in GUIDES}
-    assert len(GUIDES) == 19
+    assert len(GUIDES) == 28
     assert {
         "Flathead Catfish",
         "Guadalupe Bass",
@@ -63,6 +63,15 @@ def test_eighteen_guides_six_of_them_new():
         "Rainbow Trout",
         "Freshwater Drum",
         "Common Carp",
+        "Walleye",
+        "Northern Pike",
+        "Yellow Perch",
+        "Brook Trout",
+        "Brown Trout",
+        "Golden Trout",
+        "Cutthroat Trout",
+        "Kokanee Salmon",
+        "Brown Bullhead",
     } <= names
 
 

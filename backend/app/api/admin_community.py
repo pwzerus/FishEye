@@ -39,6 +39,7 @@ from app.models.community import (
 )
 from app.models.waterbody import Waterbody
 from app.schemas.lake_reports import AdminLakeReportOut, LakeReportResolveIn
+from app.services import ask_misses
 from app.services import lake_reports as lake_report_service
 from app.services.lake_reports import LakeReportError
 from app.schemas.admin_community import (
@@ -46,6 +47,7 @@ from app.schemas.admin_community import (
     AdminPinPage,
     AdminUserOut,
     AdminUserPage,
+    AskMissOut,
     AuditOut,
     AuditPage,
     PinStatusIn,
@@ -457,3 +459,17 @@ def audit_log(
             for r in rows
         ],
     )
+
+
+# ------------------------------------------------------------- Ask misses
+
+
+@router.get("/ask-misses", response_model=list[AskMissOut])
+def ask_miss_list(
+    days: int = Query(default=30, ge=1, le=ask_misses.RETENTION_DAYS),
+    outcome: str | None = Query(default=None, pattern=r"^(no_match|unguided_fish|other_state|off_topic)$"),
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> list[AskMissOut]:
+    """What Ask couldn't answer, most asked first: what to write next."""
+    return [AskMissOut(**vars(r)) for r in ask_misses.top(db, days, outcome)]

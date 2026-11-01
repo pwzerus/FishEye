@@ -11,6 +11,8 @@ GET  /api/ask/allowance Today's AI summaries left, for showing on the page.
 
 The search is the product; the written answer is an extra on top of it.
 """
+from dataclasses import replace
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -24,13 +26,15 @@ from app.models.community import User
 from app.schemas.ask import (
     AiAllowanceOut,
     AskCitationOut,
+    AskLakesOut,
     AskRequest,
     AskResponse,
     AskRetrievedOut,
     AskTraceOut,
 )
-from app.services import ai_quota
+from app.services import ai_quota, ask_misses
 from app.services.rag import ask as rag_ask
+from app.services.rag import lake_facts
 
 router = APIRouter(prefix="/ask", tags=["ask"])
 
@@ -65,9 +69,12 @@ def _allowance_out(db: Session, user: User | None) -> AiAllowanceOut:
     return AiAllowanceOut(signed_in=True, limit=a.limit, remaining=a.remaining)
 
 
-def _response(result: rag_ask.AskResult, ai: AiAllowanceOut, state: str | None = None) -> AskResponse:
+def _response(
+    result: rag_ask.AskResult, ai: AiAllowanceOut, state: str | None = None, lakes: AskLakesOut | None = None
+) -> AskResponse:
     t = result.trace
     return AskResponse(
+        lakes=lakes,
         state=rag_ask.answer_state(result.question, state),
         question=result.question,
         answer=result.answer,
@@ -110,9 +117,17 @@ def search_guides(
     db: Session = Depends(get_db),
     user: User | None = Depends(optional_user),
 ) -> AskResponse:
-    state = _state(payload)
-    result = rag_ask.search_guides(payload.question, species_slug=_slug(payload), state=state, lang=payload.lang)
-    return _response(result, _allowance_out(db, user), state)
+    state, slug = _state(payload), _slug(payload)
+    result = rag_ask.search_guides(payload.question, species_slug=slug, state=state, lang=payload.lang)
+    routed = tuple(result.trace.routed_species or ())
+    lakes = lake_facts.answer(db, payload.question, state, routed)
+    if lakes is not None and lakes.lakes and (lakes.answers_it or not result.citations):
+        # The lake data answers it; a miss for the guides isn't one for Ask.
+        result = replace(result, answer="", answer_source=rag_ask.ANSWER_LAKES, citations=[])
+        result.trace.outcome = rag_ask.OUTCOME_LAKE
+    # What Ask can't answer, without who asked (services/ask_misses.py).
+    ask_misses.record(db, payload.question, result.trace.outcome, payload.lang or "en", state, slug)
+    return _response(result, _allowance_out(db, user), state, lakes)
 
 
 @router.get("/allowance", response_model=AiAllowanceOut)

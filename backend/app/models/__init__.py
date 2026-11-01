@@ -1,5 +1,6 @@
 from app.models.community import (  # noqa: F401
     AiUsage,
+    AskMiss,
     AuditLog,
     CatchPin,
     EmailToken,
@@ -48,6 +49,7 @@ __all__ = [
     "PinReport",
     "AuditLog",
     "AiUsage",
+    "AskMiss",
     "TackleShop",
     "River",
     "RiverReach",

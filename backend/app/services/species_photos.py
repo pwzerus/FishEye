@@ -74,13 +74,25 @@ WIKIPEDIA_TITLES: dict[str, str] = {
     "rainbow-trout": "Rainbow trout",
     "freshwater-drum": "Freshwater drum",
     "common-carp": "Common carp",
+    "walleye": "Walleye",
+    "northern-pike": "Northern pike",
+    "yellow-perch": "Yellow perch",
+    "brook-trout": "Brook trout",
+    "brown-trout": "Brown trout",
+    "golden-trout": "Golden trout",
+    "cutthroat-trout": "Cutthroat trout",
+    "kokanee-salmon": "Kokanee",
+    "brown-bullhead": "Brown bullhead",
 }
 
 # Guide species whose photo hasn't been hand-checked yet (see above).
 AWAITING_CURATION: frozenset[str] = frozenset(
     {"flathead-catfish", "guadalupe-bass", "redear-sunfish", "rainbow-trout", "freshwater-drum", "common-carp",
      # Added with docs/adr/0030; Commons couldn't be reached to pick one by hand.
-     "smallmouth-bass"}
+     "smallmouth-bass",
+     # Added 2026-11-01.
+     "walleye", "northern-pike", "yellow-perch", "brook-trout", "brown-trout", "golden-trout",
+     "cutthroat-trout", "kokanee-salmon", "brown-bullhead"}
 )
 
 # A file to use for a species instead of whatever the lookup finds — for when

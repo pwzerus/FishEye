@@ -74,6 +74,50 @@ class AiAllowanceOut(BaseModel):
     remaining: int | None
 
 
+class AskLakeFishOut(BaseModel):
+    name: str
+    slug: str | None = None  # its guide, if it has one
+    confidence: str | None = None
+
+
+class AskAskedFishOut(BaseModel):
+    """A fish the question named, against what is on record at the lake."""
+
+    slug: str
+    name: str
+    status: str  # "on_record" | "reported" | "no_record", never "not there"
+
+
+class AskLakeOut(BaseModel):
+    id: int
+    name: str
+    state_code: str
+    county: str | None = None
+    data_tier: str
+    public_access_status: str
+    species: list[AskLakeFishOut] = []
+    reported: list[str] = []
+    asked: list[AskAskedFishOut] = []
+    access_points: int = 0
+    fish_attractors: int = 0
+    agency_url: str | None = None
+    credit: str | None = None
+
+
+class AskLakesOut(BaseModel):
+    """What the lake data says to a question (services/rag/lake_facts.py)."""
+
+    kind: str  # "lake": one named lake | "list": where to go
+    lakes: list[AskLakeOut]
+    same_name: list[AskLakeOut] = []  # other lakes called the same
+    place: str | None = None  # "near <place>", as asked
+    state: str | None = None
+    fish: list[str] = []
+    fish_slugs: list[str] = []
+    # The card is the whole answer: guide passages wouldn't add to it.
+    answers_it: bool = False
+
+
 class AskResponse(BaseModel):
     question: str
     answer: str
@@ -85,3 +129,5 @@ class AskResponse(BaseModel):
     # Whose rules the answer is for: a state named in the question, else the
     # one picked on the page, else None (services/rag/ask.answer_state).
     state: str | None = None
+    # A lake named or "where to go": from the lake data, not the guides.
+    lakes: AskLakesOut | None = None

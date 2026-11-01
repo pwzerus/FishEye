@@ -932,6 +932,43 @@ const ko: Messages = {
     linkFailed: "링크가 작동하지 않았어요",
     signInToSend: "로그인하고 새 링크 보내기",
   },
+  baitTip: {
+    whyFish: (fish: string) => `${fish}에게 잘 먹히는 이유`,
+    whyItWorks: "잘 먹히는 이유",
+    howToUse: "쓰는 법",
+    catches: "잡을 수 있는 물고기",
+    alsoCatches: "이것도 잡혀요",
+    shopsOnMap: "지도에서 낚시점 보기 →",
+    readMore: "핸드북에서 자세히 →",
+    askMore: "Ask에 물어보기 →",
+    askQuestion: (bait: string) => `${bait} 어떻게 써요?`,
+    mentioned: "여기 나온 미끼와 루어:",
+  },
+  lakeAnswer: {
+    badge: "FishEye 호수 데이터",
+    onRecord: "기록된 물고기",
+    reported: "이곳 제보:",
+    noFish: "FishEye에는 아직 이 호수의 물고기 기록이 없어요. 물고기가 없다는 뜻은 아니에요.",
+    asked: (fish: string, status: "on_record" | "reported" | "no_record") =>
+      status === "on_record"
+        ? `${fish}: 이곳에 기록이 있어요.`
+        : status === "reported"
+          ? `${fish}: 이곳에서 제보됐지만 주 기관이 확인하지는 않았어요.`
+          : `${fish}: 아직 이곳 기록이 없어요. 없다는 뜻은 아니에요.`,
+    accessPoints: (n: number) => `접근 지점 ${n}곳`,
+    attractors: (n: number) => `어초 ${n}곳`,
+    openLake: "지도에서 이 호수 열기 →",
+    agencyPage: "주 기관 페이지 →",
+    sameName: "같은 이름의 다른 호수:",
+    closed: "일반인 출입이 금지되어 있어요.",
+    likelyPrivate: "사유지일 수 있어요: 가기 전에 확인하세요.",
+    near: (place: string) => `${place} 근처`,
+    inState: (state: string) => state,
+    or: " 또는 ",
+    listTitle: (fish: string, where: string) => `${where}에서 ${fish} 기록이 있는 호수:`,
+    listTitleNoFish: (where: string) => `${where}에서 기록이 있는 호수:`,
+    listNone: (fish: string, where: string) => `FishEye에는 아직 ${where}의 ${fish} 호수 기록이 없어요.`,
+  },
   identify: {
     eyebrow: "사진으로 찾기",
     title: "이 물고기는 뭘까요?",

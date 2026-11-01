@@ -12,6 +12,7 @@ vi.mock("@/lib/api/session", async () => {
     getMe: vi.fn(),
     adminStats: vi.fn(),
     adminAudit: vi.fn(),
+    adminAskMisses: vi.fn(),
     adminReports: vi.fn(),
     adminResolve: vi.fn(),
     adminUsers: vi.fn(),
@@ -116,5 +117,19 @@ describe("AdminConsole for an admin", () => {
     fireEvent.click(within(bobRow).getByRole("button", { name: "Suspend" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     await waitFor(() => expect(session.adminUpdateUser).toHaveBeenCalledWith(2, { status: "suspended" }));
+  });
+
+  it("lists the questions Ask couldn't answer, most asked first", async () => {
+    nav.search = new URLSearchParams("tab=ask");
+    vi.mocked(session.getMe).mockResolvedValue(makeUser({ role: "admin" }));
+    vi.mocked(session.adminAskMisses).mockResolvedValue([
+      { question: "How do I catch walleye at night?", outcome: "unguided_fish", lang: "en", state: "MN", species_slug: null, count: 7, days: 3, last_day: "2026-11-01" },
+    ]);
+    renderApp(<AdminConsole />);
+    const row = (await screen.findByText("How do I catch walleye at night?")).closest("tr") as HTMLElement;
+    expect(row).toHaveTextContent("Fish without a guide");
+    expect(row).toHaveTextContent("3 days");
+    fireEvent.change(screen.getByLabelText("Why it missed"), { target: { value: "no_match" } });
+    await waitFor(() => expect(session.adminAskMisses).toHaveBeenLastCalledWith(30, "no_match"));
   });
 });

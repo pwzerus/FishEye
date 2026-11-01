@@ -933,6 +933,43 @@ const ja: Messages = {
     linkFailed: "そのリンクは使えませんでした",
     signInToSend: "ログインして新しいリンクを送る",
   },
+  baitTip: {
+    whyFish: (fish: string) => `${fish}に効く理由`,
+    whyItWorks: "効く理由",
+    howToUse: "使い方",
+    catches: "釣れる魚",
+    alsoCatches: "ほかに釣れる魚",
+    shopsOnMap: "地図で釣具店を見る →",
+    readMore: "ハンドブックで詳しく →",
+    askMore: "Askで質問する →",
+    askQuestion: (bait: string) => `${bait}の使い方は？`,
+    mentioned: "ここに出てくるエサとルアー：",
+  },
+  lakeAnswer: {
+    badge: "FishEye の湖データより",
+    onRecord: "記録のある魚",
+    reported: "ほかに報告のある魚：",
+    noFish: "FishEye にはこの湖の魚の記録がまだありません。魚がいないという意味ではありません。",
+    asked: (fish: string, status: "on_record" | "reported" | "no_record") =>
+      status === "on_record"
+        ? `${fish}：ここに記録があります。`
+        : status === "reported"
+          ? `${fish}：ここで報告がありますが、州機関の確認はありません。`
+          : `${fish}：ここの記録はまだありません。いないという意味ではありません。`,
+    accessPoints: (n: number) => `アクセス地点 ${n} か所`,
+    attractors: (n: number) => `魚礁 ${n} か所`,
+    openLake: "この湖を地図で開く →",
+    agencyPage: "州機関のページ →",
+    sameName: "同じ名前のほかの湖：",
+    closed: "一般には開放されていません。",
+    likelyPrivate: "私有地の可能性があります。行く前に確認してください。",
+    near: (place: string) => `${place}周辺`,
+    inState: (state: string) => state,
+    or: "または",
+    listTitle: (fish: string, where: string) => `${where}で${fish}の記録がある湖：`,
+    listTitleNoFish: (where: string) => `${where}で記録がある湖：`,
+    listNone: (fish: string, where: string) => `FishEye には${where}の${fish}の湖の記録がまだありません。`,
+  },
   identify: {
     eyebrow: "写真で判定",
     title: "この魚は何？",

@@ -536,7 +536,7 @@ export interface AskCitation {
 // "passages": the search alone, no model call (POST /api/ask). The other
 // three come from an AI summary (POST /api/ask/summary), except "no_match",
 // which either can return. See docs/adr/0023.
-export type AskAnswerSource = "passages" | "llm" | "fallback" | "no_match";
+export type AskAnswerSource = "passages" | "llm" | "fallback" | "no_match" | "lakes";
 
 /** Today's AI summaries for whoever is asking (backend services/ai_quota.py). */
 export interface AiAllowance {
@@ -571,6 +571,37 @@ export interface AskResponse {
   // Whose rules it answers for: a state the question names, else the one
   // picked, else null (backend services/rag/ask.answer_state).
   state?: string | null;
+  // A lake named, or where to go: from the lake data, not the guides.
+  lakes?: AskLakes | null;
+}
+
+/** A lake in an answer (backend services/rag/lake_facts.py). */
+export interface AskLake {
+  id: number;
+  name: string;
+  state_code: string;
+  county: string | null;
+  data_tier: string;
+  public_access_status: string;
+  species: { name: string; slug: string | null; confidence: string | null }[];
+  reported: string[];
+  // The fish the question named. "no_record" is not "not there".
+  asked: { slug: string; name: string; status: "on_record" | "reported" | "no_record" }[];
+  access_points: number;
+  fish_attractors: number;
+  agency_url: string | null;
+  credit: string | null;
+}
+
+export interface AskLakes {
+  kind: "lake" | "list";
+  lakes: AskLake[];
+  same_name: AskLake[];
+  place: string | null;
+  state: string | null;
+  fish: string[];
+  fish_slugs: string[];
+  answers_it: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -728,6 +759,20 @@ export interface WaterGroup {
   thumb_url: string | null;
 }
 
+/** GET /api/baits: a bait or lure as a linked term (backend knowledge/bait_terms.py). */
+export interface BaitCard {
+  id: string;
+  topic: string; // its handbook topic
+  title: string;
+  what: string;
+  why: string | null;
+  how: string | null;
+  names: Record<string, string[]>; // the words it is recognised by, per language
+  skip_on: string[]; // fish pages where it isn't a bait (shad on a shad's)
+  fish: { slug: string; name: string; why: string | null }[];
+  sources: GuideSource[];
+}
+
 /** POST /api/fish-id: what a catch photo shows (backend app/api/pins.py). */
 export interface FishCandidate {
   slug: string;
@@ -861,6 +906,18 @@ export interface AuditEntry {
   target_id: number;
   detail: string | null;
   created_at: string;
+}
+
+/** GET /api/admin/ask-misses: a question Ask couldn't answer (backend services/ask_misses.py). */
+export interface AskMiss {
+  question: string;
+  outcome: "no_match" | "unguided_fish" | "other_state" | "off_topic";
+  lang: string;
+  state: string | null;
+  species_slug: string | null;
+  count: number;
+  days: number;
+  last_day: string;
 }
 
 export interface Paged<T> {

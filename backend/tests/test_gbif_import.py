@@ -177,7 +177,7 @@ def test_matching_drops_what_cant_be_trusted_and_says_why():
         _rec(1, 30.2, -97.0),  # the same record twice
         _rec(2, 30.2, -97.0, basisOfRecord="FOSSIL_SPECIMEN"),
         _rec(3, 30.2, -97.0, coordinateUncertaintyInMeters=5_000),
-        _rec(4, 30.2, -97.0, species="Walleye"),  # no guide for it
+        _rec(4, 30.2, -97.0, species="Sauger"),  # no guide for it
         _rec(5, 35.0, -100.0),  # a river or creek
         _rec(6, 31.2, -97.0),
         _rec(7, 30.3, -96.9, license=CC_BY_NC),

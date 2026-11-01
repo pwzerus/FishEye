@@ -52,6 +52,11 @@ export default function PrivacyPage() {
             <strong>AI summaries:</strong> how many you use each day, so the daily allowance works.
           </li>
           <li>
+            <strong>Questions Ask couldn&apos;t answer:</strong> the question, its language and the state or fish you
+            picked, so we know which guides to write next. We don&apos;t record who asked, we take out email addresses,
+            phone numbers and links first, and we delete them after 90 days.
+          </li>
+          <li>
             <strong>Server logs:</strong> like most websites, our server records each request (IP address, page, time,
             browser) to keep the site running and secure. We keep these only as long as needed for that.
           </li>

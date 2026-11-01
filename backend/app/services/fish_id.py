@@ -39,7 +39,7 @@ import numpy as np
 from PIL import Image
 
 from app.core.config import get_settings
-from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, NOT_FISH, OTHER_FISH, group_label
+from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, GUIDED_SINCE_BUILD, NOT_FISH, OTHER_FISH, group_label
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +166,7 @@ def check_claim(ident: Identification, claimed: str | None, policy: Policy = POL
         return Verdict(GROUP, claimed, best.slug, group_p,
                        f"Photo check: this looks like {what}. Which kind, the photo can't show, so the species is your call.")
     if best_p >= policy.contradict and best_group != group:
-        if best.kind == OTHER_FISH:
+        if best.kind == OTHER_FISH and best.slug not in GUIDED_SINCE_BUILD:
             return Verdict(OTHER, claimed, best.slug, best_p,
                            f"This looks like {_a(best.label)}, not {_a(label)}. It isn't on FishEye's list yet: choose Other and name it.")
         return Verdict(MISMATCH, claimed, best.slug, best_p,

@@ -909,6 +909,43 @@ const zh: Messages = {
     linkFailed: "这个链接无效",
     signInToSend: "登录后再发一个链接",
   },
+  baitTip: {
+    whyFish: (fish: string) => `${fish}为什么吃它`,
+    whyItWorks: "为什么管用",
+    howToUse: "怎么用",
+    catches: "能钓到",
+    alsoCatches: "还能钓到",
+    shopsOnMap: "地图上的渔具店 →",
+    readMore: "手册里的详细说明 →",
+    askMore: "在 Ask 里问 →",
+    askQuestion: (bait: string) => `${bait}怎么用？`,
+    mentioned: "提到的饵和拟饵：",
+  },
+  lakeAnswer: {
+    badge: "来自 FishEye 湖泊数据",
+    onRecord: "有记录的鱼",
+    reported: "另有报告：",
+    noFish: "FishEye 暂时没有这个湖的鱼类记录。这不代表湖里没有鱼。",
+    asked: (fish: string, status: "on_record" | "reported" | "no_record") =>
+      status === "on_record"
+        ? `${fish}：这里有记录。`
+        : status === "reported"
+          ? `${fish}：这里有人报告过，但没有州政府确认。`
+          : `${fish}：这里暂无记录。这不代表没有。`,
+    accessPoints: (n: number) => `${n} 个下水点/入口`,
+    attractors: (n: number) => `${n} 个人工鱼巢`,
+    openLake: "在地图上打开这个湖 →",
+    agencyPage: "州政府的页面 →",
+    sameName: "同名的其他湖：",
+    closed: "不对公众开放。",
+    likelyPrivate: "可能是私人水域：去之前先确认。",
+    near: (place: string) => `${place}附近`,
+    inState: (state: string) => state,
+    or: "或",
+    listTitle: (fish: string, where: string) => `${where}有${fish}记录的湖：`,
+    listTitleNoFish: (where: string) => `${where}有记录的湖：`,
+    listNone: (fish: string, where: string) => `FishEye 暂时没有${where}${fish}的湖泊记录。`,
+  },
   identify: {
     eyebrow: "拍照识鱼",
     title: "这是什么鱼？",

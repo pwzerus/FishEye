@@ -205,7 +205,7 @@ FISHING_TERMS = frozenset(
     shiner crawfish crayfish crawdad grasshopper stinkbait powerbait boilie
     """
     # Lures
-    """lure jig jighead crankbait spinnerbait buzzbait jerkbait swimbait
+    """lure jig jighead rig wacky crankbait spinnerbait buzzbait jerkbait swimbait
     topwater
     """
     # Tackle and knots
@@ -233,7 +233,7 @@ AMBIGUOUS_TERMS = frozenset(
     freeze freezer frozen thaw thawed fridge refrigerator vacuum glaze
     measure measuring length ruler mount
     drain dry invasive mussel mussels zebra trailer launch ramp
-    monofilament recycle recycling discard discarded""".split()
+    monofilament recycle recycling discard discarded ice thick thickness knot knots""".split()
 )
 # Two everyday words that together name a piece of tackle or a practice.
 FISHING_PHRASES = (
@@ -332,7 +332,7 @@ SPECIES_ALIASES: dict[str, tuple[str, ...]] = {
     "bream": ("bluegill",),
     "brim": ("bluegill",),
     "sunfish": ("bluegill", "redear-sunfish"),
-    "perch": ("bluegill",),
+    "perch": ("yellow-perch", "bluegill"),
     "gizzard shad": ("gizzard-shad",),
     "threadfin shad": ("threadfin-shad",),
     "threadfin": ("threadfin-shad",),
@@ -358,7 +358,35 @@ SPECIES_ALIASES: dict[str, tuple[str, ...]] = {
     "shellcracker": ("redear-sunfish",),
     "rainbow trout": ("rainbow-trout",),
     "rainbows": ("rainbow-trout",),
-    "trout": ("rainbow-trout",),
+    "trout": ("rainbow-trout", "brown-trout", "brook-trout"),
+    # The northern and western fish (2026-11-01).
+    "walleyes": ("walleye",),
+    "walleye": ("walleye",),
+    "northern pike": ("northern-pike",),
+    "northerns": ("northern-pike",),
+    "pike": ("northern-pike",),
+    "yellow perch": ("yellow-perch",),
+    "lake perch": ("yellow-perch",),
+    "striped perch": ("yellow-perch",),
+    "brook trout": ("brook-trout",),
+    "brookies": ("brook-trout",),
+    "brookie": ("brook-trout",),
+    "brown trout": ("brown-trout",),
+    "german brown": ("brown-trout",),
+    "golden trout": ("golden-trout",),
+    "cutthroat trout": ("cutthroat-trout",),
+    "lahontan cutthroat": ("cutthroat-trout",),
+    "cutthroat": ("cutthroat-trout",),
+    "cutties": ("cutthroat-trout",),
+    "kokanee salmon": ("kokanee-salmon",),
+    "kokanee": ("kokanee-salmon",),
+    "brown bullhead": ("brown-bullhead",),
+    "black bullhead": ("brown-bullhead",),
+    "yellow bullhead": ("brown-bullhead",),
+    "bullheads": ("brown-bullhead",),
+    "bullhead": ("brown-bullhead",),
+    "horned pout": ("brown-bullhead",),
+    "bullpout": ("brown-bullhead",),
     "freshwater drum": ("freshwater-drum",),
     "gaspergou": ("freshwater-drum",),
     "common carp": ("common-carp",),
@@ -402,10 +430,9 @@ UNGUIDED_FISH = (
     "goggle-eye", "goggleye", "croaker", "bluefish", "snook", "tarpon", "grouper",
     "peacock bass", "sea bass",
     "rock bass", "yellow bass", "red drum", "black drum", "redfish",
-    "speckled trout", "spotted seatrout", "seatrout", "sea trout", "brown trout",
-    "brook trout", "cutthroat trout", "yellow perch", "white perch", "walleye",
-    "sauger", "alligator gar", "gar", "northern pike", "pike", "muskellunge",
-    "muskie", "bowfin", "bullheads", "bullhead", "warmouth", "longear sunfish",
+    "speckled trout", "spotted seatrout", "seatrout", "sea trout",
+    "white perch", "sauger", "alligator gar", "gar", "muskellunge",
+    "muskie", "bowfin", "warmouth", "longear sunfish",
     "longear", "green sunfish", "flounder", "sheepshead", "tilapia", "salmon",
     "tuna", "snapper", "mackerel", "shark", "sharks", "buffalo fish",
 )
@@ -462,15 +489,37 @@ ZH_SPECIES_ALIASES: dict[str, tuple[str, ...]] = {
     "线鳍真鰶": ("threadfin-shad",),
     "鲥鱼": ("gizzard-shad", "threadfin-shad"),
     "虹鳟": ("rainbow-trout",),
-    "鳟鱼": ("rainbow-trout",),
+    "鳟鱼": ("rainbow-trout", "brown-trout", "brook-trout"),
+    "白梭吻鲈": ("walleye",),
+    "大眼梭鲈": ("walleye",),
+    "大眼鲈": ("walleye",),
+    "玻璃梭鲈": ("walleye",),
+    "白斑狗鱼": ("northern-pike",),
+    "北方狗鱼": ("northern-pike",),
+    "狗鱼": ("northern-pike",),
+    "黄金鲈": ("yellow-perch",),
+    "黄鲈": ("yellow-perch",),
+    "溪红点鲑": ("brook-trout",),
+    "美洲红点鲑": ("brook-trout",),
+    "布鲁克鳟": ("brook-trout",),
+    "褐鳟": ("brown-trout",),
+    "棕鳟": ("brown-trout",),
+    "金鳟": ("golden-trout",),
+    "切喉鳟": ("cutthroat-trout",),
+    "科卡尼鲑": ("kokanee-salmon",),
+    "陆封红鲑": ("kokanee-salmon",),
+    "云斑鮰": ("brown-bullhead",),
+    "牛头鲇": ("brown-bullhead",),
+    "牛头鲶": ("brown-bullhead",),
+    "牛头鮰": ("brown-bullhead",),
     "淡水鼓鱼": ("freshwater-drum",),
     "淡水石首鱼": ("freshwater-drum",),
     "鼓鱼": ("freshwater-drum",),
     "鲤鱼": ("common-carp",),
 }
 ZH_UNGUIDED_FISH = (
-    "红鼓鱼", "红鼓", "黑鼓", "海鳟", "斑点海鳟", "黄金鲈", "黄鲈",
-    "白梭吻鲈", "梭鱼", "狗鱼", "雀鳝", "弓鳍鱼", "罗非鱼", "鲑鱼", "三文鱼", "金枪鱼",
+    "红鼓鱼", "红鼓", "黑鼓", "海鳟", "斑点海鳟",
+    "梭鱼", "雀鳝", "弓鳍鱼", "罗非鱼", "鲑鱼", "三文鱼", "金枪鱼",
     "鲨鱼", "比目鱼", "鲈鲉", "海鲈",
 )
 _ZH_ALIASES = sorted(ZH_SPECIES_ALIASES.items(), key=lambda kv: -len(kv[0]))

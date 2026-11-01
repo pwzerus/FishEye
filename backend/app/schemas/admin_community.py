@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
@@ -98,3 +98,16 @@ class AdminUserPage(Page):
 
 class AuditPage(Page):
     items: list[AuditOut]
+
+
+class AskMissOut(BaseModel):
+    """A question Ask couldn't answer (services/ask_misses.py)."""
+
+    question: str
+    outcome: str
+    lang: str
+    state: str | None
+    species_slug: str | None
+    count: int  # times asked in the period
+    days: int  # on how many days
+    last_day: date

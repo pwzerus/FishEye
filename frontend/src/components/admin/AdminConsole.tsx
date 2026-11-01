@@ -10,6 +10,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { ApiError } from "@/lib/api/client";
 import {
+  adminAskMisses,
   adminAudit,
   adminLakeReports,
   adminPins,
@@ -28,6 +29,7 @@ import type {
   AdminReportGroup,
   AdminStats,
   AdminUser,
+  AskMiss,
   AuditEntry,
   Paged,
   PinSummary,
@@ -42,6 +44,7 @@ const TABS = [
   { id: "pins", label: "Catches" },
   { id: "users", label: "Users" },
   { id: "audit", label: "Audit log" },
+  { id: "ask", label: "Ask misses" },
   { id: "data", label: "Data refresh" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
@@ -140,6 +143,7 @@ export function AdminConsole() {
         {tab === "pins" && <Pins confirmThen={confirmThen} />}
         {tab === "users" && <Users meId={user.id} confirmThen={confirmThen} />}
         {tab === "audit" && <Audit />}
+        {tab === "ask" && <AskMisses />}
         {tab === "data" && <TpwdRefresh />}
       </div>
 
@@ -835,6 +839,83 @@ function Audit() {
     <section className="admin-panel">
       {data.items.length === 0 ? <p className="muted">Nothing logged yet.</p> : <AuditTable rows={data.items} />}
       <Pager page={data.page} total={data.total} size={data.page_size} onPage={setPage} />
+    </section>
+  );
+}
+
+const MISS_LABEL: Record<AskMiss["outcome"], string> = {
+  no_match: "Nothing matched",
+  unguided_fish: "Fish without a guide",
+  other_state: "Only another state's rules",
+  off_topic: "Not a fishing question",
+};
+
+/** Questions Ask couldn't answer, most asked first (backend services/ask_misses.py):
+ * what the guides should cover next. Stored without who asked. */
+function AskMisses() {
+  const [days, setDays] = useState(30);
+  const [outcome, setOutcome] = useState("");
+  const [rows, setRows] = useState<AskMiss[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    adminAskMisses(days, outcome || undefined)
+      .then(setRows)
+      .catch((e) => setError(errText(e)));
+  }, [days, outcome]);
+  return (
+    <section className="admin-panel">
+      <div className="filter-bar">
+        <select aria-label="Period" value={days} onChange={(e) => { setRows(null); setDays(Number(e.target.value)); }}>
+          <option value={7}>Last 7 days</option>
+          <option value={30}>Last 30 days</option>
+          <option value={90}>Last 90 days</option>
+        </select>
+        <select aria-label="Why it missed" value={outcome} onChange={(e) => { setRows(null); setOutcome(e.target.value); }}>
+          <option value="">Any reason</option>
+          {Object.entries(MISS_LABEL).map(([k, label]) => (
+            <option key={k} value={k}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="muted small">Kept 90 days, without who asked. Email addresses, phone numbers and links are taken out.</p>
+      {error && <div className="backend-error">{error}</div>}
+      {!rows ? (
+        <div className="sk" style={{ height: 200 }} />
+      ) : rows.length === 0 ? (
+        <p className="muted">No unanswered questions in this period.</p>
+      ) : (
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>Why</th>
+                <th>Language</th>
+                <th>Picked</th>
+                <th className="num">Asked</th>
+                <th>Last</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={`${r.outcome}:${r.question}`}>
+                  <td lang={r.lang}>{r.question}</td>
+                  <td className="small">{MISS_LABEL[r.outcome]}</td>
+                  <td className="small">{r.lang}</td>
+                  <td className="muted small">{[r.state, r.species_slug].filter(Boolean).join(" · ")}</td>
+                  <td className="num">
+                    {r.count}
+                    {r.days > 1 && <div className="muted small">{r.days} days</div>}
+                  </td>
+                  <td className="muted small">{r.last_day}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }

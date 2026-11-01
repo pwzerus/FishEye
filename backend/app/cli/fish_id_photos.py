@@ -36,7 +36,7 @@ from typing import Any
 
 from app.data_import.provenance import USER_AGENT
 from app.knowledge.species_guides import GUIDES
-from app.services.fish_id_classes import CLASSES, OTHER_FISH
+from app.services.fish_id_classes import BY_SLUG, CLASSES, OTHER_FISH
 
 CACHE = Path("fishid_cache")
 GBIF = "https://api.gbif.org/v1"
@@ -51,7 +51,11 @@ LOOKALIKES = {c.slug: c.scientific for c in CLASSES if c.kind == OTHER_FISH}
 
 def targets() -> dict[str, str]:
     """slug → scientific name: the guide species, then the look-alikes."""
-    out = {g.slug: g.scientific_name for g in GUIDES if "×" not in g.scientific_name and " x " not in g.scientific_name}
+    out = {
+        g.slug: g.scientific_name
+        for g in GUIDES
+        if g.slug in BY_SLUG and "×" not in g.scientific_name and " x " not in g.scientific_name
+    }
     out.update(LOOKALIKES)
     return out
 

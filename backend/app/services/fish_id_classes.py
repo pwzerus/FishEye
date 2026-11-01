@@ -121,7 +121,22 @@ SCENES: tuple[tuple[str, str], ...] = (
 
 # The hybrid has no class of its own: from a photo it is a white or striped
 # bass, and a claim of it is checked as one of the group.
-CLAIM_GROUPS: dict[str, str] = {"hybrid-striped-bass": "temperate-bass"}
+CLAIM_GROUPS: dict[str, str] = {
+    "hybrid-striped-bass": "temperate-bass",
+    # Guides written after the model was built, for fish it has no class of
+    # their own for: checked as the kind of fish they are.
+    "golden-trout": "trout",
+    "kokanee-salmon": "trout",
+    "brown-bullhead": "catfish",
+}
+
+# Fish the built model knows as other_fish that have since got a guide. A
+# class's kind is part of what the model was built for (classes_digest), so
+# changing it here would mean rebuilding and retraining: until the next
+# rebuild they stay other_fish, and this says they are on the list now.
+GUIDED_SINCE_BUILD: frozenset[str] = frozenset(
+    {"walleye", "yellow-perch", "northern-pike", "brown-trout", "brook-trout", "cutthroat-trout"}
+)
 
 BY_SLUG: dict[str, FishClass] = {c.slug: c for c in CLASSES}
 

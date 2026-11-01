@@ -14,6 +14,7 @@ import type {
   AdminReportGroup,
   AdminStats,
   AdminUser,
+  AskMiss,
   AuditEntry,
   AuthProviders,
   FishIdResult,
@@ -283,3 +284,8 @@ export function adminUsers(params: { q?: string; role?: string; status?: string;
 export const adminUpdateUser = (id: number, patch: { role?: string; status?: string }) =>
   sfetch<AdminUser>(`/api/admin/users/${id}`, json("PATCH", patch));
 export const adminAudit = (page = 1) => sfetch<Paged<AuditEntry>>(`/api/admin/audit?page=${page}`);
+export function adminAskMisses(days = 30, outcome?: string) {
+  const qs = new URLSearchParams({ days: String(days) });
+  if (outcome) qs.set("outcome", outcome);
+  return sfetch<AskMiss[]>(`/api/admin/ask-misses?${qs}`);
+}

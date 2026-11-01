@@ -8,9 +8,9 @@ rules took them, and Georgia's never surfaced for a Georgia angler. In its
 own view a state's rules compete only with general content, and IDF is
 computed over what that person can actually be shown.
 
-Views are built on first use and kept: all states FishEye hasn't written
-rules for share one view (general content only), so there are at most
-"covered states + 1" per retriever.
+Views are built on first use and kept: any state FishEye has written nothing
+for shares one view (general content only), so there are at most "states with
+something written + 1" per retriever.
 """
 from __future__ import annotations
 
@@ -33,7 +33,8 @@ def for_state(retr: Retriever, state: str | None) -> Retriever | None:
     if state is None:
         group = _NO_STATE
     else:
-        group = state if (j := jurisdictions.get(state)) and j.covered else _UNCOVERED
+        written = (j := jurisdictions.get(state)) and (j.covered or j.license_topic)
+        group = state if written else _UNCOVERED
     with _lock:
         cached = _views.get(retr, {}).get(group)
     if cached is not None:

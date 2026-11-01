@@ -537,6 +537,85 @@ TACKLE: dict[str, Tackle] = {
         ),
         lure_note="Carp rarely strike lures. Fish bait on the bottom.",
     ),
+    "Walleye": Tackle(
+        lure_fallback=(
+            ("Jigs, 1/8–3/8 oz: just heavy enough to feel the bottom, in dark and bright colors", "Work it slowly near the bottom, at dawn or dusk if you can."),
+            ("Small crankbaits shaped like perch or minnows (No. 5 and No. 7 are popular sizes)", "Walleye eat mostly fish. Troll it at about 1 mph."),
+        ),
+        bait_fallback=(
+            ("Shiner or fathead minnows", "Hook one on a jig and keep it near the bottom."),
+            ("Nightcrawlers", "Drag one slowly along the bottom on a slip-sinker rig."),
+        ),
+    ),
+    "Northern Pike": Tackle(
+        lure_fallback=(
+            ("Spoons", "A flash like a hurt fish draws a strike. Use a leader: its teeth cut line."),
+            ("Jerkbaits that act like an injured fish", "Twitch it along weed edges. Use a leader: its teeth cut line."),
+        ),
+        bait_fallback=(
+            ("Minnows like the suckers it eats, where your state allows them", "Set it by the weeds where pike wait, on a steel or fluorocarbon leader."),
+        ),
+    ),
+    "Yellow Perch": Tackle(
+        lure_fallback=(
+            ("Small spinners, 1/32–1/8 oz", "Cast it around until you find fish, then stay on them."),
+        ),
+        bait_fallback=(
+            ("Worms", "Fish it on or near the bottom, and give the slow bite time."),
+            ("Minnows", "Perch eat small fish too. Keep it near the bottom."),
+        ),
+    ),
+    "Brook Trout": Tackle(
+        lure_fallback=(
+            ("Small spinners, 1/32–1/8 oz", "Cast it around until you find fish, then stay on them."),
+            ("Flies of many kinds", "Brook trout take a wide range of flies."),
+        ),
+        bait_fallback=(
+            ("Worms", "Drift it along the bottom on a light-wire hook."),
+            ("Salmon eggs", "Drift them along the bottom on a light-wire hook."),
+        ),
+    ),
+    "Brown Trout": Tackle(
+        lure_fallback=(
+            ("Small spinners, 1/32–1/8 oz", "Cast past logs and undercut banks, then bring it back beside them."),
+            ("Small crankbaits", "Large browns eat fish, so this is the choice for a bigger one."),
+        ),
+        bait_fallback=(
+            ("Worms", "Drift it along the bottom on a light-wire hook."),
+            ("Minnows, where your state allows them", "Large browns eat fish and crayfish."),
+        ),
+    ),
+    "Golden Trout": Tackle(
+        lure_fallback=(
+            ("Flies of all types, especially dry flies and terrestrials", "Golden trout rise readily. Keep the cast short."),
+            ("Small spinners, 1/32–1/8 oz", "Use one where you have room to cast."),
+        ),
+    ),
+    "Cutthroat Trout": Tackle(
+        lure_fallback=(
+            ("Dry flies and terrestrials: beetles, ants and grasshoppers", "Stream fish watch the surface for drifting insects."),
+            ("Streamers", "In a lake, retrieve it very slowly at the fish's depth."),
+        ),
+        bait_fallback=(
+            ("Earthworms, for coastal fish in winter", "Coastal cutthroat eat earthworms in winter."),
+        ),
+    ),
+    "Kokanee Salmon": Tackle(
+        lure_fallback=(
+            ("Small spoons", "Troll at 0.8–1.5 mph behind a dodger, in pink or orange."),
+            ("Soft plastic tubes (hoochies or squids)", "Troll slowly behind a dodger, and tip it with corn."),
+        ),
+        bait_fallback=(
+            ("A kernel of white shoepeg corn, often scented, on the lure's hook", "Tip the lure with it. Kokanee are fished from a boat."),
+        ),
+    ),
+    "Brown Bullhead": Tackle(
+        bait_fallback=(
+            ("Worms", "Set it on the bottom of a shallow bay in the evening."),
+            ("Other strong-smelling baits", "Bullheads feed by smell: the stronger the better."),
+        ),
+        lure_note="Lures are a poor choice for bullheads. Fish bait on the bottom.",
+    ),
 }
 
 

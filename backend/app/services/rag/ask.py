@@ -75,6 +75,9 @@ ANSWER_NO_MATCH = "no_match"
 # The passages themselves, no model involved: what everyone gets first
 # (search_guides below). A written answer is a separate, metered step.
 ANSWER_PASSAGES = "passages"
+# The lake data answered it (services/rag/lake_facts.py); no passages at all.
+ANSWER_LAKES = "lakes"
+OUTCOME_LAKE = "lake"
 PASSAGES_INTRO = "Here's what the FishEye guides say:"
 # The passages are in English; a question in Chinese is told so in Chinese.
 PASSAGES_INTRO_ZH = "以下是 FishEye 指南里的相关内容（原文为英文）："
@@ -325,11 +328,14 @@ def _search(
         local = view.search(question, k=k, species=context)
     if full and not jurisdictions.applies(full[0].passage.region, state):
         own = [h for h in local if h.passage.region == state]
+        kind = _rule_kind(full[0].passage.section)
         # A state with only its bait rules written doesn't answer a licence
         # question with them: its own rule must be the same kind.
         if own and not jurisdictions.rules_written_in_full(state):
-            kind = _rule_kind(full[0].passage.section)
             own = [h for h in own if _rule_kind(h.passage.section) == kind]
+        # The same rule said for every state (clean, drain, dry) answers it too.
+        if not own:
+            own = [h for h in local if _rule_kind(h.passage.section) == kind]
         if not own:
             return [], True
     if local:

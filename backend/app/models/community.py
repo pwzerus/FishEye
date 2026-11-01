@@ -319,3 +319,25 @@ class AiUsage(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     day: Mapped[date] = mapped_column(Date)
     used: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class AskMiss(Base):
+    """A question Ask couldn't answer from the guides (services/ask_misses.py),
+    so the guides grow where people actually ask. No account, no IP: the
+    question (with addresses and phone numbers taken out), its language and
+    why it missed. One row per question per day and reason, with a count;
+    rows older than 90 days are deleted."""
+
+    __tablename__ = "ask_misses"
+    __table_args__ = (UniqueConstraint("day", "outcome", "key", name="uq_ask_miss_day_key"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    day: Mapped[date] = mapped_column(Date, index=True)
+    # no_match | unguided_fish | other_state | off_topic (rag/ask.py)
+    outcome: Mapped[str] = mapped_column(String(24))
+    key: Mapped[str] = mapped_column(String(300))  # the question lowercased, for counting repeats
+    question: Mapped[str] = mapped_column(String(300))
+    lang: Mapped[str] = mapped_column(String(8))
+    state: Mapped[str | None] = mapped_column(String(2), nullable=True)
+    species_slug: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    count: Mapped[int] = mapped_column(Integer, default=1)

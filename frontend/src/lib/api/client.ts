@@ -2,6 +2,7 @@ import { LOCALE_COOKIE, isLocale, type Locale } from "@/i18n/config";
 import { MESSAGES } from "@/i18n/messages";
 import type {
   AdvisorRequest,
+  BaitCard,
   AdvisorResponse,
   AskRequest,
   AskResponse,
@@ -247,6 +248,10 @@ export function listSpeciesGuides(): Promise<SpeciesGuide[]> {
 
 export function listHandbook(): Promise<HandbookTopic[]> {
   return apiFetch<HandbookTopic[]>("/api/species/handbook");
+}
+
+export function listBaits(): Promise<BaitCard[]> {
+  return apiFetch<BaitCard[]>("/api/baits");
 }
 
 export function listJurisdictions(): Promise<Jurisdiction[]> {

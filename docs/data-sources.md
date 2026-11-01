@@ -333,6 +333,43 @@ Unchanged (ADR 0012): CC0 and CC BY records only in a commercial build
   each state's page before each season, and when a state's page says it
   changed.
 
+## Guides, handbook and license rules added 2026-11-01
+
+### State agency fishing pages — RESTRICTED (facts + link)
+
+- What: nine more fish guides (walleye, northern pike, yellow perch, brook,
+  brown, golden and cutthroat trout, kokanee, bullheads), handbook topics on
+  rigs and jigs, knots, ways to fish, the seasons and ice safety, and who needs
+  a fishing license in 42 more states and DC (`knowledge/species_guides.py`,
+  `angling_handbook.py`, `state_licenses.py`). Each names its pages in
+  `SOURCES`, and each is shown with them.
+- Licence class: RESTRICTED. Minnesota DNR ("© 2026 Minnesota DNR"), Missouri
+  ("Copyright ©2026 Conservation Commission of Missouri. All Rights Reserved."),
+  Pennsylvania ("Copyright © 2026 Commonwealth of Pennsylvania. All rights
+  reserved."), Washington ("© 2026 All rights reserved."), Wisconsin DNR, New
+  York DEC, and each state's license page. CDFW's `Fishing/Inland` pages are
+  under its site terms, as elsewhere in this register.
+- Stored: facts and numbers in FishEye's own sentences, with a link. No
+  agency's sentences, tables or photos; MDC marks its photos "restricted to MDC
+  only" and none is used.
+- How collected: pages opened one at a time on 2026-11-01. Where an agency's
+  license page couldn't be read (AZ, AR, ID, IL, KS, LA, ME, MI, NC, OH, RI, TN,
+  among others), its eRegulations guide was read instead, and some of those pages
+  are dated 2022–2025: **re-check these before relying on them**. Prices and dated
+  free-fishing days were left out because they go stale.
+- Left out because no page could be read: license ages for Massachusetts,
+  Minnesota, Nebraska, New Hampshire and New Jersey; bait rules for Alaska,
+  Delaware, Hawaii, Montana and South Dakota. Ask sends those questions to the
+  agency. Also left out for want of an agency source: the Carolina rig, the uni
+  and FG knots, and fish finders.
+
+### US Fish and Wildlife Service, US EPA — PD
+
+- What: Clean, Drain, Dry steps (`fws.gov/story/clean-drain-dry`), and who issues
+  fish advisories and how to find them (`epa.gov/choose-fish-and-shellfish-wisely`).
+  Federal works; credited anyway. Stop Aquatic Hitchhikers (a campaign site, no
+  licence stated) is used for facts + link only.
+
 ## Not used
 
 - **CDFW BIOS ds583 and ds2880**: marked "CDFW staff only". FORBIDDEN.

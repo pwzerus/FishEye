@@ -6,6 +6,8 @@ import { localFishName } from "@/i18n/names";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { BaitText } from "@/components/baits/BaitTip";
+
 import { AskChat } from "@/components/ask/AskChat";
 import { FishArt } from "@/components/fish/FishArt";
 import { Tag } from "@/components/fish/FishGrid";
@@ -106,14 +108,15 @@ function SetupCard({ setup, index, t }: { setup: TackleSetup; index: number; t: 
   );
 }
 
-function ListBlock({ id, title, items }: { id: string; title: string; items: string[] }) {
+/** `baitsFor`: the baits named are tappable (components/baits/BaitTip.tsx). */
+function ListBlock({ id, title, items, baitsFor }: { id: string; title: string; items: string[]; baitsFor?: string }) {
   if (items.length === 0) return null;
   return (
     <section id={id} className="guide-block">
       <h2>{title}</h2>
       <ul className="nice-list" lang="en">
         {items.map((item) => (
-          <li key={item}>{item}</li>
+          <li key={item}>{baitsFor ? <BaitText text={item} fish={baitsFor} /> : item}</li>
         ))}
       </ul>
     </section>
@@ -218,7 +221,9 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
                       <LiveBaitWarning />
                       <ul className="nice-list" lang="en">
                         {guide.live_baits.map((b) => (
-                          <li key={b}>{b}</li>
+                          <li key={b}>
+                            <BaitText text={b} fish={slug} />
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -228,7 +233,9 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
                       <h3>{t.lures}</h3>
                       <ul className="nice-list" lang="en">
                         {guide.lures.map((b) => (
-                          <li key={b}>{b}</li>
+                          <li key={b}>
+                            <BaitText text={b} fish={slug} />
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -237,7 +244,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
               </section>
             )}
 
-            <ListBlock id="why_these_baits" title={t.whyBaits} items={guide.why_these_baits} />
+            <ListBlock id="why_these_baits" title={t.whyBaits} items={guide.why_these_baits} baitsFor={slug} />
             <ListBlock id="how_to_get" title={t.howToGet} items={guide.how_to_get} />
             <ListBlock id="bait_for" title={t.baitFor} items={guide.bait_for} />
 

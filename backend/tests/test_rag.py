@@ -134,7 +134,8 @@ def test_fish_without_a_guide_are_not_read_as_the_guided_fish_in_their_name():
     assert split_species("red drum bait")[0] == ()
     assert split_species("speckled trout")[0] == ()
     assert split_species("rock bass")[0] == ()
-    assert split_species("yellow perch")[0] == ()
+    assert split_species("white perch")[0] == ()
+    assert split_species("yellow perch")[0] == ("yellow-perch",)
     assert default_retriever().search("how do I catch rock bass") == []
     # Named alongside a guided fish, the guided one is still answered.
     assert split_species("red drum or freshwater drum")[0] == ("freshwater-drum",)

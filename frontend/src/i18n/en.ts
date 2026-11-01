@@ -947,6 +947,45 @@ const en = {
     linkFailed: "That link didn't work",
     signInToSend: "Sign in to send a new link",
   },
+  // A bait or lure's card (components/baits/BaitTip.tsx).
+  baitTip: {
+    whyFish: (fish: string) => `Why ${fish} takes it`,
+    whyItWorks: "Why it works",
+    howToUse: "How to use it",
+    catches: "Catches",
+    alsoCatches: "Also catches",
+    shopsOnMap: "Bait & tackle shops on the map →",
+    readMore: "More in the handbook →",
+    askMore: "Ask about it →",
+    askQuestion: (bait: string) => `How do I fish with ${bait.toLowerCase()}?`,
+    mentioned: "Baits and lures here:",
+  },
+  // Ask's answers from the lake data (components/ask/LakeAnswer.tsx).
+  lakeAnswer: {
+    badge: "From FishEye's lake data",
+    onRecord: "Fish on record",
+    reported: "Also reported here:",
+    noFish: "FishEye has no fish on record for this lake yet. That doesn't mean there are none.",
+    asked: (fish: string, status: "on_record" | "reported" | "no_record") =>
+      status === "on_record"
+        ? `${fish}: on record here.`
+        : status === "reported"
+          ? `${fish}: reported here, but not confirmed by a state agency.`
+          : `${fish}: no record here yet. That doesn't mean there are none.`,
+    accessPoints: (n: number) => `${n} access ${n === 1 ? "point" : "points"}`,
+    attractors: (n: number) => `${n} fish ${n === 1 ? "attractor" : "attractors"}`,
+    openLake: "Open this lake on the map →",
+    agencyPage: "The state agency's page →",
+    sameName: "Other lakes with this name:",
+    closed: "Closed to the public.",
+    likelyPrivate: "Probably private: check before you go.",
+    near: (place: string) => `near ${place}`,
+    inState: (state: string) => `in ${state}`,
+    or: " or ",
+    listTitle: (fish: string, where: string) => `Lakes on record for ${fish} ${where}:`,
+    listTitleNoFish: (where: string) => `Lakes on record ${where}:`,
+    listNone: (fish: string, where: string) => `FishEye has no lake on record for ${fish} ${where} yet.`,
+  },
   identify: {
     eyebrow: "Photo ID",
     title: "What fish is this?",

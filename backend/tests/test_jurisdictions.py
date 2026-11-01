@@ -151,10 +151,22 @@ def test_an_untagged_passage_never_states_a_texas_rule():
 
 
 def test_a_rules_question_from_another_state_is_not_answered_with_texas_rules():
-    result = rag_ask.search_guides(RULE_QUESTION, state="MT")
+    result = rag_ask.search_guides(RULE_QUESTION, state="MN")
     assert result.citations == []
     assert result.trace.outcome == rag_ask.OUTCOME_OTHER_STATE
-    assert "Montana" in result.answer and "45 states and Washington, D.C." in result.answer
+    assert "Minnesota" in result.answer
+
+
+def test_a_state_with_a_license_topic_answers_with_it():
+    result = rag_ask.search_guides(RULE_QUESTION, state="AL")
+    assert result.citations[0].id == "all-fish#rule-license-al" and "Alabama" in result.citations[0].text
+    assert j.get("AK").license_from_age is None  # residents and visitors differ
+    assert j.get("AL").license_from_age == 16 and j.get("AL").license_topic == "rule-license-al"
+
+
+def test_the_rule_for_every_state_answers_in_a_state_without_its_own():
+    result = rag_ask.search_guides("how do I stop spreading zebra mussels", state="AL")
+    assert result.citations[0].id == "all-fish#rule-clean-drain-dry-us"
 
 
 @pytest.mark.parametrize(
@@ -187,17 +199,17 @@ def test_a_state_named_in_a_question_is_recognised(question, want):
 
 def test_a_state_named_in_the_question_wins_over_the_one_picked():
     """The 2026-10-28 review: a Minnesota licence question was answered with
-    Texas's, Georgia's and California's rules. (Minnesota has its bait rules
-    now; Montana has none written.)"""
+    Texas's, Georgia's and California's rules. (Its page gave no age that
+    could be read, so its licence rules aren't written.)"""
     for picked in (None, "TX"):
-        result = rag_ask.search_guides("do I need a fishing license in Montana", state=picked)
+        result = rag_ask.search_guides("do I need a fishing license in Minnesota", state=picked)
         assert result.citations == [], picked
         assert result.trace.outcome == rag_ask.OUTCOME_OTHER_STATE
-        assert "Montana" in result.answer
+        assert "Minnesota" in result.answer
     # Named in Chinese, answered in Chinese.
-    result = rag_ask.search_guides("蒙大拿钓鱼需要执照吗")
+    result = rag_ask.search_guides("明尼苏达钓鱼需要执照吗")
     assert result.citations == [] and result.trace.outcome == rag_ask.OUTCOME_OTHER_STATE
-    assert "蒙大拿" in result.answer and "FishEye 还没有整理这个州的规定" in result.answer
+    assert "明尼苏达" in result.answer
     # A state with only its bait rules written says so for a licence question.
     result = rag_ask.search_guides("do I need a fishing license in Minnesota")
     assert result.citations == [] and "some of Minnesota's fishing rules" in result.answer
@@ -258,8 +270,8 @@ def test_each_state_searches_its_own_index():
     ga, co, mt, ak = (regional.for_state(full, s) for s in ("GA", "CO", "MT", "AK"))
     assert {p.region for p in ga.passages} == {"all", "GA"}
     assert {p.region for p in co.passages} == {"all", "CO"}
-    assert {p.region for p in mt.passages} == {"all"}
-    assert mt is ak  # every state without rules shares one view
+    assert {p.region for p in mt.passages} == {"all", "MT"}  # a license topic and nothing else
+    assert {p.region for p in ak.passages} == {"all", "AK"}
     # No state picked: the three states written up first, none of the
     # bait-rules-only ones (they'd answer every bait question).
     assert {p.region for p in regional.for_state(full, None).passages} == {"all", "CA", "GA", "TX"}
@@ -334,13 +346,13 @@ def test_how_to_questions_get_the_same_answer_in_every_state():
 def test_what_ranks_below_another_states_rule_is_not_shown_as_an_answer():
     # The licence passage is the best match; the rest are filler. Showing
     # the filler would read as an answer to "do I need a licence".
-    assert rag_ask.search_guides(RULE_QUESTION, state="MT").citations == []
+    assert rag_ask.search_guides(RULE_QUESTION, state="MN").citations == []
 
 
 def test_a_state_never_sees_passages_of_another_state():
     for q in ("can I use live bait or a cast net", "what should I put in my tackle box", "kids life jacket"):
         for p in rag_ask.search_guides(q, state="MT").citations:
-            assert p.region == j.REGION_ALL, (q, p.id)
+            assert p.region in (j.REGION_ALL, "MT"), (q, p.id)
         for p in rag_ask.search_guides(q, state="CO").citations:
             assert p.region in (j.REGION_ALL, "CO"), (q, p.id)
 
@@ -371,12 +383,14 @@ def test_jurisdictions_endpoint_lists_covered_states_first(client):
     assert body[: len(covered)] == covered and len(covered) == 46
     assert all(s["bait_rules"] and s["bait_rules_sources"] for s in covered)
     montana = next(s for s in body if s["code"] == "MT")
-    # Not covered (no rules written), but its agency's own pages are linked.
+    # No bait rules written, but its license topic is, and its agency's pages are linked.
     assert montana["covered"] is False and montana["limits_url"].startswith("https://fwp.mt.gov/")
     assert montana["bait_rules"] == []
-    assert montana["license_from_age"] is None and montana["license_topic"] is None
-    ages = {s["code"]: s["license_from_age"] for s in body if s["license_from_age"] is not None}
-    assert ages == {"CA": 16, "GA": 16, "TX": 17}
+    assert montana["license_from_age"] == 12 and montana["license_topic"] == "rule-license-mt"
+    ages = {s["code"]: s["license_from_age"] for s in body}
+    assert ages["CA"] == 16 and ages["TX"] == 17 and ages["MN"] is None
+    topics = {s["license_topic"] for s in body if s["license_topic"]}
+    assert len(topics) == 46
 
 
 @pytest.mark.parametrize("code", ["CA", "GA", "TX"])
@@ -393,7 +407,7 @@ def test_a_states_licence_age_is_the_one_its_handbook_topic_states(code):
 
 
 def test_ask_endpoint_takes_a_state(client):
-    other = client.post("/api/ask", json={"question": RULE_QUESTION, "state": "CO"}).json()
+    other = client.post("/api/ask", json={"question": RULE_QUESTION, "state": "MN"}).json()
     assert other["citations"] == [] and other["trace"]["outcome"] == "other_state"
     texas = client.post("/api/ask", json={"question": RULE_QUESTION, "state": "TX"}).json()
     assert "TX" in {c["region"] for c in texas["citations"]}
@@ -417,10 +431,10 @@ def test_handbook_and_guides_say_which_parts_are_one_states_rules(client):
     assert {g["legal_notes_region"] for g in guides} == {"TX"}
 
 
-@pytest.mark.parametrize("state", ["CO", "TX", "GA"])
+@pytest.mark.parametrize("state", ["MN", "TX", "GA"])
 def test_summary_is_refused_only_when_the_search_finds_nothing(client, state):
     # An AI summary can't be spent on a rules question another state's
     # reader would only get "not written yet" for. (Needs sign-in first, so
     # the contract tested here is the search half they share.)
     result = rag_ask.search_guides(RULE_QUESTION, state=state)
-    assert bool(result.citations) == (state != "CO")
+    assert bool(result.citations) == (state != "MN")

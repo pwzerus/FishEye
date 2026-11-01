@@ -96,8 +96,8 @@ def test_pin_validation(make_client, fields):
 def test_free_text_species_when_its_not_in_the_guide(make_client):
     c = make_client()
     signup(c)
-    pin = create(c, species_other="Walleye").json()
-    assert pin["species_slug"] is None and pin["species_label"] == "Walleye"
+    pin = create(c, species_other="Sauger").json()
+    assert pin["species_slug"] is None and pin["species_label"] == "Sauger"
     # A guide species typed in is that species (and is photo-checked as one).
     pin = create(c, species_other="freshwater drum").json()
     assert pin["species_slug"] == "freshwater-drum" and pin["species_label"] == "Freshwater Drum"
@@ -496,7 +496,7 @@ def test_switching_between_a_guide_species_and_free_text(make_client):
     c = make_client()
     signup(c)
     pin = create(c, species_slug="bluegill").json()
-    other = c.patch(f"/api/pins/{pin['id']}", json={"species_other": "Walleye"}).json()
-    assert other["species_slug"] is None and other["species_label"] == "Walleye"
+    other = c.patch(f"/api/pins/{pin['id']}", json={"species_other": "Sauger"}).json()
+    assert other["species_slug"] is None and other["species_label"] == "Sauger"
     back = c.patch(f"/api/pins/{pin['id']}", json={"species_slug": "white-crappie"}).json()
     assert back["species_slug"] == "white-crappie" and back["species_label"] == "White Crappie"

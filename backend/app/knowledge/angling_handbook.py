@@ -18,7 +18,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.knowledge.jurisdictions import JURISDICTIONS
 from app.knowledge.species_guides import SOURCES
+from app.knowledge.state_licenses import STATE_LICENSES, license_body
 
 
 @dataclass(frozen=True)
@@ -38,12 +40,15 @@ CATEGORIES: dict[str, str] = {
     "baits": "Live and natural bait",
     "lures": "Lures",
     "tackle": "Rods, reels, line and terminal tackle",
+    "rigs": "Rigs and jigs",
     "knots": "Knots",
     "care": "Releasing, keeping and cleaning fish",
     "identify": "Telling fish apart",
     "timing": "When fish bite",
     # Added with docs/adr/0026.
     "technique": "Casting, playing and landing a fish",
+    # Added 2026-11-01.
+    "methods": "Ways to fish",
     "conditions": "Weather, water and where fish hold",
     "safety": "Staying safe on the water",
     "rules": "License, and rules that follow you home",
@@ -396,9 +401,9 @@ TOPICS: tuple[HandbookTopic, ...] = (
     HandbookTopic(
         id="knot-improved-clinch",
         category="knots",
-        title="Improved clinch knot",
+        title="Improved clinch knot: how to tie a fishing knot",
         body=(
-            "The go-to knot for tying a hook or lure to monofilament.",
+            "The go-to fishing knot for tying a hook or lure to monofilament line.",
             "Pass 5–6 in of line through the hook eye and wrap the tag end around the main line 5–6 "
             "times. Bring the tag end back through the small loop by the eye, then through the big "
             "loop you just made.",
@@ -411,12 +416,14 @@ TOPICS: tuple[HandbookTopic, ...] = (
         category="knots",
         title="Palomar knot",
         body=(
-            "A strong knot for braid and mono, and many anglers find it easier than the clinch.",
+            "One of the easiest and strongest knots, for braid and mono: even a child can tie it, and "
+            "many anglers find it easier than the clinch. Not a good choice for crankbaits or lures "
+            "with lots of hooks.",
             "Double 4–6 in of line into a loop and push the loop through the hook eye. Tie a loose "
             "overhand knot with the doubled line, then pass the hook through the loop.",
             "Wet it, pull both ends tight and trim.",
         ),
-        source_ids=("zebco-knots",),
+        source_ids=("zebco-knots", "pfbc-knots"),
     ),
     HandbookTopic(
         id="knot-arbor",
@@ -453,7 +460,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
     HandbookTopic(
         id="care-keeping",
         category="care",
-        title="Keeping your catch fresh",
+        title="Keeping your catch fresh on ice",
         body=(
             "Ice is the key to good-tasting fish, especially in summer. Get it into a cooler with "
             "plenty of ice soon after it's caught.",
@@ -1220,6 +1227,358 @@ TOPICS: tuple[HandbookTopic, ...] = (
         ),
         source_ids=("uaf-freezing", "umn-fish"),
     ),
+    # --------------------------------------------------------------- rigs
+    HandbookTopic(
+        id="rig-jigs",
+        category="rigs",
+        title="Jigs",
+        body=(
+            "A jig is a hook with a weighted head, dressed with bucktail, marabou or a plastic body. "
+            "A live minnow, leech or nightcrawler can be added to the hook.",
+            "Why use one: it catches almost anything, because it can be fished at any depth and "
+            "moves like small prey.",
+            "How to fish one: cast it, let it sink to the bottom, snap it up a foot or two, and let "
+            "it fall back. Repeat, and change the rhythm until the fish show what they want.",
+            "Sizes: 1/32–1/8 oz for crappie and sunfish, 1/8–1/4 oz for a tube or a Ned rig. For "
+            "crappie, you can also reel a light jig slowly as it sinks, or hang it under a bobber "
+            "and shake the bobber.",
+        ),
+        source_ids=("nydec-walleye", "nydec-crappie", "nydec-bass", "mndnr-crappie", "mndnr-sunfish"),
+    ),
+    HandbookTopic(
+        id="rig-texas",
+        category="rigs",
+        title="Texas rig",
+        body=(
+            "A soft plastic worm rigged to slide through weeds and cover, used mostly for bass.",
+            "How to set it up: a 1/4–1/2 oz worm weight on the line, then a 2/0 to 4/0 worm hook, "
+            "with a 6–10 in ribbon-tail worm. June bug, plum and green pumpkin are common colors.",
+            "How to fish it: let it sink to the bottom, then drag it back slowly, or move it a few "
+            "feet, wait a few seconds, and move it again.",
+        ),
+        source_ids=("nydec-bass",),
+    ),
+    HandbookTopic(
+        id="rig-wacky",
+        category="rigs",
+        title="Wacky rig",
+        body=(
+            "A soft stick worm hooked through its middle, so both ends flutter as it sinks. It "
+            "works in shallow and deep water.",
+            "How to set it up: a 4 in stick worm, an O-ring around its middle, and a size 1/0 circle "
+            "or octopus hook through the ring. Green pumpkin and watermelon are common colors.",
+            "How to fish it: let it sink slowly, with no weight. Once it reaches the bottom, raise "
+            "it and let it fall again. Watch the line: a bite can show as a tap there before you feel it.",
+        ),
+        source_ids=("nydec-bass",),
+    ),
+    HandbookTopic(
+        id="rig-ned",
+        category="rigs",
+        title="Ned rig",
+        body=(
+            "A short stick worm on a small jighead, for deep, clear water around rocks when fish "
+            "are not chasing.",
+            "How to set it up: a 3–4 in stick worm on a 1/8–1/4 oz mushroom jighead.",
+            "How to fish it: let it sit on the bottom for 2–5 seconds, drag it a few feet, let it "
+            "sit, and repeat.",
+        ),
+        source_ids=("nydec-bass",),
+    ),
+    HandbookTopic(
+        id="rig-drop-shot",
+        category="rigs",
+        title="Drop shot",
+        body=(
+            "A hook tied above the weight, so the bait hangs off the bottom. Used in deep, clear water.",
+            "How to set it up: a size 2 to 1/0 octopus hook with a 4–6 in straight-tail worm, and a "
+            "1/8–1/2 oz drop-shot weight below it at the end of the line.",
+            "How to fish it: when the weight reaches the bottom, let it sit a few seconds, shake the "
+            "rod tip, move it a few feet, and repeat.",
+        ),
+        source_ids=("nydec-bass",),
+    ),
+    HandbookTopic(
+        id="rig-slip-bobber",
+        category="rigs",
+        title="Slip bobber",
+        body=(
+            "A bobber that slides on the line, so bait can hang at any depth and you can still cast easily.",
+            "How to set it up: put a bobber stop on the line, then a bead, then the bobber. Set the "
+            "stop at the depth you want. After the cast, line slides through the bobber until it "
+            "reaches the stop.",
+            "When: when fish are deeper than a fixed bobber can reach, as crappie and walleye often are in summer.",
+        ),
+        source_ids=("nydec-walleye", "mndnr-crappie", "mndnr-walleye"),
+    ),
+    HandbookTopic(
+        id="rig-bottom",
+        category="rigs",
+        title="Sliding sinker bottom rig",
+        body=(
+            "A weight that slides on the line, so a fish can take the bait without feeling it. The "
+            "usual rig for catfish and carp.",
+            "How to set it up for catfish: thread 15–20 lb line through a 1 oz egg sinker, tie on a "
+            "barrel swivel, tie about 2 ft of heavy monofilament or fluorocarbon to the swivel, and "
+            "finish with a 4/0 or 6/0 circle or bait hook.",
+            "How to fish it: cast to the spot and let the bait rest on the bottom. Scale the sinker "
+            "and hook down for smaller fish.",
+        ),
+        source_ids=("mn-ccf", "nydec-basics"),
+    ),
+    # -------------------------------------------------------------- more knots
+    HandbookTopic(
+        id="knot-tips",
+        category="knots",
+        title="Keeping line strong",
+        body=(
+            "A badly tied knot can take away half or more of the line's strength: on 4 lb line, it's "
+            "like fishing with 2 lb line.",
+            "Wet the knot with water or saliva before pulling it tight.",
+            "Don't trim the end too close to the knot, and take care that clippers don't nick the line.",
+        ),
+        source_ids=("pfbc-knots",),
+    ),
+    HandbookTopic(
+        id="knot-surgeons-loop",
+        category="knots",
+        title="Surgeon's loop for swivels and snelled hooks",
+        body=(
+            "For a loop at the end of the line: useful for snelled hooks, swivels and lures with a "
+            "lot of action.",
+            "Make a loop 1–2 in long and tie an overhand knot with it, without tightening.",
+            "Pass the loop through the knot once more and tighten.",
+            "To attach a hook, thread the loop through the eye and pass it over the hook.",
+        ),
+        source_ids=("pfbc-knots",),
+    ),
+    HandbookTopic(
+        id="knot-joining",
+        category="knots",
+        title="Joining two lines: blood and surgeon's",
+        body=(
+            "Two ways to tie one piece of line to another, such as a leader to your main line.",
+            "Blood: overlap them by about 2 in. Wrap the end of the first around the second five "
+            "times and put that end between the two lines. Wrap the end of the second around the "
+            "first five times, thread it through the same gap from the other side, and tighten.",
+            "Surgeon's: lay them side by side, overlapping about 6 in. Tie an overhand knot with both, "
+            "pull the loose ends through it again, hold the lines, and tighten.",
+        ),
+        source_ids=("pfbc-knots",),
+    ),
+    # ------------------------------------------------------------ ways to fish
+    HandbookTopic(
+        id="method-trolling",
+        category="methods",
+        title="Trolling",
+        body=(
+            "Pulling a lure or bait behind a moving boat, to cover water and find fish.",
+            "Depth: pick a crankbait that dives to the depth you're fishing and touches the bottom "
+            "now and then. Its lip size, your line's thickness, how much line is out and your speed "
+            "all change how deep it runs. Lead core line, side planers and snap weights take it deeper.",
+            "Speed: go slowly. Speeding up, slowing down or a sharp turn can trigger a strike. Kokanee "
+            "are trolled at 0.8–1.5 mph and walleye at about 1 mph.",
+            "Gear: for walleye, a 7–9 ft medium-heavy rod, a baitcasting reel and 10–12 lb "
+            "monofilament or fluorocarbon.",
+        ),
+        source_ids=("nydec-walleye", "mndnr-crappie", "mndnr-walleye", "cdfw-kokanee"),
+    ),
+    HandbookTopic(
+        id="method-ice",
+        category="methods",
+        title="Ice fishing",
+        body=(
+            "Check the ice first (see Ice safety), then fish through a hole. Trout, perch, crappie, "
+            "bluegill, pike and walleye all bite in winter.",
+            "What you need: a license, a short light rod, a bucket, and an auger or spud bar to make "
+            "the hole. A 4–6 in hole is fine for panfish; trout and pike need a bigger one.",
+            "How to fish: jig a small spoon up and down, often with bait on it, or set a tip-up, a "
+            "spool on a stick that raises a flag when a fish pulls. Minnows and small fly larvae "
+            "(spikes or mousies) are the usual baits.",
+            "Where: pike, perch and sunfish in large shallow ponds; pike, walleye and lake trout in "
+            "deep lakes. Trout and landlocked salmon are often just a few feet under the ice. "
+            "Crappie hang in open water: start right under the ice and work down. A group of "
+            "anglers or lots of old holes means fish were caught there.",
+        ),
+        source_ids=("nydec-ice", "wdfw-ice", "pfbc-ice", "nydec-crappie"),
+    ),
+    HandbookTopic(
+        id="method-stream",
+        category="methods",
+        title="Reading a river or stream",
+        body=(
+            "Fish want a place to hide next to a place to feed. Where those two meet is the spot to try.",
+            "Hiding places: undercut banks (often home to the biggest fish), sunken trees, rocks, "
+            "eddies and deep water under overhanging trees.",
+            "Feeding places: the outside of bends, where fast water carries food; seams, where two "
+            "currents meet and the water slows; drop-offs; and where brooks and springs come in.",
+            "Parts of a trout stream: a pocket is the calm spot behind a rock in fast water. A pool is "
+            "slow and deep, and active fish are often at its head and tail. A run is where the flow "
+            "narrows, deeper than a rapid and shallower than a pool.",
+            "How to fish it: trout face upstream, so work your way upstream when you can, and move "
+            "slowly. Polarized glasses help when wading. Below dams, take care: the water is swift and changes fast.",
+        ),
+        source_ids=("nydec-rivers", "nydec-trout", "nydec-walleye"),
+    ),
+    HandbookTopic(
+        id="method-fly",
+        category="methods",
+        title="Fly fishing basics",
+        body=(
+            "The line's weight carries the cast, so rods are rated by line weight. Rods are "
+            "commonly 7½–9 ft, and a 4, 5 or 6 weight suits trout-sized flies.",
+            "Dry flies float and look like adult insects: cast upstream and let the fly pass over feeding fish.",
+            "Nymphs look like young insects and tumble along the bottom. A strike indicator on the "
+            "leader sets the depth, and a split shot sinks it.",
+            "Streamers look like small fish: cast and work one back toward you, or let the current "
+            "swing it on a tight line.",
+        ),
+        source_ids=("pfbc-fly",),
+    ),
+    HandbookTopic(
+        id="method-night",
+        category="methods",
+        title="Fishing at dusk and after dark",
+        body=(
+            "Channel catfish feed mainly at night: fish riffles and shallows with a nightcrawler, "
+            "chicken liver, cut minnow or stink bait.",
+            "Walleye feed more actively in low light, just before and after sunset.",
+            "Crappie have large eyes and can feed after dark. Bass take surface lures toward dark.",
+            "Bluegill and northern pike hunt by sight and bite little at night, so fish them by day.",
+        ),
+        source_ids=("mn-ccf", "nydec-walleye", "nydec-crappie", "mndnr-lmb", "mndnr-sunfish", "mndnr-pike"),
+    ),
+    HandbookTopic(
+        id="method-kayak",
+        category="methods",
+        title="Fishing from a kayak or small boat",
+        body=(
+            "Have a life jacket for everyone aboard. Some states require wearing it in the cold "
+            "months: Pennsylvania does from Nov. 1 to April 30 in kayaks, canoes and boats under 16 ft.",
+            "Leave a float plan: tell someone where you're going and when you'll be back.",
+            "After dark, carry a white light you can show in time to avoid a collision. Bring a "
+            "sound device, a change of clothes in a dry bag, and sun protection.",
+            "Many states require a registration or launch permit even for a kayak: check yours.",
+        ),
+        source_ids=("pfbc-kayak",),
+    ),
+    # --------------------------------------------------------- through the year
+    HandbookTopic(
+        id="timing-through-year",
+        category="timing",
+        title="Where fish go through the year",
+        body=(
+            "Spring: fish come shallow to spawn. Backwaters and protected bays warm first, so crappie "
+            "and bass show up there, in under 8 ft. Walleye crowd near shore, often on sand flats.",
+            "Summer: on hot days, go deeper and cooler. Larger sunfish go to 10 ft and deeper, "
+            "crappie hang over open water, and walleye move to mid-lake humps and points. Bass fishing "
+            "is often best with the water at 60–75°F.",
+            "Fall: as the water cools, fish come back toward shore, with walleye following shad. "
+            "Shallow weedbeds and midday can be good.",
+            "Winter: most fish go deep. Channel catfish look for deep water out of the current.",
+            "Trout need cold water: don't fish for them when streams warm in summer. Brook trout "
+            "prefer water under 72°F and brown trout under about 70°F.",
+        ),
+        source_ids=(
+            "nydec-crappie", "nydec-bass", "nydec-walleye", "nydec-trout", "mndnr-lmb", "mndnr-crappie",
+            "mndnr-sunfish", "mndnr-walleye", "mn-ccf", "mdc-brown-trout",
+        ),
+    ),
+    HandbookTopic(
+        id="timing-spawn-north",
+        category="timing",
+        title="Spawning temperatures of northern fish",
+        body=(
+            "Yellow perch spawn first, right after ice-out at 45–52°F, and walleye soon after, once "
+            "the water passes 46°F. Northern pike go even earlier, sometimes under the ice.",
+            "Sunfish in Minnesota begin at about 60°F, and bass build nests from about 60°F in 2–8 ft of water.",
+            "Crappie spawn when the water reaches the high 60s. Bullheads spawn at 70–77°F and channel catfish at 75°F.",
+        ),
+        source_ids=("widnr-perch", "mdc-walleye", "mndnr-pike", "mndnr-sunfish", "mndnr-lmb", "nydec-crappie", "widnr-bullhead", "mn-ccf"),
+    ),
+    # -------------------------------------------------------- every state's
+    HandbookTopic(
+        id="rule-clean-drain-dry-us",
+        category="rules",
+        title="Clean, drain and dry: stop invasive species",
+        body=(
+            "Leaving any water, you can carry zebra mussels and other invasive species to the next one. "
+            "Some states make these steps law.",
+            "Clean: take plants, animals and mud off the boat, trailer and gear before you leave the "
+            "access. Rinse with hot water where you can, and flush the motor with 120°F water for 2 "
+            "minutes, or as its manual says. Bleach and other chemicals aren't recommended.",
+            "Drain: empty the motor, bilge, livewell and anything else that holds water before you leave.",
+            "Dry: let everything dry for at least five days, or wipe it with a towel, before using it elsewhere.",
+            "Bait: put unwanted bait in the trash, and never release live fish, bait or plants into any "
+            "water. Refill a bait container with spring water or dechlorinated tap water, not lake water.",
+        ),
+        source_ids=("usfws-cdd", "sah-prevention"),
+    ),
+    HandbookTopic(
+        id="rule-clean-drain-dry-mn",
+        category="rules",
+        title="Clean, drain and dry (Minnesota)",
+        body=(
+            "In Minnesota these are law: clean plants and invasive animals off boats, trailers and gear; "
+            "drain all water, bait containers and livewells included, before leaving the water; and "
+            "keep drain plugs out while transporting.",
+            "Unwanted bait goes in the trash, and bait, plants and pet fish may never be released.",
+            "Docks, lifts and rafts must dry for 21 days before going into another water. Drying "
+            "boats and gear for five days is recommended.",
+            "Taking fish, frogs or crayfish for bait from infested waters is mostly prohibited, and live "
+            "crayfish may be used as bait only in the water where they were taken.",
+        ),
+        source_ids=("mndnr-ais", "mndnr-ais-laws"),
+        region="MN",
+    ),
+    HandbookTopic(
+        id="care-advisories",
+        category="care",
+        title="Fish advisories: is this water's fish safe to eat?",
+        body=(
+            "All 50 states, and some territories and tribes, issue advice on fish from local waters, "
+            "because of mercury, PFAS, PCBs and DDT.",
+            "Take most care if you're pregnant or may be, are breastfeeding, or feed children. Mercury "
+            "can harm a developing nervous system. Older adults, people with weak immune systems and "
+            "anyone who eats a lot of fish should check too.",
+            "To find yours: look for signs at the water's edge. If there are none, ask your state's "
+            "health or environmental agency; the EPA lists them all.",
+            "Avoid mussels and clams collected during or right after a harmful algal bloom.",
+        ),
+        source_ids=("epa-fish", "epa-fish-concern", "epa-fish-contacts"),
+    ),
+    # ------------------------------------------------------------- ice safety
+    HandbookTopic(
+        id="safe-ice",
+        category="safety",
+        title="Ice safety: how thick is safe",
+        body=(
+            "No ice is ever guaranteed safe, and state agencies don't check it for you. Ask locally, "
+            "and test it with holes as you walk out from shore.",
+            "How thick the ice must be, for new, clear ice: stay off anything under 4 in. Four inches is the least for fishing on "
+            "foot; Pennsylvania's chart asks for 5 in. Cars and trucks need far more, and the "
+            "agencies' tables differ, so follow your state's.",
+            "White ice is about half as strong as clear ice, so double the numbers. Slush ice is also "
+            "about half as strong, and ice over moving water is weaker: stay off rivers and away from "
+            "where streams enter or leave.",
+            "Never go alone. Carry ice picks and a rope, wear a life jacket, dress in layers without "
+            "cotton, add boot cleats, and spread out rather than crowding one spot.",
+        ),
+        source_ids=("nydec-ice", "mndnr-ice", "wdfw-ice", "pfbc-ice"),
+    ),
+)
+
+# Who needs a license, per state: one topic each, shown only in that state.
+TOPICS += tuple(
+    HandbookTopic(
+        id=f"rule-license-{code.lower()}",
+        category="rules",
+        title=f"Do I need a fishing license? ({JURISDICTIONS[code].name})",
+        body=license_body(JURISDICTIONS[code].name, entry, JURISDICTIONS[code].agency_label),
+        source_ids=(f"license-{code.lower()}",),
+        region=code,
+    )
+    for code, entry in STATE_LICENSES.items()
 )
 
 _BY_ID = {t.id: t for t in TOPICS}

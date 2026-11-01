@@ -224,6 +224,54 @@ SOURCES: dict[str, Source] = {
         Source("bait-wi", "Wisconsin DNR: fishing regulations (bait)", "https://dnr.wisconsin.gov/topic/Fishing/vhs/vhs_qaanglers.html", "agency"),
         Source("bait-wv", "WVDNR: fishing regulations (bait)", "https://www.eregulations.com/westvirginia/fishing/fishing-regulations", "agency"),
         Source("bait-wy", "WGFD: fishing regulations (bait)", "https://wgfd.wyo.gov/Ask-Game-and-Fish/span-id-docs-internal-guid-1d630e74-1dd1-7693-b2", "agency"),
+        # Northern and western fish (2026-11-01): state agency pages, facts
+        # in our own words with a link (docs/data-sources.md).
+        Source("mndnr-walleye", "Minnesota DNR: how to catch a walleye", "https://www.dnr.state.mn.us/gofishing/how-catch-walleye.html", "agency"),
+        Source("mndnr-pike", "Minnesota DNR: how to catch a northern pike", "https://www.dnr.state.mn.us/gofishing/how-catch-northern-pike.html", "agency"),
+        Source("mndnr-trout", "Minnesota DNR: trout fishing", "https://www.dnr.state.mn.us/fishing/trout/index.html", "agency"),
+        Source("nydec-fishing", "New York DEC: freshwater fishing", "https://dec.ny.gov/things-to-do/freshwater-fishing", "agency"),
+        Source("mdc-walleye", "Missouri Department of Conservation: Walleye field guide", "https://mdc.mo.gov/discover-nature/field-guide/walleye", "agency"),
+        Source("mdc-pike", "Missouri Department of Conservation: Northern Pike field guide", "https://mdc.mo.gov/discover-nature/field-guide/northern-pike", "agency"),
+        Source("mdc-perch", "Missouri Department of Conservation: Yellow Perch field guide", "https://mdc.mo.gov/discover-nature/field-guide/yellow-perch", "agency"),
+        Source("mdc-brown-trout", "Missouri Department of Conservation: Brown Trout field guide", "https://mdc.mo.gov/discover-nature/field-guide/brown-trout", "agency"),
+        Source("mdc-bullhead", "Missouri Department of Conservation: Brown Bullhead field guide", "https://mdc.mo.gov/discover-nature/field-guide/brown-bullhead", "agency"),
+        Source("pfbc-walleye", "Pennsylvania Fish & Boat Commission: walleye", "https://www.pa.gov/agencies/fishandboat/fishing/all-about-fish/catch-pa-fish/walleye", "agency"),
+        Source("pfbc-perch", "Pennsylvania Fish & Boat Commission: yellow perch", "https://www.pa.gov/agencies/fishandboat/fishing/all-about-fish/catch-pa-fish/yellow-perch", "agency"),
+        Source("pfbc-trout", "Pennsylvania Fish & Boat Commission: trout", "https://www.pa.gov/agencies/fishandboat/fishing/all-about-fish/catch-pa-fish/trout", "agency"),
+        Source("widnr-perch", "Wisconsin DNR: yellow perch", "https://dnr.wisconsin.gov/topic/fishing/species/yperch.html", "agency"),
+        Source("widnr-bullhead", "Wisconsin DNR: bullheads fact sheet", "https://dnr.wisconsin.gov/sites/default/files/topic/Fishing/Species_bullheads.pdf", "agency"),
+        Source("wdfw-ice", "Washington Department of Fish and Wildlife: ice fishing", "https://wdfw.wa.gov/fishing/basics/ice-fishing", "agency"),
+        Source("cdfw-brook", "CDFW: fishing for brook trout", "https://wildlife.ca.gov/Fishing/Inland/Brook-Trout", "agency"),
+        Source("cdfw-brown", "CDFW: fishing for brown trout", "https://wildlife.ca.gov/Fishing/Inland/Brown-Trout", "agency"),
+        Source("cdfw-kokanee", "CDFW: fishing for kokanee", "https://wildlife.ca.gov/Fishing/Inland/Kokanee", "agency"),
+        Source("cdfw-golden", "CDFW: fishing for California golden trout", "https://wildlife.ca.gov/Fishing/Inland/California-Golden-Trout", "agency"),
+        Source("cdfw-golden-status", "CDFW: California golden trout", "https://wildlife.ca.gov/Conservation/Fishes/California-Golden-Trout", "agency"),
+        Source("cdfw-lahontan", "CDFW: fishing for Lahontan cutthroat trout", "https://wildlife.ca.gov/Fishing/Inland/Lahontan-Cutthroat-Trout", "agency"),
+        Source("cdfw-lahontan-status", "CDFW: Lahontan cutthroat trout", "https://wildlife.ca.gov/Conservation/Fishes/Lahontan-Cutthroat-Trout", "agency"),
+        Source("cdfw-coastal-cutthroat", "CDFW: fishing for coastal cutthroat trout", "https://wildlife.ca.gov/Fishing/Inland/Coastal-Cutthroat-Trout", "agency"),
+        # Rigs, knots and ways to fish (2026-11-01).
+        Source("nydec-basics", "New York DEC: fishing basics", "https://dec.ny.gov/things-to-do/freshwater-fishing/learn-to-fish/tips-skills/basics", "agency"),
+        Source("nydec-walleye", "New York DEC: fishing for walleye", "https://dec.ny.gov/things-to-do/freshwater-fishing/learn-to-fish/tips-skills/fishing-for-walleye", "agency"),
+        Source("nydec-crappie", "New York DEC: fishing for crappie", "https://dec.ny.gov/things-to-do/freshwater-fishing/learn-to-fish/tips-skills/fishing-for-crappie", "agency"),
+        Source("nydec-trout", "New York DEC: fishing for stream trout", "https://dec.ny.gov/things-to-do/freshwater-fishing/learn-to-fish/tips-skills/stream-trout", "agency"),
+        Source("nydec-rivers", "New York DEC: where to fish in rivers and streams", "https://dec.ny.gov/things-to-do/freshwater-fishing/learn-to-fish/tips-skills/where-to-fish-rivers-streams", "agency"),
+        Source("nydec-ice", "New York DEC: how to ice fish", "https://dec.ny.gov/things-to-do/freshwater-fishing/learn-to-fish/tips-skills/how-to-ice-fish", "agency"),
+        Source("mndnr-lmb", "Minnesota DNR: how to catch a largemouth bass", "https://www.dnr.state.mn.us/gofishing/how-catch-largemouth-bass.html", "agency"),
+        Source("mndnr-crappie", "Minnesota DNR: how to catch crappie", "https://www.dnr.state.mn.us/gofishing/how-catch-crappie.html", "agency"),
+        Source("mndnr-sunfish", "Minnesota DNR: how to catch sunfish", "https://www.dnr.state.mn.us/gofishing/how-catch-sunfish.html", "agency"),
+        Source("mndnr-ice", "Minnesota DNR: ice thickness guidelines", "https://www.dnr.state.mn.us/safety/ice/thickness.html", "agency"),
+        Source("pfbc-knots", "Pennsylvania Fish & Boat Commission: \"Knotes\" on knots", "https://www.pa.gov/content/dam/copapwp-pagov/en/fishandboat/documents/fishing/basics/gear/knotesknots.pdf", "agency"),
+        Source("pfbc-fly", "Pennsylvania Fish & Boat Commission: fly fishing", "https://www.pa.gov/agencies/fishandboat/fishing/basics/fly-fishing", "agency"),
+        Source("pfbc-kayak", "Pennsylvania Fish & Boat Commission: kayak fishing", "https://www.pa.gov/agencies/fishandboat/fishing/basics/kayak-fishing", "agency"),
+        Source("pfbc-ice", "Pennsylvania Fish & Boat Commission: ice fishing", "https://www.pa.gov/agencies/fishandboat/fishing/basics/ice-fishing", "agency"),
+        # Stopping invasives and eating fish safely, nationally (2026-11-01).
+        Source("usfws-cdd", "US Fish and Wildlife Service: Clean, Drain, Dry", "https://www.fws.gov/story/clean-drain-dry", "agency"),
+        Source("sah-prevention", "Stop Aquatic Hitchhikers: prevention", "https://stopaquatichitchhikers.org/prevention/", "publication"),
+        Source("mndnr-ais", "Minnesota DNR: what you should do to stop invasive species", "https://www.dnr.state.mn.us/invasives/ais/preventspread.html", "agency"),
+        Source("mndnr-ais-laws", "Minnesota DNR: invasive species laws", "https://www.dnr.state.mn.us/invasives/laws.html", "agency"),
+        Source("epa-fish", "US EPA: choose fish and shellfish wisely", "https://www.epa.gov/choose-fish-and-shellfish-wisely", "agency"),
+        Source("epa-fish-concern", "US EPA: should I be concerned about eating fish and shellfish?", "https://www.epa.gov/choose-fish-and-shellfish-wisely/should-i-be-concerned-about-eating-fish-and-shellfish", "agency"),
+        Source("epa-fish-contacts", "US EPA: state, territorial and tribal fish advisory contacts", "https://www.epa.gov/choose-fish-and-shellfish-wisely/nlfa-contacts", "agency"),
         Source("cdfw-fitc", "CDFW: Fishing in the City", "https://wildlife.ca.gov/Fishing-in-the-City/Overview", "agency"),
         Source("cdfw-mussels", "CDFW: quagga and zebra mussels", "https://wildlife.ca.gov/Conservation/Invasives/Mussels", "agency"),
         Source("cadbw-safety", "California Division of Boating and Waterways: safety equipment", "https://dbw.parks.ca.gov/SafetyEquipment", "agency"),
@@ -2047,6 +2095,732 @@ _NEW_GUIDES: tuple[SpeciesGuide, ...] = (
         eating=("Flavor depends on the water it came from (TPWD).",),
         source_ids=("tpwd-crp", "nydec-carp", "mdc-bait-lures"),
     ),
+    # Fish of the northern and western states (2026-11-01): the waters and
+    # the state rules FishEye covers reach them, and the map names them in
+    # hundreds of lakes. Read from each state's own pages; where no page gave
+    # a number, a setup gives none.
+    SpeciesGuide(
+        common_name="Walleye",
+        scientific_name="Sander vitreus",
+        role="sport",
+        difficulty="intermediate",
+        summary=(
+            "A prized eating fish with glassy eyes that feeds at dawn, at dusk and after dark. A jig "
+            "and minnow near the bottom is the classic way to catch one."
+        ),
+        diet=(
+            "Mostly other fish as an adult, plus insects: in summer it often eats insects coming up "
+            "off the bottom. Young fish eat small crustaceans and insects."
+        ),
+        diet_type="carnivore",
+        identification=(
+            "Long and slender, with two separate dorsal fins, a forked tail, and large teeth in the "
+            "jaws and on the roof of the mouth.",
+            "Yellowish or olive-brown back with darker mottling and a white belly. A large black "
+            "blotch at the rear of the first dorsal fin, and a white spot at the bottom of the tail.",
+            "Its eyes reflect light, which helps it feed at night and in murky water.",
+            "A yellow perch is a relative, but has regular dark bars down its sides and no large teeth.",
+            "Usually 12–28 in and up to about 8 lb; larger ones are caught.",
+        ),
+        habitat=(
+            "Open water of deep, clear lakes and reservoirs, and pools of large rivers, often over "
+            "rock or gravel.",
+            "In rivers, look in pools 12 ft or deeper where boulders or sunken logs break up the bottom.",
+        ),
+        habits=(
+            "Stays deep by day and moves shallower at night. Dawn and dusk are its classic feeding "
+            "times, when it comes up onto shallow flats after schools of minnows.",
+            "Spring: near shore, especially on big sand flats. As the season goes on it moves to "
+            "mid-lake humps, saddles and points, and deeper as the water warms. Late summer into "
+            "fall, many come back toward the shoreline.",
+            "One of the first fish to spawn in spring, once the water passes 46°F, on gravel in "
+            "tributaries or on rocky points and dam faces in reservoirs.",
+        ),
+        where_and_when=(
+            "May and June are the best months in Minnesota, when fish are shallow and near shore. "
+            "Further south, spring comes earlier.",
+            "Fish at first and last light. In Pennsylvania's advice: morning and late day in spring, "
+            "at night in summer.",
+            "In fall, troll near shallow weedlines, gravel bars and points.",
+            "A bobber over rocky reefs and humps works through the year.",
+            "Seasons differ by state and by water: check your state's rules before you go.",
+        ),
+        live_baits=("Shiner or fathead minnows", "Nightcrawlers", "Leeches"),
+        lures=(
+            "Jigs, 1/8–3/8 oz: just heavy enough to feel the bottom, in dark and bright colors",
+            "Rubber twister tails on a jig",
+            "Small crankbaits shaped like perch or minnows (No. 5 and No. 7 are popular sizes)",
+            "Spinners",
+        ),
+        why_these_baits=(
+            "Adults eat mostly fish, so a minnow, or a crankbait shaped like one, looks like what it hunts.",
+            "It feeds near the bottom, so a nightcrawler or leech on a slip-sinker rig stays where "
+            "it's looking.",
+            "It sees well in low light and murky water, so try both dark and bright jigs until one works.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Jig and minnow",
+                use_when="Fish holding near the bottom; fished straight down or cast and worked slowly.",
+                method="bait",
+                rod="Medium-action spinning rod",
+                reel="Spinning reel",
+                line="6–10 lb monofilament or braid; on braid, tie on a length of clear monofilament as a leader",
+                terminal=(
+                    "A 1/8, 1/4 or 3/8 oz ball-head jig, heavy enough to feel the bottom, tipped with "
+                    "a shiner or fathead minnow."
+                ),
+                source_ids=("mndnr-walleye",),
+            ),
+            TackleSetup(
+                name="Slip-sinker rig",
+                use_when="Dragging bait slowly along the bottom on humps, points and flats.",
+                method="bait",
+                rod="Medium-action spinning rod",
+                reel="Spinning reel",
+                line="6–10 lb monofilament or braid",
+                terminal=(
+                    "A slip-sinker rig with a size 4 to 3/0 hook and a minnow, nightcrawler or leech. "
+                    "When a fish takes it, let line run for several seconds, reel until tight, then "
+                    "set the hook."
+                ),
+                source_ids=("mndnr-walleye", "pfbc-walleye"),
+            ),
+            TackleSetup(
+                name="Slip bobber",
+                use_when="Over rocky reefs and humps, including deep ones.",
+                method="bait",
+                rod="Medium-action spinning rod",
+                reel="Spinning reel",
+                line="6–10 lb monofilament or braid",
+                terminal=(
+                    "A slip bobber with a minnow, nightcrawler or leech. It slides on the line, so "
+                    "you can still cast easily with the bait set 20 ft down or deeper."
+                ),
+                source_ids=("mndnr-walleye",),
+            ),
+            TackleSetup(
+                name="Trolling a small crankbait",
+                use_when="Covering water from a boat, especially along weedlines and bars in fall.",
+                method="lure",
+                rod="Medium-action spinning rod",
+                reel="Spinning reel",
+                line="6–10 lb monofilament or braid",
+                terminal=(
+                    "A small hard crankbait (No. 5 or No. 7) trolled at about 1 mph, or just fast "
+                    "enough to make it wobble."
+                ),
+                source_ids=("mndnr-walleye",),
+            ),
+        ),
+        tips=("Bring a net and pliers: its teeth are sharp.",),
+        eating=("Firm, tender and among the best-tasting freshwater fish.",),
+        source_ids=("mndnr-walleye", "mdc-walleye", "pfbc-walleye", "mdc-perch"),
+    ),
+    SpeciesGuide(
+        common_name="Northern Pike",
+        scientific_name="Esox lucius",
+        role="sport",
+        difficulty="intermediate",
+        summary=(
+            "A long, toothy ambush hunter of weedy shallows. It hits flashy lures hard, and its teeth "
+            "mean you need a leader."
+        ),
+        diet="Mostly other fish. Adults favor perch and suckers 4–15 in long, but will eat almost any fish.",
+        diet_type="carnivore",
+        identification=(
+            "A long body with a duck-bill snout, many sharp teeth, and one dorsal fin set far back "
+            "near the forked tail, above an anal fin of about the same shape.",
+            "Green or blue-gray back, with rows of light yellowish spots on the sides. Fins are often "
+            "marked with roundish black spots.",
+            "Telling it from a muskellunge: count the pores under the jaw. A pike has five or fewer "
+            "on each side; a muskie has six or more. A pike's cheek is fully scaled, and its gill "
+            "cover is scaled only on the upper half.",
+            "It looks like a larger chain or redfin pickerel.",
+            "Can pass 4 ft and 40 lb.",
+        ),
+        habitat=(
+            "Lakes, reservoirs, large rivers, backwaters and drainage ditches. It avoids strong current "
+            "and likes dense vegetation.",
+            "In lakes, often 2–15 ft deep in and around weedbeds, bulrush edges and rocky points.",
+            "In rivers: scoured holes, sunken timber, weedy backwaters and eddies.",
+            "Mainly a northern fish; Missouri is near the southern edge of its range.",
+        ),
+        habits=(
+            "It lies still and strikes at great speed, often from below.",
+            "It hunts by sight: most active in early morning and evening and catchable all day, but "
+            "it bites little at night.",
+            "Spawns very early, from late winter into early spring, in shallow marshes and grassy "
+            "margins, sometimes while lakes still have ice on them.",
+        ),
+        where_and_when=(
+            "Cast along weed edges and rocky points in 2–15 ft of water.",
+            "Early morning and evening are best, but any daylight hour can work.",
+            "Seasons, limits and zones differ by state: check your state's rules before you go.",
+        ),
+        live_baits=("Minnows like the suckers it eats, where your state allows them",),
+        lures=(
+            "Spoons",
+            "Jerkbaits that act like an injured fish",
+            "Crankbaits that wobble like a dying fish",
+        ),
+        why_these_baits=(
+            "It eats fish and attacks fast, so a lure that flashes or wobbles like a hurt fish draws a strike.",
+            "It hunts by sight, so lures work in daylight, and much less after dark.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Casting a spoon or jerkbait",
+                use_when="Along weed edges and points, from a boat or the bank.",
+                method="lure",
+                rod="About 7 ft, moderate to medium-heavy action",
+                reel="Spincasting or baitcasting reel",
+                line="Braid of at least 15 lb, rather than 8 lb monofilament",
+                terminal=(
+                    "A foot-long steel or fluorocarbon leader tied to the line, with a spoon, jerkbait "
+                    "or crankbait on the leader. Without a leader its teeth can cut the line."
+                ),
+                source_ids=("mndnr-pike",),
+            ),
+            TackleSetup(
+                name="Baitfish on a leader",
+                use_when="Fishing a weed edge slowly, where live bait is legal.",
+                method="bait",
+                rod="About 7 ft, moderate to medium-heavy action",
+                reel="Spincasting or baitcasting reel",
+                line="Braid of at least 15 lb",
+                terminal=(
+                    "A foot-long steel or fluorocarbon leader and a baitfish like the suckers it eats, "
+                    "set by the weeds where it waits."
+                ),
+                source_ids=("mndnr-pike",),
+            ),
+        ),
+        tips=(
+            "Use a net: lifting a big pike by the line or rod can break the rod tip.",
+            "Bring long pliers. Many lures have two or three treble hooks, and its teeth are razor sharp.",
+            "To release one, keep it alongside the boat, grip the hook with the pliers and snap it "
+            "free with the wrist. That keeps the protective slime on the fish.",
+        ),
+        eating=(
+            "White, mild meat, but it has Y-bones to take out before cooking, which makes filleting "
+            "harder than for most fish.",
+        ),
+        source_ids=("mndnr-pike", "mdc-pike"),
+    ),
+    SpeciesGuide(
+        common_name="Yellow Perch",
+        scientific_name="Perca flavescens",
+        role="sport",
+        difficulty="beginner",
+        summary=(
+            "A small, golden, barred fish that swims in big schools and is delicious in the pan. Find "
+            "a school and fish worms near the bottom. A classic fish for ice fishing."
+        ),
+        diet="Eats almost anything, but mainly minnows, insect larvae, plankton, worms and small crustaceans.",
+        diet_type="carnivore",
+        identification=(
+            "Deep-bodied, with two separate dorsal fins and 6–8 evenly spaced dark bars from the back "
+            "down the sides.",
+            "Olive-green back, golden yellow or brassy sides, white belly.",
+            "A walleye is a relative with large teeth and no regular bars; a perch's teeth are small.",
+            "The rear edge of the gill cover is saw-toothed.",
+            "Usually 6–8 in.",
+        ),
+        habitat=(
+            "Mainly a lake fish: clear, cool, open lakes and ponds, and a few slow streams with rocky bottoms.",
+            "It prefers cooler water, so the best fishing is usually deep.",
+        ),
+        habits=(
+            "Moves in schools, often of hundreds.",
+            "Deep by day; comes inshore to feed in late afternoon or evening.",
+            "Feeds mostly on the bottom, with a slow, deliberate bite.",
+            "Spawns just after the ice goes out, in April or early May at 45–52°F, laying strings of "
+            "eggs on sand, gravel or plants.",
+        ),
+        where_and_when=(
+            "If a spot gives nothing after a few tries, move: you're looking for a school.",
+            "Pennsylvania's advice: afternoons in March and April, then early morning and late evening in summer.",
+            "In winter, through the ice. Ice must be at least 4 in thick to walk on.",
+        ),
+        live_baits=("Worms", "Grubs", "Minnows"),
+        lures=(
+            "Small spinners, 1/32–1/8 oz",
+            "Small twister-tail jigs",
+            "Small crankbaits in white, yellow or green",
+        ),
+        why_these_baits=(
+            "It feeds on the bottom on insect larvae and worms, so a worm or grub on or near the "
+            "bottom is what it's looking for.",
+            "It also eats minnows, so a small spinner or crankbait works when a school is feeding higher up.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Worm near the bottom",
+                use_when="From the bank or a boat, once you've found a school.",
+                method="bait",
+                rod="Any light rod; a fly rod or even a handline works in summer",
+                reel="Small spinning reel",
+                line="2–4 lb test",
+                terminal="A size 4–8 hook with a worm or grub, on or near the bottom. Give the slow bite time.",
+                source_ids=("pfbc-perch", "widnr-perch"),
+            ),
+            TackleSetup(
+                name="Small lure",
+                use_when="Searching for a school.",
+                method="lure",
+                rod="Light spinning rod",
+                reel="Small spinning reel",
+                line="2–4 lb test",
+                terminal="A 1/32–1/8 oz spinner, twister-tail jig or small crankbait in white, yellow or green.",
+                source_ids=("pfbc-perch",),
+            ),
+            TackleSetup(
+                name="Through the ice",
+                use_when="Winter, on ice at least 4 in thick.",
+                method="either",
+                rod="A short, whippy jigging rod",
+                reel="Small spinning reel",
+                line="2–4 lb test",
+                terminal="A small hook with a worm or minnow, worked slowly near the bottom through a drilled hole.",
+                source_ids=("widnr-perch", "wdfw-ice", "pfbc-perch"),
+            ),
+        ),
+        eating=("A delicious panfish.",),
+        source_ids=("mdc-perch", "widnr-perch", "pfbc-perch", "wdfw-ice"),
+    ),
+    SpeciesGuide(
+        common_name="Brook Trout",
+        scientific_name="Salvelinus fontinalis",
+        role="sport",
+        difficulty="beginner",
+        summary=(
+            "A small, beautifully marked trout of cold mountain lakes and headwater streams. Small "
+            "streams can give fast fishing on light tackle."
+        ),
+        diet="An opportunistic feeder that eats what is around, so small baits, lures and flies all work.",
+        diet_type="carnivore",
+        identification=(
+            "Wavy, maze-like lines on the back and upper sides: in California, no other trout has them.",
+            "Olive-green to olive-brown, often with reddish hues, and red spots inside blue halos.",
+            "The pectoral, pelvic and anal fins have white front edges.",
+            "Spawning fish darken: dusky to black bellies, red sides and red lower fins.",
+        ),
+        habitat=(
+            "Cold, clear lakes and streams. Native to the northeastern US and eastern Canada, and "
+            "stocked far beyond: it was brought to California in 1871 and is most abundant in the "
+            "high Sierra Nevada.",
+            "Known waters include Adirondack ponds in New York, and streams and interior lakes in Minnesota.",
+        ),
+        habits=(
+            "Small high-elevation streams hold many fish, usually under 14 in; some lakes hold fish over 18 in.",
+        ),
+        where_and_when=(
+            "For a lot of bites, try a small high-elevation stream: California reports more than two fish an hour.",
+            "For a bigger fish, try a lake known for them.",
+            "Pennsylvania's trout advice: midday in spring, early morning and early evening in summer.",
+            "Rules vary a lot: some California waters have bonus limits, and New York has proposed "
+            "new rules for Adirondack brook trout ponds. Check your state's rules before you go.",
+        ),
+        live_baits=("Worms", "Salmon eggs", "Corn", "Prepared dough baits", "Minnows, where your state allows them"),
+        lures=("Small spinners, 1/32–1/8 oz", "Small crankbaits", "Flies of many kinds"),
+        why_these_baits=(
+            "It feeds on whatever is around, so a small bait or lure in the right place matters more "
+            "than the exact choice.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Bait drifted on the bottom",
+                use_when="Streams, or the edges of small lakes.",
+                method="bait",
+                rod="Light spinning rod",
+                reel="Light spinning reel",
+                line="2–8 lb test",
+                terminal="A light-wire hook, size 6–14, with a worm or salmon eggs, drifted along the bottom.",
+                source_ids=("pfbc-trout",),
+            ),
+            TackleSetup(
+                name="Small spinner",
+                use_when="Covering a pool or a lake shore.",
+                method="lure",
+                rod="Light spinning rod",
+                reel="Light spinning reel",
+                line="2–8 lb test",
+                terminal="A 1/32–1/8 oz spinner or small crankbait.",
+                source_ids=("pfbc-trout", "cdfw-brook"),
+            ),
+        ),
+        source_ids=("cdfw-brook", "pfbc-trout", "mndnr-trout", "nydec-fishing"),
+    ),
+    SpeciesGuide(
+        common_name="Brown Trout",
+        scientific_name="Salmo trutta",
+        role="sport",
+        difficulty="intermediate",
+        summary=(
+            "A wary trout with black and red spots, in cold streams, rivers and reservoirs. Small streams "
+            "give fast fishing; big rivers and reservoirs can hold trophies."
+        ),
+        diet=(
+            "Insects, crayfish, crustaceans, snails and small fish. Large adults eat mainly fish and crayfish."
+        ),
+        diet_type="carnivore",
+        identification=(
+            "Both black and red spots on the body, the black ones usually inside a pale halo.",
+            "Dark to olive-brown back, yellow sides, yellow or white belly.",
+            "The tail is usually not forked and usually has no spots.",
+            "Usually 8–15 in, but can reach about 37 in and 26 lb.",
+        ),
+        habitat=(
+            "Cold streams and lakes that stay under about 70°F; it prefers 12–20°C (54–68°F).",
+            "In streams, around dense cover such as sunken logs and undercut banks, or in deep water below riffles.",
+            "Native to Europe, North Africa and western Asia, and brought to the US by 1883. "
+            "Some waters depend on stocking.",
+        ),
+        habits=(
+            "Known for being wary.",
+            "It usually lives about 4 years, sometimes 8 or more.",
+        ),
+        where_and_when=(
+            "Small high-elevation streams for fast action: California reports more than two fish an hour.",
+            "Larger rivers and reservoirs fed by spawning streams for fish over 18 in.",
+            "Pennsylvania's trout advice: midday in spring, early morning and early evening in summer.",
+            "Fish logs, undercut banks and the deep water below riffles.",
+        ),
+        live_baits=("Worms", "Minnows, where your state allows them", "Salmon eggs", "Corn", "Prepared dough baits"),
+        lures=("Small spinners, 1/32–1/8 oz", "Small crankbaits"),
+        why_these_baits=(
+            "It eats insects and small prey, so worms and small spinners match what it finds in a stream.",
+            "Large adults eat mostly fish and crayfish, so a minnow or a small crankbait is the bigger-fish choice.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Bait drifted on the bottom",
+                use_when="Runs and deep water below riffles.",
+                method="bait",
+                rod="Light spinning rod",
+                reel="Light spinning reel",
+                line="2–8 lb test",
+                terminal="A light-wire hook, size 6–14, with a worm or other bait, drifted along the bottom.",
+                source_ids=("pfbc-trout",),
+            ),
+            TackleSetup(
+                name="Spinner or small crankbait",
+                use_when="Working logs and undercut banks.",
+                method="lure",
+                rod="Light spinning rod",
+                reel="Light spinning reel",
+                line="2–8 lb test",
+                terminal="A 1/32–1/8 oz spinner or small crankbait, cast past the cover and brought back beside it.",
+                source_ids=("pfbc-trout",),
+            ),
+        ),
+        source_ids=("cdfw-brown", "mdc-brown-trout", "pfbc-trout"),
+    ),
+    SpeciesGuide(
+        common_name="Golden Trout",
+        scientific_name="Oncorhynchus aguabonita",
+        role="sport",
+        difficulty="intermediate",
+        summary=(
+            "California's state freshwater fish: a brilliantly colored trout of high mountain water, "
+            "often a hike from the road. It takes small flies and lures readily."
+        ),
+        diet="A trout that readily takes insects at the surface, going by what catches it: dry flies and terrestrials.",
+        diet_type="carnivore",
+        identification=(
+            "Vivid red to red-orange belly, gill covers, lower jaw and side line, with a deep olive-green "
+            "back fading to bright gold.",
+            "About ten dark oval marks along the side, usually kept through adulthood.",
+            "Large round spots near the tail and on the dorsal and tail fins, not usually below the side line.",
+            "Orange paired fins, some with white or yellow tips behind a black band.",
+            "Fish that have crossed with rainbow trout, as in the lower South Fork Kern, can be much less bright.",
+        ),
+        habitat=(
+            "Native to Golden Trout Creek and the South Fork Kern River in Tulare County, California. "
+            "Stocked widely in high-elevation Sierra Nevada lakes and streams, and in Wyoming's Wind River Range.",
+        ),
+        habits=(
+            "Rises readily to flies on the surface.",
+            "Where it has crossed with rainbow trout, how much varies from one water to the next; "
+            "Golden Trout Creek and Mulkey Creek hold the purest fish.",
+        ),
+        where_and_when=(
+            "All Kern Plateau waters are open to fishing, but many can only be reached by trail, in "
+            "the Golden Trout Wilderness.",
+            "Golden Trout Creek and the South Fork Kern are managed as wild trout waters. Check the "
+            "special rules before you go.",
+            "Small tributaries lined with plants can be hard to cast into, so a short, careful cast matters.",
+        ),
+        lures=("Flies of all types, especially dry flies and terrestrials", "Small spinners, 1/32–1/8 oz"),
+        why_these_baits=(
+            "It rises readily to flies on the surface, so a dry fly or terrestrial is the first thing to try.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Dry fly or terrestrial",
+                use_when="Small creeks and clear high lakes.",
+                method="lure",
+                rod="Fly rod",
+                reel="Fly reel",
+                line="Floating fly line",
+                terminal="A dry fly or terrestrial, cast short along the banks.",
+                source_ids=("cdfw-golden",),
+            ),
+            TackleSetup(
+                name="Small spinner",
+                use_when="Open water where you have room to cast.",
+                method="lure",
+                rod="Light spinning rod",
+                reel="Light spinning reel",
+                line="2–8 lb test",
+                terminal="A 1/32–1/8 oz spinner.",
+                source_ids=("cdfw-golden", "pfbc-trout"),
+            ),
+        ),
+        source_ids=("cdfw-golden", "cdfw-golden-status", "pfbc-trout"),
+    ),
+    SpeciesGuide(
+        common_name="Cutthroat Trout",
+        scientific_name="Oncorhynchus clarkii",
+        role="sport",
+        difficulty="intermediate",
+        summary=(
+            "A western trout named for the red-orange slash under its jaw. Stream fish take dry flies; "
+            "lake fish want something fished slowly at their depth."
+        ),
+        diet=(
+            "Takes whatever is most plentiful that season. In lakes: fish, insects and scuds. In "
+            "streams: insects drifting in the current. Coastal fish also eat small fish, and "
+            "earthworms in winter."
+        ),
+        diet_type="carnivore",
+        identification=(
+            "A red, orange or yellow slash under the jaw on each side, which can be pale on lake fish.",
+            "Lahontan cutthroat, lake form: larger, with a squared tail, a green to greenish-brown back, "
+            "a pink band on the side, and large, round, almost black spots, fewer below the side line.",
+            "Lahontan cutthroat, stream form: smaller and darker, copper to green, with many spots and "
+            "with dark oval marks kept into adulthood.",
+            "Coastal cutthroat: more spots than a rainbow, especially below the side line, a slimmer "
+            "body and a large head.",
+        ),
+        habitat=(
+            "Lahontan cutthroat live from high mountain streams to low, alkaline desert lakes, from the "
+            "Sierra Nevada crest into Nevada and a small part of Oregon.",
+            "Coastal cutthroat live in small, slow coastal streams, estuaries and lagoons with cool, clean water.",
+            "In streams, look in slow water and pools, under undercut banks, overhanging plants and "
+            "woody debris. In lakes, look around sunken rocks, woody debris and drop-offs.",
+        ),
+        habits=(
+            "An opportunistic feeder, taking whatever is most plentiful that season.",
+            "Lahontan spawning fish, males especially, turn vivid copper, red and orange.",
+        ),
+        where_and_when=(
+            "Lahontan cutthroat are federally threatened, and some waters have special rules. Heenan "
+            "Lake and the Upper Truckee River in California are known waters. Check the rules first.",
+            "Coastal fish gather at river mouths when young salmon and steelhead head to sea.",
+        ),
+        live_baits=("Earthworms, for coastal fish in winter",),
+        lures=(
+            "Streamers",
+            "Nymphs such as prince, hare's ear and small beaded bird's nest",
+            "Dry flies and terrestrials: beetles, ants and grasshoppers",
+            "Gold casting spoons and small spoons trolled in lakes",
+        ),
+        why_these_baits=(
+            "Stream fish feed on drifting insects, so dry flies and nymphs match what comes past them.",
+            "Lake fish eat fish, insects and scuds, so streamers and nymphs fished slowly work well.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Slow streamer or nymph in a lake",
+                use_when="Lakes, with the fly kept at the depth the fish are holding.",
+                method="lure",
+                rod="Fly rod",
+                reel="Fly reel",
+                line="Intermediate sink-tip fly line",
+                terminal="A streamer or nymph, retrieved very slowly.",
+                source_ids=("cdfw-lahontan",),
+            ),
+            TackleSetup(
+                name="Hopper-dropper in a stream",
+                use_when="Streams in summer, along banks and pools.",
+                method="lure",
+                rod="Fly rod",
+                reel="Fly reel",
+                line="Floating fly line",
+                terminal="A grasshopper-style dry fly with a small nymph hanging below it.",
+                source_ids=("cdfw-lahontan",),
+            ),
+            TackleSetup(
+                name="Trolling a small spoon",
+                use_when="Lakes and lagoons, from a boat.",
+                method="lure",
+                rod="Light spinning rod",
+                reel="Spinning reel",
+                line="Light line, set so the lure runs at the fish's depth",
+                terminal="A gold casting spoon or a small buoyant spoon, or a streamer in a lagoon.",
+                source_ids=("cdfw-lahontan", "cdfw-coastal-cutthroat"),
+            ),
+        ),
+        source_ids=("cdfw-lahontan", "cdfw-lahontan-status", "cdfw-coastal-cutthroat"),
+    ),
+    SpeciesGuide(
+        common_name="Kokanee Salmon",
+        scientific_name="Oncorhynchus nerka",
+        role="sport",
+        difficulty="intermediate",
+        summary=(
+            "A landlocked sockeye salmon that schools in open water and eats plankton. You'll need a "
+            "boat: troll slowly with a small pink or orange lure behind a dodger."
+        ),
+        diet="Almost only zooplankton, the tiny animals drifting in open water.",
+        diet_type="filter_feeder",
+        identification=(
+            "Bright silver sides and a dark blue to green back, with a deeply forked tail, which sets "
+            "it apart from a rainbow trout.",
+            "At spawning time the body turns bright red and the head and tail stay olive green. Males "
+            "grow a hooked jaw and a humped back.",
+            "Usually 10–12 in, up to about 20 in in some reservoirs.",
+        ),
+        habitat=(
+            "Lakes and reservoirs, in open water. It prefers 10–13°C (50–55°F) and tolerates up to 15°C (59°F).",
+        ),
+        habits=(
+            "A schooling fish that lives 2–3 years in California reservoirs.",
+            "Near the surface early in the season and in low light, then deeper as the water warms and "
+            "the lake layers in summer.",
+            "Runs up tributaries to spawn in fall, gathering in dense schools near their mouths first.",
+        ),
+        where_and_when=(
+            "Fish from a boat: it stays in open water.",
+            "Fishing starts in spring and peaks in summer.",
+            "Early and late in the day it can be shallow; through summer, go deeper to find the cold water it wants.",
+            "Rules differ by state and by water: check your state's rules before you go.",
+        ),
+        live_baits=("A kernel of white shoepeg corn, often scented, on the lure's hook",),
+        lures=(
+            "Small spinners",
+            "Soft plastic tubes (hoochies or squids)",
+            "Small spoons",
+            "A dodger or flasher just ahead of the lure",
+        ),
+        why_these_baits=(
+            "It eats plankton, not fish, so what works is a small lure in pink or orange, not a big one.",
+            "A dodger ahead of the lure flashes in open water, where there is nothing else to draw it in.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Trolling with a dodger",
+                use_when="Summer, at the depth of the cold water; early season, near the surface.",
+                method="lure",
+                rod="Ultralight-action rod",
+                reel="Reel to suit the rod",
+                line="Line on a downrigger to reach depth, or leadcore line",
+                terminal=(
+                    "A dodger just ahead of a small spinner, hoochie or spoon in pink or orange, "
+                    "tipped with shoepeg corn, trolled at 0.8–1.5 mph."
+                ),
+                source_ids=("cdfw-kokanee",),
+            ),
+            TackleSetup(
+                name="Lead weights near the surface",
+                use_when="Spring and low light, when fish are shallow.",
+                method="lure",
+                rod="Ultralight-action rod",
+                reel="Reel to suit the rod",
+                line="Light line with lead weights ahead of the lure",
+                terminal="A small pink or orange spoon or hoochie, trolled at 0.8–1.5 mph.",
+                source_ids=("cdfw-kokanee",),
+            ),
+        ),
+        source_ids=("cdfw-kokanee",),
+    ),
+    SpeciesGuide(
+        common_name="Brown Bullhead",
+        scientific_name="Ameiurus nebulosus",
+        role="sport",
+        difficulty="beginner",
+        summary=(
+            "A small catfish relative that bites almost anything, almost any time. Worms on the bottom "
+            "of a shallow bay in the evening are all you need. Black and yellow bullheads fish the same way."
+        ),
+        diet=(
+            "Snails, clams, insects, leeches, small fish, algae and crayfish, found by smell and taste "
+            "along the bottom, mostly at night."
+        ),
+        diet_type="omnivore",
+        identification=(
+            "No scales, a thick head and six whiskers: one long one at each corner of the mouth and four on the chin.",
+            "A square tail, not forked like a channel catfish's.",
+            "Brown bullhead: mottled yellowish-brown sides, dark brown chin whiskers, rough jagged fin spines.",
+            "Black bullhead: dark and unmottled, black or gray chin whiskers, a slightly notched tail, smooth spines.",
+            "Yellow bullhead: yellow to olive, white chin whiskers, a rounded tail, jagged spines.",
+            "Other names: horned pout, mudcat, bullpout, speckled cat.",
+            "Usually 8–10 in, and just under ¾ lb.",
+        ),
+        habitat=(
+            "Warm lakes and slow streams, in quiet backwaters and weedy shallows. Brown bullheads prefer "
+            "clear water with plenty of plants.",
+            "It tolerates low oxygen and warm water that kills other fish, and can be the only fish in "
+            "a small, shallow lake.",
+        ),
+        habits=(
+            "Travels along the bottom in large schools.",
+            "Rests in weeds by day and feeds after dark.",
+            "Stops feeding in winter and may bury itself in soft mud.",
+            "Spawns from April to July at 70–77°F, in a saucer-shaped nest near cover. The parents guard "
+            "the eggs and young.",
+        ),
+        where_and_when=(
+            "A shallow bay in the evening is the classic place.",
+            "Warm months, from spring through summer; it stops biting in winter.",
+        ),
+        live_baits=("Worms", "Other strong-smelling baits"),
+        why_these_baits=(
+            "It finds food by smell, with taste buds all over its skin, so the smellier the bait the "
+            "better. Artificial lures are a poor choice.",
+        ),
+        setups=(
+            TackleSetup(
+                name="Worm on the bottom",
+                use_when="A shallow bay, from evening into the night.",
+                method="bait",
+                rod="Light tackle",
+                reel="Any small reel",
+                line="Light line",
+                terminal=(
+                    "A long-shanked hook with a worm, set on the bottom. Let the fish mouth it for a "
+                    "few seconds before setting the hook."
+                ),
+                source_ids=("widnr-bullhead",),
+            ),
+            TackleSetup(
+                name="Smelly bait on the bottom",
+                use_when="When worms are slow, or for an easy evening from the bank.",
+                method="bait",
+                rod="Light tackle",
+                reel="Any small reel",
+                line="Light line",
+                terminal="A long-shanked hook with the strongest-smelling bait you have, resting on the bottom.",
+                source_ids=("widnr-bullhead",),
+            ),
+        ),
+        tips=(
+            "Its dorsal and side fins have sharp spines that lock in place and cut, not the whiskers. "
+            "Work gloves help.",
+            "Bullheads swallow hooks deeply: bring long-nosed pliers, or cut the line and take the hook "
+            "out when you clean the fish.",
+            "They breed fast and can overrun small ponds, so keeping some is good for the water.",
+        ),
+        eating=(
+            "Clean and chill it soon after catching. Pull the skin off with pliers, take off the "
+            "head, then fillet it or cook it whole.",
+            "From muddy or weedy water, soak it overnight in the refrigerator in cold water with 1 "
+            "tablespoon of salt and 2 of vinegar, then rinse.",
+        ),
+        source_ids=("widnr-bullhead", "mdc-bullhead", "mn-ccf"),
+    ),
 )
 
 GUIDES: tuple[SpeciesGuide, ...] = tuple(_with_details(g) for g in _BASE_GUIDES) + _NEW_GUIDES
@@ -2094,9 +2868,18 @@ GENERAL_SUMMARIES: dict[str, str] = {
 }
 
 
+# Fish the lake data names separately that one guide covers.
+_SAME_GUIDE: dict[str, str] = {
+    "lahontan-cutthroat-trout": "cutthroat-trout",
+    "black-bullhead": "brown-bullhead",
+    "yellow-bullhead": "brown-bullhead",
+}
+
+
 def get_guide(slug_or_name: str) -> SpeciesGuide | None:
     key = slug_or_name.strip()
-    return _BY_SLUG.get(slugify(key)) or _BY_NAME.get(key.lower())
+    slug = slugify(key)
+    return _BY_SLUG.get(_SAME_GUIDE.get(slug, slug)) or _BY_NAME.get(key.lower())
 
 
 def sources_for(ids: tuple[str, ...]) -> list[Source]:
