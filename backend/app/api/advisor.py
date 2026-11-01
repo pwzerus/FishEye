@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api import rate_limits
+from app.api.auth_deps import require_user, same_origin
 from app.api.deps import get_db
 from app.schemas.advisor import AdvisorRequest, AdvisorResponse, AdvisorTraceOut
 from app.services import ai_advisor
@@ -10,7 +11,14 @@ from app.services.recommendations import WaterbodyNotFound
 router = APIRouter(prefix="/advisor", tags=["advisor"])
 
 
-@router.post("/explain", response_model=AdvisorResponse, dependencies=[Depends(rate_limits.LLM)])
+# A model call, so like the AI summaries it needs an account: open to anyone,
+# a script could spend the day's shared AI budget (rate_limits.LLM) and
+# turn the summaries off for everyone. The site itself doesn't call it.
+@router.post(
+    "/explain",
+    response_model=AdvisorResponse,
+    dependencies=[Depends(same_origin), Depends(require_user), Depends(rate_limits.LLM)],
+)
 def explain_recommendations(
     payload: AdvisorRequest, db: Session = Depends(get_db)
 ) -> AdvisorResponse:

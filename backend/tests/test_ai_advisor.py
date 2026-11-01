@@ -39,6 +39,7 @@ from app.services.weather_adapter import (
     WeatherAlert,
     WeatherSnapshot,
 )
+from tests.conftest import signup
 
 NOW = datetime(2026, 9, 23, 12, 0, tzinfo=timezone.utc)
 
@@ -575,6 +576,7 @@ def test_explain_endpoint_returns_the_full_shape(client, seeded_lake, monkeypatc
     # runs end to end without touching the network — same approach as
     # test_recommendations_api.py.
     monkeypatch.setattr(rec_module, "get_weather", lambda lat, lng: _snapshot())
+    signup(client)
 
     resp = client.post(
         "/api/advisor/explain",
@@ -593,5 +595,11 @@ def test_explain_endpoint_returns_the_full_shape(client, seeded_lake, monkeypatc
 
 
 def test_explain_endpoint_404s_for_an_unknown_lake(client):
+    signup(client)
     resp = client.post("/api/advisor/explain", json={"waterbody_id": 99999})
     assert resp.status_code == 404
+
+
+def test_explain_endpoint_needs_an_account(client):
+    # Open to anyone, it would let a script spend everyone's AI budget.
+    assert client.post("/api/advisor/explain", json={"waterbody_id": 99999}).status_code == 401

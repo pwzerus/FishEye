@@ -395,6 +395,7 @@ const es: Messages = {
     sendError: "No se pudo enviar el reporte.",
     reasons: {
       spam: "Spam o publicidad",
+      hateful: "Insultos o contenido de odio",
       inappropriate: "Foto o texto inapropiado",
       wrong_location: "Ubicación equivocada o inventada",
       private_property: "Propiedad privada o sin acceso público",

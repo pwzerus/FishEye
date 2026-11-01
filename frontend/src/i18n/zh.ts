@@ -388,6 +388,7 @@ const zh: Messages = {
     sendError: "举报发送失败。",
     reasons: {
       spam: "垃圾信息或广告",
+      hateful: "歧视或仇恨言论",
       inappropriate: "不当的照片或文字",
       wrong_location: "位置错误或编造",
       private_property: "私人领地或没有公共入口",

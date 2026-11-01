@@ -15,6 +15,7 @@ until an admin reviews it, and admins can hide, restore or remove any pin.
 from __future__ import annotations
 
 import math
+import unicodedata
 from dataclasses import dataclass
 from datetime import date, timedelta
 
@@ -39,7 +40,7 @@ from app.models.community import (
 )
 from app.models.water import River
 from app.models.waterbody import Waterbody
-from app.services import audit, counties, fish_id, water
+from app.services import audit, counties, fish_id, water, word_filter
 from app.db.spatial import bbox_filter
 from app.services.geo import haversine_km
 from app.services.media import MediaStore, PhotoRejected, clean_photo, new_key
@@ -47,6 +48,7 @@ from app.services.media import MediaStore, PhotoRejected, clean_photo, new_key
 SPECIES_LABELS: dict[str, str] = {g.slug: g.common_name for g in GUIDES}
 REPORT_REASONS = {
     "spam": "Spam or advertising",
+    "hateful": "Slurs or hateful content",
     "inappropriate": "Inappropriate photo or text",
     "wrong_location": "Wrong or made-up location",
     "private_property": "Private property or no public access",
@@ -112,7 +114,26 @@ class PinFields:
     share_exact: bool = False
 
 
+# Joiners shape emoji and some scripts; the other invisible characters only
+# hide: a title of zero-width spaces looks empty, and a right-to-left
+# override shows "reggin" backwards, past services/word_filter.py.
+_KEEP_INVISIBLE = {"\u200c", "\u200d"}
+
+
+def _printable(value: str | None) -> str | None:
+    """`value` without invisible format and control characters (line breaks
+    stay, for notes)."""
+    if value is None:
+        return None
+    return "".join(
+        ch
+        for ch in value
+        if ch in "\n\t" or ch in _KEEP_INVISIBLE or unicodedata.category(ch) not in ("Cc", "Cf")
+    )
+
+
 def _text(value: str | None, max_len: int) -> str | None:
+    value = _printable(value)
     if value is None:
         return None
     value = value.strip()
@@ -149,9 +170,18 @@ def validate(
         raise PinError(422, "That location isn't valid.")
     if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
         raise PinError(422, "That location isn't valid.")
-    clean_title = " ".join((title or "").split())
-    if not 3 <= len(clean_title) <= 80:
+    clean_title = " ".join((_printable(title) or "").split())
+    if not 3 <= len(clean_title) <= 80 or not any(unicodedata.category(ch)[0] in "LNPS" for ch in clean_title):
         raise PinError(422, "Give the catch a title of 3 to 80 characters.")
+    note, species_other = _printable(note), _printable(species_other)
+    # What others read on the map and the catch's page: no slurs
+    # (services/word_filter.py).
+    if word_filter.blocked_word(clean_title):
+        raise PinError(422, "The title includes a word FishEye doesn't allow.")
+    if word_filter.blocked_word(note):
+        raise PinError(422, "The notes include a word FishEye doesn't allow.")
+    if word_filter.blocked_word(species_other):
+        raise PinError(422, "The fish's name includes a word FishEye doesn't allow.")
     slug = claimed_species(species_slug, species_other)
     if visibility not in (VISIBILITY_PUBLIC, VISIBILITY_PRIVATE):
         raise PinError(422, "Visibility is public or private.")

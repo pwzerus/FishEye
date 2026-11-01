@@ -36,6 +36,7 @@ from app.models.community import (
     User,
     UserSession,
 )
+from app.services import word_filter
 
 # Deliberately loose: one @, something on each side, a dot in the domain.
 # Real validation is "can this person receive mail there", which needs an
@@ -68,12 +69,15 @@ def normalize_email(email: str) -> str:
 
 def clean_display_name(name: str) -> str:
     """Trim, collapse whitespace, and refuse control characters (which
-    render as nothing and can be used to impersonate another name)."""
+    render as nothing and can be used to impersonate another name) and
+    slurs (services/word_filter.py): the name is shown on every catch."""
     name = " ".join(name.split())
     if any(unicodedata.category(ch).startswith("C") for ch in name):
         raise AuthError(422, "Display names can't contain control characters.", "bad_name")
     if not 2 <= len(name) <= 40:
         raise AuthError(422, "Display names are 2 to 40 characters.", "bad_name")
+    if word_filter.blocked_word(name):
+        raise AuthError(422, "That name includes a word FishEye doesn't allow.", "bad_name")
     return name
 
 

@@ -17,9 +17,12 @@ type Mode = "signin" | "signup";
 // Errors the Google callback sends back as ?error=… (backend app/api/auth.py)
 // are worded in t.auth.oauth.
 
-/** Only same-site paths — `next` comes from the URL, so it's untrusted. */
+/** Only same-site paths — `next` comes from the URL, so it's untrusted. Only
+ * visible ASCII, as the backend's _safe_next: a browser drops a tab or a
+ * newline from a URL, so "/\t/evil.example" goes to //evil.example. */
 export function safeNext(raw: string | null): string {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return "/";
+  if (!/^[!-~]+$/.test(raw)) return "/";
   if (raw.startsWith("/login")) return "/";
   return raw;
 }

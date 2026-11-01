@@ -9,12 +9,16 @@ alembic==1.13.2
 psycopg[binary]==3.2.3
 pydantic==2.9.2
 pydantic-settings==2.5.2
-python-dotenv==1.0.1
+python-dotenv==1.2.4
 httpx==0.27.2
+# The CA bundle httpx trusts: older ones still trust emSign roots whose
+# intermediate keys leaked (fixed in 2026.10.18).
+certifi>=2026.10.18
 beautifulsoup4==4.12.3
 # Community pins: photo uploads (form parsing; decode, re-encode, strip EXIF)
-python-multipart==0.0.20
-Pillow==11.3.0
+python-multipart==0.0.33
+# Kept current: it decodes what strangers upload (services/media.py).
+Pillow==13.0.0
 
 # dev/test
 pytest==8.3.3

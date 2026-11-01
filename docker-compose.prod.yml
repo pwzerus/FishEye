@@ -47,7 +47,8 @@ services:
       FRONTEND_ORIGIN: ${PUBLIC_URL:?set PUBLIC_URL in .env}
       API_PUBLIC_URL: ${PUBLIC_URL}
       # The session cookie is only sent over HTTPS when this is true, which
-      # breaks sign-in on a plain-HTTP address. Turn it on with a domain.
+      # breaks sign-in on a plain-HTTP address. With an https:// PUBLIC_URL
+      # it is on whatever this says (backend app/core/config.py).
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       # Every visitor reaches the backend through Caddy, so without this the
       # backend sees Caddy's address for all of them, and the per-visitor

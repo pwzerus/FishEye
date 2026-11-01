@@ -47,6 +47,9 @@ describe("helpers", () => {
     ["https://evil.example", "/"],
     ["//evil.example", "/"],
     ["/\\evil", "/"],
+    // A browser drops tabs and newlines from a URL: these are //evil.example.
+    ["/\t/evil.example", "/"],
+    ["/\n/evil.example", "/"],
     ["/login?next=/x", "/"],
     ["/map?addPin=1", "/map?addPin=1"],
   ])("safeNext(%j) = %j", (raw, out) => {

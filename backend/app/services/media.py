@@ -33,6 +33,9 @@ from app.core.config import get_settings
 # MPO is how Pillow reports the multi-picture JPEGs many phone cameras
 # write; only the first (primary) frame is kept.
 ALLOWED_FORMATS = {"JPEG", "MPO", "PNG", "WEBP"}
+# What Image.open may try: a multi-picture JPEG (MPO) is read by the JPEG
+# plugin, which has no format of its own to name here.
+OPEN_FORMATS = ["JPEG", "PNG", "WEBP"]
 MAX_PIXELS = 40_000_000  # ~ a 48 MP phone photo downsampled; bombs are far larger
 FULL_MAX_EDGE = 2048
 THUMB_MAX_EDGE = 640
@@ -103,20 +106,25 @@ def clean_photo(data: bytes) -> CleanPhoto:
     if len(data) > max_bytes:
         raise PhotoRejected(f"Photos can be up to {max_bytes // (1024 * 1024)} MB.")
     try:
-        with Image.open(io.BytesIO(data)) as probe:
+        # Only these formats are parsed at all: Pillow's decoders for the
+        # others (TIFF, FlashPix, PSD...) are where most of its security
+        # holes have been, so a file in any of them is refused unread.
+        with Image.open(io.BytesIO(data), formats=OPEN_FORMATS) as probe:
             fmt = probe.format
             if fmt not in ALLOWED_FORMATS:
                 raise PhotoRejected("Upload a JPEG, PNG or WebP photo.")
             if probe.width * probe.height > MAX_PIXELS:
                 raise PhotoRejected("That image is too large.")
             probe.verify()  # structural check; the image must be reopened after
-        with Image.open(io.BytesIO(data)) as img:
+        with Image.open(io.BytesIO(data), formats=OPEN_FORMATS) as img:
             img.load()
             gps = photo_gps(img)
             img = ImageOps.exif_transpose(img)
             img = _flatten(img)
     except PhotoRejected:
         raise
+    except UnidentifiedImageError as exc:
+        raise PhotoRejected("Upload a JPEG, PNG or WebP photo.") from exc
     except (UnidentifiedImageError, Image.DecompressionBombError, OSError, SyntaxError, ValueError) as exc:
         raise PhotoRejected("That file isn't a photo we can read.") from exc
 

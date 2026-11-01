@@ -42,6 +42,7 @@ def test_guide_searches_are_limited_per_client(client, as_client, monkeypatch):
 
 
 def test_searching_the_guides_does_not_spend_the_ai_allowance(client, as_client):
+    signup(client)
     for _ in range(20):
         client.post("/api/ask", json=QUESTION, headers=as_client("a"))
     resp = client.post("/api/advisor/explain", json={"waterbody_id": 99999}, headers=as_client("a"))
@@ -65,6 +66,7 @@ def test_ai_summaries_and_the_advisor_share_one_allowance(make_client, as_client
 
 def test_the_shared_daily_cap_stops_everyone_with_its_own_message(client, as_client, monkeypatch):
     monkeypatch.setattr(rate_limits.LLM.everyone[0], "limit", 3)
+    signup(client)
     for ip in ("a", "b", "c"):
         assert explain(client, as_client(ip)) == 404
 
@@ -75,6 +77,7 @@ def test_the_shared_daily_cap_stops_everyone_with_its_own_message(client, as_cli
 
 def test_refused_requests_do_not_use_up_the_shared_cap(client, as_client, monkeypatch):
     monkeypatch.setattr(rate_limits.LLM.everyone[0], "limit", 11)
+    signup(client)
     # 10 accepted, then 5 refused for being over the client's own limit.
     statuses = [explain(client, as_client("a")) for _ in range(15)]
     assert statuses == [404] * 10 + [429] * 5

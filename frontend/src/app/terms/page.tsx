@@ -74,6 +74,10 @@ export default function TermsPage() {
         <ul>
           <li>break the law, including fishing and wildlife laws, or show yourself doing so;</li>
           <li>harass, threaten or impersonate anyone, or post someone else&apos;s personal information;</li>
+          <li>
+            use slurs, or attack people for their race, ethnicity, nationality, religion, sex, sexual orientation, gender
+            identity or disability (names and catches with slurs aren&apos;t accepted);
+          </li>
           <li>post spam, advertising, sexual or violent content, or anything you don&apos;t have the right to post;</li>
           <li>pin a place to mislead people, or point people onto private land without permission;</li>
           <li>collect data from FishEye with bots or scrapers, or get around its limits or security.</li>

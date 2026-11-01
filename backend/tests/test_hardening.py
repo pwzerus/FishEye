@@ -298,6 +298,28 @@ def test_oversized_bodies_are_refused_before_they_are_read(make_client):
     assert bad.status_code == 400
 
 
+def test_only_a_photo_upload_gets_the_photo_sized_limit(make_client):
+    from app.main import MAX_OTHER_BODY
+
+    c = make_client()
+    signup(c)
+    # A plain form to the upload address: Starlette would parse all of it.
+    form = c.post(
+        "/api/pins",
+        content=b"a=b",
+        headers={"content-type": "application/x-www-form-urlencoded", "content-length": str(MAX_OTHER_BODY + 1)},
+    )
+    assert form.status_code == 413
+    # A Host header bent so the URL reads /api/pins: the route is still login.
+    bent = c.post(
+        "/api/auth/login",
+        content=b"{}",
+        headers={"host": "testserver/api/pins#", "content-type": "multipart/form-data; boundary=x",
+                 "content-length": str(MAX_OTHER_BODY + 1)},
+    )
+    assert bent.status_code == 413
+
+
 def test_a_full_size_phone_photo_reaches_the_photo_check(make_client):
     """/api/fish-id takes one photo as the phone took it (the 2026-10-30
     test pass found it held to the 256 KB cap for JSON: every real photo was

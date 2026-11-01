@@ -256,6 +256,23 @@ TEXT: dict[str, dict[str, str]] = {
         "zh": "为了安全，请先确认是你本人。", "es": "Por tu seguridad, primero confirma que eres tú.",
         "ko": "보안을 위해 먼저 본인 확인을 해 주세요.", "ja": "安全のため、先に本人確認をしてください。",
     },
+    # --- slurs (services/word_filter.py)
+    "That name includes a word FishEye doesn't allow.": {
+        "zh": "这个名字里有 FishEye 不允许使用的词。", "es": "Ese nombre incluye una palabra que FishEye no permite.",
+        "ko": "이 이름에는 FishEye에서 쓸 수 없는 말이 들어 있어요.", "ja": "この名前には、FishEyeで使えない言葉が含まれています。",
+    },
+    "The title includes a word FishEye doesn't allow.": {
+        "zh": "标题里有 FishEye 不允许使用的词。", "es": "El título incluye una palabra que FishEye no permite.",
+        "ko": "제목에 FishEye에서 쓸 수 없는 말이 들어 있어요.", "ja": "タイトルに、FishEyeで使えない言葉が含まれています。",
+    },
+    "The notes include a word FishEye doesn't allow.": {
+        "zh": "备注里有 FishEye 不允许使用的词。", "es": "Las notas incluyen una palabra que FishEye no permite.",
+        "ko": "메모에 FishEye에서 쓸 수 없는 말이 들어 있어요.", "ja": "メモに、FishEyeで使えない言葉が含まれています。",
+    },
+    "The fish's name includes a word FishEye doesn't allow.": {
+        "zh": "鱼名里有 FishEye 不允许使用的词。", "es": "El nombre del pez incluye una palabra que FishEye no permite.",
+        "ko": "물고기 이름에 FishEye에서 쓸 수 없는 말이 들어 있어요.", "ja": "魚の名前に、FishEyeで使えない言葉が含まれています。",
+    },
     # --- lake reports
     "You've sent a lot of reports. Try again later.": {
         "zh": "你提交的报告太多了，请稍后再试。", "es": "Has enviado muchos reportes. Intenta más tarde.",

@@ -10,6 +10,7 @@ from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.models.community import AuditLog, CatchPin, PinPhoto
+from app.services.media import PhotoRejected, clean_photo
 from tests.conftest import make_admin, signup
 
 
@@ -161,6 +162,16 @@ def test_a_file_that_isnt_a_photo_is_rejected_and_nothing_is_written(make_client
     assert "Photo 2" in resp.json()["detail"]
     assert db_session.scalar(select(CatchPin)) is None
     assert media_files() == []
+
+
+@pytest.mark.parametrize("fmt", ["TIFF", "GIF", "BMP"])
+def test_only_jpeg_png_and_webp_are_ever_decoded(fmt):
+    # Pillow's other decoders (TIFF, FlashPix, PSD...) are where its security
+    # holes have been: a file in one of those formats is refused unread.
+    out = io.BytesIO()
+    Image.new("RGB", (40, 30), "green").save(out, format=fmt)
+    with pytest.raises(PhotoRejected, match="Upload a JPEG, PNG or WebP photo."):
+        clean_photo(out.getvalue())
 
 
 def test_photo_count_and_size_limits(make_client, monkeypatch):

@@ -396,6 +396,7 @@ const ja: Messages = {
     sendError: "通報を送信できませんでした。",
     reasons: {
       spam: "スパム・宣伝",
+      hateful: "差別的・憎悪的な表現",
       inappropriate: "不適切な写真や文章",
       wrong_location: "場所が違う・でたらめ",
       private_property: "私有地・一般に開放されていない",

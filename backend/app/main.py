@@ -102,10 +102,13 @@ MAX_PHOTO_BODY = settings.max_photo_bytes + 1024 * 1024
 MAX_OTHER_BODY = 256 * 1024
 
 
-def body_limit(path: str) -> int:
-    if path.startswith(f"{settings.api_prefix}/pins"):
+def body_limit(path: str, multipart: bool) -> int:
+    """Photos come only as multipart uploads; a plain form or JSON sent to
+    the same address is small, and gets no room to make the server parse
+    megabytes of it (Starlette ignores its own form limits for those)."""
+    if multipart and path.startswith(f"{settings.api_prefix}/pins"):
         return MAX_UPLOAD_BODY
-    if path == f"{settings.api_prefix}/fish-id":
+    if multipart and path == f"{settings.api_prefix}/fish-id":
         return MAX_PHOTO_BODY
     return MAX_OTHER_BODY
 
@@ -113,9 +116,11 @@ def body_limit(path: str) -> int:
 @app.middleware("http")
 async def limit_body_size(request: Request, call_next):  # type: ignore[no-untyped-def]
     if request.method in ("POST", "PUT", "PATCH", "DELETE"):
-        limit = body_limit(request.url.path)
         length = request.headers.get("content-length")
         is_multipart = request.headers.get("content-type", "").startswith("multipart/")
+        # The path the request is routed by: request.url.path is rebuilt with
+        # the Host header, which a client can bend to look like /api/pins.
+        limit = body_limit(request.scope["path"], is_multipart)
         # A chunked body has no length to check up front, and browsers never
         # send one for fetch/XHR; refusing it keeps the cap unbypassable.
         if length is None and (is_multipart or "transfer-encoding" in request.headers):
@@ -129,6 +134,26 @@ async def limit_body_size(request: Request, call_next):  # type: ignore[no-untyp
                 detail = error_text.tr("That upload is too large.", request.cookies.get(error_text.LANG_COOKIE))
                 return JSONResponse({"detail": detail}, status_code=413)
     return await call_next(request)
+
+
+# On every API answer; the pages get theirs from frontend/next.config.ts.
+# The API is never meant to be framed or sniffed as anything but what it
+# says it is. HSTS only with HTTPS (a browser ignores it over HTTP anyway).
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+}
+if settings.frontend_origin.startswith("https://"):
+    SECURITY_HEADERS["Strict-Transport-Security"] = "max-age=31536000"
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):  # type: ignore[no-untyped-def]
+    response = await call_next(request)
+    for name, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    return response
 
 
 @app.exception_handler(StarletteHTTPException)

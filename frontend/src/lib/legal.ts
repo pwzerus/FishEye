@@ -14,5 +14,5 @@ export const LEGAL = {
   governingState: "Texas",
   // COPPA: no accounts for children under 13.
   minimumAge: 13,
-  updated: "October 29, 2026",
+  updated: "October 31, 2026",
 } as const;

@@ -6,6 +6,7 @@ silently falling back to something that looks like it works.
 """
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -126,6 +127,16 @@ class Settings(BaseSettings):
     # project; set true before any commercial use and only CC0 / CC BY
     # records are shown. See docs/commercialization.md.
     gbif_exclude_noncommercial: bool = False
+
+    @model_validator(mode="after")
+    def _secure_cookies_over_https(self) -> "Settings":
+        # A site served over HTTPS sends its cookies Secure whatever
+        # COOKIE_SECURE says: left out of the server's .env, the session
+        # cookie would also travel over plain HTTP, where anyone on the
+        # network path can read it.
+        if self.frontend_origin.startswith("https://"):
+            self.cookie_secure = True
+        return self
 
 
 @lru_cache

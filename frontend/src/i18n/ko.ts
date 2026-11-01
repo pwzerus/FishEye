@@ -396,6 +396,7 @@ const ko: Messages = {
     sendError: "신고를 보내지 못했어요.",
     reasons: {
       spam: "스팸 또는 광고",
+      hateful: "혐오 표현이나 비하하는 말",
       inappropriate: "부적절한 사진이나 글",
       wrong_location: "틀리거나 지어낸 위치",
       private_property: "사유지이거나 일반인 출입 불가",

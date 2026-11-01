@@ -405,6 +405,7 @@ const en = {
     sendError: "Couldn't send the report.",
     reasons: {
       spam: "Spam or advertising",
+      hateful: "Slurs or hateful content",
       inappropriate: "Inappropriate photo or text",
       wrong_location: "Wrong or made-up location",
       private_property: "Private property or no public access",

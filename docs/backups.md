@@ -20,6 +20,17 @@ Both run on the server from `~/FishEye`, read their settings from
    all public access" on. Add a lifecycle rule that deletes objects under
    `fisheye/` after 30 days (that is how long backups are kept off the
    server).
+
+   Turn on **Bucket Versioning** (Properties → Bucket Versioning → Enable),
+   and in the lifecycle rule also "permanently delete noncurrent versions"
+   after 30 days. The server can't delete backups (step 2 gives it no
+   delete permission), but it can write a file under a name that's already
+   there; with versioning that keeps the old copy instead of replacing it.
+   Together they mean that someone who takes over the server, ransomware
+   included, can't destroy the backups that would undo the damage. For a
+   lock even the AWS account can't lift early, also turn on **Object Lock**
+   (Properties → Object Lock) with a default retention of 30 days in
+   compliance mode.
 2. **Let the server write to it**, without keys on the server: an IAM role
    for EC2 with this policy, attached to the instance (EC2 → the instance →
    Actions → Security → Modify IAM role):
