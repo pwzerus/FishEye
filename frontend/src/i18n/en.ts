@@ -88,7 +88,6 @@ const en = {
     feedbackTitle: "Help us make FishEye better",
     feedbackText: "Found a lake we got wrong, or wish FishEye did something it doesn't? Tell us.",
     feedbackSend: "Send feedback",
-    feedbackSubject: "FishEye feedback",
     footer: "FishEye · Get outside.",
   },
   legal: {
@@ -100,6 +99,18 @@ const en = {
     contact: "Contact",
     updated: (date: string) => `Last updated ${date}`,
     englishOnly: "",
+  },
+  // Send feedback (components/feedback/FeedbackDialog.tsx).
+  feedback: {
+    title: "Send feedback",
+    placeholder: "A lake we got wrong, something that didn't work, something you wish FishEye did…",
+    send: "Send",
+    sending: "Sending…",
+    thanks: "Thanks! We read every message.",
+    failed: "Couldn't send that. Try again.",
+    signInFirst: "Sign in to send feedback, so we can reply to you.",
+    cantSignIn: "Can't sign in? Write to",
+    fromAccount: (email: string) => `Sent from your account, ${email}, so we can reply.`,
   },
   sourcesPage: {
     title: "Sources",
@@ -853,6 +864,22 @@ const en = {
     send: "Send",
   },
   auth: {
+    // Forgotten passwords (components/auth/ForgotPassword.tsx, ResetPassword.tsx)
+    forgotLink: "Forgot password?",
+    forgotTitle: "Forgot your password?",
+    forgotSub: "Enter your email and we'll send a link to choose a new one.",
+    forgotNoMail: "FishEye can't send email yet, so write to us from the address you signed up with and we'll send you a link.",
+    sendResetLink: "Send reset link",
+    resetSentTitle: "Check your email",
+    resetSentText: (email: string) => `If ${email} has a FishEye account, a link is on its way. It works for an hour. Check your spam folder too.`,
+    tryAnotherEmail: "Try another address",
+    backToSignIn: "Back to sign in",
+    resetTitle: "Choose a new password",
+    resetFor: (email: string) => `For ${email}. You'll be signed out on your other devices.`,
+    resetNewPassword: "New password",
+    saveNewPassword: "Save new password",
+    resetDone: "Password changed. You're signed in.",
+    resetBadLink: "This link has expired or was already used. Ask for a new one.",
     oauth: {
       google_email_exists:
         "There's already a FishEye account with that email. Sign in with your password, then connect Google from your account page.",

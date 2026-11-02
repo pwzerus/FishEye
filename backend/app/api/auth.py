@@ -6,7 +6,7 @@ from datetime import timedelta
 from typing import NoReturn
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -29,6 +29,10 @@ from app.schemas.auth import (
     ReauthIn,
     LoginIn,
     PasswordChangeIn,
+    PasswordResetCheckIn,
+    PasswordResetCheckOut,
+    PasswordResetIn,
+    PasswordResetRequestIn,
     ProfileIn,
     ProvidersOut,
     RegisterIn,
@@ -37,7 +41,8 @@ from app.schemas.auth import (
     VerifyEmailIn,
     VerifyEmailOut,
 )
-from app.services import audit, email_verification
+from app.knowledge.error_text import LANG_COOKIE
+from app.services import audit, email_verification, password_reset
 from app.services import auth as auth_service
 from app.services import pins as pin_service
 from app.services.auth import AuthError
@@ -55,6 +60,10 @@ register_by_ip = RateLimiter(limit=10, window_seconds=60 * 60)
 # real inbox); link checks per IP, so tokens can't be guessed at speed.
 verify_mail_by_user = RateLimiter(limit=5, window_seconds=60 * 60)
 verify_by_ip = RateLimiter(limit=30, window_seconds=15 * 60)
+# Reset emails: a few to one address an hour, whoever asks; and per IP, so one
+# visitor can't send them to a long list of strangers.
+reset_mail_by_email = RateLimiter(limit=3, window_seconds=60 * 60)
+reset_by_ip = RateLimiter(limit=10, window_seconds=60 * 60)
 
 OAUTH_COOKIE = "fm_oauth"
 OAUTH_COOKIE_TTL = 10 * 60
@@ -106,7 +115,7 @@ def _throttle(limiter: RateLimiter, key: str) -> None:
 
 @router.get("/providers", response_model=ProvidersOut)
 def providers() -> ProvidersOut:
-    return ProvidersOut(password=True, google=auth_service.google_enabled())
+    return ProvidersOut(password=True, google=auth_service.google_enabled(), email_ready=password_reset.can_email())
 
 
 @router.post("/register", response_model=UserOut, status_code=201)
@@ -159,6 +168,60 @@ def verify_email(payload: VerifyEmailIn, request: Request, db: Session = Depends
         raise HTTPException(status_code=exc.status, detail=exc.message) from exc
     db.commit()
     return VerifyEmailOut(verified=True, email=user.email)
+
+
+@router.post("/password-reset/request", status_code=202, response_class=Response)
+def request_password_reset(
+    payload: PasswordResetRequestIn, request: Request, background: BackgroundTasks, db: Session = Depends(get_db)
+) -> Response:
+    """The same answer, at the same speed, whether or not the address has an
+    account (services/password_reset.py). Over the per-address limit, nothing
+    more is sent, and that isn't said either."""
+    ip = client_ip(request)
+    _throttle(reset_by_ip, ip)
+    reset_by_ip.hit(ip)
+    key = auth_service.normalize_email(payload.email)
+    if reset_mail_by_email.blocked_for(key) <= 0:
+        reset_mail_by_email.hit(key)
+        message = password_reset.prepare(db, payload.email, request.cookies.get(LANG_COOKIE))
+        db.commit()
+        if message is not None:
+            background.add_task(password_reset.deliver, message)
+    return Response(status_code=202, background=background)
+
+
+@router.post("/password-reset/check", response_model=PasswordResetCheckOut)
+def check_password_reset(
+    payload: PasswordResetCheckIn, request: Request, db: Session = Depends(get_db)
+) -> PasswordResetCheckOut:
+    """Is this link still good? Doesn't use it up, so a mail app that opens
+    links to scan them can't spend it."""
+    ip = client_ip(request)
+    _throttle(verify_by_ip, ip)
+    verify_by_ip.hit(ip)
+    user = password_reset.account_for(db, payload.token)
+    db.commit()  # an expired link is deleted either way
+    return PasswordResetCheckOut(valid=user is not None, email=user.email if user else None)
+
+
+@router.post("/password-reset/confirm", response_model=UserOut)
+def confirm_password_reset(
+    payload: PasswordResetIn, request: Request, response: Response, db: Session = Depends(get_db)
+) -> UserOut:
+    """Sets the new password and signs this browser in, on a new session."""
+    ip = client_ip(request)
+    _throttle(verify_by_ip, ip)
+    verify_by_ip.hit(ip)
+    try:
+        user = password_reset.reset(db, payload.token, payload.new_password)
+    except AuthError as exc:
+        db.commit()  # an expired link is deleted either way
+        _raise(exc)
+    token = auth_service.create_session(db, user, request.headers.get("user-agent"))
+    user.last_login_at = utcnow()
+    db.commit()
+    set_session_cookie(response, token)
+    return user_out(user)
 
 
 @router.post("/login", response_model=UserOut)

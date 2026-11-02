@@ -85,7 +85,6 @@ const zh: Messages = {
     feedbackTitle: "帮我们把 FishEye 做得更好",
     feedbackText: "发现哪个湖的信息不对，或者希望 FishEye 多做点什么？告诉我们。",
     feedbackSend: "发送反馈",
-    feedbackSubject: "FishEye 反馈",
     footer: "FishEye · 出门去钓鱼。",
   },
   legal: {
@@ -97,6 +96,18 @@ const zh: Messages = {
     contact: "联系我们",
     updated: (date: string) => `最后更新：${date}`,
     englishOnly: "本页只有英文版，以英文版为准。",
+  },
+  // Send feedback (components/feedback/FeedbackDialog.tsx).
+  feedback: {
+    title: "发送反馈",
+    placeholder: "哪个湖的信息不对、哪里不好用，或者希望 FishEye 多做什么……",
+    send: "发送",
+    sending: "正在发送…",
+    thanks: "谢谢！每条我们都会看。",
+    failed: "发送失败，请再试一次。",
+    signInFirst: "登录后才能发送反馈，这样我们才能回复你。",
+    cantSignIn: "登录不了？写信到",
+    fromAccount: (email: string) => `从你的账号 ${email} 发送，方便我们回复。`,
   },
   sourcesPage: {
     title: "来源",
@@ -821,6 +832,22 @@ const zh: Messages = {
     send: "发送",
   },
   auth: {
+    // Forgotten passwords (components/auth/ForgotPassword.tsx, ResetPassword.tsx)
+    forgotLink: "忘记密码？",
+    forgotTitle: "忘记密码了？",
+    forgotSub: "输入你的邮箱，我们会发一个链接，让你设置新密码。",
+    forgotNoMail: "FishEye 暂时还不能发邮件。请用注册时的邮箱写信给我们，我们会把链接发给你。",
+    sendResetLink: "发送重置链接",
+    resetSentTitle: "请查看邮箱",
+    resetSentText: (email: string) => `如果 ${email} 有 FishEye 账号，链接已经发出，一小时内有效。也请看看垃圾邮件。`,
+    tryAnotherEmail: "换一个邮箱",
+    backToSignIn: "返回登录",
+    resetTitle: "设置新密码",
+    resetFor: (email: string) => `账号：${email}。你在其他设备上会被登出。`,
+    resetNewPassword: "新密码",
+    saveNewPassword: "保存新密码",
+    resetDone: "密码已修改，你已登录。",
+    resetBadLink: "这个链接已过期或已被使用，请重新申请。",
     oauth: {
       google_email_exists: "已经有一个用这个邮箱的 FishEye 账户。请先用密码登录，再在账户页连接 Google。",
       google_unverified: "你的 Google 邮箱还没验证，不能在这里使用。",

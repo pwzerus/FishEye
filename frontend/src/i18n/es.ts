@@ -86,7 +86,6 @@ const es: Messages = {
     feedbackTitle: "Ayúdanos a mejorar FishEye",
     feedbackText: "¿Viste un lago con datos equivocados o quieres que FishEye haga algo más? Cuéntanos.",
     feedbackSend: "Enviar comentarios",
-    feedbackSubject: "Comentarios sobre FishEye",
     footer: "FishEye · Sal a pescar.",
   },
   legal: {
@@ -98,6 +97,18 @@ const es: Messages = {
     contact: "Contacto",
     updated: (date: string) => `Última actualización: ${date}`,
     englishOnly: "Esta página solo está disponible en inglés; la versión en inglés es la oficial.",
+  },
+  // Send feedback (components/feedback/FeedbackDialog.tsx).
+  feedback: {
+    title: "Enviar comentarios",
+    placeholder: "Un lago con datos equivocados, algo que no funcionó, algo que te gustaría que hiciera FishEye…",
+    send: "Enviar",
+    sending: "Enviando…",
+    thanks: "¡Gracias! Leemos todos los mensajes.",
+    failed: "No se pudo enviar. Inténtalo de nuevo.",
+    signInFirst: "Inicia sesión para enviar comentarios, así podremos responderte.",
+    cantSignIn: "¿No puedes iniciar sesión? Escribe a",
+    fromAccount: (email: string) => `Se envía desde tu cuenta, ${email}, para poder responderte.`,
   },
   sourcesPage: {
     title: "Fuentes",
@@ -835,6 +846,22 @@ const es: Messages = {
     send: "Enviar",
   },
   auth: {
+    // Forgotten passwords (components/auth/ForgotPassword.tsx, ResetPassword.tsx)
+    forgotLink: "¿Olvidaste tu contraseña?",
+    forgotTitle: "¿Olvidaste tu contraseña?",
+    forgotSub: "Escribe tu correo y te enviaremos un enlace para elegir una nueva.",
+    forgotNoMail: "FishEye todavía no puede enviar correos. Escríbenos desde la dirección con la que te registraste y te mandaremos un enlace.",
+    sendResetLink: "Enviar enlace",
+    resetSentTitle: "Revisa tu correo",
+    resetSentText: (email: string) => `Si ${email} tiene una cuenta de FishEye, el enlace ya va en camino. Funciona durante una hora. Revisa también el correo no deseado.`,
+    tryAnotherEmail: "Probar otra dirección",
+    backToSignIn: "Volver a iniciar sesión",
+    resetTitle: "Elige una contraseña nueva",
+    resetFor: (email: string) => `Para ${email}. Se cerrará tu sesión en otros dispositivos.`,
+    resetNewPassword: "Contraseña nueva",
+    saveNewPassword: "Guardar contraseña",
+    resetDone: "Contraseña cambiada. Ya iniciaste sesión.",
+    resetBadLink: "Este enlace ya caducó o ya se usó. Pide uno nuevo.",
     oauth: {
       google_email_exists:
         "Ya hay una cuenta de FishEye con ese correo. Inicia sesión con tu contraseña y luego conecta Google desde la página de tu cuenta.",

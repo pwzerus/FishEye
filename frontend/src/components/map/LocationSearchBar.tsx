@@ -132,7 +132,11 @@ export function LocationSearchBar({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const typed = query.trim();
-    if (typed.length < 2) return;
+    // Nothing to look for, so the last search's lakes shouldn't stay up.
+    if (typed.length < 2 || !/[\p{L}\p{N}]/u.test(typed)) {
+      setChoices(null);
+      return;
+    }
     const trimmed = inEnglish(typed);
 
     setSearching(true);

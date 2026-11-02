@@ -119,6 +119,9 @@ class Settings(BaseSettings):
     # (services/ai_quota.py, docs/adr/0023). Searching the guides is free and
     # needs no account; only the model call is metered. Admins are exempt.
     ai_summaries_per_day: int = 3
+    # What the paid model may cost in a calendar month, in US dollars, for
+    # everyone together (services/ai_budget.py). 0 turns the model off.
+    ai_monthly_budget_usd: float = 10.0
 
     # Feature flags
     use_seed_data_only: bool = True

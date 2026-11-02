@@ -1,6 +1,7 @@
 """/api/pins — community catch pins, and /api/media — their photos."""
 from __future__ import annotations
 
+import math
 from datetime import date
 from typing import NoReturn
 
@@ -185,6 +186,8 @@ def _parse_bbox(bbox: str | None) -> tuple[float, float, float, float] | None:
         west, south, east, north = (float(v) for v in bbox.split(","))
     except ValueError as exc:
         raise HTTPException(status_code=422, detail="bbox is west,south,east,north") from exc
+    if not all(math.isfinite(v) for v in (west, south, east, north)):
+        raise HTTPException(status_code=422, detail="bbox is west,south,east,north")
     return west, south, east, north
 
 
@@ -265,7 +268,8 @@ def pin_where(
         water=WhereWaterOut(kind=match.kind, id=match.id, name=match.name, distance_m=match.distance_m)
         if match
         else None,
-        water_required=water.data_ready(db, c.state if c else None),
+        # Outside the US nothing but mapped water will do, whatever the data.
+        water_required=c is None or water.data_ready(db, c.state),
     )
 
 
@@ -279,7 +283,8 @@ def pin_waters(
     """Other people's catches in view, counted per lake and per river in
     each county (ADR 0040). The viewer's own catches come from /pins."""
     box = _parse_bbox(bbox)
-    assert box is not None
+    if box is None:
+        raise HTTPException(status_code=422, detail="bbox is west,south,east,north")
     out: list[WaterGroupOut] = []
     for g in svc.water_groups(db, user, bbox=box, species=species):
         counted: dict[str, int] = {}

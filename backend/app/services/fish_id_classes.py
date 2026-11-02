@@ -130,6 +130,10 @@ CLAIM_GROUPS: dict[str, str] = {
     "brown-bullhead": "catfish",
 }
 
+# Fish a photo can't tell from a guide fish's group: a USFWS photo of a white
+# bass read as a white perch (2026-11-02), and the angler was told it wasn't one.
+LOOK_ALIKES: dict[str, str] = {"white-perch": "temperate-bass"}
+
 # Fish the built model knows as other_fish that have since got a guide. A
 # class's kind is part of what the model was built for (classes_digest), so
 # changing it here would mean rebuilding and retraining: until the next

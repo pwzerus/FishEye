@@ -253,6 +253,14 @@ def _lakes_for(
     return _load(db, [w.id for w in rows[:MAX_LAKES]])
 
 
+def missing_lake(question: str, routed: tuple[str, ...]) -> str | None:
+    """The name, when the question asks what's in a lake `answer` didn't find."""
+    if routed or not _ASKS_WHATS_THERE.search(question):
+        return None
+    names = _named_lakes(question)
+    return names[0] if names else None
+
+
 def answer(db: Session, question: str, picked_state: str | None, routed: tuple[str, ...]) -> AskLakesOut | None:
     """What the lake data says to this question, if it says anything."""
     state = jurisdictions.state_in_question(question) or jurisdictions.normalize(picked_state)

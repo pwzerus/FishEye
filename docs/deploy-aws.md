@@ -216,7 +216,7 @@ mkdir -p ~/backups && $DC exec -T db pg_dump -U fisheye fisheye | gzip > ~/backu
 ls -lh ~/backups | tail -1
 
 git pull
-$DC up --build -d backend frontend
+$DC build backend && $DC build frontend && $DC up -d backend frontend
 $DC cp ~/data/. backend:/tmp/data
 
 # 1. Lakes, every state, from the extracts' payloads (about 2 minutes)
@@ -258,7 +258,7 @@ On the server, after the backup and `git pull` above (`docker-compose.prod.yml`
 mounts `backend/models/fish-id` into the backend, read-only):
 
 ```bash
-$DC up --build -d backend frontend
+$DC build backend && $DC build frontend && $DC up -d backend frontend
 $DC cp ~/data/osm_cache/tackle_shops.json backend:/tmp/data/tackle_shops.json
 $DC exec -T backend python -m app.data_import.tackle_shops --from-file /tmp/data/tackle_shops.json
 # The photo check loads on the first photo; this checks it is installed:
@@ -294,7 +294,7 @@ scp -i fisheye.pem osm_cache/*_water.json.gz ubuntu@<ELASTIC_IP>:~/data/osm_cach
 On the server, after the backup (`pg_dump`, above) and `git pull`:
 
 ```bash
-$DC up --build -d backend frontend
+$DC build backend && $DC build frontend && $DC up -d backend frontend
 $DC exec -T backend mkdir -p /tmp/water
 for f in ~/data/osm_cache/*_water.json.gz; do $DC cp "$f" backend:/tmp/water/; done
 $DC exec -T backend python -m app.data_import.water_shapes --states all --import-only --out-dir /tmp/water
@@ -318,8 +318,9 @@ it, and keep that tab.
 ```bash
 DC="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
 
-# New version
-git pull && $DC up --build -d
+# New version. One image at a time: built together they have run the server
+# (2 GB of memory, 2 GB of swap) out of memory and killed the live backend.
+git pull && $DC build backend && $DC build frontend && $DC up -d
 
 # Logs
 $DC logs -f --tail 100
@@ -337,9 +338,11 @@ its disk too, so back up first.
 - **Managed database.** The database is a container on the same disk. The
   plan is RDS PostgreSQL + PostGIS, photos on S3. Until then, nightly
   backups to S3 with a restore drill: `docs/backups.md`.
-- **Email.** No password reset yet. Address verification is built but off
-  (`EMAIL_VERIFICATION`, `MAIL_BACKEND` in `.env.example`) until a mail
-  service such as Amazon SES is set up; Google sign-in needs neither.
+- **Email.** Until a mail service is set up (`MAIL_BACKEND=smtp` and `SMTP_*` in
+  `.env.example`: Amazon SES, or a mailbox's app password), "Forgot password?"
+  tells people to write to the contact address, and an admin makes them a link
+  from the Users screen (ADR 0044). Address verification stays off until then
+  (`EMAIL_VERIFICATION`); Google sign-in needs neither.
 
 ## Taking it down
 

@@ -1,7 +1,8 @@
+import math
 from collections import defaultdict
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api import rate_limits
@@ -38,6 +39,10 @@ def _parse_bbox(bbox: str) -> tuple[float, float, float, float]:
         raise HTTPException(
             status_code=422, detail="bbox must be 'west,south,east,north' as four numbers"
         ) from exc
+    if not all(math.isfinite(v) for v in (west, south, east, north)):
+        raise HTTPException(
+            status_code=422, detail="bbox must be 'west,south,east,north' as four numbers"
+        )
     if not (south <= north and west <= east):
         raise HTTPException(status_code=422, detail="bbox has south > north or west > east")
     return west, south, east, north
@@ -80,7 +85,7 @@ def list_waterbodies(
             stmt = stmt.where(State.code == state_code.upper())
         if species:
             stmt = stmt.join(Waterbody.species_links).join(WaterbodySpecies.species).where(
-                Species.common_name.ilike(species)
+                func.lower(Species.common_name) == species.lower()
             )
         if bbox:
             west, south, east, north = _parse_bbox(bbox)

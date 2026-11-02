@@ -60,6 +60,26 @@ class VerifyEmailOut(BaseModel):
 class ProvidersOut(BaseModel):
     password: bool
     google: bool
+    # Can a reset link be emailed? If not, the page says who to ask instead.
+    email_ready: bool = False
+
+
+class PasswordResetRequestIn(BaseModel):
+    email: str = Field(max_length=254)
+
+
+class PasswordResetCheckIn(BaseModel):
+    token: str = Field(max_length=200)
+
+
+class PasswordResetCheckOut(BaseModel):
+    valid: bool
+    email: str | None = None
+
+
+class PasswordResetIn(BaseModel):
+    token: str = Field(max_length=200)
+    new_password: str = Field(max_length=256)
 
 
 class SessionOut(BaseModel):

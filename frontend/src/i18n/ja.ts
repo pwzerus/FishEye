@@ -87,7 +87,6 @@ const ja: Messages = {
     feedbackTitle: "FishEyeをよりよくするために",
     feedbackText: "湖の情報が間違っていた、こんな機能がほしい――そんなときはお知らせください。",
     feedbackSend: "フィードバックを送る",
-    feedbackSubject: "FishEyeへのフィードバック",
     footer: "FishEye・外へ出かけよう。",
   },
   legal: {
@@ -99,6 +98,18 @@ const ja: Messages = {
     contact: "お問い合わせ",
     updated: (date: string) => `最終更新：${date}`,
     englishOnly: "このページは英語版のみです。英語版の内容が正式なものです。",
+  },
+  // Send feedback (components/feedback/FeedbackDialog.tsx).
+  feedback: {
+    title: "フィードバックを送る",
+    placeholder: "間違っている湖の情報、うまく動かなかったこと、FishEyeに望むこと…",
+    send: "送信",
+    sending: "送信中…",
+    thanks: "ありがとうございます！すべて読んでいます。",
+    failed: "送信できませんでした。もう一度お試しください。",
+    signInFirst: "返信できるよう、ログインしてからお送りください。",
+    cantSignIn: "ログインできない場合の連絡先：",
+    fromAccount: (email: string) => `返信できるよう、アカウント ${email} から送信します。`,
   },
   sourcesPage: {
     title: "出典",
@@ -842,6 +853,22 @@ const ja: Messages = {
     send: "送信",
   },
   auth: {
+    // Forgotten passwords (components/auth/ForgotPassword.tsx, ResetPassword.tsx)
+    forgotLink: "パスワードをお忘れですか？",
+    forgotTitle: "パスワードをお忘れですか？",
+    forgotSub: "メールアドレスを入力すると、新しいパスワードを決めるためのリンクをお送りします。",
+    forgotNoMail: "FishEyeはまだメールを送信できません。登録したアドレスからご連絡いただければ、リンクをお送りします。",
+    sendResetLink: "再設定リンクを送る",
+    resetSentTitle: "メールをご確認ください",
+    resetSentText: (email: string) => `${email} にFishEyeのアカウントがあれば、リンクを送信しました。1時間有効です。迷惑メールフォルダもご確認ください。`,
+    tryAnotherEmail: "別のアドレスで試す",
+    backToSignIn: "ログインに戻る",
+    resetTitle: "新しいパスワードを決める",
+    resetFor: (email: string) => `${email} のアカウントです。ほかの端末ではログアウトされます。`,
+    resetNewPassword: "新しいパスワード",
+    saveNewPassword: "新しいパスワードを保存",
+    resetDone: "パスワードを変更しました。ログインしました。",
+    resetBadLink: "このリンクは期限切れか、すでに使用されています。新しいリンクを依頼してください。",
     oauth: {
       google_email_exists:
         "そのメールアドレスのFishEyeアカウントがすでにあります。パスワードでログインしてから、アカウントページでGoogleを連携してください。",

@@ -334,7 +334,7 @@ export function AskChat({
   const ask = useCallback(
     async (question: string) => {
       const q = question.trim().slice(0, MAX_LEN);
-      if (q.length < 3 || busy) return;
+      if (q.length < 2 || busy) return;
       setTurns((t) => [...t, { id: nextId.current++, role: "user", text: q }]);
       setInput("");
       setBusy(true);
@@ -399,7 +399,7 @@ export function AskChat({
       } catch (e) {
         const message = e instanceof ApiError ? e.message : t.serverDown;
         if (e instanceof ApiError && e.status === 429) setAi((a) => (a ? { ...a, remaining: 0 } : a));
-        if (e instanceof ApiError && e.status === 401) setAi({ signed_in: false, limit: null, remaining: null });
+        if (e instanceof ApiError && e.status === 401) setAi({ signed_in: false, limit: null, remaining: null, enabled: true });
         setSummary({ status: "error", message });
       }
     },
@@ -563,7 +563,7 @@ export function AskChat({
                   fish={speciesSlug ?? r.citations.find((c) => c.species_slug !== "all-fish")?.species_slug ?? null}
                   label={all.baitTip.mentioned}
                 />
-                {r.answer_source === "passages" && (
+                {r.answer_source === "passages" && ai?.enabled && (
                   <AiSummary
                     summary={turn.summary}
                     ai={ai}
@@ -636,7 +636,7 @@ export function AskChat({
           placeholder={fishName ? t.placeholderFish(fishName) : t.placeholder}
           aria-label={t.yourQuestion}
         />
-        <button type="submit" className="send-btn" disabled={busy || input.trim().length < 3} aria-label={t.send}>
+        <button type="submit" className="send-btn" disabled={busy || input.trim().length < 2} aria-label={t.send}>
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
             <path d="M4 12l16-8-6 16-2.5-6.5L4 12z" fill="currentColor" />
           </svg>

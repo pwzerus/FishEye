@@ -8,7 +8,6 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { formatDay } from "@/components/community/PinCard";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { ApiError } from "@/lib/api/client";
 import {
   adminAskMisses,
   adminAudit,
@@ -20,25 +19,26 @@ import {
   adminResolveLakeReport,
   adminSetPinStatus,
   adminStats,
-  adminUpdateUser,
-  adminUsers,
 } from "@/lib/api/session";
 import type {
   AdminLakeReport,
   AdminPin,
   AdminReportGroup,
   AdminStats,
-  AdminUser,
   AskMiss,
   AuditEntry,
   Paged,
   PinSummary,
 } from "@/lib/api/types";
 import { useJurisdictions } from "@/lib/jurisdiction";
+import { AdminFeedbackTab } from "./AdminFeedback";
+import { Users } from "./AdminUsers";
+import { ACTION_LABEL, Pager, detailText, errText, when, type Pending } from "./shared";
 import { TpwdRefresh } from "./TpwdRefresh";
 
 const TABS = [
   { id: "overview", label: "Overview" },
+  { id: "feedback", label: "Feedback" },
   { id: "reports", label: "Reports" },
   { id: "lakes", label: "Lake reports" },
   { id: "pins", label: "Catches" },
@@ -55,24 +55,6 @@ function checkNote(pin: Pick<PinSummary, "species_label" | "species_check" | "sp
   if (pin.species_check === "confirmed") return " (photo-checked)";
   if (pin.species_check === "group") return ` (photo: ${pin.species_check_label ?? "look-alike"})`;
   return " (not photo-checked)";
-}
-
-function when(iso: string | null): string {
-  if (!iso) return "never";
-  return new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-}
-
-function errText(e: unknown) {
-  return e instanceof ApiError ? e.message : "Something went wrong.";
-}
-
-/** Confirm-before-acting, shared by every destructive admin button. */
-interface Pending {
-  title: string;
-  body: string;
-  confirm: string;
-  danger?: boolean;
-  run: () => Promise<void>;
 }
 
 export function AdminConsole() {
@@ -138,6 +120,7 @@ export function AdminConsole() {
 
       <div className="admin-body" key={tab}>
         {tab === "overview" && <Overview onGo={(t) => router.replace(`${pathname}?tab=${t}`, { scroll: false })} />}
+        {tab === "feedback" && <AdminFeedbackTab />}
         {tab === "reports" && <Reports confirmThen={confirmThen} />}
         {tab === "lakes" && <LakeReports confirmThen={confirmThen} />}
         {tab === "pins" && <Pins confirmThen={confirmThen} />}
@@ -217,6 +200,19 @@ function Overview({ onGo }: { onGo: (tab: TabId) => void }) {
           sub={`${stats.open_reports} open report${stats.open_reports === 1 ? "" : "s"}`}
           tone={stats.pins_awaiting_review > 0 ? "warn" : undefined}
           onClick={() => onGo("reports")}
+        />
+        <StatCard
+          label="Feedback"
+          value={stats.feedback_new ?? 0}
+          sub="new messages"
+          tone={(stats.feedback_new ?? 0) > 0 ? "warn" : undefined}
+          onClick={() => onGo("feedback")}
+        />
+        <StatCard
+          label="AI cost this month"
+          value={`$${(stats.ai_spent_usd ?? 0).toFixed(2)}`}
+          sub={`estimate · pauses at $${(stats.ai_budget_usd ?? 0).toFixed(2)}`}
+          tone={(stats.ai_spent_usd ?? 0) >= (stats.ai_budget_usd ?? 0) * 0.8 ? "warn" : undefined}
         />
         <StatCard
           label="Lake reports"
@@ -438,30 +434,14 @@ function LakeReports({ confirmThen }: { confirmThen: (p: Pending) => void }) {
 
 // -------------------------------------------------------------------- pins
 
-function Pager({ page, total, size, onPage }: { page: number; total: number; size: number; onPage: (p: number) => void }) {
-  const pages = Math.max(1, Math.ceil(total / size));
-  return (
-    <div className="pager">
-      <span className="muted small">
-        {total} total · page {page} of {pages}
-      </span>
-      <button type="button" className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>
-        ←
-      </button>
-      <button type="button" className="btn btn-ghost btn-sm" disabled={page >= pages} onClick={() => onPage(page + 1)}>
-        →
-      </button>
-    </div>
-  );
-}
-
 function Pins({ confirmThen }: { confirmThen: (p: Pending) => void }) {
   const [status, setStatus] = useState("");
   const [visibility, setVisibility] = useState("");
   const [state, setState] = useState("");
   const states = useJurisdictions();
-  const [q, setQ] = useState("");
-  const [query, setQuery] = useState("");
+  const asked = useSearchParams().get("q") ?? "";
+  const [q, setQ] = useState(asked);
+  const [query, setQuery] = useState(asked);
   const [page, setPage] = useState(1);
   const [data, setData] = useState<Paged<AdminPin> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -624,170 +604,7 @@ function Pins({ confirmThen }: { confirmThen: (p: Pending) => void }) {
 
 // ------------------------------------------------------------------- users
 
-function Users({ meId, confirmThen }: { meId: number; confirmThen: (p: Pending) => void }) {
-  const [q, setQ] = useState("");
-  const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<Paged<AdminUser> | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const toast = useToast();
-
-  const load = useCallback(() => {
-    adminUsers({ q: query, page }).then(setData).catch((e) => setError(errText(e)));
-  }, [query, page]);
-  useEffect(load, [load]);
-
-  const change = (u: AdminUser, patch: { role?: string; status?: string }, title: string, body: string, danger = false) =>
-    confirmThen({
-      title,
-      body,
-      confirm: "Confirm",
-      danger,
-      run: async () => {
-        await adminUpdateUser(u.id, patch);
-        toast("User updated");
-        load();
-      },
-    });
-
-  return (
-    <section className="admin-panel">
-      <form
-        className="filter-bar"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setPage(1);
-          setQuery(q);
-        }}
-      >
-        <input className="filter-input" placeholder="Search name or email" value={q} onChange={(e) => setQ(e.target.value)} />
-        <button type="submit" className="btn btn-ghost btn-sm">
-          Search
-        </button>
-      </form>
-      {error && <div className="backend-error">{error}</div>}
-      {!data ? (
-        <div className="sk" style={{ height: 200 }} />
-      ) : (
-        <>
-          <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th className="num">Catches</th>
-                  <th className="num">Reports against</th>
-                  <th>Last sign-in</th>
-                  <th aria-label="Actions" />
-                </tr>
-              </thead>
-              <tbody>
-                {data.items.map((u) => {
-                  const me = u.id === meId;
-                  return (
-                    <tr key={u.id}>
-                      <td>
-                        {u.display_name} {me && <span className="tag tag-admin">you</span>}
-                        <div className="muted small">
-                          {u.email}
-                          {u.google_connected ? " · Google" : ""}
-                        </div>
-                      </td>
-                      <td>{u.role === "admin" ? <span className="tag tag-admin">Admin</span> : "User"}</td>
-                      <td>
-                        <span className={`status-dot status-${u.status}`}>{u.status}</span>
-                      </td>
-                      <td className="num">{u.pins}</td>
-                      <td className="num">{u.reports_against || ""}</td>
-                      <td className="muted small">{when(u.last_login_at)}</td>
-                      <td>
-                        {!me && (
-                          <div className="row-actions">
-                            {u.role === "user" ? (
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-xs"
-                                onClick={() => change(u, { role: "admin" }, `Make ${u.display_name} an admin?`, "Admins can moderate every catch and manage every account, including yours.")}
-                              >
-                                Make admin
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-xs"
-                                onClick={() => change(u, { role: "user" }, `Remove admin from ${u.display_name}?`, "They keep their account and catches.")}
-                              >
-                                Remove admin
-                              </button>
-                            )}
-                            {u.status === "active" ? (
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-xs btn-danger-text"
-                                onClick={() =>
-                                  change(u, { status: "suspended" }, `Suspend ${u.display_name}?`, "They're signed out everywhere immediately and can't sign in until reactivated. Their catches stay as they are.", true)
-                                }
-                              >
-                                Suspend
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-xs"
-                                onClick={() => change(u, { status: "active" }, `Reactivate ${u.display_name}?`, "They can sign in again.")}
-                              >
-                                Reactivate
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <Pager page={data.page} total={data.total} size={data.page_size} onPage={setPage} />
-        </>
-      )}
-    </section>
-  );
-}
-
 // ------------------------------------------------------------------- audit
-
-const ACTION_LABEL: Record<string, string> = {
-  "pin.auto_hidden": "Auto-hid catch after reports",
-  "pin.published": "Restored catch",
-  "pin.hidden": "Hid catch",
-  "pin.removed": "Removed catch",
-  "pin.purged": "Permanently deleted catch",
-  "reports.dismissed": "Dismissed reports",
-  "reports.hidden": "Hid catch (reports)",
-  "reports.removed": "Removed catch (reports)",
-  "lake_report.fixed": "Fixed a lake report",
-  "lake_report.dismissed": "Dismissed a lake report",
-  "user.updated": "Changed user",
-  "user.deleted": "Deleted their account",
-  "user.created_admin_cli": "Created admin (command line)",
-  "user.role_cli": "Changed role (command line)",
-};
-
-function detailText(detail: string | null): string {
-  if (!detail) return "";
-  try {
-    const d = JSON.parse(detail) as Record<string, unknown>;
-    return Object.entries(d)
-      .filter(([, v]) => v !== null && v !== "")
-      .map(([k, v]) => `${k.replaceAll("_", " ")}: ${String(v)}`)
-      .join(" · ");
-  } catch {
-    return detail;
-  }
-}
 
 function AuditTable({ rows }: { rows: AuditEntry[] }) {
   return (

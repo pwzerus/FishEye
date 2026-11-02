@@ -36,7 +36,7 @@ function Links({ sources, guideSite }: { sources: GuideSource[]; guideSite: stri
 
 function Group({ id, title, count, children }: { id: string; title: string; count?: string; children: React.ReactNode }) {
   return (
-    <details id={id} className="sources-group">
+    <details id={id} className="sources-group" suppressHydrationWarning>
       <summary>
         <h2>{title}</h2>
         {count && <span>{count}</span>}
@@ -80,6 +80,8 @@ export default async function SourcesPage() {
           <h1>{t.title}</h1>
           <p className="lede">{t.lede}</p>
         </header>
+
+        {guides.length === 0 && handbook.length === 0 && <div className="backend-error">{all.fish.loadError}</div>}
 
         <Group id="fish" title={t.fish} count={t.count(guides.length)}>
           {guides.map((g) => (

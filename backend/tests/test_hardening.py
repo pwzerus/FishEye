@@ -143,7 +143,7 @@ def test_reports_survive_the_reporter_deleting_their_account(make_client, db_ses
     assert reporter.request("DELETE", "/api/auth/me", json={"password": PW}).status_code == 204
 
     admin = make_client()
-    signup(admin, email="admin@example.com", name="Admin")
+    signup(admin, email="admin@example.com", name="Head Boss")
     make_admin(db_session, "admin@example.com")
     queue = admin.get("/api/admin/reports")
     assert queue.status_code == 200
@@ -197,7 +197,7 @@ def test_owners_cannot_edit_a_pin_a_moderator_took_down_but_can_delete_it(make_c
     signup(owner)
     pin = create(owner).json()
     admin = make_client()
-    signup(admin, email="admin@example.com", name="Admin")
+    signup(admin, email="admin@example.com", name="Head Boss")
     make_admin(db_session, "admin@example.com")
     admin.post(f"/api/admin/pins/{pin['id']}/status", json={"status": "hidden"})
 

@@ -134,6 +134,44 @@ TEXT: dict[str, dict[str, str]] = {
         "ko": "비밀번호로 로그인한 다음, 계정 페이지에서 Google을 연결하세요.", "ja": "パスワードでログインしてから、アカウントページでGoogleを連携してください。",
     },
     # --- catches and photos
+    "Put the pin on a lake or river in the United States: FishEye doesn't cover anywhere else yet.": {
+        "zh": "请把图钉放在美国的湖泊或河流上：FishEye 暂时还不覆盖其他地方。",
+        "es": "Pon el pin en un lago o río de Estados Unidos: FishEye todavía no cubre otros lugares.",
+        "ko": "미국의 호수나 강에 핀을 놓아 주세요. FishEye는 아직 다른 곳을 지원하지 않아요.",
+        "ja": "アメリカの湖か川にピンを置いてください。FishEyeはまだほかの場所に対応していません。",
+    },
+    "This reset link has expired or was already used. Ask for a new one.": {
+        "zh": "这个重置链接已过期或已被使用，请重新申请。",
+        "es": "Este enlace ya caducó o ya se usó. Pide uno nuevo.",
+        "ko": "이 재설정 링크는 만료되었거나 이미 사용되었어요. 새 링크를 요청하세요.",
+        "ja": "この再設定リンクは期限切れか、すでに使用されています。新しいリンクを依頼してください。",
+    },
+    "You've sent a lot today. Thanks! Try again tomorrow.": {
+        "zh": "你今天已经发了很多条，谢谢！明天再试吧。",
+        "es": "Hoy ya enviaste muchos. ¡Gracias! Inténtalo mañana.",
+        "ko": "오늘 많이 보내 주셨어요. 감사합니다! 내일 다시 시도해 주세요.",
+        "ja": "今日はたくさん送っていただきました。ありがとうございます！また明日お試しください。",
+    },
+    "Write a few words first.": {
+        "zh": "请先写几个字。", "es": "Escribe unas palabras primero.",
+        "ko": "먼저 몇 마디 적어 주세요.", "ja": "先に何か書いてください。",
+    },
+    "AI summaries are paused until next month. The fish guides, the map and Ask's answers from the guides still work.": {
+        "zh": "AI 总结暂停到下个月。鱼类指南、地图和 Ask 里来自指南的回答都还能用。",
+        "es": "Los resúmenes con IA están en pausa hasta el próximo mes. Las guías de peces, el mapa y las respuestas de Ask basadas en las guías siguen funcionando.",
+        "ko": "AI 요약은 다음 달까지 일시 중지돼요. 어종 가이드, 지도, 가이드 기반 Ask 답변은 계속 쓸 수 있어요.",
+        "ja": "AI要約は来月まで停止しています。魚のガイド、地図、ガイドに基づくAskの回答は引き続き使えます。",
+    },
+    "That name is reserved. Pick another.": {
+        "zh": "这个名字已被保留，请换一个。", "es": "Ese nombre está reservado. Elige otro.",
+        "ko": "예약된 이름이에요. 다른 이름을 골라 주세요.", "ja": "その名前は予約されています。別の名前を選んでください。",
+    },
+    "That has characters FishEye can't read. Check what you typed and try again.": {
+        "zh": "内容里有 FishEye 读不了的字符，请检查后再试。",
+        "es": "Hay caracteres que FishEye no puede leer. Revisa lo que escribiste e inténtalo de nuevo.",
+        "ko": "FishEye가 읽을 수 없는 문자가 있어요. 입력한 내용을 확인하고 다시 시도하세요.",
+        "ja": "FishEyeが読めない文字が含まれています。入力内容を確認して、もう一度お試しください。",
+    },
     "Put the pin on the water: a lake, pond or river that has a name on the map, or its bank.": {
         "zh": "请把标记放到水上：地图上有名字的湖、池塘或河流，或者它的岸边。",
         "es": "Pon el marcador en el agua: un lago, estanque o río con nombre en el mapa, o su orilla.",

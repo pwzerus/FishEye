@@ -39,7 +39,7 @@ import numpy as np
 from PIL import Image
 
 from app.core.config import get_settings
-from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, GUIDED_SINCE_BUILD, NOT_FISH, OTHER_FISH, group_label
+from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, GUIDED_SINCE_BUILD, LOOK_ALIKES, NOT_FISH, OTHER_FISH, group_label
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +160,9 @@ def check_claim(ident: Identification, claimed: str | None, policy: Policy = POL
     if claim is not None and best.slug == claimed and best_p >= policy.confirm:
         return Verdict(CONFIRMED, claimed, claimed, best_p, f"Photo check: this looks like {_a(label)}.")
     group_p = (ident.group_probability(group) if group else 0.0) / fish_p
-    best_group = BY_SLUG[best.slug].group if best.slug in BY_SLUG else None
+    best_group = LOOK_ALIKES.get(best.slug) or (BY_SLUG[best.slug].group if best.slug in BY_SLUG else None)
+    if best.slug in LOOK_ALIKES and best_group == group:
+        group_p += best_p
     if group and best_group == group and group_p >= policy.group:
         what = group_label(group) or _a(label)
         return Verdict(GROUP, claimed, best.slug, group_p,

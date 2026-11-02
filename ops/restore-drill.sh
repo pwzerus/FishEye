@@ -41,15 +41,27 @@ fi
 
 docker rm -f "$NAME" >/dev/null 2>&1 || true
 docker run -d --name "$NAME" -e POSTGRES_USER=fisheye -e POSTGRES_PASSWORD=drill -e POSTGRES_DB=fisheye "$IMAGE" >/dev/null
+gave_up() {
+  echo "The drill database stopped: $1 (OOMKilled: $(docker inspect -f '{{.State.OOMKilled}}' "$NAME" 2>/dev/null)). Its last log lines:" >&2
+  docker logs --tail 30 "$NAME" >&2 || true
+  exit 1
+}
+# Over TCP: the image's first-boot setup runs a temporary server on the socket
+# only, and restoring into that one collides with the setup and stops the
+# container.
+ready=""
 for _ in $(seq 1 60); do
-  if docker exec "$NAME" pg_isready -U fisheye -d fisheye >/dev/null 2>&1; then
+  if docker exec "$NAME" pg_isready -h 127.0.0.1 -U fisheye -d fisheye >/dev/null 2>&1; then
+    ready=1
     break
   fi
   sleep 2
 done
+[ -n "$ready" ] || gave_up "it never became ready"
 
 echo "Restoring $(basename "$SRC") ($(du -h "$SRC" | cut -f1))…"
 if ! docker exec -i "$NAME" pg_restore -U fisheye -d fisheye --no-owner < "$SRC"; then
+  [ "$(docker inspect -f '{{.State.Running}}' "$NAME")" = "true" ] || gave_up "during the restore"
   echo "pg_restore reported errors (above). Read them: a few about objects that already exist are harmless; missing tables are not." >&2
 fi
 

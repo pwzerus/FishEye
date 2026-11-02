@@ -92,7 +92,7 @@ AWAITING_CURATION: frozenset[str] = frozenset(
      "smallmouth-bass",
      # Added 2026-11-01.
      "walleye", "northern-pike", "yellow-perch", "brook-trout", "brown-trout", "golden-trout",
-     "cutthroat-trout", "kokanee-salmon", "brown-bullhead"}
+     "cutthroat-trout", "kokanee-salmon"}
 )
 
 # A file to use for a species instead of whatever the lookup finds — for when
@@ -245,6 +245,16 @@ CURATED_PHOTOS: dict[str, SpeciesPhoto] = {
         license='CC BY-SA 3.0',
         license_url='https://creativecommons.org/licenses/by-sa/3.0',
         file_page="https://commons.wikimedia.org/wiki/File:Dorosoma_petenense.jpeg",
+    ),
+    # Looked at 2026-11-01: the lookup's pick credited an unknown author.
+    "brown-bullhead": SpeciesPhoto(
+        url="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Ameiurus_nebulosus_150659845.jpg/960px-Ameiurus_nebulosus_150659845.jpg",
+        width=960,
+        height=640,
+        author='Mikael Nyman',
+        license='CC BY 4.0',
+        license_url='https://creativecommons.org/licenses/by/4.0',
+        file_page="https://commons.wikimedia.org/wiki/File:Ameiurus_nebulosus_150659845.jpg",
     ),
 }
 

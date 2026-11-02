@@ -543,6 +543,7 @@ export interface AiAllowance {
   signed_in: boolean;
   limit: number | null; // null: signed out, or unlimited (admins)
   remaining: number | null;
+  enabled: boolean; // false: no paid model is set up, so summaries aren't offered
 }
 
 export interface AskTrace {
@@ -627,6 +628,8 @@ export interface User {
 export interface AuthProviders {
   password: boolean;
   google: boolean;
+  /** Can the server send a reset link? If not, the page says who to ask. */
+  email_ready?: boolean;
 }
 
 export type PinVisibility = "public" | "private";
@@ -845,6 +848,9 @@ export interface AdminStats {
   open_reports: number;
   pins_awaiting_review: number;
   lake_reports_open?: number;
+  feedback_new?: number;
+  ai_spent_usd?: number;
+  ai_budget_usd?: number;
 }
 
 /** "Something's wrong with this lake" / "a lake is missing" (backend ADR 0039). */
@@ -894,8 +900,43 @@ export interface AdminUser {
   google_connected: boolean;
   created_at: string;
   last_login_at: string | null;
+  email_verified?: boolean;
   pins: number;
   reports_against: number;
+}
+
+export interface AdminUserCounts {
+  all: number;
+  admins: number;
+  suspended: number;
+  unconfirmed: number;
+  new_7d: number;
+}
+
+export interface AdminUserDetail extends AdminUser {
+  last_seen_at: string | null;
+  sessions: number;
+  pins_public: number;
+  pins_private: number;
+  pins_hidden: number;
+  reports_filed: number;
+  feedback: number;
+  recent_pins: { id: number; title: string; status: string; visibility: string; created_at: string }[];
+  history: AuditEntry[];
+}
+
+/** A message from "Send feedback" (backend services/feedback.py). */
+export interface AdminFeedback {
+  id: number;
+  message: string;
+  page: string | null;
+  lang: string | null;
+  status: "new" | "done";
+  created_at: string;
+  handled_at: string | null;
+  user_id: number | null;
+  author_name: string | null;
+  author_email: string | null;
 }
 
 export interface AuditEntry {

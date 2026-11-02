@@ -34,6 +34,7 @@ export function CommunityFeed() {
   const [species, setSpecies] = useState("");
   const [mine, setMine] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [placesError, setPlacesError] = useState<string | null>(null);
   // null until the starting place is decided, so the page doesn't flash
   // "all states" before opening the angler's county.
   const [scope, setScopeState] = useState<PinScope | null>(null);
@@ -107,8 +108,18 @@ export function CommunityFeed() {
     if (authLoading || scope === null) return;
     let cancelled = false;
     listPinPlaces({ state: scope.state, county: scope.county, species: species || undefined, mine: mine && !!user })
-      .then((p) => !cancelled && setPlaces(p))
-      .catch(() => !cancelled && setPlaces(null));
+      .then((p) => {
+        if (!cancelled) {
+          setPlaces(p);
+          setPlacesError(null);
+        }
+      })
+      .catch((e: Error) => {
+        if (!cancelled) {
+          setPlaces(null);
+          setPlacesError(e.message);
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -204,7 +215,9 @@ export function CommunityFeed() {
 
       {where && !pickFirst && <h2 className="feed-heading">{t.catchesIn(where)}</h2>}
 
-      {pickFirst ? null : error ? (
+      {pickFirst ? (
+        placesError && <div className="backend-error">{placesError}</div>
+      ) : error ? (
         <div className="backend-error">{error}</div>
       ) : pins === null ? (
         <ul className="pin-grid" aria-busy="true">

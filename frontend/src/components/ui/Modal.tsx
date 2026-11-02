@@ -17,6 +17,7 @@ export function Modal({
   children,
   footer,
   tone = "default",
+  wide = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -24,6 +25,7 @@ export function Modal({
   children: ReactNode;
   footer?: ReactNode;
   tone?: "default" | "danger";
+  wide?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const returnTo = useRef<HTMLElement | null>(null);
@@ -56,7 +58,7 @@ export function Modal({
   return (
     <dialog
       ref={ref}
-      className={`modal modal-${tone}`}
+      className={`modal modal-${tone}${wide ? " modal-wide" : ""}`}
       aria-labelledby="modal-title"
       onCancel={(e) => {
         e.preventDefault();

@@ -52,6 +52,10 @@ export default function PrivacyPage() {
             <strong>AI summaries:</strong> how many you use each day, so the daily allowance works.
           </li>
           <li>
+            <strong>Feedback you send:</strong> your message, the page you were on and your language, with your account,
+            so we can reply. If you delete your account we keep the message without saying who sent it.
+          </li>
+          <li>
             <strong>Questions Ask couldn&apos;t answer:</strong> the question, its language and the state or fish you
             picked, so we know which guides to write next. We don&apos;t record who asked, we take out email addresses,
             phone numbers and links first, and we delete them after 90 days.

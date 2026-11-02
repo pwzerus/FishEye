@@ -65,7 +65,8 @@ def test_the_api_answers_in_the_chosen_language(make_client):
 USER_FACING = [
     "api/auth.py", "api/geocode.py", "api/lake_reports.py", "api/pins.py", "api/ask.py", "api/rate_limits.py",
     "core/security.py", "services/auth.py", "services/pins.py", "services/media.py", "services/lake_reports.py",
-    "services/email_verification.py", "services/fish_id.py", "main.py",
+    "services/email_verification.py", "services/fish_id.py", "services/password_reset.py", "services/feedback.py",
+    "api/feedback.py", "main.py",
 ]
 NOT_SHOWN = {
     "Requests need a Content-Length.", "Bad Content-Length.",  # no browser sends these

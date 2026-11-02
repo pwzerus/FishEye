@@ -188,6 +188,11 @@ export function LoginForm() {
               {t.pwHint}
             </small>
           )}
+          {mode === "signin" && (
+            <Link href="/forgot-password" className="text-link forgot-link">
+              {t.forgotLink}
+            </Link>
+          )}
         </div>
 
         {error && (

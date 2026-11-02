@@ -65,6 +65,7 @@ PHOTO_AT_SPOT_M = 300.0
 NOT_ON_WATER = (
     "Put the pin on the water: a lake, pond or river that has a name on the map, or its bank."
 )
+NOT_IN_THE_US = "Put the pin on a lake or river in the United States: FishEye doesn't cover anywhere else yet."
 
 
 class PinError(Exception):
@@ -221,7 +222,7 @@ def water_required(db: Session, lat: float, lng: float) -> bool:
     """Are this spot's state's shapes imported, so a catch here must be on
     named water? Until they are, it needn't be (services/water.py)."""
     county = counties.county_at(lat, lng)
-    return water.data_ready(db, county.state if county else None)
+    return county is None or water.data_ready(db, county.state)
 
 
 def locate(db: Session, lat: float, lng: float) -> tuple[water.WaterMatch | None, bool]:
@@ -229,7 +230,10 @@ def locate(db: Session, lat: float, lng: float) -> tuple[water.WaterMatch | None
     spot's state is held to the rule. PinError when it is and the spot is
     on no named water."""
     match = water.find_water(db, lat, lng)
-    required = water_required(db, lat, lng)
+    county = counties.county_at(lat, lng)
+    if match is None and county is None:
+        raise PinError(422, NOT_IN_THE_US)
+    required = water.data_ready(db, county.state if county else None)
     if match is None and required:
         raise PinError(422, NOT_ON_WATER)
     return match, required

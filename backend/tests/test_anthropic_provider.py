@@ -87,7 +87,7 @@ def test_get_provider_builds_anthropic_when_configured(monkeypatch):
     llm.reset_provider_cache()
     try:
         provider = llm.get_provider()
-        assert isinstance(provider, anth.AnthropicProvider)
+        assert isinstance(provider._inner, anth.AnthropicProvider)  # inside the month's ceiling
         assert provider.model == anth.DEFAULT_MODEL
     finally:
         llm.reset_provider_cache()

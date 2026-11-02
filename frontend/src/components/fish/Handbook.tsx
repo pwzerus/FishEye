@@ -43,7 +43,7 @@ export function Handbook({ topics }: { topics: HandbookTopic[] }) {
         ))}
       </nav>
       {groups.map((g) => (
-        <details key={g.category} id={g.category} className="handbook-group">
+        <details key={g.category} id={g.category} className="handbook-group" suppressHydrationWarning>
           <summary><h3>{g.label}</h3><span>{tr.topics(g.topics.length)}</span></summary>
           <div className="handbook-grid">
             {g.topics.map((t) => {

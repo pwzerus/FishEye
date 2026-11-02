@@ -73,6 +73,17 @@ describe("LocationSearchBar with lakes", () => {
     vi.mocked(searchLakes).mockReset();
   });
 
+  it("drops the last search's lakes when the next has nothing to look for", async () => {
+    vi.mocked(searchLakes).mockResolvedValue([GA_FREEMAN, KY_FREEMAN]);
+    render(<LocationSearchBar onLocate={vi.fn()} onLake={vi.fn()} />);
+    search("Freeman Lake");
+    expect(await screen.findByText(/Kentucky/)).toBeInTheDocument();
+    vi.mocked(searchLakes).mockClear();
+    search("%%");
+    await waitFor(() => expect(screen.queryByText(/Kentucky/)).not.toBeInTheDocument());
+    expect(searchLakes).not.toHaveBeenCalled();
+  });
+
   it("opens the lake of that name in the state being looked at", async () => {
     vi.mocked(searchLakes).mockResolvedValue([GA_FREEMAN, KY_FREEMAN]);
     const onLake = vi.fn();

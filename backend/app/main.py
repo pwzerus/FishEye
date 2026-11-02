@@ -15,6 +15,7 @@ from app.api import (
     ask,
     auth,
     baits,
+    feedback,
     geocode,
     jurisdictions,
     lake_reports,
@@ -27,7 +28,7 @@ from app.api import (
     weather,
 )
 from app.core.config import get_settings
-from app.db.session import Base, engine
+from app.db.session import Base, UnstorableText, engine
 from app.db.spatial import ensure_spatial_schema
 from app.db.upgrades import ensure_waterbody_ranking_schema
 from app.knowledge import error_text
@@ -170,6 +171,14 @@ async def refuse_in_their_language(request: Request, exc: StarletteHTTPException
     return await http_exception_handler(request, exc)
 
 
+UNREADABLE_TEXT = "That has characters FishEye can't read. Check what you typed and try again."
+
+
+@app.exception_handler(UnstorableText)
+async def refuse_unreadable_text(request: Request, _exc: UnstorableText):  # type: ignore[no-untyped-def]
+    return await refuse_in_their_language(request, StarletteHTTPException(status_code=422, detail=UNREADABLE_TEXT))
+
+
 app.add_middleware(
     CORSMiddleware,
     # Credentialed requests (the session cookie) need an explicit origin,
@@ -191,6 +200,7 @@ app.include_router(advisor.router, prefix=settings.api_prefix)
 app.include_router(geocode.router, prefix=settings.api_prefix)
 app.include_router(species.router, prefix=settings.api_prefix)
 app.include_router(baits.router, prefix=settings.api_prefix)
+app.include_router(feedback.router, prefix=settings.api_prefix)
 app.include_router(jurisdictions.router, prefix=settings.api_prefix)
 app.include_router(ask.router, prefix=settings.api_prefix)
 app.include_router(auth.router, prefix=settings.api_prefix)

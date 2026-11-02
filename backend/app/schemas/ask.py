@@ -11,13 +11,16 @@ ids, expanded here into titles, excerpts and source links the model never
 wrote), whether the answer came from the model, the fallback, or a "not
 covered" short-circuit, and the trace.
 """
-from pydantic import BaseModel, Field
+from typing import Annotated
+
+from pydantic import BaseModel, Field, StringConstraints
 
 from app.schemas.species_guide import GuideSourceOut
 
 
 class AskRequest(BaseModel):
-    question: str = Field(min_length=3, max_length=300)
+    # Two characters is a question in Chinese, Korean and Japanese (钓鱼).
+    question: Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=300)]
     # The fish page the question was asked from, if any. Fish named in the
     # question itself take precedence (see retriever.py).
     species_slug: str | None = None
@@ -72,6 +75,7 @@ class AiAllowanceOut(BaseModel):
     signed_in: bool
     limit: int | None  # None when signed out, or unlimited (admins)
     remaining: int | None
+    enabled: bool  # False: no paid model is set up, so summaries aren't offered
 
 
 class AskLakeFishOut(BaseModel):

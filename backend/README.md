@@ -93,6 +93,7 @@ become admin from the website):
 ```bash
 python -m app.cli.users create-admin --email you@example.com --name "Your Name"
 python -m app.cli.users list
+python -m app.cli.feedback                # what people sent through "Send feedback" (ADR 0044)
 python -m app.cli.users promote --email someone@example.com
 ```
 

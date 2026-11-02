@@ -206,7 +206,7 @@ def test_a_new_account_shares_a_few_catches_a_day(make_client, db_session, monke
 
     # Admins are never held back.
     admin = make_client()
-    signup(admin, email="admin@example.com", name="Admin")
+    signup(admin, email="admin@example.com", name="Head Boss")
     make_admin(db_session, "admin@example.com")
     assert all(create(admin, title=f"Pin {i}").status_code == 201 for i in range(3))
 
@@ -243,7 +243,7 @@ def test_private_pins_are_invisible_to_everyone_but_the_owner_and_admins(make_cl
     assert any(p["id"] == pin["id"] for p in owner.get("/api/pins").json())
 
     admin = make_client()
-    signup(admin, email="admin@example.com", name="Admin")
+    signup(admin, email="admin@example.com", name="Head Boss")
     make_admin(db_session, "admin@example.com")
     assert admin.get(f"/api/pins/{pin['id']}").status_code == 200
 
@@ -349,7 +349,7 @@ def test_others_see_the_lake_not_the_spot_unless_the_angler_shares_it(make_clien
     assert [(p["id"], p["location_shown"]) for p in mine] == [(pin["id"], "exact")]
 
     admin = make_client()
-    signup(admin, email="admin@example.com", name="Admin")
+    signup(admin, email="admin@example.com", name="Head Boss")
     make_admin(db_session, "admin@example.com")
     assert admin.get(f"/api/pins/{pin['id']}").json()["location_shown"] == "exact"
 
@@ -373,7 +373,7 @@ def test_a_catch_can_be_shared_at_its_spot_from_the_start(make_client, seeded_la
     assert (seen["latitude"], seen["longitude"], seen["location_shown"]) == (32.8101, -95.5899, "exact")
 
 
-def test_away_from_lakes_others_see_the_county_or_a_rounded_area(make_client):
+def test_away_from_lakes_others_see_the_county_or_a_rounded_area(make_client, monkeypatch):
     from app.services import counties
 
     c = make_client()
@@ -385,7 +385,8 @@ def test_away_from_lakes_others_see_the_county_or_a_rounded_area(make_client):
     assert (seen["latitude"], seen["longitude"]) != (29.7604, -95.3698)
     assert counties.county_at(seen["latitude"], seen["longitude"]).geoid == "48201"  # the county's middle
 
-    # Outside every county: the spot to one decimal (~11 km).
+    # Outside every county, as on open water in a Great Lake: the spot to one decimal (~11 km).
+    monkeypatch.setattr("app.services.pins.locate", lambda *_: (None, False))
     far = create(c, latitude=10.1234, longitude=20.5678).json()
     assert far["public_place"] == "area"
     seen = make_client().get(f"/api/pins/{far['id']}").json()

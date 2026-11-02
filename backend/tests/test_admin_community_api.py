@@ -15,7 +15,7 @@ from tests.test_pins_api import create, jpeg, media_files
 @pytest.fixture()
 def admin(make_client, db_session):
     c = make_client()
-    signup(c, email="admin@example.com", name="Admin")
+    signup(c, email="admin@example.com", name="Head Boss")
     make_admin(db_session, "admin@example.com")
     return c
 
@@ -185,7 +185,7 @@ def test_audit_log_is_newest_first_with_actor_names(admin, angler, make_client):
     admin.post(f"/api/admin/reports/{pin['id']}/resolve", json={"action": "remove"})
     items = admin.get("/api/admin/audit").json()["items"]
     assert [i["action"] for i in items[:2]] == ["reports.removed", "pin.auto_hidden"]
-    assert items[0]["actor"] == "Admin" and items[1]["actor"] == "System"
+    assert items[0]["actor"] == "Head Boss" and items[1]["actor"] == "System"
 
 
 def test_admin_session_can_run_the_tpwd_refresh_without_the_token(admin, angler):

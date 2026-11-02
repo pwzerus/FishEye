@@ -34,6 +34,9 @@ PIN_REMOVED = "removed"
 REPORT_OPEN = "open"
 REPORT_RESOLVED = "resolved"
 
+FEEDBACK_NEW = "new"
+FEEDBACK_DONE = "done"
+
 
 # AUTOINCREMENT on SQLite: a deleted row's id is never handed out again, so
 # nothing that outlives a row (a cached link, an audit entry) can end up
@@ -65,6 +68,7 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
     email_tokens: Mapped[list[EmailToken]] = relationship(cascade="all, delete-orphan")
+    reset_tokens: Mapped[list[PasswordResetToken]] = relationship(cascade="all, delete-orphan")
     pins: Mapped[list[CatchPin]] = relationship(
         back_populates="user", cascade="all, delete-orphan", foreign_keys="CatchPin.user_id"
     )
@@ -145,6 +149,38 @@ class EmailToken(Base):
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     expires_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class PasswordResetToken(Base):
+    """A link to set a new password (services/password_reset.py). As with
+    sessions, the link holds the token and the database only its SHA-256."""
+
+    __tablename__ = "password_reset_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class Feedback(Base):
+    """What someone told FishEye from "Send feedback" (services/feedback.py).
+    Outlives the account, without saying whose it was, like a report."""
+
+    __tablename__ = "feedback"
+    __table_args__ = _NO_ID_REUSE
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True, nullable=True)
+    message: Mapped[str] = mapped_column(Text)
+    page: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    lang: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), default=FEEDBACK_NEW, index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    handled_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+    user: Mapped[User | None] = relationship()
 
 
 class CatchPin(Base):
@@ -305,6 +341,17 @@ class AuditLog(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
 
     actor: Mapped[User | None] = relationship(foreign_keys=[actor_id])
+
+
+class AiSpend(Base):
+    """What the paid model has cost in a month, estimated (services/ai_budget.py)."""
+
+    __tablename__ = "ai_spend"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    month: Mapped[str] = mapped_column(String(7), unique=True)  # "2026-11", UTC
+    usd: Mapped[float] = mapped_column(Float, default=0.0)
+    calls: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class AiUsage(Base):

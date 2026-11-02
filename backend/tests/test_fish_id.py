@@ -251,3 +251,10 @@ def test_a_photo_checked_twice_is_read_once():
     first = recognizer.identify(jpeg("green"))
     again = recognizer.identify(jpeg("green"))
     assert len(reads) == 1 and first.candidates == again.candidates
+
+
+def test_a_white_bass_that_reads_as_a_white_perch_is_accepted_as_its_group():
+    v = check_claim(ident(white_perch=0.7, white_bass=0.2), "white-bass")
+    assert v.status == GROUP and v.accepted
+    # Named anything else, it's still refused.
+    assert check_claim(ident(white_perch=0.9), "bluegill").status == OTHER

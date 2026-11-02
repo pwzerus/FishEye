@@ -9,6 +9,22 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
+
+class UnstorableText(ValueError):
+    """Text with a NUL character in it, on its way to the database."""
+
+
+@event.listens_for(Engine, "before_cursor_execute")
+def _refuse_nul(_conn: Any, _cursor: Any, _statement: str, parameters: Any, _context: Any, executemany: bool) -> None:
+    """PostgreSQL can't hold a NUL and refuses the statement, where SQLite
+    takes it, so junk in any field was a server error in production only.
+    Here, for every statement, so it is the same refusal on both."""
+    for row in parameters if executemany else [parameters]:
+        values = row.values() if isinstance(row, dict) else row if isinstance(row, (list, tuple)) else ()
+        if any(isinstance(v, str) and "\x00" in v for v in values):
+            raise UnstorableText("NUL character")
+
+
 _is_sqlite = settings.database_url.startswith("sqlite")
 
 if _is_sqlite:

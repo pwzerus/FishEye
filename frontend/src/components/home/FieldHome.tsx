@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ActionIcon } from "@/components/ui/ActionIcon";
+import { FeedbackButton } from "@/components/feedback/FeedbackDialog";
 import { FishArt } from "@/components/fish/FishArt";
 import { LegalLinks } from "@/components/legal/LegalPage";
 import { PageTransition } from "@/components/motion/Transition";
@@ -12,8 +13,6 @@ import { MESSAGES } from "@/i18n/messages";
 import { localFishName, localStateName } from "@/i18n/names";
 
 export const dynamic = "force-dynamic";
-
-const FEEDBACK_EMAIL = "feedback.fisheyefishing@gmail.com";
 
 function WaterIllustration() {
   return <svg className="field-map" viewBox="0 0 640 510" fill="none" aria-hidden="true">
@@ -99,7 +98,7 @@ export default async function FieldHome() {
         <h2 id="home-feedback-title">{t.feedbackTitle}</h2>
         <p>{t.feedbackText}</p>
       </div>
-      <a className="btn btn-primary" href={`mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(t.feedbackSubject)}`}>{t.feedbackSend}</a>
+      <FeedbackButton className="btn btn-primary" label={t.feedbackSend} />
     </section>
     <footer className="field-footer"><span>{t.footer}</span><LegalLinks /></footer>
   </main></PageTransition>;

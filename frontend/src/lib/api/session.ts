@@ -26,6 +26,9 @@ import type {
   PinSummary,
   PinWhere,
   WaterGroup,
+  AdminFeedback,
+  AdminUserCounts,
+  AdminUserDetail,
   PinUpdate,
   User,
 } from "./types";
@@ -97,6 +100,15 @@ export const register = (email: string, password: string, display_name: string) 
 export const login = (email: string, password: string) =>
   sfetch<User>("/api/auth/login", json("POST", { email, password }));
 export const logout = () => sfetch<void>("/api/auth/logout", { method: "POST" });
+// Forgotten passwords (backend services/password_reset.py).
+export const requestPasswordReset = (email: string) =>
+  sfetch<void>("/api/auth/password-reset/request", json("POST", { email }));
+export const checkPasswordReset = (token: string) =>
+  sfetch<{ valid: boolean; email: string | null }>("/api/auth/password-reset/check", json("POST", { token }));
+export const confirmPasswordReset = (token: string, new_password: string) =>
+  sfetch<User>("/api/auth/password-reset/confirm", json("POST", { token, new_password }));
+export const sendFeedback = (message: string, page: string, lang: string) =>
+  sfetch<{ id: number }>("/api/feedback", json("POST", { message, page, lang }));
 // Confirming the email address: a new link, and the link's token itself.
 export const sendVerificationEmail = () => sfetch<User>("/api/auth/verify-email/send", { method: "POST" });
 export const confirmEmail = (token: string) =>
@@ -276,13 +288,28 @@ export const adminSetPinStatus = (pinId: number, status: "published" | "hidden" 
   sfetch<AdminPin>(`/api/admin/pins/${pinId}/status`, json("POST", { status, note: note || null }));
 export const adminPurgePin = (pinId: number) => sfetch<void>(`/api/admin/pins/${pinId}`, { method: "DELETE" });
 
-export function adminUsers(params: { q?: string; role?: string; status?: string; page?: number }) {
+export function adminUsers(params: { q?: string; role?: string; status?: string; unconfirmed?: boolean; sort?: string; page?: number }) {
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") qs.set(k, String(v));
-  return sfetch<Paged<AdminUser>>(`/api/admin/users?${qs}`);
+  return sfetch<Paged<AdminUser> & { counts?: AdminUserCounts | null }>(`/api/admin/users?${qs}`);
 }
-export const adminUpdateUser = (id: number, patch: { role?: string; status?: string }) =>
+export const adminUpdateUser = (id: number, patch: { role?: string; status?: string; display_name?: string }) =>
   sfetch<AdminUser>(`/api/admin/users/${id}`, json("PATCH", patch));
+export const adminUser = (id: number) => sfetch<AdminUserDetail>(`/api/admin/users/${id}`);
+export const adminConfirmEmail = (id: number) => sfetch<AdminUserDetail>(`/api/admin/users/${id}/confirm-email`, { method: "POST" });
+export const adminSignOutUser = (id: number) => sfetch<AdminUserDetail>(`/api/admin/users/${id}/sign-out`, { method: "POST" });
+export const adminResetLink = (id: number, email_it: boolean) =>
+  sfetch<{ link: string; expires_at: string; emailed: boolean }>(`/api/admin/users/${id}/reset-link`, json("POST", { email_it }));
+export const adminDeleteUser = (id: number) => sfetch<void>(`/api/admin/users/${id}`, { method: "DELETE" });
+export function adminFeedback(params: { status?: string; q?: string; page?: number }) {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v) qs.set(k, String(v));
+  return sfetch<Paged<AdminFeedback>>(`/api/admin/feedback?${qs}`);
+}
+export const adminFeedbackExport = (status?: string) =>
+  sfetch<{ count: number; text: string }>(`/api/admin/feedback/export${status ? `?status=${status}` : ""}`);
+export const adminUpdateFeedback = (id: number, status: "new" | "done") =>
+  sfetch<AdminFeedback>(`/api/admin/feedback/${id}`, json("POST", { status }));
 export const adminAudit = (page = 1) => sfetch<Paged<AuditEntry>>(`/api/admin/audit?page=${page}`);
 export function adminAskMisses(days = 30, outcome?: string) {
   const qs = new URLSearchParams({ days: String(days) });

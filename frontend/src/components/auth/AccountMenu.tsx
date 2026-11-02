@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { FeedbackDialog } from "@/components/feedback/FeedbackDialog";
 import { useToast } from "@/components/ui/Toast";
 import { useT } from "@/i18n/client";
 import { useAuth } from "./AuthProvider";
@@ -22,6 +23,7 @@ export function initials(name: string): string {
 export function AccountMenu() {
   const { user, loading, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const [feedback, setFeedback] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname() ?? "/";
   const router = useRouter();
@@ -95,6 +97,17 @@ export function AccountMenu() {
           <button
             role="menuitem"
             type="button"
+            className="menu-item"
+            onClick={() => {
+              setOpen(false);
+              setFeedback(true);
+            }}
+          >
+            {t.feedback.title}
+          </button>
+          <button
+            role="menuitem"
+            type="button"
             className="menu-item menu-danger"
             onClick={async () => {
               setOpen(false);
@@ -107,6 +120,7 @@ export function AccountMenu() {
           </button>
         </div>
       )}
+      {feedback && <FeedbackDialog open onClose={() => setFeedback(false)} />}
     </div>
   );
 }

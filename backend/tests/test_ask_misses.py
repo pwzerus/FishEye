@@ -39,7 +39,7 @@ def test_ask_records_misses_and_admins_read_them(make_client, client, db_session
     assert [(r.outcome, r.count) for r in rows] == [("off_topic", 2)]
 
     admin = make_client()
-    signup(admin, email="admin@example.com", name="Admin")
+    signup(admin, email="admin@example.com", name="Head Boss")
     make_admin(db_session, "admin@example.com")
     listed = admin.get("/api/admin/ask-misses").json()
     assert listed == [

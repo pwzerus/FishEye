@@ -55,7 +55,10 @@ def get_provider() -> LLMProvider:
             # sending that to Anthropic is a guaranteed 404 on every call.
             print(f"LLM_MODEL={model!r} is not an Anthropic model; using the default.")
             model = None
-        _cached_provider = AnthropicProvider(settings.llm_api_key, model=model)
+        from app.services.ai_budget import BudgetedProvider
+
+        # A paid model: every call goes through the month's ceiling.
+        _cached_provider = BudgetedProvider(AnthropicProvider(settings.llm_api_key, model=model))
         return _cached_provider
 
     # Other vendors land here as they're added. Until then, an explicit

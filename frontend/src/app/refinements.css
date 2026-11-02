@@ -219,3 +219,36 @@ button:active:not(:disabled), .btn:active { translate:0 1px; }
 .sources-entry dt { font-size: 13px; color: var(--ink-2); }
 .sources-entry dd { margin: 2px 0 0; font-size: 12.5px; line-height: 1.7; color: var(--muted); }
 .sources-entry dd a { color: var(--brand-strong); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: color-mix(in srgb, var(--brand) 40%, transparent); }
+
+/* A title or name can be one very long word: it wraps, not push the page wider. */
+.pin-layout > *, .acct-hero > * { min-width: 0; }
+.pin-info h1, .pin-info p, .pin-info dd, .acct-hero h1, .acct-hero p { overflow-wrap: anywhere; }
+
+/* Forgotten passwords */
+.forgot-link { justify-self: end; align-self: end; font-size: 13px; margin-top: 2px; }
+.field:has(.forgot-link) { display: grid; }
+
+/* Admin: one account (components/admin/AdminUsers.tsx) */
+.modal-wide { max-width: min(760px, calc(100vw - 24px)); }
+.user-filters { flex-wrap: wrap; width: fit-content; max-width: 100%; }
+.user-open { font-weight: 600; text-align: left; overflow-wrap: anywhere; }
+.user-email { overflow-wrap: anywhere; }
+.row-dim td { opacity: .65; }
+.user-detail { display: grid; gap: 18px; }
+.user-detail h3 { font-size: 13px; margin: 0 0 6px; color: var(--ink-2); }
+.user-detail-who { margin: 0; overflow-wrap: anywhere; }
+.user-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px 16px; margin: 0; }
+.user-facts dt { font-size: 12px; color: var(--muted); }
+.user-facts dd { margin: 0; font-size: 14px; }
+.user-catches, .user-history { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 4px; overflow-wrap: anywhere; }
+.user-detail .row-actions { flex-wrap: wrap; }
+.reset-link { display: grid; gap: 8px; padding: 12px; border-radius: 12px; background: var(--surface-2); }
+.reset-link p { margin: 0; }
+
+/* Admin: feedback (components/admin/AdminFeedback.tsx) */
+.feedback-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.feedback-item { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; }
+.feedback-message { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.feedback-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.copy-box { width: 100%; font: inherit; font-size: 13px; }
+.user-detail .row-actions { justify-content: flex-start; }

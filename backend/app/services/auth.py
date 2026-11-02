@@ -41,7 +41,12 @@ from app.services import word_filter
 # Deliberately loose: one @, something on each side, a dot in the domain.
 # Real validation is "can this person receive mail there", which needs an
 # email round-trip this demo doesn't have.
-_EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$")
+_EMAIL_RE = re.compile(r"^[a-z0-9._%+'-]{1,64}@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z][a-z0-9-]*[a-z0-9]$")
+# Names that would read as FishEye itself speaking.
+_RESERVED_NAMES = frozenset(
+    {"fisheye", "fisheyeteam", "fisheyesupport", "fisheyeofficial", "fisheyeadmin", "admin", "administrator",
+     "moderator", "mod", "support", "staff", "official"}
+)
 # Refresh last_seen_at at most this often, so reading pages doesn't turn
 # into a database write per request.
 _TOUCH_INTERVAL = timedelta(hours=1)
@@ -78,6 +83,8 @@ def clean_display_name(name: str) -> str:
         raise AuthError(422, "Display names are 2 to 40 characters.", "bad_name")
     if word_filter.blocked_word(name):
         raise AuthError(422, "That name includes a word FishEye doesn't allow.", "bad_name")
+    if "".join(ch for ch in name.casefold() if ch.isalnum()) in _RESERVED_NAMES:
+        raise AuthError(422, "That name is reserved. Pick another.", "bad_name")
     return name
 
 

@@ -433,7 +433,7 @@ def test_ask_endpoint_returns_the_passages_without_calling_a_model(client):
     assert first["species_name"] in {"White Crappie", "Black Crappie"}
     assert not first["excerpt"].startswith(first["species_name"])  # header stripped
     assert first["sources"] and first["sources"][0]["url"].startswith("https://")
-    assert body["ai"] == {"signed_in": False, "limit": None, "remaining": None}
+    assert body["ai"] == {"signed_in": False, "limit": None, "remaining": None, "enabled": False}
 
 
 def test_ask_endpoint_uses_the_page_species_as_context(client):
@@ -445,7 +445,7 @@ def test_ask_endpoint_uses_the_page_species_as_context(client):
 
 def test_ask_endpoint_rejects_unknown_species_and_bad_questions(client):
     assert client.post("/api/ask", json={"question": "bait?", "species_slug": "nessie"}).status_code == 404
-    assert client.post("/api/ask", json={"question": "hi"}).status_code == 422
+    assert client.post("/api/ask", json={"question": "h"}).status_code == 422
     assert client.post("/api/ask", json={"question": "x" * 301}).status_code == 422
 
 

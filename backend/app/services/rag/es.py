@@ -159,7 +159,7 @@ GLOSSARY: dict[str, str] = {
     "como pescar": "how catch",
     "como atrapo": "how catch",
     "pescar": "catch fish",
-    "pesco": "catch",
+    "pesco": "catch fish",
     "pescas": "catch",
     "pescan": "catch",
     "pesca": "fishing",

@@ -82,7 +82,7 @@ def test_a_new_link_replaces_the_old_and_expired_links_fail(make_client, db_sess
 
 def test_reporting_waits_too_and_admins_never_wait(make_client, db_session, verification_on):
     admin = make_client()
-    signup(admin, email="admin@example.com", name="Admin")
+    signup(admin, email="admin@example.com", name="Head Boss")
     make_admin(db_session, "admin@example.com")
     pin = create_pin(admin)
     assert pin.status_code == 201

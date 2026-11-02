@@ -159,6 +159,18 @@ def no_match(lang: str) -> str:
     return f"The FishEye guides don't cover that yet. {coverage(lang)} Try asking about one of those."
 
 
+def no_lake(name: str, lang: str) -> str:
+    if lang == "zh":
+        return f"FishEye 没有叫“{name}”的湖的记录。可以检查一下拼写，或者在地图上搜索。"
+    if lang == "es":
+        return f"FishEye no tiene registrado ningún lago llamado {name}. Revisa cómo se escribe o búscalo en el mapa."
+    if lang == "ko":
+        return f"FishEye에는 {name}(이)라는 호수 기록이 없어요. 철자를 확인하거나 지도에서 검색해 보세요."
+    if lang == "ja":
+        return f"FishEyeには{name}という湖の記録がありません。つづりを確認するか、地図で検索してください。"
+    return f"FishEye has no lake called {name} on record. Check the spelling, or search for it on the map."
+
+
 def off_topic(lang: str) -> str:
     if lang == "zh":
         return f"这看起来不像钓鱼问题，或者我没看懂。{coverage(lang)}试着说出一种鱼、一种饵或一件装备，用中文、英文、西班牙语、韩语或日语都行。"

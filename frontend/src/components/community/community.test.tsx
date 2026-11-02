@@ -391,6 +391,12 @@ describe("CommunityFeed", () => {
     vi.mocked(session.listPinPlaces).mockImplementation(async (p = {}) => (p.county ? WOOD : p.state ? TX : STATES));
   });
 
+  it("says so when the places can't load, instead of showing nothing", async () => {
+    vi.mocked(session.listPinPlaces).mockRejectedValue(new Error("Couldn't reach FishEye."));
+    renderApp(<CommunityFeed />);
+    expect(await screen.findByText("Couldn't reach FishEye.")).toBeInTheDocument();
+  });
+
   it("starts by picking a state, never one nationwide pile", async () => {
     vi.mocked(session.listPins).mockResolvedValue([pin(), pin({ id: 8, title: "Pier" })]);
     renderApp(<CommunityFeed />);

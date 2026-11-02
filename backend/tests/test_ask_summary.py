@@ -39,8 +39,8 @@ def test_searching_needs_no_account_and_says_how_many_summaries_are_left(make_cl
     signup(c)
     body = c.post("/api/ask", json=QUESTION).json()
     assert body["answer_source"] == "passages"
-    assert body["ai"] == {"signed_in": True, "limit": 3, "remaining": 3}
-    assert c.get("/api/ask/allowance").json() == {"signed_in": True, "limit": 3, "remaining": 3}
+    assert body["ai"] == {"signed_in": True, "limit": 3, "remaining": 3, "enabled": False}
+    assert c.get("/api/ask/allowance").json() == body["ai"]
 
 
 def test_a_summary_needs_an_account(make_client):
@@ -146,7 +146,7 @@ def test_admins_are_not_limited(make_client, db_session):
     for q in questions:
         resp = summary(c, q)
         assert resp.status_code == 200
-        assert resp.json()["ai"] == {"signed_in": True, "limit": None, "remaining": None}
+        assert resp.json()["ai"] == {"signed_in": True, "limit": None, "remaining": None, "enabled": False}
 
 
 def test_the_last_summary_cannot_be_taken_twice(db_session, make_client):

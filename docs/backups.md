@@ -53,6 +53,7 @@ Both run on the server from `~/FishEye`, read their settings from
 5. **The settings file** `~/.fisheye-backup.env`:
 
    ```bash
+   PATH=/snap/bin:$PATH   # cron's PATH doesn't include the snap's aws
    BACKUP_S3_URI=s3://BUCKET/fisheye
    BACKUP_PING_URL=https://hc-ping.com/your-check-uuid
    # KEEP_DAYS=7          # copies kept on the server

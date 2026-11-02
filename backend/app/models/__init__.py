@@ -1,10 +1,13 @@
 from app.models.community import (  # noqa: F401
+    AiSpend,
     AiUsage,
     AskMiss,
     AuditLog,
     CatchPin,
     EmailToken,
+    Feedback,
     LakeReport,
+    PasswordResetToken,
     PinPhoto,
     PinReport,
     User,

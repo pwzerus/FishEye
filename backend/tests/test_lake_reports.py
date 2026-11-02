@@ -10,7 +10,7 @@ from tests.conftest import make_admin, signup
 
 def admin_client(make_client, db_session):
     c = make_client()
-    signup(c, email="admin@example.com", name="Admin")
+    signup(c, email="admin@example.com", name="Head Boss")
     make_admin(db_session, "admin@example.com")
     return c
 

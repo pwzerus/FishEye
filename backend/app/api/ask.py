@@ -32,9 +32,9 @@ from app.schemas.ask import (
     AskRetrievedOut,
     AskTraceOut,
 )
-from app.services import ai_quota, ask_misses
+from app.services import ai_budget, ai_quota, ask_misses
 from app.services.rag import ask as rag_ask
-from app.services.rag import lake_facts
+from app.services.rag import lake_facts, replies
 
 router = APIRouter(prefix="/ask", tags=["ask"])
 
@@ -63,10 +63,11 @@ def _state(payload: AskRequest) -> str | None:
 
 
 def _allowance_out(db: Session, user: User | None) -> AiAllowanceOut:
+    enabled = ai_budget.available()
     if user is None:
-        return AiAllowanceOut(signed_in=False, limit=None, remaining=None)
+        return AiAllowanceOut(signed_in=False, limit=None, remaining=None, enabled=enabled)
     a = ai_quota.allowance(db, user)
-    return AiAllowanceOut(signed_in=True, limit=a.limit, remaining=a.remaining)
+    return AiAllowanceOut(signed_in=True, limit=a.limit, remaining=a.remaining, enabled=enabled)
 
 
 def _response(
@@ -125,6 +126,10 @@ def search_guides(
         # The lake data answers it; a miss for the guides isn't one for Ask.
         result = replace(result, answer="", answer_source=rag_ask.ANSWER_LAKES, citations=[])
         result.trace.outcome = rag_ask.OUTCOME_LAKE
+    elif lakes is None and (name := lake_facts.missing_lake(payload.question, routed)):
+        reply = replies.no_lake(name, replies.reply_lang(payload.question, payload.lang))
+        result = replace(result, answer=reply, answer_source=rag_ask.ANSWER_NO_MATCH, citations=[])
+        result.trace.outcome = rag_ask.OUTCOME_NO_MATCH
     # What Ask can't answer, without who asked (services/ask_misses.py).
     ask_misses.record(db, payload.question, result.trace.outcome, payload.lang or "en", state, slug)
     return _response(result, _allowance_out(db, user), state, lakes)
@@ -160,6 +165,9 @@ def summarize(
     slug, state = _slug(payload), _state(payload)
     if not rag_ask.search_guides(payload.question, species_slug=slug, state=state, lang=payload.lang).citations:
         raise HTTPException(status_code=422, detail=NOT_A_FISHING_QUESTION)
+
+    if ai_budget.exhausted(db):
+        raise HTTPException(status_code=503, detail=ai_budget.PAUSED)
 
     day = ai_quota.today()
     if not ai_quota.reserve(db, user, day):

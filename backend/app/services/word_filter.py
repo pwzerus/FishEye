@@ -92,6 +92,15 @@ LATIN_PHRASES = {
     "porch monkey", "jungle bunny", "camel jockey", "slant eye", "slant eyes",
     "heil hitler", "sieg heil", "gas the jews",
 }
+# "Kill all jews" has no slur in it. "The blacks" and "the whites" are also how
+# anglers talk about crappie and bass, so those two only with "all".
+_HATE_VERBS = ("kill", "gas", "hang", "lynch", "exterminate", "burn", "shoot", "deport")
+_HATE_TARGETS = ("jews", "muslims", "gays", "mexicans", "asians", "arabs", "immigrants", "christians", "chinese", "women", "blacks", "whites")
+LATIN_PHRASES |= {
+    f"{verb} {middle} {target}"
+    for verb, target in itertools.product(_HATE_VERBS, _HATE_TARGETS)
+    for middle in ("all", "all the", *(() if target in ("blacks", "whites") else ("the",)))
+}
 
 # Chinese, Japanese and Korean: refused wherever they appear, as these
 # scripts don't put spaces between words. Only terms that aren't also a

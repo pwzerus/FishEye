@@ -88,7 +88,6 @@ const ko: Messages = {
     feedbackTitle: "FishEye를 함께 다듬어 주세요",
     feedbackText: "호수 정보가 틀렸거나, FishEye에 바라는 기능이 있나요? 알려 주세요.",
     feedbackSend: "의견 보내기",
-    feedbackSubject: "FishEye 의견",
     footer: "FishEye · 밖으로 나가요.",
   },
   legal: {
@@ -100,6 +99,18 @@ const ko: Messages = {
     contact: "문의",
     updated: (date: string) => `최종 업데이트: ${date}`,
     englishOnly: "이 페이지는 영어로만 제공돼요. 영어판 내용이 기준이에요.",
+  },
+  // Send feedback (components/feedback/FeedbackDialog.tsx).
+  feedback: {
+    title: "의견 보내기",
+    placeholder: "잘못된 호수 정보, 잘 안 되는 기능, FishEye에 바라는 점…",
+    send: "보내기",
+    sending: "보내는 중…",
+    thanks: "감사합니다! 모든 메시지를 읽어요.",
+    failed: "보내지 못했어요. 다시 시도해 주세요.",
+    signInFirst: "답장을 드릴 수 있도록 로그인한 뒤 의견을 보내 주세요.",
+    cantSignIn: "로그인할 수 없나요? 메일 주소:",
+    fromAccount: (email: string) => `답장을 드릴 수 있도록 계정 ${email}(으)로 보내요.`,
   },
   sourcesPage: {
     title: "출처",
@@ -842,6 +853,22 @@ const ko: Messages = {
     send: "보내기",
   },
   auth: {
+    // Forgotten passwords (components/auth/ForgotPassword.tsx, ResetPassword.tsx)
+    forgotLink: "비밀번호를 잊으셨나요?",
+    forgotTitle: "비밀번호를 잊으셨나요?",
+    forgotSub: "이메일을 입력하면 새 비밀번호를 정할 수 있는 링크를 보내 드려요.",
+    forgotNoMail: "FishEye는 아직 이메일을 보낼 수 없어요. 가입한 주소로 저희에게 메일을 보내 주시면 링크를 보내 드릴게요.",
+    sendResetLink: "재설정 링크 보내기",
+    resetSentTitle: "이메일을 확인하세요",
+    resetSentText: (email: string) => `${email}에 FishEye 계정이 있다면 링크가 발송되었어요. 한 시간 동안 유효해요. 스팸함도 확인해 주세요.`,
+    tryAnotherEmail: "다른 주소로 시도",
+    backToSignIn: "로그인으로 돌아가기",
+    resetTitle: "새 비밀번호 정하기",
+    resetFor: (email: string) => `계정: ${email}. 다른 기기에서는 로그아웃돼요.`,
+    resetNewPassword: "새 비밀번호",
+    saveNewPassword: "새 비밀번호 저장",
+    resetDone: "비밀번호를 바꿨어요. 로그인되었어요.",
+    resetBadLink: "이 링크는 만료되었거나 이미 사용되었어요. 새 링크를 요청하세요.",
     oauth: {
       google_email_exists:
         "이 이메일로 만든 FishEye 계정이 이미 있어요. 비밀번호로 로그인한 다음, 계정 페이지에서 Google을 연결하세요.",

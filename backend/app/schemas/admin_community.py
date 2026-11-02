@@ -22,6 +22,10 @@ class StatsOut(BaseModel):
     pins_awaiting_review: int
     # "Something's wrong with this lake" / "a lake is missing" (ADR 0039).
     lake_reports_open: int = 0
+    feedback_new: int = 0
+    # What the AI model has cost this month, estimated, and its ceiling.
+    ai_spent_usd: float = 0.0
+    ai_budget_usd: float = 0.0
 
 
 class ReportItemOut(BaseModel):
@@ -63,6 +67,7 @@ class AdminUserOut(BaseModel):
     google_connected: bool
     created_at: datetime
     last_login_at: datetime | None
+    email_verified: bool = False
     pins: int
     reports_against: int
 
@@ -70,6 +75,27 @@ class AdminUserOut(BaseModel):
 class UserUpdateIn(BaseModel):
     role: str | None = None  # "user" | "admin"
     status: str | None = None  # "active" | "suspended"
+    display_name: str | None = Field(default=None, max_length=80)
+
+
+class UserCountsOut(BaseModel):
+    """For the filters above the list."""
+
+    all: int
+    admins: int
+    suspended: int
+    unconfirmed: int
+    new_7d: int
+
+
+class ResetLinkIn(BaseModel):
+    email_it: bool = False
+
+
+class ResetLinkOut(BaseModel):
+    link: str
+    expires_at: datetime
+    emailed: bool
 
 
 class AuditOut(BaseModel):
@@ -80,6 +106,28 @@ class AuditOut(BaseModel):
     target_id: int
     detail: str | None
     created_at: datetime
+
+
+class AdminUserCatchOut(BaseModel):
+    id: int
+    title: str
+    status: str
+    visibility: str
+    created_at: datetime
+
+
+class AdminUserDetailOut(AdminUserOut):
+    """One account, for acting on it with what's needed in front of you."""
+
+    last_seen_at: datetime | None
+    sessions: int
+    pins_public: int
+    pins_private: int
+    pins_hidden: int
+    reports_filed: int
+    feedback: int
+    recent_pins: list[AdminUserCatchOut]
+    history: list[AuditOut]
 
 
 class Page(BaseModel):
@@ -94,6 +142,7 @@ class AdminPinPage(Page):
 
 class AdminUserPage(Page):
     items: list[AdminUserOut]
+    counts: UserCountsOut | None = None
 
 
 class AuditPage(Page):
