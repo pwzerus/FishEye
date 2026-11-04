@@ -24,21 +24,12 @@ import { ApiError, getSpeciesGuide, listSpeciesGuides, listSpeciesPhotos } from 
 import { waterFor } from "@/lib/fishArt";
 import type { SpeciesGuide, TackleSetup } from "@/lib/api/types";
 
-/**
- * Pre-render every fish page. Besides being faster, it's what makes the
- * thumbnail-to-hero morph play: a prefetched page renders in the same
- * commit as the navigation, while a page that suspends into its loading
- * skeleton first has no element to morph into (see the Next.js view
- * transitions guide). If the backend is down at build time the list is
- * empty and pages simply render on demand.
- */
-export async function generateStaticParams() {
-  try {
-    return (await listSpeciesGuides()).map((g) => ({ slug: g.slug }));
-  } catch {
-    return [];
-  }
-}
+// Render on each request, like the other pages: the root layout reads the
+// language cookie, so this one can't be pre-rendered either. It used to list
+// the guides in generateStaticParams, and a build made without the API running
+// (a Docker image, CI) then got an empty list, left the route static, and every
+// fish page answered 500 when that cookie was read.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(props: PageProps<"/fish/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;

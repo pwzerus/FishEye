@@ -19,6 +19,9 @@ beautifulsoup4==4.12.3
 python-multipart==0.0.33
 # Kept current: it decodes what strangers upload (services/media.py).
 Pillow==13.0.0
+# Vector maths for the photo check and Ask (services/fish_id.py, rag/hybrid.py).
+# Both are imported when the app starts, even with their models switched off.
+numpy==2.2.1
 
 # dev/test
 pytest==8.3.3
