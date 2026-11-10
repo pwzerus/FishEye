@@ -63,6 +63,8 @@ class User(Base):
     # When the address was confirmed (services/email_verification.py): by
     # the emailed link, or by Google, which only signs in verified addresses.
     email_verified_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    # Leaves the leaderboards (services/social.py): their catches stay public.
+    hide_from_rankings: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
     sessions: Mapped[list[UserSession]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
@@ -73,6 +75,9 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan", foreign_keys="CatchPin.user_id"
     )
     ai_usage: Mapped[list[AiUsage]] = relationship(cascade="all, delete-orphan")
+    likes: Mapped[list[PinLike]] = relationship(cascade="all, delete-orphan")
+    comments: Mapped[list[PinComment]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    alerts: Mapped[list[SpeciesAlert]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     @property
     def is_admin(self) -> bool:
@@ -269,6 +274,8 @@ class CatchPin(Base):
     reports: Mapped[list[PinReport]] = relationship(
         back_populates="pin", cascade="all, delete-orphan"
     )
+    likes: Mapped[list[PinLike]] = relationship(cascade="all, delete-orphan")
+    comments: Mapped[list[PinComment]] = relationship(back_populates="pin", cascade="all, delete-orphan")
 
 
 class PinPhoto(Base):
@@ -322,6 +329,80 @@ class PinReport(Base):
 
     pin: Mapped[CatchPin] = relationship(back_populates="reports")
     reporter: Mapped[User | None] = relationship(foreign_keys=[reporter_id])
+
+
+class PinLike(Base):
+    """One person liking one catch, once (services/social.py)."""
+
+    __tablename__ = "pin_likes"
+    __table_args__ = (UniqueConstraint("pin_id", "user_id", name="uq_pin_likes_pin_user"), _NO_ID_REUSE)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    pin_id: Mapped[int] = mapped_column(ForeignKey("catch_pins.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+
+
+class PinComment(Base):
+    """A comment under a public catch. Published at once, like a catch, then
+    possibly hidden by enough reports (services/social.report_comment)."""
+
+    __tablename__ = "pin_comments"
+    __table_args__ = _NO_ID_REUSE
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    pin_id: Mapped[int] = mapped_column(ForeignKey("catch_pins.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    body: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), default=PIN_PUBLISHED, index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+
+    pin: Mapped[CatchPin] = relationship(back_populates="comments")
+    user: Mapped[User] = relationship(back_populates="comments")
+    reports: Mapped[list[CommentReport]] = relationship(back_populates="comment", cascade="all, delete-orphan")
+
+
+class CommentReport(Base):
+    __tablename__ = "comment_reports"
+    # One report per person per comment, as for a catch.
+    __table_args__ = (UniqueConstraint("comment_id", "reporter_id", name="uq_comment_reports_comment_reporter"), _NO_ID_REUSE)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    comment_id: Mapped[int] = mapped_column(ForeignKey("pin_comments.id", ondelete="CASCADE"), index=True)
+    reporter_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    reason: Mapped[str] = mapped_column(String(24))
+    status: Mapped[str] = mapped_column(String(16), default=REPORT_OPEN, index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    resolved_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    resolved_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    # "dismissed" | "removed"
+    resolution: Mapped[str | None] = mapped_column(String(24), nullable=True)
+
+    comment: Mapped[PinComment] = relationship(back_populates="reports")
+
+
+class SpeciesAlert(Base):
+    """"Email me when someone confirms this fish within this far of here"
+    (services/alerts.py). `token` is what the unsubscribe link holds."""
+
+    __tablename__ = "species_alerts"
+    __table_args__ = _NO_ID_REUSE
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    species_slug: Mapped[str] = mapped_column(String(64), index=True)
+    # Rounded to about a kilometre when saved.
+    latitude: Mapped[float] = mapped_column(Float)
+    longitude: Mapped[float] = mapped_column(Float)
+    place: Mapped[str] = mapped_column(String(120))
+    radius_miles: Mapped[int] = mapped_column(Integer)
+    # The language the emails are written in: the site's when it was set.
+    lang: Mapped[str] = mapped_column(String(8), default="en")
+    token: Mapped[str] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    last_sent_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+    user: Mapped[User] = relationship(back_populates="alerts")
 
 
 class AuditLog(Base):

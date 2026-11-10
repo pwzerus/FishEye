@@ -88,6 +88,7 @@ _NULLABLE_COLUMNS = (
 _DEFAULTED_COLUMNS = (
     # Pins saved before ADR 0038 get the new default: the spot isn't shared.
     ("catch_pins", "share_exact", "BOOLEAN NOT NULL DEFAULT FALSE"),
+    ("users", "hide_from_rankings", "BOOLEAN NOT NULL DEFAULT FALSE"),
 )
 
 _INDEXES = (

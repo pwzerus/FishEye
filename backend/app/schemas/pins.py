@@ -68,6 +68,10 @@ class PinSummaryOut(BaseModel):
     photo_count: int
     thumb_url: str | None
     is_mine: bool
+    # What others have done with it (services/social.py).
+    like_count: int = 0
+    comment_count: int = 0
+    liked_by_me: bool = False
 
 
 class PinDetailOut(PinSummaryOut):

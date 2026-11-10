@@ -753,7 +753,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
               focusPoint={focusPoint}
               you={you}
               initialView={national ? null : lastView}
-              pins={showPins ? pins : []}
+              pins={showPins && !placing ? pins : []}
               groups={showPins && !placing ? groups : []}
               shops={showShops ? shops : []}
               placing={placing}

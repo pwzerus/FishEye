@@ -87,6 +87,7 @@ def user_out(user: User) -> UserOut:
         created_at=user.created_at,
         email_verified=user.email_verified_at is not None,
         verification_required=email_verification.needs_verifying(user),
+        hide_from_rankings=user.hide_from_rankings,
     )
 
 
@@ -293,10 +294,13 @@ def reauth(
 
 @router.patch("/me", response_model=UserOut)
 def update_me(payload: ProfileIn, user: User = Depends(require_user), db: Session = Depends(get_db)) -> UserOut:
-    try:
-        user.display_name = auth_service.clean_display_name(payload.display_name)
-    except AuthError as exc:
-        _raise(exc)
+    if payload.display_name is not None:
+        try:
+            user.display_name = auth_service.clean_display_name(payload.display_name)
+        except AuthError as exc:
+            _raise(exc)
+    if payload.hide_from_rankings is not None:
+        user.hide_from_rankings = payload.hide_from_rankings
     db.commit()
     return user_out(user)
 

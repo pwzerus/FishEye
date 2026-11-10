@@ -59,7 +59,7 @@ export default function TermsPage() {
       <section>
         <h2>What you share</h2>
         <p>
-          You keep ownership of the catches, photos and notes you post. So that FishEye can show them, you give
+          You keep ownership of the catches, photos, notes and comments you post. So that FishEye can show them, you give
           FishEye a worldwide, non-exclusive, royalty-free license to store, copy (for example as smaller versions of a
           photo), and display them in the service: to everyone for a public catch, and only to you (and moderators)
           for a private one. The license ends when you delete the catch or your account, apart from copies in backups

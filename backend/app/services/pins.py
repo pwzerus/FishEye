@@ -617,6 +617,7 @@ def list_pins(
     county: str | None = None,
     lake: int | None = None,
     river: int | None = None,
+    author: int | None = None,
     limit: int = 200,
 ) -> list[CatchPin]:
     if mine and user is None:
@@ -650,6 +651,9 @@ def list_pins(
         )
     if river is not None:
         q = q.where(CatchPin.river_id == river)
+    if author is not None:
+        # One angler's page: what they've shared with everyone, even for them.
+        q = q.where(CatchPin.user_id == author, CatchPin.visibility == VISIBILITY_PUBLIC, CatchPin.status == PIN_PUBLISHED)
     q = q.order_by(CatchPin.created_at.desc(), CatchPin.id.desc()).limit(min(max(limit, 1), MAX_LIST))
     return list(db.scalars(q).all())
 

@@ -42,6 +42,34 @@ class ReportGroupOut(BaseModel):
     reports: list[ReportItemOut]
 
 
+class ReportedCommentOut(BaseModel):
+    id: int
+    body: str
+    status: str
+    author: str
+    pin_id: int
+    pin_title: str
+    created_at: datetime
+
+
+class CommentReportItemOut(BaseModel):
+    id: int
+    reason: str
+    reason_label: str
+    reporter: str
+    created_at: datetime
+
+
+class CommentReportGroupOut(BaseModel):
+    comment: ReportedCommentOut
+    reports: list[CommentReportItemOut]
+
+
+class CommentResolvedOut(BaseModel):
+    id: int
+    outcome: str
+
+
 class ResolveIn(BaseModel):
     action: str  # "dismiss" | "hide" | "remove"
     note: str | None = Field(default=None, max_length=500)

@@ -21,12 +21,15 @@ That is what lets "怎么杀鱼" through, which has no English word to match.
 """
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 
+from app.knowledge.translations import table
 from app.services.rag import zh
 from app.services.rag.chunking import SHARED_SLUG
-from app.services.rag.embeddings import Embedder, passage_vectors
-from app.services.rag.zh_search import ZhTopics
+from app.services.rag.embeddings import MODEL_DIR, Embedder, passage_vectors
+from app.services.rag.zh_search import ZhTopics, asks
 from app.services.rag.retriever import (
     AMBIGUOUS_ALIASES,
     AmbiguousName,
@@ -53,12 +56,82 @@ DENSE_TOP = 5
 DENSE_W = 0.5
 # A Chinese question's closest handbook topics (zh_search.py), per place in that list.
 ZH_TOPIC_W = 0.5
+# A topic whose ways of asking the question is close to (zh_search.ZhAsks), times
+# how close. Above the three lists together, because a question that is how
+# people ask about a topic is about that topic.
+ZH_ASK_W = 4.0
+# The closest way of asking by meaning (WaysOfAsking), for a question put in
+# other words than any of them. Its weight rises from nothing at NEAR_FLOOR to
+# all of it at NEAR_FLOOR + NEAR_SPAN: a nearest way that is only as close as
+# unrelated questions get says nothing.
+ZH_NEAR_W = 2.5
+NEAR_FLOOR = 0.90
+NEAR_SPAN = 0.06
+# Only the topics about as close as the closest: the third nearest is usually
+# just the next most similar sentence shape.
+NEAR_TIE = 0.012
+# A fish named and nothing else the keyword side can read ("钓鳟鱼用什么线"): the
+# how-to for that fish, under the topic the question is about, if one is this close.
+ROUTED_NEAR_FIRST = 0.94
+# With a fish named, a topic goes first only when the question is nearly how
+# people ask about it: "大嘴鲈和小嘴鲈怎么分" is the look-alike card, but "白鲈什么
+# 季节最好钓" is that fish's own section, not the card about seasons.
+ROUTED_ASK_FIRST = 0.75
+
+
+# Words that can be about fishing. A question with none of them isn't let in by
+# being close to a way of asking: "下雨天开车要注意什么" is near "下雨天能钓鱼吗".
+_CAN_BE_FISHING = (
+    *"鱼线竿钩饵漂铅轮抛口鲈鲶鳟鲤救虫绑证湖河船晒",
+    "水里", "水草", "水位", "水库", "水温", "水面", "水色", "水深", "落水", "掉水", "浑水", "清水",
+)
+
+
+class WaysOfAsking:
+    """Chinese questions compared by meaning with how people ask about each topic.
+
+    The same list as zh_search.ZhAsks, which only sees shared characters.
+    Here "鱼太大拉不动怎么办" is near "怎么把鱼拉上来", and "钩子怎么从鱼嘴里拿出来"
+    near "鱼吞钩了怎么取". This model's cosines can't say by themselves whether a
+    question is about fishing (ADR 0025), but which of two lists a question is
+    closer to they can: the ways of asking, or questions about anything else
+    (translations/zh_not_fishing.json). The same comparison as the "bass" decoys.
+    """
+
+    def __init__(self, embedder: Embedder, cache: bool = True) -> None:
+        ways = cast("dict[str, list[str]]", table("topic_asks", "zh"))
+        others = cast("list[str]", table("not_fishing", "zh"))
+        self._topics = [topic for topic, phrases in ways.items() for _ in phrases]
+        cache_dir = MODEL_DIR if cache else None
+        self._ways = passage_vectors(embedder, [p for phrases in ways.values() for p in phrases], cache_dir, "query")
+        self._others = passage_vectors(embedder, others, cache_dir, "query")
+
+    def nearest(self, qvec: np.ndarray, top: int = 3) -> list[tuple[str, float]]:
+        sims = self._ways @ qvec
+        found: dict[str, float] = {}
+        for i in np.argsort(-sims):
+            found.setdefault(self._topics[int(i)], float(sims[i]))
+            if len(found) == top:
+                break
+        return list(found.items())
+
+    def is_fishing(self, question: str, qvec: np.ndarray) -> bool:
+        text = zh.without_other_meanings(question)
+        if not any(c in text for c in _CAN_BE_FISHING):
+            return False
+        return float((self._ways @ qvec).max()) > float((self._others @ qvec).max())
 
 
 class HybridRetriever:
     name = "hybrid"
 
-    def __init__(self, bm25: BM25Retriever, embedder: Embedder, vectors: np.ndarray | None = None) -> None:
+    def __init__(
+        self,
+        bm25: BM25Retriever,
+        embedder: Embedder,
+        vectors: np.ndarray | None = None,
+        ways: WaysOfAsking | None = None,
+    ) -> None:
         self.bm25 = bm25
         self.passages = bm25.passages
         self.embedder = embedder
@@ -66,6 +139,12 @@ class HybridRetriever:
         self._slugs = np.array([p.species_slug for p in self.passages])
         self._index = {p.id: i for i, p in enumerate(self.passages)}
         self._zh = ZhTopics(self.passages)
+        self._topic = {p.section: i for i, p in enumerate(self.passages) if p.species_slug == SHARED_SLUG and p.region == "all"}
+        # A licence card is per state; this index holds the asker's, or all of them.
+        for i, p in enumerate(self.passages):
+            if p.section.startswith("rule-license"):
+                self._topic.setdefault("rule-license", i)
+        self.ways = ways if ways is not None else WaysOfAsking(embedder, cache=vectors is None)
         # One vector per decoy sentence, for the ambiguous names
         # (retriever.AmbiguousName). About 30 short sentences, encoded once.
         decoys = [(alias, d) for alias, n in AMBIGUOUS_ALIASES.items() for d in n.decoys]
@@ -103,11 +182,23 @@ class HybridRetriever:
         # took Chinese hit@4 from 96% to 100% and moved nothing else.
         return self.embedder.encode([zh.with_english(question)], kind="query")[0]
 
+    def _under_nearest_topic(self, hits: list[ScoredPassage], zh_vec: np.ndarray | None, k: int) -> list[ScoredPassage]:
+        if zh_vec is None:
+            return hits
+        topic, sim = self.ways.nearest(zh_vec, top=1)[0]
+        i = self._topic.get(topic)
+        if i is None or sim < ROUTED_NEAR_FIRST:
+            return hits
+        first = ScoredPassage(self.passages[i], sim)
+        return [first, *(h for h in hits if h.passage is not first.passage)][:k]
+
     def search(self, question: str, k: int = 4, species: tuple[str, ...] | None = None) -> list[ScoredPassage]:
         qvec = self._qvec(question)
         sims = qvec @ self._vecs.T
         named, residual = self._resolve(question, qvec)
         routed = named or species or ()
+        # The question as asked, for comparing Chinese with Chinese.
+        zh_vec = self.embedder.encode([question.lower()], kind="query")[0] if zh.has_chinese(question) else None
         topics = topic_fish_passages(question)
         if topics:
             # Fish the handbook covers but no guide does (salmon, steelhead,
@@ -116,7 +207,9 @@ class HybridRetriever:
         if routed:
             if is_howto(residual if named else question):
                 return self.bm25.howto(routed[0], k)
-        elif names_unguided_fish(question) or not is_on_topic(question):
+        elif names_unguided_fish(question):
+            return []
+        elif not is_on_topic(question) and not (zh_vec is not None and self.ways.is_fishing(question.lower(), zh_vec)):
             return []
 
         query = query_terms(question, residual, named)
@@ -129,7 +222,7 @@ class HybridRetriever:
         allowed = set(routed) | {SHARED_SLUG} if routed else None
         lexical = self.bm25._rank(query, allowed) if query else []
         if not lexical and routed and wants_howto(residual if named else question):
-            return self.bm25.howto(routed[0], k)
+            return self._under_nearest_topic(self.bm25.howto(routed[0], k), zh_vec, k)
         if not lexical and not chinese:
             # An English question keyword search finds nothing for is "not
             # covered", as before: the model would always find *something*.
@@ -144,11 +237,25 @@ class HybridRetriever:
             fused[i] = fused.get(i, 0.0) + 1 / (RRF_K + rank + 1)
         for rank, i in enumerate(dense):
             fused[i] = fused.get(i, 0.0) + DENSE_W / (RRF_K + rank + 1)
+        asked = asks().best(question) if chinese else []
         if chinese:
             for rank, i in enumerate(self._zh.rank(residual if named else question)):
                 fused[i] = fused.get(i, 0.0) + ZH_TOPIC_W / (RRF_K + rank + 1)
+            for rank, match in enumerate(asked):
+                if (i := self._topic.get(match.topic)) is not None:
+                    fused[i] = fused.get(i, 0.0) + ZH_ASK_W * match.closeness / (RRF_K + rank + 1)
+            if zh_vec is not None and not routed:
+                near = self.ways.nearest(zh_vec)
+                for rank, (topic, sim) in enumerate(near):
+                    if sim >= near[0][1] - NEAR_TIE and (i := self._topic.get(topic)) is not None:
+                        weight = ZH_NEAR_W * min(1.0, max(0.0, (sim - NEAR_FLOOR) / NEAR_SPAN))
+                        fused[i] = fused.get(i, 0.0) + weight / (RRF_K + rank + 1)
         hits = [ScoredPassage(self.passages[i], s) for i, s in fused.items()]
         hits.sort(key=lambda h: (-h.score, h.passage.id))
-        if routed:
-            return arrange_routed(hits, query, k)
-        return hits[:k]
+        if not routed:
+            return hits[:k]
+        arranged = arrange_routed(hits, query, k)
+        if asked and asked[0].closeness >= ROUTED_ASK_FIRST and (i := self._topic.get(asked[0].topic)) is not None:
+            first = next(h for h in hits if h.passage is self.passages[i])
+            return [first, *(h for h in arranged if h is not first)][:k]
+        return arranged

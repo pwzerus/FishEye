@@ -20,6 +20,7 @@ import { AdminModeration } from "./AdminModeration";
 import { formatDay, PhotoAtSpot, PinBadges, placeText, SpeciesCheck, speciesCheckShort } from "./PinCard";
 import { ShareSpotToggle, SpeciesOptions, VisibilityToggle } from "./PinForm";
 import { ReportDialog } from "./ReportDialog";
+import { CommentsSection, LikeButton } from "./Social";
 
 const PinMiniMap = dynamic(() => import("./PinMiniMap"), {
   ssr: false,
@@ -171,7 +172,15 @@ export function PinDetailView({ pinId }: { pinId: number }) {
               {pin.author.display_name.slice(0, 1).toUpperCase()}
             </span>
             <span>
-              {pin.is_mine ? t.you : pin.author.display_name}
+              {pin.is_mine ? (
+                t.you
+              ) : pin.visibility === "public" ? (
+                <Link href={`/community/anglers/${pin.author.id}`} className="text-link">
+                  {pin.author.display_name}
+                </Link>
+              ) : (
+                pin.author.display_name
+              )}
               {when && <> · {t.caught(when)}</>}
             </span>
           </p>
@@ -241,6 +250,7 @@ export function PinDetailView({ pinId }: { pinId: number }) {
           </div>
 
           <div className="pin-actions reveal" style={{ "--i": 7 } as React.CSSProperties}>
+            <LikeButton key={`${pin.id}:${pin.liked_by_me}:${pin.like_count}`} pin={pin} />
             {pin.visibility === "public" && pin.status === "published" && (
               <button
                 type="button"
@@ -308,6 +318,8 @@ export function PinDetailView({ pinId }: { pinId: number }) {
           )}
         </div>
       </div>
+
+      <CommentsSection pin={pin} />
 
       <Modal open={lightbox !== null} onClose={() => setLightbox(null)} title={pin.title}>
         {lightbox !== null && pin.photos[lightbox] && (

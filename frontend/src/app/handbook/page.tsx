@@ -40,20 +40,19 @@ export default async function HandbookPage() {
   return (
     <PageTransition>
       <main className="page-scroll handbook-page">
-        <section className="page-intro">
-          <p className="eyebrow reveal" style={{ "--i": 0 } as React.CSSProperties}>
-            FishEye
-          </p>
-          <h1 className="reveal" style={{ "--i": 1 } as React.CSSProperties}>
-            {t.handbook}
-          </h1>
-          <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
-            {t.handbookLede}
-          </p>
-          <StatePicker />
-        </section>
-
-        {failed ? <div className="backend-error">{t.loadError}</div> : <Handbook topics={topics} gear={gear} />}
+        {failed ? (
+          <>
+            <section className="page-intro">
+              <h1>{t.handbook}</h1>
+              <p className="lede">{t.handbookLede}</p>
+            </section>
+            <div className="backend-error">{t.loadError}</div>
+          </>
+        ) : (
+          <Handbook topics={topics} gear={gear}>
+            <StatePicker />
+          </Handbook>
+        )}
 
         {baitRules.length > 0 && (
           <div className="rules-stack reveal" style={{ "--i": 6 } as React.CSSProperties}>

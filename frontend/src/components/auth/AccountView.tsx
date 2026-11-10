@@ -19,10 +19,12 @@ import {
   googleStartUrl,
   isReauthRequired,
   listPins,
+  setRankingsHidden,
   updateProfile,
 } from "@/lib/api/session";
 import type { PinSummary } from "@/lib/api/types";
 import { initials } from "./AccountMenu";
+import { AlertsSection } from "./AlertsSection";
 import { useAuth } from "./AuthProvider";
 import { ReauthDialog } from "./ReauthDialog";
 import { VerifyEmailBanner } from "./VerifyEmailBanner";
@@ -152,6 +154,27 @@ export function AccountView() {
           <Section title={t.preferences}>
             <StatePicker label={t.homeState} />
             <p className="muted small">{t.homeStateHint}</p>
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={!user.hide_from_rankings}
+                onChange={async (e) => {
+                  try {
+                    setUser(await setRankingsHidden(!e.target.checked));
+                  } catch (err) {
+                    toast(err instanceof ApiError ? err.message : all.social.failed, "error");
+                  }
+                }}
+              />
+              <span>
+                {all.social.rankings}
+                <small className="muted">{all.social.rankingsHelp}</small>
+              </span>
+            </label>
+          </Section>
+
+          <Section id="alerts" title={all.alerts.title}>
+            <AlertsSection />
           </Section>
 
           <Section title={t.methods}>

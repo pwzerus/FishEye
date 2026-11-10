@@ -379,7 +379,9 @@ its disk too, so back up first.
   `.env.example`: Amazon SES, or a mailbox's app password), "Forgot password?"
   tells people to write to the contact address, and an admin makes them a link
   from the Users screen (ADR 0044). Address verification stays off until then
-  (`EMAIL_VERIFICATION`); Google sign-in needs neither.
+  (`EMAIL_VERIFICATION`); Google sign-in needs neither. Catch alerts (ADR 0054) go
+  out once mail is set up and only to confirmed addresses; until then people can
+  set alerts and the page says emails aren't on yet.
 
 ## Taking it down
 

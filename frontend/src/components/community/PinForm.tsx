@@ -474,6 +474,7 @@ export function PinForm({
 
       <div className="field">
         <span>{t.photoLabel}</span>
+        <p className="hint">{t.oneFish}</p>
         <PhotoPicker
           files={photos}
           onChange={changePhotos}

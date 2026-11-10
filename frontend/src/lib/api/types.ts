@@ -629,6 +629,73 @@ export interface User {
   // reporting catches (backend services/email_verification.py; off until
   // outgoing mail is set up).
   verification_required?: boolean;
+  // Left the leaderboards (backend services/social.py).
+  hide_from_rankings?: boolean;
+}
+
+/** A comment under a catch (backend services/social.py). */
+export interface PinComment {
+  id: number;
+  body: string;
+  created_at: string;
+  author: { id: number; display_name: string };
+  status: "published" | "hidden";
+  is_mine: boolean;
+  can_delete: boolean;
+  can_report: boolean;
+}
+
+export type LeaderboardMetric = "catches" | "shares" | "active" | "likes";
+export type LeaderboardPeriod = "30d" | "all";
+
+export interface Standing {
+  rank: number;
+  user_id: number;
+  display_name: string;
+  value: number;
+  is_me: boolean;
+}
+
+export interface Leaderboard {
+  metric: LeaderboardMetric;
+  period: LeaderboardPeriod;
+  entries: Standing[];
+  me: Standing | null;
+}
+
+export interface Angler {
+  id: number;
+  display_name: string;
+  joined_at: string;
+  catches: number;
+  confirmed: number;
+  likes: number;
+}
+
+/** "Email me when someone confirms this fish near here" (backend services/alerts.py). */
+export interface SpeciesAlert {
+  id: number;
+  species_slug: string;
+  species_label: string;
+  place: string;
+  radius_miles: number;
+  created_at: string;
+  last_sent_at: string | null;
+}
+
+export interface AlertsInfo {
+  alerts: SpeciesAlert[];
+  email: string;
+  email_confirmed: boolean;
+  sending: boolean;
+  max_alerts: number;
+  min_radius: number;
+  max_radius: number;
+}
+
+export interface AdminCommentReportGroup {
+  comment: { id: number; body: string; status: string; author: string; pin_id: number; pin_title: string; created_at: string };
+  reports: { id: number; reason: string; reason_label: string; reporter: string; created_at: string }[];
 }
 
 export interface AuthProviders {
@@ -719,6 +786,9 @@ export interface PinSummary {
   photo_count: number;
   thumb_url: string | null;
   is_mine: boolean;
+  like_count?: number;
+  comment_count?: number;
+  liked_by_me?: boolean;
 }
 
 /** GET /api/pins/places: one level of browsing catches by place. `id` is a

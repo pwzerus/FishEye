@@ -5,7 +5,7 @@ import math
 from datetime import date
 from typing import NoReturn
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -49,7 +49,7 @@ from app.schemas.pins import (
     WhereWaterOut,
 )
 from app.knowledge.jurisdictions import STATE_NAMES
-from app.services import audit, counties, email_verification, fish_id, water
+from app.services import alerts, audit, counties, email_verification, fish_id, social, water
 from app.services import pins as svc
 from app.services.email_verification import VerificationError
 from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, SAME_FISH, group_label
@@ -122,8 +122,9 @@ def _water_out(pin: CatchPin, waters: Waters) -> PinWaterOut | None:
     return None
 
 
-def summary_fields(pin: CatchPin, user: User | None, waters: Waters) -> dict:
+def summary_fields(pin: CatchPin, user: User | None, waters: Waters, likes: social.Social | None = None) -> dict:
     lake = waters[0].get(pin.waterbody_id) if pin.waterbody_id else None
+    likes = likes or social.Social()
     first = pin.photos[0] if pin.photos else None
     # Others see the public point unless the angler shared the spot (ADR 0038).
     latitude, longitude, shown = svc.shown_point(pin, user)
@@ -154,6 +155,9 @@ def summary_fields(pin: CatchPin, user: User | None, waters: Waters) -> dict:
         "photo_count": len(pin.photos),
         "thumb_url": _media_url(first, thumb=True) if first else None,
         "is_mine": user is not None and user.id == pin.user_id,
+        "like_count": likes.likes,
+        "comment_count": likes.comments,
+        "liked_by_me": likes.liked,
     }
 
 
@@ -170,7 +174,7 @@ def detail_out(db: Session, pin: CatchPin, user: User | None) -> PinDetailOut:
         select(PinReport.id).where(PinReport.pin_id == pin.id, PinReport.reporter_id == user.id)
     ) is not None
     return PinDetailOut(
-        **summary_fields(pin, user, waters_for(db, [pin])),
+        **summary_fields(pin, user, waters_for(db, [pin]), social.counts(db, [pin.id], user)[pin.id]),
         note=pin.note,
         photos=[
             PinPhotoOut(id=p.id, url=_media_url(p), thumb_url=_media_url(p, thumb=True), width=p.width, height=p.height)
@@ -321,16 +325,18 @@ def list_pins(
     county: str | None = CountyParam,
     lake: int | None = Query(default=None, ge=0, le=MAX_ID),
     river: int | None = Query(default=None, ge=1, le=MAX_ID),
+    author: int | None = Query(default=None, ge=1, le=MAX_ID),
     limit: int = Query(default=200, ge=1, le=svc.MAX_LIST),
     user: User | None = Depends(optional_user),
     db: Session = Depends(get_db),
 ) -> list[PinSummaryOut]:
     pins = svc.list_pins(
         db, user, bbox=_parse_bbox(bbox), species=species, mine=mine,
-        state=state, county=county, lake=lake, river=river, limit=limit,
+        state=state, county=county, lake=lake, river=river, author=author, limit=limit,
     )
     waters = waters_for(db, pins)
-    return [PinSummaryOut(**summary_fields(p, user, waters)) for p in pins]
+    likes = social.counts(db, [p.id for p in pins], user)
+    return [PinSummaryOut(**summary_fields(p, user, waters, likes[p.id])) for p in pins]
 
 
 @router.get("/pins/{pin_id}", response_model=PinDetailOut)
@@ -350,6 +356,7 @@ def get_pin(pin_id: DbId, user: User | None = Depends(optional_user), db: Sessio
 # loop for every other request.
 @router.post("/pins", response_model=PinDetailOut, status_code=201)
 def create_pin(
+    background: BackgroundTasks,
     latitude: float = Form(...),
     longitude: float = Form(...),
     title: str = Form(..., max_length=200),
@@ -382,8 +389,12 @@ def create_pin(
     except PinError as exc:
         db.rollback()
         _raise(exc)
+    notices = alerts.notices_for(db, pin)
     db.commit()
     db.refresh(pin)
+    # After the response: a slow mail server shouldn't hold up the post.
+    if notices:
+        background.add_task(alerts.send, notices)
     return detail_out(db, pin, user)
 
 

@@ -37,6 +37,8 @@ from app.models.community import (
     LakeReport,
     PinPhoto,
     PinReport,
+    CommentReport,
+    PinComment,
     User,
     UserSession,
 )
@@ -49,6 +51,10 @@ from app.services import password_reset
 from app.services import lake_reports as lake_report_service
 from app.services.lake_reports import LakeReportError
 from app.schemas.admin_community import (
+    CommentReportGroupOut,
+    CommentReportItemOut,
+    CommentResolvedOut,
+    ReportedCommentOut,
     AdminPinOut,
     AdminPinPage,
     AdminUserCatchOut,
@@ -257,6 +263,71 @@ def resolve_reports(
     )
     db.commit()
     return _admin_pin(db, pin, admin)
+
+
+@router.get("/comment-reports", response_model=list[CommentReportGroupOut])
+def comment_report_queue(admin: User = Depends(require_admin), db: Session = Depends(get_db)) -> list[CommentReportGroupOut]:
+    """Comments with open reports, the most reported first."""
+    reports = db.scalars(
+        select(CommentReport)
+        .where(CommentReport.status == REPORT_OPEN)
+        .options(selectinload(CommentReport.comment).selectinload(PinComment.user), selectinload(CommentReport.comment).selectinload(PinComment.pin))
+        .order_by(CommentReport.created_at)
+    ).all()
+    reporters = {u.id: u.display_name for u in db.scalars(select(User).where(User.id.in_({r.reporter_id for r in reports if r.reporter_id})))}
+    groups: dict[int, list[CommentReport]] = {}
+    for r in reports:
+        groups.setdefault(r.comment_id, []).append(r)
+    return [
+        CommentReportGroupOut(
+            comment=ReportedCommentOut(
+                id=c.id,
+                body=c.body,
+                status=c.status,
+                author=c.user.display_name,
+                pin_id=c.pin_id,
+                pin_title=c.pin.title,
+                created_at=c.created_at,
+            ),
+            reports=[
+                CommentReportItemOut(
+                    id=r.id,
+                    reason=r.reason,
+                    reason_label=pin_service.REPORT_REASONS.get(r.reason, r.reason),
+                    reporter=reporters.get(r.reporter_id or 0, "Deleted account"),
+                    created_at=r.created_at,
+                )
+                for r in items
+            ],
+        )
+        for items in sorted(groups.values(), key=lambda g: (-len(g), g[0].created_at))
+        for c in [items[0].comment]
+    ]
+
+
+@router.post("/comment-reports/{comment_id}/resolve", response_model=CommentResolvedOut)
+def resolve_comment_reports(
+    payload: ResolveIn, comment_id: DbId, admin: User = Depends(require_admin), db: Session = Depends(get_db)
+) -> CommentResolvedOut:
+    comment = db.get(PinComment, comment_id)
+    if comment is None:
+        raise HTTPException(status_code=404, detail="No such comment.")
+    outcome = {"dismiss": "dismissed", "remove": "removed"}.get(payload.action)
+    if outcome is None:
+        raise HTTPException(status_code=422, detail="action is dismiss or remove")
+    open_reports = [r for r in comment.reports if r.status == REPORT_OPEN]
+    if not open_reports:
+        raise HTTPException(status_code=409, detail="This comment has no open reports.")
+    audit.record(db, admin, f"comment_reports.{outcome}", "comment", comment.id, reports=len(open_reports), note=payload.note)
+    if payload.action == "remove":
+        db.delete(comment)
+    else:
+        now = utcnow()
+        for r in open_reports:
+            r.status, r.resolution, r.resolved_at, r.resolved_by_id = REPORT_RESOLVED, outcome, now, admin.id
+        comment.status = PIN_PUBLISHED
+    db.commit()
+    return CommentResolvedOut(id=comment_id, outcome=outcome)
 
 
 # ------------------------------------------------------------------- pins

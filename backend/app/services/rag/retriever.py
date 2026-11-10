@@ -31,7 +31,7 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Callable, Protocol
 
-from app.services.rag import zh
+from app.services.rag import zh, zh_search
 from app.services.rag.chunking import SHARED_SLUG, Passage, build_passages
 
 # BM25 defaults from the literature; the eval did not show a reason to tune them.
@@ -322,7 +322,7 @@ _GATE_WORD_RE = re.compile(r"[a-z]+")
 
 def is_on_topic(question: str) -> bool:
     lowered = question.lower()
-    if zh.is_on_topic(lowered):
+    if zh.is_on_topic(lowered) or (zh.has_chinese(lowered) and zh_search.is_asked_about(lowered)):
         return True
     if topic_fish_passages(lowered):
         return True
@@ -569,6 +569,10 @@ ZH_UNGUIDED_FISH = (
     "红鼓鱼", "红鼓", "黑鼓", "海鳟", "斑点海鳟",
     "梭鱼", "雀鳝", "弓鳍鱼", "罗非鱼", "金枪鱼",
     "鲨鱼", "比目鱼", "鲈鲉", "海鲈",
+    # The fish Chinese anglers grew up on, which the guides don't cover.
+    "草鱼", "鲢鱼", "鳙鱼", "胖头鱼", "青鱼", "鲫鱼", "黑鱼", "鳜鱼", "翘嘴", "黄颡鱼", "黄辣丁", "马口鱼",
+    # Not a fish, but the same answer: the guides are about fresh water.
+    "海钓",
 )
 # Fish with no guide that handbook topics cover (added 2026-11-06): a
 # question naming one is answered from those topics, first, rather than

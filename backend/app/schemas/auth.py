@@ -19,7 +19,9 @@ class ReauthIn(BaseModel):
 
 
 class ProfileIn(BaseModel):
-    display_name: str = Field(max_length=80)
+    display_name: str | None = Field(default=None, max_length=80)
+    # Whether their name appears on the leaderboards (services/social.py).
+    hide_from_rankings: bool | None = None
 
 
 class PasswordChangeIn(BaseModel):
@@ -46,6 +48,7 @@ class UserOut(BaseModel):
     # True while the account must confirm its email before sharing or
     # reporting catches (EMAIL_VERIFICATION=on, services/email_verification.py).
     verification_required: bool = False
+    hide_from_rankings: bool = False
 
 
 class VerifyEmailIn(BaseModel):

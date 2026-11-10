@@ -121,6 +121,7 @@ export function IdentifyFish() {
       >
         {state.kind === "idle" ? t.pick : t.another}
       </button>
+      <p className="hint">{t.oneFish}</p>
       <p className="hint">{t.tip}</p>
       {!user && <p className="hint">{t.trialNote}</p>}
 

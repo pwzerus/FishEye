@@ -9,6 +9,7 @@ import type { Messages } from "@/i18n/messages";
 import { localGroup, localSpecies, withoutArticle } from "@/i18n/names";
 import { waterFor } from "@/lib/fishArt";
 import type { PinSummary } from "@/lib/api/types";
+import { SocialCounts } from "./SocialCounts";
 
 /** A day as people read it in this language: "Oct 29, 2026", "2026年10月29日". */
 export function formatDay(iso: string | null, tag = "en-US"): string | null {
@@ -159,6 +160,7 @@ export function PinCard({ pin, index = 0 }: { pin: PinSummary; index?: number })
         </p>
         <p className="pin-card-by muted">
           {pin.is_mine ? t.catch.you : pin.author.display_name} · {formatDay(pin.caught_on ?? pin.created_at, tag)}
+          <SocialCounts pin={pin} />
         </p>
       </div>
     </Link>

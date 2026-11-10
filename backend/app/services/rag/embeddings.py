@@ -101,7 +101,9 @@ def load_embedder(model_dir: Path = MODEL_DIR) -> E5Embedder | None:
     return None
 
 
-def passage_vectors(embedder: Embedder, texts: list[str], cache_dir: Path | None = MODEL_DIR) -> np.ndarray:
+def passage_vectors(
+    embedder: Embedder, texts: list[str], cache_dir: Path | None = MODEL_DIR, kind: str = "passage"
+) -> np.ndarray:
     """Vectors for the guide passages, cached on disk by content.
 
     The guides only change with a deploy, so the cache key is the model plus
@@ -109,13 +111,13 @@ def passage_vectors(embedder: Embedder, texts: list[str], cache_dir: Path | None
     file is simply never read again."""
     import numpy as np
 
-    key = hashlib.sha256("\x00".join([embedder.name, ENCODING, *texts]).encode("utf-8")).hexdigest()[:16]
+    key = hashlib.sha256("\x00".join([embedder.name, ENCODING, kind, *texts]).encode("utf-8")).hexdigest()[:16]
     path = cache_dir / f"passages-{key}.npy" if cache_dir else None
     if path and path.exists():
         vecs = np.load(path)
         if vecs.shape[0] == len(texts):
             return vecs
-    vecs = embedder.encode(texts, kind="passage")
+    vecs = embedder.encode(texts, kind=kind)
     if path:
         try:
             np.save(path, vecs)

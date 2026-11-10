@@ -50,10 +50,19 @@ export default function PrivacyPage() {
             storing it.
           </li>
           <li>
-            <strong>Reports and moderation:</strong> reports you file about a catch, and a log of what moderators do.
+            <strong>Reports and moderation:</strong> reports you file about a catch or a comment, and a log of what moderators do.
           </li>
           <li>
             <strong>AI summaries:</strong> how many you use each day, so the daily allowance works.
+          </li>
+          <li>
+            <strong>Likes and comments:</strong> which catches you liked, and the comments you wrote. Comments and how many
+            likes a catch has are public. Your name also appears on leaderboards for the public catches you share, unless you
+            turn that off on your account page.
+          </li>
+          <li>
+            <strong>Catch alerts, if you set any:</strong> the fish, the place (rounded to about a kilometre), the distance and
+            your language, so we can email you. Every email has an unsubscribe link, and alerts are deleted with your account.
           </li>
           <li>
             <strong>Feedback you send:</strong> your message, the page you were on and your language. Signed in, it is

@@ -45,6 +45,33 @@ corrects only towards words that mean nothing but fishing, and real words near
 them are listed and left alone: of a 125,000-word English dictionary it changes
 four, two of them on purpose ("bate", "lour").
 
+**Ways of asking** (added the same day, after the owner asked for Ask to be checked
+properly). The sets above were the sets it was tuned on. On 100 new everyday
+questions read one by one, about a third were answered badly: "一直没口怎么办" and
+"线用几号的" were turned away as not about fishing, "鱼钩吞进肚子了怎么取" got the card about
+a hook in your hand. The handbook's Chinese is written Chinese; people ask in spoken
+Chinese. So:
+
+- `translations/zh_topic_asks.json` has, by hand, the ways people ask about each
+  topic (622 of them, 117 topics). A question is compared with them by shared pairs
+  of characters (`zh_search.ZhAsks`) and by meaning (`hybrid.WaysOfAsking`, the same
+  embedding model, Chinese against Chinese), and the closest topic goes first.
+- Turning a question away is now a comparison, not a word list: closer to the ways
+  of asking, or to `translations/zh_not_fishing.json` (about 190 questions on
+  everything else), as the "bass" decoys do. A question must also name something
+  fishing can involve, so "下雨天开车要注意什么" stays out.
+- Questions about the site ("怎么分享渔获", "拍照识别准吗") get what the site does
+  (`site_help.py`), not a guide passage that shares a word.
+
+Measured by reading the first answer. 86 questions, written before the meaning-based
+matching: about 57% good, then about 75% with it (none of the ways of asking written
+for them). 55 fishing questions written after everything was finished and never
+tuned on: 34 right first time (62%); five of the misses are about something the
+guides don't cover. No off-topic question in the eval got through. So this is much
+better and still search: it finds a passage, and a question nobody wrote a passage
+for gets the nearest one. The owner's plan is a paid model for subscribers, reading
+the handbook first.
+
 ## What did not work
 
 Measured on the same sets before being dropped:

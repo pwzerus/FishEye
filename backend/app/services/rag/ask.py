@@ -36,7 +36,7 @@ from app.knowledge import jurisdictions
 from app.knowledge.species_guides import GUIDES
 from app.services.llm import LLMProvider, LLMUnavailable, get_provider
 from app.services.rag import question_library, regional
-from app.services.rag.chunking import Passage
+from app.services.rag.chunking import SHARED_SLUG, Passage
 from app.services.rag.retriever import (
     EMPTY_NOT_COVERED,
     EMPTY_OFF_TOPIC,
@@ -47,7 +47,7 @@ from app.services.rag.retriever import (
     split_species,
     unguided_fish_named,
 )
-from app.services.rag import es, ja, ko, replies, spelling
+from app.services.rag import es, ja, ko, replies, spelling, zh
 
 DEFAULT_K = 4
 MAX_ATTEMPTS = 2
@@ -102,7 +102,7 @@ def searchable(question: str) -> str:
         return ja.to_english(question)
     if ko.is_korean(question):
         return ko.to_english(question)
-    return es.to_english(question) if es.is_spanish(question) else spelling.fix(question)
+    return es.to_english(question) if es.is_spanish(question) else zh.normalized(spelling.fix(question))
 
 SPECIES_VOCABULARY = tuple(sorted((g.common_name.lower() for g in GUIDES), key=len, reverse=True))
 
@@ -407,9 +407,11 @@ _LIMITS_QUESTION_RE = re.compile(
     r"|\b(bag|creel|daily|size|length|slot|possession)\s+limits?\b"
     r"|\bhow\s+(big|long|large)\b.*\bkeep\b"
     r"|\b(legal|minimum|keeper)\s+(size|length)\b"
-    r"|\bcan\s+i\s+keep\b|\ballowed\s+to\s+keep\b|(?<!speed )(?<!time )\blimits?\b",
+    r"|\bcan\s+i\s+keep\b|\ballowed\s+to\s+keep\b|(?<!speed )(?<!time )\blimits?\b"
+    r"|几条|带走|限额|尺寸限制|最小尺寸|多大才能|多长才能",
     re.I,
 )
+_LICENSE_QUESTION_ZH_RE = re.compile("要证|办证|钓鱼证|没证|执照")
 # "Two rods at once": some states write it into the license (California's
 # Second Rod validation), so the license card answers it.
 _RODS_QUESTION_RE = re.compile(
@@ -425,9 +427,12 @@ def _required_rule(question: str, state: str | None) -> tuple[str, str | None] |
     code = state.lower()
     if _LIMITS_QUESTION_RE.search(question):
         return f"all-fish#rule-limits-{code}", None
+    j = jurisdictions.get(state)
+    license_card = f"all-fish#{(j and j.license_topic) or f'rule-license-{code}'}"
     if _RODS_QUESTION_RE.search(question):
-        j = jurisdictions.get(state)
-        return f"all-fish#{(j and j.license_topic) or f'rule-license-{code}'}", "rod"
+        return license_card, "rod"
+    if _LICENSE_QUESTION_ZH_RE.search(question):
+        return license_card, None
     return None
 
 
@@ -453,7 +458,7 @@ def _with_required_rule(
     card = ScoredPassage(passage, hits[0].score if hits else 0.0)
     # The state's own card on the subject (Georgia's "keeping fish within the
     # limit") stays on top, with the rule card under it.
-    if rest and rest[0].passage.region == state:
+    if rest and rest[0].passage.region == state and rest[0].passage.species_slug == SHARED_SLUG:
         return [rest[0], card, *rest[1:]][:k]
     return [card, *rest][:k]
 

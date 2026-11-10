@@ -14,13 +14,16 @@ import {
   adminLakeReports,
   adminPins,
   adminPurgePin,
+  adminCommentReports,
   adminReports,
+  adminResolveComment,
   adminResolve,
   adminResolveLakeReport,
   adminSetPinStatus,
   adminStats,
 } from "@/lib/api/session";
 import type {
+  AdminCommentReportGroup,
   AdminLakeReport,
   AdminPin,
   AdminReportGroup,
@@ -124,7 +127,12 @@ export function AdminConsole() {
         {tab === "overview" && <Overview onGo={(t) => router.replace(`${pathname}?tab=${t}`, { scroll: false })} />}
         {tab === "feedback" && <AdminFeedbackTab />}
         {tab === "visits" && <AdminVisitsTab />}
-        {tab === "reports" && <Reports confirmThen={confirmThen} />}
+        {tab === "reports" && (
+          <>
+            <Reports confirmThen={confirmThen} />
+            <CommentReports confirmThen={confirmThen} />
+          </>
+        )}
         {tab === "lakes" && <LakeReports confirmThen={confirmThen} />}
         {tab === "pins" && <Pins confirmThen={confirmThen} />}
         {tab === "users" && <Users meId={user.id} confirmThen={confirmThen} />}
@@ -331,6 +339,67 @@ function Reports({ confirmThen }: { confirmThen: (p: Pending) => void }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+function CommentReports({ confirmThen }: { confirmThen: (p: Pending) => void }) {
+  const [groups, setGroups] = useState<AdminCommentReportGroup[] | null>(null);
+  const toast = useToast();
+  const load = useCallback(() => {
+    adminCommentReports().then(setGroups).catch(() => setGroups([]));
+  }, []);
+  useEffect(load, [load]);
+  if (!groups || groups.length === 0) return null;
+  const act = (id: number, action: "dismiss" | "remove") =>
+    confirmThen({
+      title: action === "dismiss" ? "Dismiss these reports?" : "Remove this comment?",
+      confirm: action === "dismiss" ? "Dismiss" : "Remove",
+      body: action === "dismiss" ? "The comment stays up, and comes back if the reports had hidden it." : "The comment is deleted.",
+      run: async () => {
+        await adminResolveComment(id, action);
+        toast(action === "dismiss" ? "Reports dismissed" : "Comment removed");
+        load();
+      },
+    });
+  return (
+    <>
+      <h2 className="admin-subhead">Reported comments</h2>
+      <ul className="report-list">
+        {groups.map((g) => (
+          <li key={g.comment.id} className="report-card">
+            <div className="report-pin">
+              <div>
+                <Link href={`/community/${g.comment.pin_id}`} className="report-title">
+                  {g.comment.pin_title}
+                </Link>
+                <p>“{g.comment.body}”</p>
+                <p className="muted small">
+                  by {g.comment.author}
+                  {g.comment.status === "hidden" && " · hidden by reports"}
+                </p>
+              </div>
+              <span className="report-count">{g.reports.length}</span>
+            </div>
+            <ul className="report-reasons">
+              {g.reports.map((r) => (
+                <li key={r.id}>
+                  <strong>{r.reason_label}</strong>
+                  <span className="muted small"> · {r.reporter}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="row-actions">
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => act(g.comment.id, "dismiss")}>
+                Dismiss
+              </button>
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => act(g.comment.id, "remove")}>
+                Remove
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 

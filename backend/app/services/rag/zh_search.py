@@ -17,8 +17,12 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
+from dataclasses import dataclass
+from functools import lru_cache
+from typing import cast
 
 from app.knowledge.translations import table
+from app.services.rag import zh
 from app.services.rag.chunking import SHARED_SLUG, Passage
 
 _RUNS = re.compile(r"[㐀-鿿]+|[a-z0-9]+")
@@ -26,6 +30,13 @@ K1 = 1.2
 B = 0.75
 TITLE_TIMES = 4
 TOP = 6
+# How close a question has to be to one way of asking (ZhAsks) to count.
+ASK_MIN = 0.45
+ASK_ON_TOPIC = 0.6
+ASK_TOP = 3
+# Words that say nothing about what is asked; left out before comparing.
+_FILLER = re.compile("请问|一下|的|了|吗|呢|啊|呀|吧|哦|嘛")
+_FISHING_THINGS = "鱼线竿钩饵漂铅轮抛口鲈鲶鳟鲤救虫绑证"
 # Question words: in almost every question, and in many a topic ("怎么组").
 _WEAK = frozenset(
     {"怎么", "么办", "什么", "么时", "时候", "为什", "如何", "怎样", "可以", "能不", "不能", "需要", "应该", "一下", "钓鱼", "了怎", "的时"}
@@ -76,3 +87,70 @@ class ZhTopics:
     def rank(self, question: str) -> list[int]:
         """Indexes of the passages of the topics closest to the question, best first."""
         return [i for _, i in self._scored(question)]
+
+
+@dataclass(frozen=True)
+class AskMatch:
+    topic: str
+    closeness: float  # 0 to 1; 1: the question is one of the topic's ways of asking
+
+
+class ZhAsks:
+    """Which handbook topic a Chinese question is, by how people ask about each.
+
+    A topic's title and text are written Chinese. People ask "一直没口怎么办" and
+    "线用几号的", which share nothing with "一直没口？该改什么" but a pair or two,
+    and nothing at all with the glossary. So each topic has the ways people ask
+    about it, written by hand from the topic (translations/zh_topic_asks.json).
+    A question is compared with every one of them, as the cosine of their pairs
+    of characters weighted by how rare each pair is among all the ways of asking.
+    """
+
+    def __init__(self, asks: dict[str, list[str]]) -> None:
+        phrases = [(topic, self._terms(p)) for topic, ways in asks.items() for p in ways]
+        df = Counter(t for _, terms in phrases for t in terms)
+        self._idf = {t: math.log(1 + len(phrases) / c) for t, c in df.items()}
+        self._rarest = math.log(1 + len(phrases))
+        self._phrases = [(topic, terms, self._norm(terms)) for topic, terms in phrases if terms]
+
+    @staticmethod
+    def _terms(text: str) -> list[str]:
+        return [t for t in dict.fromkeys(tokens(_FILLER.sub("", text))) if t not in _WEAK]
+
+    def _weight(self, term: str) -> float:
+        return self._idf.get(term, self._rarest)
+
+    def _norm(self, terms: list[str]) -> float:
+        return math.sqrt(sum(self._weight(t) ** 2 for t in terms))
+
+    def best(self, question: str) -> list[AskMatch]:
+        """The topics this question is closest to, closest first, up to ASK_TOP."""
+        terms = self._terms(question)
+        if not terms:
+            return []
+        norm = self._norm(terms)
+        wanted = set(terms)
+        closest: dict[str, float] = {}
+        for topic, way, way_norm in self._phrases:
+            shared = sum(self._weight(t) ** 2 for t in way if t in wanted)
+            if shared:
+                closest[topic] = max(closest.get(topic, 0.0), shared / (norm * way_norm))
+        found = sorted(closest.items(), key=lambda kv: (-kv[1], kv[0]))
+        return [AskMatch(topic, c) for topic, c in found[:ASK_TOP] if c >= ASK_MIN]
+
+
+@lru_cache(maxsize=1)
+def asks() -> ZhAsks:
+    return ZhAsks(cast("dict[str, list[str]]", table("topic_asks", "zh")))
+
+
+def is_asked_about(question: str) -> bool:
+    """Close enough to how people ask about a topic to be a fishing question.
+    Closeness alone isn't enough: "夏天穿什么衣服" is as close to "钓鱼穿什么" as
+    many real questions are to theirs. It has to name something a question
+    about fishing names as well, once words like 电线 are out of the way."""
+    text = zh.without_other_meanings(question)
+    if not any(c in text for c in _FISHING_THINGS):
+        return False
+    found = asks().best(text)
+    return bool(found) and found[0].closeness >= ASK_ON_TOPIC

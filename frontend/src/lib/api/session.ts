@@ -6,6 +6,14 @@
 // The cookie itself is httpOnly: this code never sees or stores the token.
 import { ApiError, noReason, unreachable } from "./client";
 import type {
+  AdminCommentReportGroup,
+  AlertsInfo,
+  Angler,
+  Leaderboard,
+  LeaderboardMetric,
+  LeaderboardPeriod,
+  PinComment,
+  SpeciesAlert,
   AiAllowance,
   VisitSummary,
   AskRequest,
@@ -151,7 +159,7 @@ function scopeQuery(qs: URLSearchParams, scope: PinScope) {
   if (scope.river) qs.set("river", scope.river);
 }
 
-export function listPins(params: { bbox?: string; species?: string; mine?: boolean; limit?: number } & PinScope = {}) {
+export function listPins(params: { bbox?: string; species?: string; mine?: boolean; limit?: number; author?: number } & PinScope = {}) {
   const qs = new URLSearchParams();
   if (params.bbox) qs.set("bbox", params.bbox);
   if (params.species) qs.set("species", params.species);
@@ -283,6 +291,9 @@ export const reportLake = (report: LakeReportInput) =>
 
 export const adminStats = () => sfetch<AdminStats>("/api/admin/stats");
 export const adminReports = () => sfetch<AdminReportGroup[]>("/api/admin/reports");
+export const adminCommentReports = () => sfetch<AdminCommentReportGroup[]>("/api/admin/comment-reports");
+export const adminResolveComment = (commentId: number, action: "dismiss" | "remove") =>
+  sfetch<{ id: number; outcome: string }>(`/api/admin/comment-reports/${commentId}/resolve`, json("POST", { action }));
 export const adminLakeReports = (status: "open" | "resolved" = "open") =>
   sfetch<AdminLakeReport[]>(`/api/admin/lake-reports?status=${status}`);
 export const adminResolveLakeReport = (id: number, resolution: "fixed" | "dismissed", note?: string) =>
@@ -328,3 +339,29 @@ export function adminAskMisses(days = 30, outcome?: string) {
   if (outcome) qs.set("outcome", outcome);
   return sfetch<AskMiss[]>(`/api/admin/ask-misses?${qs}`);
 }
+
+// Likes, comments, leaderboards, alerts (backend api/social.py).
+export const likePin = (id: number) => sfetch<{ liked: boolean; like_count: number }>(`/api/pins/${id}/like`, { method: "POST" });
+export const unlikePin = (id: number) => sfetch<{ liked: boolean; like_count: number }>(`/api/pins/${id}/like`, { method: "DELETE" });
+export const listComments = (id: number) => sfetch<PinComment[]>(`/api/pins/${id}/comments`);
+export const addComment = (id: number, body: string) => sfetch<PinComment>(`/api/pins/${id}/comments`, json("POST", { body }));
+export const deleteComment = (id: number, commentId: number) => sfetch<void>(`/api/pins/${id}/comments/${commentId}`, { method: "DELETE" });
+export const reportComment = (id: number, commentId: number, reason: string) =>
+  sfetch<{ received: boolean; hidden: boolean }>(`/api/pins/${id}/comments/${commentId}/reports`, json("POST", { reason }));
+
+export function getLeaderboard(params: { metric: LeaderboardMetric; period: LeaderboardPeriod; state?: string; county?: string }) {
+  const qs = new URLSearchParams({ metric: params.metric, period: params.period });
+  if (params.state) qs.set("state", params.state);
+  if (params.county) qs.set("county", params.county);
+  return sfetch<Leaderboard>(`/api/leaderboard?${qs.toString()}`);
+}
+
+export const getAngler = (id: number) => sfetch<Angler>(`/api/anglers/${id}`);
+export const setRankingsHidden = (hide_from_rankings: boolean) => sfetch<User>("/api/auth/me", json("PATCH", { hide_from_rankings }));
+
+export const listAlerts = () => sfetch<AlertsInfo>("/api/alerts");
+export const createAlert = (alert: { species_slug: string; latitude: number; longitude: number; place: string; radius_miles: number; lang: string }) =>
+  sfetch<SpeciesAlert>("/api/alerts", json("POST", alert));
+export const deleteAlert = (id: number) => sfetch<void>(`/api/alerts/${id}`, { method: "DELETE" });
+export const unsubscribeAlert = (token: string) =>
+  sfetch<{ species_label: string; place: string }>("/api/alerts/unsubscribe", json("POST", { token }));

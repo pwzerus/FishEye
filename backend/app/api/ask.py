@@ -34,7 +34,7 @@ from app.schemas.ask import (
 )
 from app.services import ai_budget, ai_quota, ask_misses
 from app.services.rag import ask as rag_ask
-from app.services.rag import lake_facts, replies
+from app.services.rag import lake_facts, replies, site_help
 
 router = APIRouter(prefix="/ask", tags=["ask"])
 
@@ -141,6 +141,10 @@ def search_guides(
         reply = replies.use_the_map(replies.reply_lang(payload.question, payload.lang))
         result = replace(result, answer=reply, answer_source=rag_ask.ANSWER_NO_MATCH, citations=[])
         result.trace.outcome = rag_ask.OUTCOME_NO_MATCH
+    elif lakes is None and (topic := site_help.topic(payload.question)):
+        reply = replies.site_help(topic, replies.reply_lang(payload.question, payload.lang))
+        result = replace(result, answer=reply, answer_source=rag_ask.ANSWER_NO_MATCH, citations=[])
+        result.trace.outcome = rag_ask.OUTCOME_OK
     # What Ask can't answer, without who asked (services/ask_misses.py).
     ask_misses.record(db, payload.question, result.trace.outcome, payload.lang or "en", state, slug)
     return _response(result, _allowance_out(db, user), state, lakes, payload.lang)

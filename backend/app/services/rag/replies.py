@@ -187,6 +187,87 @@ def use_the_map(lang: str) -> str:
     return "For water near you, use the map: open Find water, use your location or search a city, and you'll see the lakes around you and what fish are in them."
 
 
+_SITE_HELP = {
+    "about": {
+        "zh": "我是 FishEye 的问答搜索：用 FishEye 的鱼类指南和手册回答钓鱼问题，比如用什么饵、怎么绑钩、什么时候钓、要不要执照、钓到的鱼怎么处理。答案都来自这些资料，下面标着出处。",
+        "en": "I'm FishEye's Ask search. I answer fishing questions from FishEye's fish guides and handbook: what bait to use, how to tie a hook on, when to go, whether you need a license, what to do with your catch. Every answer comes from those pages, and they're linked under it.",
+        "es": "Soy la búsqueda de FishEye. Respondo preguntas de pesca con las guías de peces y el manual de FishEye: qué carnada usar, cómo atar un anzuelo, cuándo ir, si necesitas licencia, qué hacer con tu captura. Cada respuesta sale de esas páginas, y están enlazadas debajo.",
+        "ko": "저는 FishEye의 질문 검색이에요. FishEye의 어종 가이드와 핸드북으로 낚시 질문에 답해요. 어떤 미끼를 쓸지, 바늘을 어떻게 묶는지, 언제 가면 좋은지, 면허가 필요한지, 잡은 물고기를 어떻게 하는지 물어보세요. 답은 모두 그 자료에서 나오고 아래에 출처가 있어요.",
+        "ja": "FishEyeの質問検索です。FishEyeの魚ガイドとハンドブックをもとに、エサ、針の結び方、いつ行くか、ライセンスが必要か、釣った魚の扱いなど、釣りの質問に答えます。答えはすべてそれらのページからで、下に出典があります。",
+    },
+    "account": {
+        "zh": "点右上角登录或创建账户，也可以用 Google 登录。忘记密码就在登录页点“忘记密码”。登录后在账户页可以改名字、改密码，也可以删除账户。",
+        "en": "Use Sign in at the top right to sign in or create an account, or continue with Google. If you've forgotten your password, use Forgot password on the sign-in page. Your account page is where you change your name or password, or delete the account.",
+        "es": "Usa Iniciar sesión, arriba a la derecha, para entrar o crear una cuenta, o continúa con Google. Si olvidaste la contraseña, usa la opción de la página de inicio de sesión. En tu cuenta puedes cambiar el nombre o la contraseña, o eliminarla.",
+        "ko": "오른쪽 위에서 로그인하거나 계정을 만들 수 있고, Google로도 로그인할 수 있어요. 비밀번호를 잊었다면 로그인 페이지에서 찾을 수 있어요. 계정 페이지에서 이름과 비밀번호를 바꾸거나 계정을 삭제할 수 있어요.",
+        "ja": "右上からログインまたはアカウント作成ができ、Googleでもログインできます。パスワードを忘れた場合はログインページから再設定できます。アカウントページで名前やパスワードの変更、アカウントの削除ができます。",
+    },
+    "alerts": {
+        "zh": "登录后打开账户页的“鱼讯提醒”，选一种鱼、一个地点和半径（英里）。半径内有人分享了这种鱼、照片也核对过，FishEye 就给你发一封邮件，每封邮件里都有退订链接。",
+        "en": "Sign in and open Catch alerts on your account page: pick a fish, a place and a radius in miles. When someone shares that fish inside the radius and the photo check backs it, FishEye emails you. Every email has an unsubscribe link.",
+        "es": "Inicia sesión y abre Alertas de capturas en tu cuenta: elige un pez, un lugar y un radio en millas. Cuando alguien comparta ese pez dentro del radio y la foto lo confirme, FishEye te enviará un correo. Cada correo trae un enlace para cancelar.",
+        "ko": "로그인한 뒤 계정 페이지의 조과 알림에서 어종, 장소, 반경(마일)을 고르세요. 반경 안에서 누군가 그 물고기를 공유하고 사진 확인을 통과하면 FishEye가 이메일을 보내요. 모든 메일에 수신 거부 링크가 있어요.",
+        "ja": "ログインしてアカウントページの釣果アラートで、魚、場所、半径（マイル）を選びます。半径内で誰かがその魚を投稿し、写真の確認を通ると、FishEyeからメールが届きます。どのメールにも配信停止リンクがあります。",
+    },
+    "share": {
+        "zh": "分享渔获三步：打开“找钓点”，点“分享渔获”（要先登录）；在地图上点你钓鱼的那片水；传一张鱼的照片，鱼种会自动帮你填。一次分享一条鱼，照片里只拍这一条。标记要放在地图上有名字的湖、河或池塘上，不然按钮是灰的，旁边会写原因。",
+        "en": "Sharing a catch takes three steps: open Find water and press Share a catch (sign in first), tap the water you fished on the map, then add a photo of the fish and FishEye fills in the species. One fish per share, and only that fish in the photo. The pin has to be on a lake, river or pond the map names; otherwise the button stays grey and says why.",
+        "es": "Compartir una captura son tres pasos: abre Dónde pescar y pulsa Compartir una captura (inicia sesión antes), toca en el mapa el agua donde pescaste y añade una foto del pez; FishEye rellena la especie. Un pez por vez, y solo ese pez en la foto. El marcador debe estar en un lago, río o estanque con nombre en el mapa; si no, el botón queda gris y explica por qué.",
+        "ko": "조과 공유는 세 단계예요. 낚시터 찾기를 열고 조과 공유를 누른 뒤(먼저 로그인), 지도에서 낚시한 물을 누르고 물고기 사진을 올리면 어종이 자동으로 채워져요. 한 번에 한 마리, 사진에도 그 물고기만 나오게 해 주세요. 표시는 지도에 이름이 있는 호수, 강, 연못 위에 있어야 하고, 아니면 버튼이 회색이 되고 이유가 표시돼요.",
+        "ja": "釣果の投稿は3ステップです。釣り場を探すを開いて釣果を投稿を押し（先にログイン）、地図で釣った水面を押して、魚の写真を追加すると魚種が自動で入ります。1回に1匹、写真にもその魚だけが写るようにしてください。印は地図に名前のある湖、川、池の上に置きます。そうでないとボタンは灰色のままで、理由が表示されます。",
+    },
+    "privacy": {
+        "zh": "分享渔获时可以选“仅自己”，只有你能看到。选“公开”时，别人默认只看到是哪个湖或哪条河，看不到确切钓点；想让别人看到确切位置，要自己勾选“让其他钓友看到确切钓点”。照片里的位置信息保存前会删掉。",
+        "en": "When you share a catch you can choose Only me, and nobody else sees it. A public catch shows others only which lake or river it's on, not the spot, unless you tick the box to show the exact spot. Location data in a photo is removed before it's saved.",
+    },
+    "edit_catch": {
+        "zh": "打开“渔获”，切到“我的”，点开那一条，就能修改、加减照片或删除。删除后不能恢复。",
+        "en": "Open Catches, switch to Mine and open the catch: you can edit it, add or remove photos, or delete it. A deleted catch can't be brought back.",
+    },
+    "upload": {
+        "zh": "照片要是 JPG、PNG 或 WebP，单张不超过 10 MB。如果还是传不上去，多半是网络断了，换个信号好的地方重试；仍然不行，可以在首页或头像菜单里点“发送反馈”告诉我们。",
+        "en": "Photos need to be JPG, PNG or WebP, up to 10 MB each. If one still won't go up, it's usually the connection: try again with a better signal, or use Send feedback on the home page or in your account menu.",
+    },
+    "language": {
+        "zh": "点右上角的地球图标，就能切换语言：中文、English、Español、한국어、日本語。",
+        "en": "Use the globe at the top right to switch language: English, Chinese, Spanish, Korean or Japanese.",
+    },
+    "map_trouble": {
+        "zh": "地图需要联网。先刷新页面，或者换个信号好的地方再试；还是打不开，可以在首页或头像菜单里点“发送反馈”告诉我们。",
+        "en": "The map needs a connection. Refresh the page or try where the signal is better; if it still won't open, use Send feedback on the home page or in your account menu.",
+    },
+    "price": {
+        "zh": "FishEye 现在免费：地图、鱼类指南、手册和问答都不收费，注册账户也不收费。",
+        "en": "FishEye is free to use: the map, the fish guides, the handbook and Ask, and an account costs nothing.",
+        "es": "FishEye es gratis: el mapa, las guías de peces, el manual y las preguntas, y crear una cuenta tampoco cuesta nada.",
+        "ko": "FishEye는 무료예요. 지도, 어종 가이드, 핸드북, 질문하기 모두 무료이고 계정 만들기도 무료예요.",
+        "ja": "FishEyeは無料です。地図、魚ガイド、ハンドブック、質問はすべて無料で、アカウント作成も無料です。",
+    },
+    "missing_water": {
+        "zh": "地图上找不到你常去的水域，可以在地图上点那个位置，按“地图上没有这片水？告诉我们”发给我们，我们核对后会加上。也可以先搜城市名，放大看看它是不是用了别的名字。",
+        "en": "If water you fish isn't on the map, tap the spot and use \"Water not on the map? Tell us\", and it gets checked and added. Searching a nearby town and zooming in also helps: it may be there under another name.",
+        "es": "Si el agua donde pescas no está en el mapa, toca el lugar y usa la opción para avisarnos; la revisaremos y la añadiremos. También puedes buscar un pueblo cercano y acercar el mapa: puede estar con otro nombre.",
+        "ko": "자주 가는 물이 지도에 없으면 그 위치를 누르고 지도에 없는 물을 알려 주세요. 확인한 뒤 추가해요. 근처 도시를 검색해 확대해 보면 다른 이름으로 있을 수도 있어요.",
+        "ja": "よく行く水域が地図にない場合は、その場所を押して地図にない水域を知らせてください。確認して追加します。近くの町を検索して拡大すると、別の名前で載っていることもあります。",
+    },
+    "photo": {
+        "zh": "拍照识鱼最准的拍法：一张照片只拍一条鱼，整条鱼的侧面都拍进去，光线要够。几条鱼放在一起、鱼太小或太暗时容易认错，长得像的鱼（比如几种黑鲈）有时只能认到大类。没有鱼的照片会直接告诉你没找到鱼。结果只作参考，留不留鱼以你所在州的规定为准。",
+        "en": "The photo check is most accurate with one fish in the photo, its whole side showing, in good light. Several fish together, a very small fish or a dark photo can fool it, and look-alikes (the black basses, say) sometimes only get as far as the group. A photo with no fish in it is told so. Treat the answer as a guide: what you may keep is up to your state's rules.",
+        "es": "La revisión por foto acierta más con un solo pez en la foto, de costado y completo, con buena luz. Varios peces juntos, un pez muy pequeño o una foto oscura pueden confundirla, y los parecidos (como las lobinas) a veces solo llegan al grupo. Si la foto no muestra ningún pez, te lo dice. Tómalo como orientación: lo que puedes quedarte depende de las reglas de tu estado.",
+        "ko": "사진 확인은 사진에 물고기 한 마리만, 옆모습 전체가 밝게 나올 때 가장 정확해요. 여러 마리가 함께 있거나, 너무 작거나 어두우면 틀릴 수 있고, 닮은 어종은 무리까지만 알아볼 때도 있어요. 물고기가 없는 사진은 없다고 알려 줘요. 참고로만 쓰고, 가져갈 수 있는지는 주 규정을 따르세요.",
+        "ja": "写真の確認は、1枚に1匹、魚の側面全体が明るく写っているときが最も正確です。何匹も一緒だったり、とても小さかったり、暗かったりすると間違えることがあり、似た魚は仲間までしかわからないこともあります。魚が写っていない写真にはそう伝えます。結果は目安にして、持ち帰れるかは州の規則に従ってください。",
+    },
+}
+
+
+def site_help(topic: str, lang: str) -> str:
+    """What the site does, when the question is about the site (site_help.py)."""
+    if topic == "find":
+        return use_the_map(lang)
+    words = _SITE_HELP[topic]
+    return words.get(lang, words["en"])
+
+
 def off_topic(lang: str) -> str:
     if lang == "zh":
         return f"这看起来不像钓鱼问题，或者我没看懂。{coverage(lang)}试着说出一种鱼、一种饵或一件装备，用中文、英文、西班牙语、韩语或日语都行。"
@@ -213,7 +294,7 @@ def off_topic(lang: str) -> str:
 
 def unguided_fish(name: str, lang: str) -> str:
     if lang == "zh":
-        return f"FishEye 还没有{name}的指南，所以关于这种鱼说什么都只是猜测。{coverage(lang)}"
+        return f"FishEye 还没有{name}的指南，现在回答只能是猜测。{coverage(lang)}"
     if lang == "es":
         return f"FishEye todavía no tiene guía para {name}, así que cualquier cosa sobre ese pez sería adivinar. {coverage(lang)}"
     if lang == "ko":

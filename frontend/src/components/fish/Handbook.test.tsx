@@ -17,14 +17,15 @@ describe("Handbook", () => {
     topic("care-release", "care", "Releasing, keeping and cleaning fish", "Catch and release"),
   ];
 
-  it("opens a collapsed category when an Ask citation links to a topic", () => {
+  it("opens the chapter when an Ask citation links to a topic", () => {
     window.history.replaceState(null, "", "#bait-minnows");
     const scroll = vi.fn();
     const original = Element.prototype.scrollIntoView;
     Element.prototype.scrollIntoView = scroll;
     try {
       const { container } = render(<Handbook topics={topics} />);
-      expect(container.querySelector("#baits")).toHaveAttribute("open");
+      expect(container.querySelector("#baits")).not.toHaveAttribute("hidden");
+      expect(container.querySelector("#care")).toHaveAttribute("hidden");
       expect(scroll).toHaveBeenCalled();
     } finally {
       Element.prototype.scrollIntoView = original;

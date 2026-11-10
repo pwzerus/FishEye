@@ -23,6 +23,7 @@ from app.api import (
     pins,
     recommendations,
     shops,
+    social,
     species,
     states,
     visits,
@@ -209,6 +210,7 @@ app.include_router(jurisdictions.router, prefix=settings.api_prefix)
 app.include_router(ask.router, prefix=settings.api_prefix)
 app.include_router(auth.router, prefix=settings.api_prefix)
 app.include_router(pins.router, prefix=settings.api_prefix)
+app.include_router(social.router, prefix=settings.api_prefix)
 app.include_router(admin_community.router, prefix=settings.api_prefix)
 app.include_router(shops.router, prefix=settings.api_prefix)
 app.include_router(lake_reports.router, prefix=settings.api_prefix)

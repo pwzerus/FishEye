@@ -9,6 +9,7 @@ import { localStateName } from "@/i18n/names";
 import { getPinOptions, listPinPlaces, listPins, pinWhere, type PinScope } from "@/lib/api/session";
 import type { PinOptions, PinPlaces, PinSummary } from "@/lib/api/types";
 import { readState } from "@/lib/jurisdiction";
+import { Leaderboard } from "./Leaderboard";
 import { PinCard } from "./PinCard";
 import { SpeciesOptions } from "./PinForm";
 import { PlaceBrowser, readScope, rememberScope, scopeFromUrl, scopeTitle, scopeToSearch } from "./PlaceBrowser";
@@ -27,6 +28,7 @@ export function CommunityFeed() {
   const all = useT();
   const t = all.feed;
   const tc = all.catch;
+  const ts = all.social;
   const locale = useLocale();
   // The catches for `feedKey`; anything else is still loading.
   const [feed, setFeed] = useState<{ key: string; pins: PinSummary[] } | null>(null);
@@ -176,6 +178,15 @@ export function CommunityFeed() {
         </Link>
       </section>
 
+      <ol className="share-steps reveal" style={{ "--i": 4 } as React.CSSProperties} aria-label={ts.stepsTitle}>
+        {[ts.step1, ts.step2, ts.step3].map((step, i) => (
+          <li key={step}>
+            <span className="hb-step" aria-hidden="true">{i + 1}</span>
+            <span>{step}</span>
+          </li>
+        ))}
+      </ol>
+
       <div className="fish-toolbar reveal" style={{ "--i": 4 } as React.CSSProperties}>
         <div className="segmented" role="tablist" aria-label={t.whose}>
           <button type="button" role="tab" aria-selected={!mine} className={!mine ? "segment active" : "segment"} onClick={() => setMine(false)}>
@@ -213,6 +224,8 @@ export function CommunityFeed() {
         />
       )}
 
+      <div className="feed-layout">
+      <div className="feed-main">
       {where && !pickFirst && <h2 className="feed-heading">{t.catchesIn(where)}</h2>}
 
       {pickFirst ? (
@@ -255,6 +268,14 @@ export function CommunityFeed() {
           ))}
         </ul>{pins.length > visibleCount && <button type="button" className="btn btn-ghost feed-more" onClick={() => setPage({ key: feedKey, count: visibleCount + 12 })}>{t.showMore}</button>}</>
       )}
+
+      </div>
+      {scope !== null && (
+        <aside className="feed-side">
+          <Leaderboard state={scope.state} county={scope.county} where={where} />
+        </aside>
+      )}
+      </div>
 
       <details className="rules-card community-rules">
         <summary>{t.guidelines}</summary>

@@ -57,7 +57,7 @@ GLOSSARY: dict[str, str] = {
     "晚上钓": "night dusk after dark",
     "位置": "points drop-offs cover bank", "钓点": "points drop-offs cover", "湖边": "bank shore",
     "河边": "bank shore", "岸边": "bank shore", "岸钓": "bank shore",
-    "办证": "license", "办执照": "license", "没有执照": "license", "没证": "license",
+    "办证": "license", "办执照": "license", "没有执照": "license", "没证": "license", "要证": "license",
     "保存": "keep alive cool store", "存放": "keep alive cool store",
     "缠在一起": "line twist tangles", "缠": "line twist tangles", "打扭": "line twist tangles",
     "乱线": "line twist tangles", "炸线": "backlash baitcaster tangles",
@@ -318,7 +318,9 @@ def has_chinese(text: str) -> bool:
 NOT_FISHING = (
     "鱼香", "金鱼", "观赏鱼", "鱼缸", "水族", "鱼丸", "鱼干", "鱼翅", "鱼子酱", "木鱼",
     "鱿鱼", "章鱼", "鲍鱼", "鱼露", "鱼肝油", "鱼尾纹", "美人鱼", "鱼雷",
-    "旗竿", "竹竿", "晾衣竿",
+    "旗竿", "竹竿", "晾衣竿", "热带鱼", "孔雀鱼", "水煮鱼", "酸菜鱼", "清蒸鱼", "红烧鱼", "糖醋鱼",
+    # Lines that aren't fishing line (线 alone is an AMBIGUOUS_TERM).
+    "电线", "数据线", "网线", "充电线", "耳机线", "路线", "在线", "线上", "线下", "天线", "毛线", "针线", "前线", "航线",
 )
 AMBIGUOUS_TERMS = (
     "鱼", "保鲜", "冷冻", "冷藏", "解冻", "清洗", "处理", "新鲜", "好吃", "能吃", "可以吃",
@@ -331,10 +333,23 @@ AMBIGUOUS_TERMS = (
 )
 
 
-def is_on_topic(text: str) -> bool:
-    # The other meanings go first: 旗竿 (a flagpole) holds 竿, a rod.
+def without_other_meanings(text: str) -> str:
+    """The other meanings go first: 旗竿 (a flagpole) holds 竿, a rod."""
     for word in NOT_FISHING:
         text = text.replace(word, "")
+    return text
+
+
+# People write 鱼杆 as often as 鱼竿; the guides and this file say 竿.
+_ROD_SPELLINGS = re.compile("(?<=[鱼钓手海抛扬提甩收路亚])杆|杆(?=子|长)")
+
+
+def normalized(text: str) -> str:
+    return _ROD_SPELLINGS.sub("竿", text)
+
+
+def is_on_topic(text: str) -> bool:
+    text = without_other_meanings(text)
     if any(term in text for term in FISHING_TERMS):
         return True
     return sum(1 for term in AMBIGUOUS_TERMS if term in text) >= 2
