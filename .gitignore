@@ -47,6 +47,7 @@ backend/records_cache/
 backend/census_cache/
 # Photos the fish recognizer is measured against (app/cli/fish_id_photos.py)
 backend/fishid_cache/
+backend/gear_cache/
 
 # Community photo uploads (MEDIA_ROOT): user content, never committed
 backend/media/
@@ -73,3 +74,6 @@ frontend-preview/
 # Local screenshots for reviewing a change; never committed
 /screenshots/
 /reports/
+
+# Fishing PDFs downloaded to read and learn from; other people's copyright, never committed
+docs/learn-material/

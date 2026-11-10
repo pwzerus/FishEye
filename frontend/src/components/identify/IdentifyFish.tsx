@@ -21,6 +21,11 @@ const SHOWN = 0.1;
 // a photo of something else the model calls fish-like): it says it can't
 // tell, rather than offer a 6% guess as "most likely".
 const UNCLEAR = 0.2;
+// Above this, the likeliest fish is named as the best guess, with the
+// others under it, rather than a bare "not sure" list.
+const LIKELY = 0.5;
+// Its kind together (all the trout) this sure: named as that kind.
+const KIND_SURE = 0.6;
 
 type State =
   | { kind: "idle" }
@@ -46,6 +51,8 @@ export function IdentifyFish() {
   const all = useT();
   const t = all.identify;
   const [state, setState] = useState<State>({ kind: "idle" });
+  // Signed out, the day's free checks are used up (backend api/pins._trial).
+  const [trialUsed, setTrialUsed] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const latest = useRef(0);
@@ -65,18 +72,21 @@ export function IdentifyFish() {
       const result = await identifyFish(file);
       if (id === latest.current) setState({ kind: "done", result });
     } catch (err) {
-      if (id === latest.current) {
-        setState({ kind: "error", message: err instanceof ApiError ? err.message : t.checkFailed });
+      if (id !== latest.current) return;
+      if (!user && err instanceof ApiError && err.status === 429) {
+        setTrialUsed(true);
+        setState({ kind: "idle" });
+        return;
       }
+      setState({ kind: "error", message: err instanceof ApiError ? err.message : t.checkFailed });
     }
   }
 
   if (loading) return <div className="identify-card sk" style={{ height: 320 }} />;
-  if (!user) {
+  if (!user && trialUsed) {
     return (
       <div className="identify-card">
-        <h2>{t.freeTitle}</h2>
-        <p className="muted">{t.freeText}</p>
+        <p>{t.trialUsed}</p>
         <div className="identify-actions">
           <Link href="/login?mode=signup&next=/identify" className="btn btn-primary">
             {t.createFree}
@@ -112,6 +122,7 @@ export function IdentifyFish() {
         {state.kind === "idle" ? t.pick : t.another}
       </button>
       <p className="hint">{t.tip}</p>
+      {!user && <p className="hint">{t.trialNote}</p>}
 
       {preview && (
         // A local preview of the user's own photo.
@@ -162,36 +173,66 @@ export function FishIdAnswer({ result }: { result: FishIdResult }) {
       </p>
     );
   }
-  const sure = top.probability >= SURE;
+  // One fish under two names (a steelhead is a rainbow trout) shares a
+  // guide: together they can settle what the fish is.
+  const sameFish = top.guide_slug
+    ? result.candidates.filter((c) => c.guide_slug === top.guide_slug).reduce((sum, c) => sum + c.probability, 0)
+    : top.probability;
+  const sure = Math.max(top.probability, sameFish) >= SURE;
+  const likely = !sure && top.probability >= LIKELY;
+  // Not sure which fish, but sure what kind ("a trout"): say the kind, and
+  // the likeliest of it.
+  const kind = !sure && !likely && result.group && (result.group_probability ?? 0) >= KIND_SURE
+    ? t.groupNames[result.group] ?? null
+    : null;
+  const named = sure || likely || Boolean(kind);
+  const others = named ? fish.slice(1) : fish;
+  const guide = top.guide_slug ?? (top.in_guides ? top.slug : null);
+  const note = t.nameNotes[top.slug];
+  const row = (c: FishCandidate) => {
+    const target = c.guide_slug ?? (c.in_guides ? c.slug : null);
+    return (
+      <li key={c.slug}>
+        <span className="identify-name">
+          {target ? <Link href={`/fish/${target}`}>{name(c.slug, c.label)}</Link> : name(c.slug, c.label)}
+        </span>
+        <span className="identify-bar" aria-hidden="true">
+          <span style={{ width: percent(c.probability) }} />
+        </span>
+        <span className="identify-pct">{percent(c.probability)}</span>
+      </li>
+    );
+  };
   return (
     <div className="identify-answer" role="status">
       <p className="identify-verdict">
-        {sure ? (
+        {sure || likely ? (
           <>
-            {t.looksLike}
+            {sure ? t.looksLike : t.probably}
             <strong>{name(top.slug, top.label)}</strong>
-            {t.looksLikeEnd}
+            {sure ? t.looksLikeEnd : t.probablyEnd}
+          </>
+        ) : kind ? (
+          <>
+            {t.kindIs(kind)}
+            <strong>{name(top.slug, top.label)}</strong>
+            {t.kindIsEnd}
           </>
         ) : (
           t.notSure
         )}
       </p>
-      <ul className="identify-list">
-        {fish.map((c) => (
-          <li key={c.slug}>
-            <span className="identify-name">
-              {c.in_guides ? <Link href={`/fish/${c.slug}`}>{name(c.slug, c.label)}</Link> : c.label}
-            </span>
-            <span className="identify-bar" aria-hidden="true">
-              <span style={{ width: percent(c.probability) }} />
-            </span>
-            <span className="identify-pct">{percent(c.probability)}</span>
-          </li>
-        ))}
-      </ul>
-      {top.in_guides && (
+      {note && <p className="identify-note">{note}</p>}
+      {named && <ul className="identify-list">{row(top)}</ul>}
+      {others.length > 0 && (
+        <>
+          {named && <p className="hint">{t.couldAlso}</p>}
+          <ul className="identify-list">{others.map(row)}</ul>
+        </>
+      )}
+      {guide && (
         <p>
-          <Link href={`/fish/${top.slug}`} className="text-link">
+          <Link href={`/fish/${guide}`} className="text-link">
             {t.howTo(name(top.slug, top.label))}
           </Link>
         </p>

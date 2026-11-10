@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { RegionGate } from "@/components/rules/RegionGate";
 import { useLocale, useT } from "@/i18n/client";
-import { localCategory, localTopicTitle } from "@/i18n/names";
-import type { HandbookTopic } from "@/lib/api/types";
+import { localCategory, localGearName, localTopicTitle } from "@/i18n/names";
+import type { GearItem, HandbookTopic } from "@/lib/api/types";
 import { useRevealHash } from "@/lib/useRevealHash";
 
 /**
@@ -18,7 +18,27 @@ import { useRevealHash } from "@/lib/useRevealHash";
  * RegionGate, so it shows only to someone in that state or who hasn't said
  * where they are (backend docs/adr/0027).
  */
-export function Handbook({ topics }: { topics: HandbookTopic[] }) {
+/** The gear a topic explains, as small photos linking to /gear. */
+function GearStrip({ items }: { items: GearItem[] }) {
+  const tr = useT().fish;
+  const locale = useLocale();
+  const shown = items.filter((i) => i.photo).slice(0, 4);
+  if (shown.length === 0) return null;
+  return (
+    <div className="handbook-gear" aria-label={tr.topicGear}>
+      {shown.map((i) => (
+        <Link key={i.id} href={`/gear#${i.id}`} className="handbook-gear-item">
+          {/* Credit is on /gear, one tap away, under the full-size photo. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={i.photo!.url} alt="" width={i.photo!.width} height={i.photo!.height} loading="lazy" />
+          <span>{localGearName(i.id, locale) ?? i.name}</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+export function Handbook({ topics, gear = [] }: { topics: HandbookTopic[]; gear?: GearItem[] }) {
   const tr = useT().fish;
   const locale = useLocale();
   useRevealHash();
@@ -62,6 +82,7 @@ export function Handbook({ topics }: { topics: HandbookTopic[] }) {
                       {sentence}
                     </p>
                   ))}
+                  <GearStrip items={gear.filter((g) => g.topic === t.id)} />
                   {/* A state's rule keeps its official page beside it, to check
                       it against; the rest are on /sources (docs/adr/0043). */}
                   {t.region !== "all" && (

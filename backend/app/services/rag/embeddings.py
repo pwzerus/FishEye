@@ -26,7 +26,15 @@ log = logging.getLogger(__name__)
 
 MODEL_DIR = Path(__file__).resolve().parents[3] / "models" / "multilingual-e5-small"
 MAX_TOKENS = 512  # the model's limit; every guide passage is far shorter
-BATCH = 16
+# One text per run. The int8 model quantizes each run's activations on the
+# fly, so in a batch of 16 a passage's vector moved with whichever passages
+# shared its batch (cosine 0.997 between two batches): any edit anywhere
+# reshuffled answers near the cut-off (docs/adr/0050). One at a time, a
+# passage's vector depends on its own text only, and is no slower: there is
+# no padding.
+BATCH = 1
+# Part of the vector cache key: vectors made in batches aren't reused.
+ENCODING = "one-text-per-run"
 
 
 class Embedder(Protocol):
@@ -101,7 +109,7 @@ def passage_vectors(embedder: Embedder, texts: list[str], cache_dir: Path | None
     file is simply never read again."""
     import numpy as np
 
-    key = hashlib.sha256("\x00".join([embedder.name, *texts]).encode("utf-8")).hexdigest()[:16]
+    key = hashlib.sha256("\x00".join([embedder.name, ENCODING, *texts]).encode("utf-8")).hexdigest()[:16]
     path = cache_dir / f"passages-{key}.npy" if cache_dir else None
     if path and path.exists():
         vecs = np.load(path)

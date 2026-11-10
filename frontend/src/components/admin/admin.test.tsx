@@ -200,7 +200,7 @@ describe("AdminConsole for an admin", () => {
     nav.search = new URLSearchParams("tab=feedback");
     const row = {
       id: 7, message: "Add a dark mode", page: "/fish", lang: "ko", status: "new" as const, created_at: "2026-11-01T12:00:00Z",
-      handled_at: null, user_id: 2, author_name: "Bob", author_email: "bob@example.com",
+      handled_at: null, user_id: 2, author_name: "Bob", author_email: "bob@example.com", signed_out: false, contact: null,
     };
     vi.mocked(session.adminFeedback).mockResolvedValue({ total: 1, page: 1, page_size: 25, items: [row] });
     vi.mocked(session.adminUpdateFeedback).mockResolvedValue({ ...row, status: "done" });

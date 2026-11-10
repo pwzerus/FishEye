@@ -21,8 +21,10 @@
 .trip-links a, .trip-step-body li a { color: var(--brand); font-weight: 600; }
 
 .trip-kit { list-style: none; padding: 0; margin: 6px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; }
-.trip-kit li { display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: start; line-height: 1.45; }
-.trip-kit input { width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--brand); }
+.trip-kit li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; line-height: 1.45; }
+/* 22 px, not 16: the box is the only thing that ticks (the words are a link
+   to the handbook), so on a phone it has to be easy to hit. */
+.trip-kit input { width: 22px; height: 22px; margin: 0; accent-color: var(--brand); cursor: pointer; }
 .trip-kit input:checked + span a { color: var(--muted); text-decoration: line-through; }
 .zh-hint { display: block; font-size: 12px; font-weight: 400; color: var(--muted); }
 /* A fish page's Chinese name, after its scientific one. */

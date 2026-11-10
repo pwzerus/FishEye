@@ -1,0 +1,116 @@
+# Commons val photos, checked by eye (handcheck.py apply ... commons@val ...)
+1 drop      # black trays, unclear
+2 drop
+3 drop      # shop aisle
+4 drop      # bait freezer in a shop
+5 bait-nightcrawler
+6 bait-crayfish+tool-bucket
+7 drop      # engraving
+8 drop      # patent drawing
+9 bait-cut+bait-minnow
+10 drop     # baiting a hook, unclear
+11 drop
+12 bobber
+13 bobber+float-slip
+14 tool-tackle-box
+15 bobber
+16 bobber+rod?
+17 drop     # old photo
+18 drop     # old photo
+19 bobber+line-mono
+20 bobber+line-mono
+21 bobber+line-mono
+22 no       # a gull
+23 jig-head+hook-j
+24 hook-j+leader-wire
+25 hook-j
+26 hook-j   # a box of hooks
+27 hook-j
+28 drop     # a hook in a fish's mouth
+29 drop     # printed size chart
+30 drop     # museum bone hooks
+31 drop     # drawings
+32 drop
+33 drop
+34 drop     # museum lures
+35 drop     # museum stone
+36 drop     # museum display
+37 drop     # drawing
+38 drop     # diagram
+39 drop     # old wooden hook
+40 drop     # line recycling bin
+41 rod?+line?
+42 line-mono
+43 line-mono
+44 line-mono
+45 line-mono
+46 line-mono
+47 line-mono
+48 line-mono
+49 line-mono
+50 line-mono
+51 line-mono
+52 line-mono
+53 line-mono
+54 line-mono
+55 lure?    # collage of lures
+56 lure-swimbait+lure-jerkbait   # big hard fish-shaped lure
+57 lure-inline-spinner
+58 lure-spoon
+59 lure-spoon
+60 lure-crankbait
+61 lure-spoon   # jigging spoons
+62 lure?        # ice balance jig
+63 lure-spoon   # box of small spoons
+64 drop         # drawing
+65 lure-jerkbait+lure-crankbait
+66 lure-crankbait
+67 lure-crankbait
+68 drop         # old advert
+69 drop         # catalogue drawing
+70 drop
+71 drop
+72 drop         # drawing
+73 drop         # fly plates
+74 drop
+75 drop
+76 drop
+77 drop
+78 drop
+79 lure?        # lures in packets
+80 reel-baitcasting
+81 rod-fly      # fly reel
+82 rod-fly
+83 reel-spinning
+84 rod-fly      # fly or centrepin reel
+85 rod-fly
+86 rod?+reel?
+87 drop         # advert
+88 drop         # old painting
+89 reel-spinning
+90 rod?
+91 rod?         # rod handle in hand
+92 reel-spinning+rod-spinning
+93 reel-spinning+rod-spinning
+94 reel-spinning+rod-spinning
+95 reel-spinning
+96 reel-spinning
+97 reel-spinning
+98 reel-spinning+rod-spinning
+99 drop         # beach, rod barely seen
+100 no          # people at a table
+101 drop        # painting
+102 rod?        # surf rod in the sand
+103 rod?        # rod tips
+104 rod?
+105 drop        # drawing
+106 drop        # engraving
+107 drop        # illustration
+108 drop        # old photo
+109 rod?
+110 drop        # street, poles overhead
+111 drop
+112 drop
+113 drop
+114 sinker-bank # bell sinker
+115 drop        # drawing

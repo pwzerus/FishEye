@@ -64,21 +64,24 @@ CLASSES: tuple[FishClass, ...] = (
     FishClass("rainbow-trout", "Rainbow Trout", "Oncorhynchus mykiss", "Salmoniformes", "Salmonidae", group="trout", group_label="a trout"),
     FishClass("freshwater-drum", "Freshwater Drum", "Aplodinotus grunniens", "Perciformes", "Sciaenidae", group="freshwater-drum"),
     FishClass("common-carp", "Common Carp", "Cyprinus carpio", "Cypriniformes", "Cyprinidae", group="carp", group_label="a carp"),
+    FishClass("golden-trout", "Golden Trout", "Oncorhynchus aguabonita", "Salmoniformes", "Salmonidae", group="trout", group_label="a trout"),
+    FishClass("kokanee-salmon", "Kokanee Salmon", "Oncorhynchus nerka", "Salmoniformes", "Salmonidae", group="salmon", group_label="a salmon"),
+    FishClass("brown-bullhead", "Brown Bullhead", "Ameiurus nebulosus", "Siluriformes", "Ictaluridae", group="catfish", group_label="a catfish"),
     # ---- fish with no guide ---------------------------------------------
-    FishClass("walleye", "Walleye", "Sander vitreus", "Perciformes", "Percidae", OTHER_FISH),
+    FishClass("walleye", "Walleye", "Sander vitreus", "Perciformes", "Percidae"),
     FishClass("sauger", "Sauger", "Sander canadensis", "Perciformes", "Percidae", OTHER_FISH),
-    FishClass("yellow-perch", "Yellow Perch", "Perca flavescens", "Perciformes", "Percidae", OTHER_FISH),
+    FishClass("yellow-perch", "Yellow Perch", "Perca flavescens", "Perciformes", "Percidae"),
     FishClass("white-perch", "White Perch", "Morone americana", "Perciformes", "Moronidae", OTHER_FISH),
-    FishClass("northern-pike", "Northern Pike", "Esox lucius", "Esociformes", "Esocidae", OTHER_FISH),
+    FishClass("northern-pike", "Northern Pike", "Esox lucius", "Esociformes", "Esocidae"),
     FishClass("muskellunge", "Muskellunge", "Esox masquinongy", "Esociformes", "Esocidae", OTHER_FISH),
     FishClass("chain-pickerel", "Chain Pickerel", "Esox niger", "Esociformes", "Esocidae", OTHER_FISH),
     FishClass("longnose-gar", "Longnose Gar", "Lepisosteus osseus", "Lepisosteiformes", "Lepisosteidae", OTHER_FISH),
     FishClass("spotted-gar", "Spotted Gar", "Lepisosteus oculatus", "Lepisosteiformes", "Lepisosteidae", OTHER_FISH),
     FishClass("alligator-gar", "Alligator Gar", "Atractosteus spatula", "Lepisosteiformes", "Lepisosteidae", OTHER_FISH),
     FishClass("bowfin", "Bowfin", "Amia calva", "Amiiformes", "Amiidae", OTHER_FISH),
-    FishClass("brown-trout", "Brown Trout", "Salmo trutta", "Salmoniformes", "Salmonidae", OTHER_FISH, group="trout"),
-    FishClass("brook-trout", "Brook Trout", "Salvelinus fontinalis", "Salmoniformes", "Salmonidae", OTHER_FISH, group="trout"),
-    FishClass("cutthroat-trout", "Cutthroat Trout", "Oncorhynchus clarkii", "Salmoniformes", "Salmonidae", OTHER_FISH, group="trout"),
+    FishClass("brown-trout", "Brown Trout", "Salmo trutta", "Salmoniformes", "Salmonidae", GUIDE, group="trout", group_label="a trout"),
+    FishClass("brook-trout", "Brook Trout", "Salvelinus fontinalis", "Salmoniformes", "Salmonidae", GUIDE, group="trout", group_label="a trout"),
+    FishClass("cutthroat-trout", "Cutthroat Trout", "Oncorhynchus clarkii", "Salmoniformes", "Salmonidae", GUIDE, group="trout", group_label="a trout"),
     FishClass("lake-trout", "Lake Trout", "Salvelinus namaycush", "Salmoniformes", "Salmonidae", OTHER_FISH, group="trout"),
     FishClass("green-sunfish", "Green Sunfish", "Lepomis cyanellus", "Perciformes", "Centrarchidae", OTHER_FISH, group="sunfish"),
     FishClass("warmouth", "Warmouth", "Lepomis gulosus", "Perciformes", "Centrarchidae", OTHER_FISH, group="sunfish"),
@@ -97,6 +100,33 @@ CLASSES: tuple[FishClass, ...] = (
     FishClass("american-eel", "American Eel", "Anguilla rostrata", "Anguilliformes", "Anguillidae", OTHER_FISH),
     FishClass("red-drum", "Red Drum", "Sciaenops ocellatus", "Perciformes", "Sciaenidae", OTHER_FISH),
     FishClass("tilapia", "Blue Tilapia", "Oreochromis aureus", "Perciformes", "Cichlidae", OTHER_FISH),
+    # Added 2026-11-06: lake and Great Lakes fish anglers asked about
+    # (salmon, steelhead, sturgeon…), so the answer can name them.
+    # Steelhead is a rainbow trout that went to sea (or to a Great Lake) and
+    # came back: the same species, so it has no taxon of its own. Its photos
+    # are ones their source calls steelhead (fish_id_photos.STEELHEAD), and
+    # a steelhead backs a claim of rainbow trout (SAME_FISH).
+    FishClass("steelhead", "Steelhead", "Oncorhynchus mykiss", "Salmoniformes", "Salmonidae", OTHER_FISH, group="trout"),
+    FishClass("chinook-salmon", "Chinook Salmon", "Oncorhynchus tshawytscha", "Salmoniformes", "Salmonidae", OTHER_FISH, group="salmon"),
+    FishClass("coho-salmon", "Coho Salmon", "Oncorhynchus kisutch", "Salmoniformes", "Salmonidae", OTHER_FISH, group="salmon"),
+    FishClass("pink-salmon", "Pink Salmon", "Oncorhynchus gorbuscha", "Salmoniformes", "Salmonidae", OTHER_FISH, group="salmon"),
+    FishClass("atlantic-salmon", "Atlantic Salmon", "Salmo salar", "Salmoniformes", "Salmonidae", OTHER_FISH, group="salmon"),
+    FishClass("bull-trout", "Bull Trout", "Salvelinus confluentus", "Salmoniformes", "Salmonidae", OTHER_FISH, group="trout"),
+    FishClass("arctic-grayling", "Arctic Grayling", "Thymallus arcticus", "Salmoniformes", "Salmonidae", OTHER_FISH),
+    FishClass("lake-whitefish", "Lake Whitefish", "Coregonus clupeaformis", "Salmoniformes", "Salmonidae", OTHER_FISH, group="whitefish", group_label="a whitefish or cisco"),
+    FishClass("cisco", "Cisco", "Coregonus artedi", "Salmoniformes", "Salmonidae", OTHER_FISH, group="whitefish"),
+    FishClass("lake-sturgeon", "Lake Sturgeon", "Acipenser fulvescens", "Acipenseriformes", "Acipenseridae", OTHER_FISH, group="sturgeon", group_label="a sturgeon"),
+    FishClass("white-sturgeon", "White Sturgeon", "Acipenser transmontanus", "Acipenseriformes", "Acipenseridae", OTHER_FISH, group="sturgeon"),
+    FishClass("shovelnose-sturgeon", "Shovelnose Sturgeon", "Scaphirhynchus platorynchus", "Acipenseriformes", "Acipenseridae", OTHER_FISH, group="sturgeon"),
+    FishClass("paddlefish", "Paddlefish", "Polyodon spathula", "Acipenseriformes", "Polyodontidae", OTHER_FISH),
+    FishClass("burbot", "Burbot", "Lota lota", "Gadiformes", "Lotidae", OTHER_FISH),
+    FishClass("rainbow-smelt", "Rainbow Smelt", "Osmerus mordax", "Osmeriformes", "Osmeridae", OTHER_FISH),
+    FishClass("alewife", "Alewife", "Alosa pseudoharengus", "Clupeiformes", "Alosidae", OTHER_FISH),
+    FishClass("round-goby", "Round Goby", "Neogobius melanostomus", "Gobiiformes", "Gobiidae", OTHER_FISH),
+    FishClass("northern-snakehead", "Northern Snakehead", "Channa argus", "Anabantiformes", "Channidae", OTHER_FISH),
+    FishClass("peacock-bass", "Butterfly Peacock Bass", "Cichla ocellaris", "Cichliformes", "Cichlidae", OTHER_FISH),
+    FishClass("shorthead-redhorse", "Shorthead Redhorse", "Moxostoma macrolepidotum", "Cypriniformes", "Catostomidae", OTHER_FISH),
+    FishClass("shortnose-gar", "Shortnose Gar", "Lepisosteus platostomus", "Lepisosteiformes", "Lepisosteidae", OTHER_FISH),
     # ---- not a fish -----------------------------------------------------
     FishClass("person", "Human", "Homo sapiens", "Primates", "Hominidae", NOT_FISH),
     FishClass("dog", "Dog", "Canis lupus familiaris", "Carnivora", "Canidae", NOT_FISH),
@@ -123,12 +153,12 @@ SCENES: tuple[tuple[str, str], ...] = (
 # bass, and a claim of it is checked as one of the group.
 CLAIM_GROUPS: dict[str, str] = {
     "hybrid-striped-bass": "temperate-bass",
-    # Guides written after the model was built, for fish it has no class of
-    # their own for: checked as the kind of fish they are.
-    "golden-trout": "trout",
-    "kokanee-salmon": "trout",
-    "brown-bullhead": "catfish",
 }
+
+# Classes that are one guide species under another name: a steelhead is a
+# rainbow trout. Seen in a photo, it confirms a claim of that species, and
+# the answer names both.
+SAME_FISH: dict[str, str] = {"steelhead": "rainbow-trout"}
 
 # Fish a photo can't tell from a guide fish's group: a USFWS photo of a white
 # bass read as a white perch (2026-11-02), and the angler was told it wasn't one.
@@ -138,9 +168,7 @@ LOOK_ALIKES: dict[str, str] = {"white-perch": "temperate-bass"}
 # class's kind is part of what the model was built for (classes_digest), so
 # changing it here would mean rebuilding and retraining: until the next
 # rebuild they stay other_fish, and this says they are on the list now.
-GUIDED_SINCE_BUILD: frozenset[str] = frozenset(
-    {"walleye", "yellow-perch", "northern-pike", "brown-trout", "brook-trout", "cutthroat-trout"}
-)
+GUIDED_SINCE_BUILD: frozenset[str] = frozenset()
 
 BY_SLUG: dict[str, FishClass] = {c.slug: c for c in CLASSES}
 

@@ -94,15 +94,15 @@ export function AdminFeedbackTab() {
                       {f.author_name}
                     </Link>
                   ) : (
-                    <span>Deleted account</span>
+                    <span>{f.signed_out ? (f.contact ? `Signed out · ${f.contact}` : "Signed out, no address") : "Deleted account"}</span>
                   )}
                   <span>{when(f.created_at)}</span>
                   {f.page && <span>{f.page}</span>}
                   {f.lang && <span>{f.lang}</span>}
                 </div>
                 <div className="row-actions">
-                  {f.author_email && (
-                    <a className="btn btn-ghost btn-xs" href={`mailto:${f.author_email}?subject=${encodeURIComponent("Your FishEye feedback")}`}>
+                  {(f.author_email ?? f.contact) && (
+                    <a className="btn btn-ghost btn-xs" href={`mailto:${f.author_email ?? f.contact}?subject=${encodeURIComponent("Your FishEye feedback")}`}>
                       Reply by email
                     </a>
                   )}

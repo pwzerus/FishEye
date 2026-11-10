@@ -7,8 +7,10 @@ angler needs. No fees and no dated free-fishing days, which go stale; a rule
 for which days are free stays. Each becomes one handbook topic shown only in
 its state (angling_handbook.py) and one source (species_guides.py).
 
-Not here: Massachusetts, Minnesota, Nebraska, New Hampshire and New Jersey,
-whose pages gave no age that could be read. Ask links their agency instead.
+Checked again 2026-11-06 against the same pages (docs/data-sources.md); where
+an agency page carries no age (Alaska's main page, Oregon's, Utah's...), the
+source is now the page that states it. Massachusetts, Minnesota, Nebraska,
+New Hampshire and New Jersey were added then, so every state and DC has one.
 """
 from __future__ import annotations
 
@@ -26,12 +28,13 @@ class StateLicense:
 _ER = "https://www.eregulations.com"
 
 STATE_LICENSES: dict[str, StateLicense] = {
-    "AL": StateLicense(16, 16, "https://www.outdooralabama.com/license-information", (
-        "Residents under 16 or 65 and older are exempt from the freshwater license, and residents may fish from the bank in their home county without one.",
+    "AL": StateLicense(16, 16, f"{_ER}/alabama/fishing/fishing-licenses-fees", (
+        "Residents under 16 or 65 and older are exempt from the freshwater license, and residents fishing with ordinary hook and line from the bank in their home county don't need one.",
         "On Free Fishing Day each June no license is needed on public waters, though state public fishing lakes still need a permit.",
     )),
-    "AK": StateLicense(18, 16, "https://www.adfg.alaska.gov/index.cfm?adfg=license.main", (
-        "Residents 60 and older and disabled veterans don't need a license if they hold an ADF&G ID card.",
+    "AK": StateLicense(18, 16, "https://www.adfg.alaska.gov/index.cfm?adfg=sportlicense.main", (
+        "Residents 60 and older and resident disabled veterans don't need a license if they hold an ADF&G ID card.",
+        "King salmon also need a King Salmon Stamp, except for residents under 18 and non-residents under 16.",
     )),
     "AZ": StateLicense(10, 10, f"{_ER}/arizona/fishing/license-fee-structure", (
         "Blind residents, and anyone on private waters with the owner's permission, are exempt.",
@@ -41,7 +44,7 @@ STATE_LICENSES: dict[str, StateLicense] = {
         "Licensed put-and-take pay lakes are exempt. A Trout Permit is needed on certain waters and to keep trout.",
     )),
     "CO": StateLicense(16, 16, "https://cpw.state.co.us/activities/fishing/fishing-licenses-and-dates", (
-        "Active-duty residents on leave are exempt for up to 30 days a year. Anglers with a license also need a Habitat Stamp.",
+        "Active-duty residents on leave are exempt for up to 30 days a year. Anglers 18 to 64 also need a Habitat Stamp with their license.",
     )),
     "CT": StateLicense(16, 16, "https://portal.ct.gov/deep/fishing/general-information/fisheries-licenses-and-permits", (
         "Residents 65 and older get theirs free, but still need one. Trout and salmon anglers may need a Trout and Salmon Stamp.",
@@ -58,7 +61,8 @@ STATE_LICENSES: dict[str, StateLicense] = {
         "Freshwater is license-free on the first weekend of April and the second weekend of June.",
     )),
     "HI": StateLicense(None, None, "https://dlnr.hawaii.gov/dar/licenses-and-permits/freshwater-game-fishing-license/", (
-        "Anyone taking introduced freshwater sport fish needs a freshwater game fishing license. It costs nothing at 65 and older.",
+        "Anyone taking introduced freshwater sport fish (bass, trout, tilapia and the like) needs a freshwater game fishing license. Minors need one from 9, at a minors' rate up to 15.",
+        "Visitors can buy a 7-day or 30-day tourist license, and seniors 65 and older get theirs free.",
     )),
     "ID": StateLicense(14, 14, f"{_ER}/idaho/fishing/licenses-tags-and-permits", (
         "A non-resident under 14 needs no license only when with an Idaho license holder. There is no trout stamp.",
@@ -100,14 +104,30 @@ STATE_LICENSES: dict[str, StateLicense] = {
         "Residents 65 and older are exempt, except for trout. So are veterans with a disability of 60% or more, and landowners whose land surrounds the water.",
         "Trout need a Trout Permit, or a daily tag in trout parks. The weekend after the first Monday in June is free.",
     )),
+    "MA": StateLicense(15, 15, "https://www.mass.gov/how-to/buy-your-freshwater-fishing-license", (
+        "Residents 15 to 17 and 70 and older still need one, but get it free.",
+    )),
+    "MN": StateLicense(16, 16, f"{_ER}/minnesota/fishing/license-guide", (
+        "A non-resident under 16 needs no license only if a parent or guardian is licensed. Residents 90 and older are exempt.",
+        "Minnesota holds free fishing weekends, such as Take a Kid Fishing Weekend in June.",
+    )),
     "MT": StateLicense(12, 12, "https://fwp.mt.gov/buyandapply/fishinglicenses", (
         "Anglers also need an AIS Prevention Pass.",
+    )),
+    "NE": StateLicense(16, 16, "https://outdoornebraska.gov/permits/fishing-permits/", (
+        "The fishing permit includes the Aquatic Habitat Stamp that Nebraska requires.",
+    )),
+    "NH": StateLicense(16, 16, "https://www.wildlife.nh.gov/licenses-and-permits/nh-license-requirements", (
+        "Residents 68 and older can buy a discounted senior license, and residents born in 1947 or earlier can get a free permanent one.",
+    )),
+    "NJ": StateLicense(16, 16, "https://dep.nj.gov/njfw/fishing/freshwater/buy-a-license/", (
+        "The license is needed even on privately owned waters. Trout and salmon need a Trout Stamp as well.",
     )),
     "NV": StateLicense(12, 12, "https://www.ndow.org/apply-buy/fishing/", (
         "Discounted licenses exist for residents 65 and older, disabled residents and disabled veterans.",
     )),
     "NM": StateLicense(12, 12, "https://wildlife.dgf.nm.gov/fishing/licenses-permits/", (
-        "Tribal reservations and private Class-A lakes are exempt. Residents 70 and older and fully disabled veterans fish free.",
+        "Tribal reservations and private Class-A lakes are exempt. Residents 70 and older and 100%-disabled resident veterans can get a free license.",
         "A Habitat Stamp is needed on Forest Service and BLM land from 12.",
     )),
     "NY": StateLicense(16, 16, "https://dec.ny.gov/regulatory/permits-licenses/sporting-and-use/sporting/fishing-license", (
@@ -125,8 +145,8 @@ STATE_LICENSES: dict[str, StateLicense] = {
     "OK": StateLicense(18, 18, "https://www.wildlifedepartment.com/licensing/regs/license-exemptions", (
         "Resident private-pond owners and tenants with their families, and resident veterans with a disability of 60% or more, are exempt.",
     )),
-    "OR": StateLicense(12, 12, "https://myodfw.com/fishing/licensing-info", (
-        "Resident landowners on their own land are exempt, but not for salmon, steelhead, sturgeon or halibut. Salmon and steelhead need a Combined Angling Tag.",
+    "OR": StateLicense(12, 12, f"{_ER}/oregon/fishing/license-information", (
+        "Resident landowners on their own land are exempt, but not for salmon, steelhead, sturgeon or halibut. Anglers of any age need a Combined Angling Tag for those four.",
     )),
     "PA": StateLicense(16, 16, "https://www.pa.gov/agencies/fishandboat/fishing/buy-fishing-license-permit", (
         "Trout need a Trout Permit from 16, and Lake Erie has its own permit. Seniors get a discount, not an exemption.",
@@ -145,8 +165,8 @@ STATE_LICENSES: dict[str, StateLicense] = {
         "Farmland owners and tenants, and military on leave with orders, are exempt.",
         "Tennessee holds a Free Fishing Day each June. There's no statewide trout stamp, but some waters need their own permit.",
     )),
-    "UT": StateLicense(12, 12, "https://wildlife.utah.gov/licenses", (
-        "Qualifying disabled residents can get one free. Utah also holds a Free Fishing Day.",
+    "UT": StateLicense(12, 12, f"{_ER}/utah/fishing/licenses-and-permits", (
+        "Under 12, a child may fish without one and keep a full daily limit. On Utah's Free Fishing Day each June, nobody needs a license.",
     )),
     "VT": StateLicense(15, 15, "https://vtfishandwildlife.com/licenses-and-lotteries/license-center/license-buying-faqs", (
         "Special licenses exist for blind or paraplegic people and for veterans with a disability of 60% or more.",
@@ -158,14 +178,14 @@ STATE_LICENSES: dict[str, StateLicense] = {
     "WA": StateLicense(16, 16, "https://wdfw.wa.gov/licenses/fishing", (
         "Anglers 70 and older and disabled anglers get a reduced license, not an exemption. Salmon, steelhead and sturgeon need a catch record card.",
     )),
-    "WV": StateLicense(15, 15, "https://wvdnr.gov/buy-a-license/", (
-        "West Virginia also holds free fishing days.",
+    "WV": StateLicense(15, 15, f"{_ER}/westvirginia/fishing/fishing-lincenses-and-fees", (
+        "Licensed anglers fishing for trout also need a Trout Stamp.",
     )),
     "WI": StateLicense(16, 16, "https://dnr.wisconsin.gov/topic/Fishing/outreach/FishingLicenses", (
         "Anglers born before 1927 and resident military on leave are exempt. Trout may need an Inland Trout Stamp.",
     )),
-    "WY": StateLicense(14, 14, "https://wgfd.wyo.gov/licenses-applications", (
-        "A non-resident under 14 is exempt only when with a licensed adult.",
+    "WY": StateLicense(14, 14, f"{_ER}/wyoming/fishing/licenses-fees", (
+        "Fishing preserves and waters under special or landowner fishing permits are the exceptions. Residents 14 to 17 can buy a cheap youth license.",
     )),
 }
 

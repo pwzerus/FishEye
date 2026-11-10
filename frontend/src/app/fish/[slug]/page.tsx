@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { getLocale, getT } from "@/i18n/server";
 import { MESSAGES } from "@/i18n/messages";
-import { localFishName } from "@/i18n/names";
+import { localFishName, localGearName } from "@/i18n/names";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -20,7 +20,7 @@ import { BaitRules, LimitsNote, LiveBaitWarning } from "@/components/rules/Regio
 import { DietTypeTag } from "@/components/species/SpeciesGuideBody";
 import { groupSetups } from "@/components/species/setups";
 import type { Messages } from "@/i18n/messages";
-import { ApiError, getSpeciesGuide, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
+import { ApiError, getSpeciesGuide, listGear, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
 import { waterFor } from "@/lib/fishArt";
 import type { SpeciesGuide, TackleSetup } from "@/lib/api/types";
 
@@ -49,9 +49,12 @@ export async function generateMetadata(props: PageProps<"/fish/[slug]">): Promis
   }
 }
 
-function SetupCard({ setup, index, t }: { setup: TackleSetup; index: number; t: Messages["fish"] }) {
+/** `index` is the number shown, counted within its group; `anchor` is the
+ * setup's place in the whole guide, which is what Ask's citations link to
+ * (`#setup-2` is the guide's second setup, whichever group it is in). */
+function SetupCard({ setup, index, anchor, t }: { setup: TackleSetup; index: number; anchor?: string; t: Messages["fish"] }) {
   return (
-    <article id={`setup-${index}`} className="setup-card">
+    <article id={anchor} className="setup-card">
       <header>
         <span className="setup-num">{index}</span>
         <div lang="en">
@@ -126,7 +129,14 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
       </main>
     );
   }
-  const [all, photos] = await Promise.all([listSpeciesGuides().catch(() => [guide]), listSpeciesPhotos()]);
+  const [all, photos, gear] = await Promise.all([
+    listSpeciesGuides().catch(() => [guide]),
+    listSpeciesPhotos(),
+    // First-kit things first: the strip reads as a shopping list.
+    listGear()
+      .then((g) => g.items.filter((i) => i.fish.includes(slug) && i.photo).sort((a, b) => Number(b.first_kit) - Number(a.first_kit)))
+      .catch(() => []),
+  ]);
   const idx = all.findIndex((g) => g.slug === guide.slug);
   const prev = idx > 0 ? all[idx - 1] : null;
   const next = idx >= 0 && idx < all.length - 1 ? all[idx + 1] : null;
@@ -217,6 +227,25 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
               </section>
             )}
 
+            {gear.length > 0 && (
+              <section id="gear" className="guide-block">
+                <h2>{t.gearForFish}</h2>
+                <div className="handbook-gear fish-gear">
+                  {gear.slice(0, 8).map((i) => (
+                    <Link key={i.id} href={`/gear#${i.id}`} className="handbook-gear-item">
+                      {/* Credit is on /gear, under the full-size photo. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={i.photo!.url} alt="" width={i.photo!.width} height={i.photo!.height} loading="lazy" />
+                      <span>{localGearName(i.id, locale) ?? i.name}</span>
+                    </Link>
+                  ))}
+                </div>
+                <p className="muted small">
+                  <Link href="/gear">{t.gearAll}</Link>
+                </p>
+              </section>
+            )}
+
             <ListBlock id="why_these_baits" title={t.whyBaits} items={guide.why_these_baits} baitsFor={slug} />
             <ListBlock id="how_to_get" title={t.howToGet} items={guide.how_to_get} />
             <ListBlock id="bait_for" title={t.baitFor} items={guide.bait_for} />
@@ -224,6 +253,14 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
             {guide.setups.length > 0 &&
               (() => {
                 const { lure, bait } = groupSetups(guide.setups);
+                // A setup for either method is in both groups; only its first
+                // card carries the anchor, so no id is used twice.
+                const anchored = new Set<TackleSetup>();
+                const anchorFor = (s: TackleSetup) => {
+                  if (anchored.has(s)) return undefined;
+                  anchored.add(s);
+                  return `setup-${guide.setups.indexOf(s) + 1}`;
+                };
                 return (
                   <section id="setups" className="guide-block">
                     <h2>{t.setups}</h2>
@@ -233,7 +270,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
                         <h3>{t.lureFishing}</h3>
                         <div className="setup-list">
                           {lure.map((s, i) => (
-                            <SetupCard key={s.name} setup={s} index={i + 1} t={t} />
+                            <SetupCard key={s.name} setup={s} index={i + 1} anchor={anchorFor(s)} t={t} />
                           ))}
                         </div>
                       </div>
@@ -243,7 +280,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
                         <h3>{t.baitFishing}</h3>
                         <div className="setup-list">
                           {bait.map((s, i) => (
-                            <SetupCard key={s.name} setup={s} index={i + 1} t={t} />
+                            <SetupCard key={s.name} setup={s} index={i + 1} anchor={anchorFor(s)} t={t} />
                           ))}
                         </div>
                       </div>

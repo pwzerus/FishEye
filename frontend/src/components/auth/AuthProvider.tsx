@@ -84,3 +84,9 @@ export function useAuth(): AuthState {
   if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
   return ctx;
 }
+
+/** Whether someone is signed in, for a component that also renders outside
+ * the provider (Ask, in its own tests): false there, rather than a throw. */
+export function useSignedIn(): boolean {
+  return Boolean(useContext(AuthContext)?.user);
+}

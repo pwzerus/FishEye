@@ -16,6 +16,7 @@ from app.api import (
     auth,
     baits,
     feedback,
+    gear,
     geocode,
     jurisdictions,
     lake_reports,
@@ -24,6 +25,7 @@ from app.api import (
     shops,
     species,
     states,
+    visits,
     waterbodies,
     weather,
 )
@@ -69,9 +71,11 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     # with instructions, instead of breaking Ask later; and the model and
     # passage vectors are warm before anyone asks (docs/adr/0029).
     if settings.rag_semantic != "off":
+        from app.services.rag import question_library
         from app.services.rag.retriever import default_retriever
 
-        default_retriever()
+        retriever = default_retriever()
+        question_library.library(getattr(retriever, "embedder", None))
     # New accounts can't share catches until they open the emailed link, so
     # with no mail server every new account is stuck. Said once, at start.
     if settings.email_verification == "on" and settings.mail_backend != "smtp":
@@ -208,6 +212,8 @@ app.include_router(pins.router, prefix=settings.api_prefix)
 app.include_router(admin_community.router, prefix=settings.api_prefix)
 app.include_router(shops.router, prefix=settings.api_prefix)
 app.include_router(lake_reports.router, prefix=settings.api_prefix)
+app.include_router(visits.router, prefix=settings.api_prefix)
+app.include_router(gear.router, prefix=settings.api_prefix)
 
 
 @app.get("/health")

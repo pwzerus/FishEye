@@ -24,12 +24,19 @@ async function open() {
 }
 
 describe("Send feedback", () => {
-  it("asks to sign in first, and says who to write to if you can't", async () => {
+  it("needs no account signed out, and the reply address is optional", async () => {
     vi.mocked(session.getMe).mockResolvedValue(null);
+    vi.mocked(session.sendFeedback).mockResolvedValue({ id: 1 });
     await open();
-    expect(await screen.findByText(/Sign in to send feedback/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Sign in", hidden: true })).toHaveAttribute("href", "/login?next=%2Fmap");
-    expect(screen.queryByRole("textbox", { hidden: true })).not.toBeInTheDocument();
+    expect(await screen.findByText(/No account needed/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Sign in", hidden: true })).not.toBeInTheDocument();
+    const [box, email] = screen.getAllByRole("textbox", { hidden: true });
+    fireEvent.change(box, { target: { value: "Love the map" } });
+    fireEvent.change(email, { target: { value: " me@example.com " } });
+    fireEvent.click(screen.getByRole("button", { name: "Send", hidden: true }));
+    await waitFor(() =>
+      expect(session.sendFeedback).toHaveBeenCalledWith("Love the map", "/map", "en", "me@example.com"),
+    );
   });
 
   it("is one box and one button, sent from the account with the page", async () => {
@@ -38,13 +45,15 @@ describe("Send feedback", () => {
     await open();
     const box = await screen.findByRole("textbox", { hidden: true });
     expect(screen.getByText(/me@example.com/)).toBeInTheDocument();
+    // Signed in, the account is the reply address: no second box.
+    expect(screen.getAllByRole("textbox", { hidden: true })).toHaveLength(1);
     const send = screen.getByRole("button", { name: "Send", hidden: true });
     expect(send).toBeDisabled();
     fireEvent.change(box, { target: { value: "   " } });
     expect(send).toBeDisabled();
     fireEvent.change(box, { target: { value: " The map is slow " } });
     fireEvent.click(send);
-    await waitFor(() => expect(session.sendFeedback).toHaveBeenCalledWith("The map is slow", "/map", "en"));
+    await waitFor(() => expect(session.sendFeedback).toHaveBeenCalledWith("The map is slow", "/map", "en", undefined));
     await waitFor(() => expect(screen.queryByRole("textbox", { hidden: true })).not.toBeInTheDocument());
     expect(await screen.findByText(/We read every message/)).toBeInTheDocument();
   });

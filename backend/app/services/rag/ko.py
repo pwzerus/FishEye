@@ -38,6 +38,22 @@ STATE_NAMES: dict[str, str] = {
 
 # Korean phrase -> the English words the guides use for it ("" drops it).
 GLOSSARY: dict[str, str] = {
+    # Added 2026-11-06: salmon, steelhead and other cold-water fish; thermocline; senses.
+    "스틸헤드": "steelhead rainbow trout",
+    "연어": "salmon",
+    "왕연어": "chinook king salmon",
+    "은연어": "coho silver salmon",
+    "곱사연어": "pink salmon",
+    "레이크트라우트": "lake trout",
+    "철갑상어": "sturgeon",
+    "모캐": "burbot",
+    "트롤링": "trolling troll",
+    "얼음낚시": "ice fishing",
+    "수온약층": "thermocline layers",
+    "옆줄": "lateral line vibration",
+    "후각": "smell scent",
+    "알": "eggs spawn sac",
+    "계류": "stream river",
     # not fishing, though they contain a fishing word
     "찌개": "", "방법": "", "하루 중": "time of day", "시간대": "time of day", "몇 시": "what time",
     "하루": "day", "시간": "time", "추천": "best",

@@ -110,6 +110,11 @@ class Settings(BaseSettings):
     # carry the 300 MB model.
     fish_id: str = "on"
     fish_id_model_dir: str = "models/fish-id"
+    # The gear camera on /gear (services/gear_id.py, docs/adr/0048): "on"
+    # answers from models/gear-id, or says the camera isn't available while
+    # it isn't installed; "off" for the test suite and CI.
+    gear_id: str = "on"
+    gear_id_model_dir: str = "models/gear-id"
 
     # Per-client request limits on the endpoints anyone can call
     # (app/api/rate_limits.py). Only for turning them off in a pinch.

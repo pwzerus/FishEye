@@ -74,13 +74,21 @@ def test_the_hybrid_is_checked_as_a_white_or_striped_bass():
 
 
 def test_other_needs_a_fish_and_not_plainly_a_guide_species():
-    assert check_claim(ident(walleye=0.9), None).accepted
+    assert check_claim(ident(sauger=0.9), None).accepted
     plain = check_claim(ident(bluegill=0.9), None)
     assert plain.status == MISMATCH and "Bluegill" in plain.message
     assert not check_claim(ident(person=0.95), None).accepted
 
 
 # ---------------------------------------------------------------- classes
+
+
+def test_a_steelhead_confirms_a_rainbow_trout_and_names_both():
+    v = check_claim(ident(steelhead=0.5, rainbow_trout=0.4), "rainbow-trout")
+    assert v.status == CONFIRMED and v.accepted and v.detected == "steelhead"
+    assert "Steelhead, which is a Rainbow Trout" in v.message
+    # On its own a steelhead is a fish with no guide of its own name, but not refused as "another fish".
+    assert check_claim(ident(steelhead=0.9), "brown-trout").status != CONFIRMED
 
 
 def test_every_guide_species_can_be_checked():
@@ -91,7 +99,7 @@ def test_every_guide_species_can_be_checked():
 
 def test_every_look_alike_group_says_what_it_is():
     for c in CLASSES:
-        if c.kind == GUIDE and sum(1 for o in CLASSES if o.group == c.group) > 1:
+        if c.kind == GUIDE and c.group and sum(1 for o in CLASSES if o.group == c.group) > 1:
             assert c.group_label, c.slug
 
 
@@ -207,7 +215,6 @@ def test_catches_wait_while_the_check_is_unavailable(make_client, monkeypatch):
 
 def test_the_form_can_ask_before_saving(make_client, checking):
     c = make_client()
-    assert c.post("/api/fish-id", files={"photo": ("p.jpg", jpeg("blue"), "image/jpeg")}).status_code == 401
     signup(c)
     body = c.post(
         "/api/fish-id",
@@ -222,11 +229,36 @@ def test_the_form_can_ask_before_saving(make_client, checking):
     assert plain["verdict"] is None and plain["candidates"][0]["label"] == "Largemouth Bass"
 
 
+def test_signed_out_it_is_a_small_daily_trial(make_client, checking):
+    c = make_client()
+    photo = {"photo": ("p.jpg", jpeg("green"), "image/jpeg")}
+    codes = [c.post("/api/fish-id", files=photo).status_code for _ in range(6)]
+    assert codes == [200] * 5 + [429]
+    assert "Sign in" in c.post("/api/fish-id", files=photo).json()["detail"]
+    # Signed in, the account's own, larger allowance applies.
+    signup(c)
+    assert c.post("/api/fish-id", files=photo).status_code == 200
+
+
+def test_signed_out_trials_together_have_a_ceiling(make_client, checking, monkeypatch):
+    from app.api import pins as pins_api
+
+    monkeypatch.setattr(pins_api.fish_id_trial_everyone, "limit", 1)
+    c = make_client()
+    photo = {"photo": ("p.jpg", jpeg("green"), "image/jpeg")}
+    assert c.post("/api/fish-id", files=photo).status_code == 200
+    refused = c.post("/api/fish-id", files=photo)
+    assert refused.status_code == 429 and refused.json()["detail"] == pins_api.TRIAL_FULL
+
+
 def test_the_form_hears_when_the_check_is_off(make_client):
     c = make_client()
     signup(c)
     body = c.post("/api/fish-id", files={"photo": ("p.jpg", jpeg("green"), "image/jpeg")}).json()
-    assert body == {"available": False, "model": None, "fish_probability": None, "candidates": [], "verdict": None}
+    assert body == {
+        "available": False, "model": None, "fish_probability": None, "candidates": [], "verdict": None,
+        "group": None, "group_probability": None,
+    }
 
 
 # ------------------------------------------------------- the real model

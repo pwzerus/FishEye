@@ -9,7 +9,7 @@
 .home-refined .field-assurance { font-size: 12px; }
 .home-refined .field-section-heading h2 { margin-top: 0; }
 .home-refined .field-fish h3 { display: flex; justify-content: space-between; }
-.home-actions { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+.home-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
 .home-action { display: flex; align-items: center; gap: 15px; padding: 23px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; transition: border-color .18s, translate .18s; }
 .home-action:hover { border-color: var(--brand); translate: 0 -2px; }
 .home-action-icon { width: 44px; height: 44px; display: grid; place-items: center; background: #e9efdf; color: var(--brand); border-radius: 11px; flex-shrink: 0; }
@@ -36,7 +36,10 @@
 .plan-updating { font-size:12px; color:var(--brand); padding:4px 0; }
 .plan-card[aria-busy="true"] .plan-rows { opacity:.3; pointer-events:none; }
 .panel-error .btn { margin-top:10px; }
-.guide-shortcuts { display:flex; gap:8px; margin:4px 0; }
+.guide-shortcuts { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0; }
+/* On a phone the four links squeezed into one row, "What to buy" three words
+   to a line; two by two they read evenly. */
+@media (max-width: 560px) { .guide-shortcuts { display:grid; grid-template-columns:1fr 1fr; } }
 .guide-shortcuts a { border:1px solid var(--line); border-radius:7px; padding:8px 13px; font-size:13px; color:var(--brand); }
 .handbook-group { border-top:1px solid var(--line); padding:0; scroll-margin-top:calc(var(--header-h) + 16px); }
 .handbook-group > summary { display:flex; align-items:center; gap:12px; cursor:pointer; padding:19px 0; }
@@ -252,3 +255,62 @@ button:active:not(:disabled), .btn:active { translate:0 1px; }
 .feedback-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .copy-box { width: 100%; font: inherit; font-size: 13px; }
 .user-detail .row-actions { justify-content: flex-start; }
+
+/* State rules pages (app/rules). */
+.rules-page { max-width: 760px; margin: 0 auto; padding-bottom: 48px; }
+.rules-states { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px 16px; }
+.rules-states li { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.rules-states a { color: var(--brand-strong); font-weight: 600; }
+.rules-written { font-size: 12px; color: var(--ink-2); background: var(--brand-soft); border-radius: 999px; padding: 1px 8px; }
+.rules-card { background: var(--surface, #fff); border: 1px solid var(--line, rgba(15, 37, 48, 0.1)); border-radius: 14px; padding: 16px 18px; margin: 14px 0; display: grid; gap: 8px; }
+.rules-card h2 { font-size: 19px; margin: 0; }
+.rules-card ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.rules-topic summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+.rules-topic p { margin: 6px 0; }
+.rules-limits-link { display: inline-block; margin-top: 4px; }
+
+/* What to buy (app/gear/page.tsx) and the gear strip on handbook cards. */
+.gear-page { max-width: 1080px; margin: 0 auto; padding-bottom: 48px; }
+.gear-kit { margin-top: 8px; padding: 20px 22px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-sm); display: grid; gap: 8px; }
+.gear-kit h2 { font-size: 20px; }
+.gear-kit-list { list-style: none; padding: 0; margin: 4px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
+.gear-kit-list a { display: grid; gap: 6px; justify-items: center; text-align: center; font-size: 13px; color: var(--ink-2); text-decoration: none; }
+.gear-kit-list img { width: 100%; height: 84px; max-height: 84px; object-fit: contain; background: var(--surface-2, #f4f4f2); border-radius: var(--radius); }
+.gear-camera { margin: 8px 0 18px; display: grid; gap: 8px; }
+.gear-camera h2 { font-size: 20px; }
+.gear-camera .identify-card { margin: 0; max-width: 620px; }
+.gear-id-list li.gear-id-row { grid-template-columns: 64px minmax(110px, 1fr) 1.4fr auto; }
+.gear-id-row img, .gear-id-nophoto { width: 64px; height: 48px; object-fit: contain; background: var(--surface-2, #f4f4f2); border-radius: var(--radius); }
+.gear-id-nophoto { display: block; }
+.gear-id-list.is-quiet { opacity: .8; }
+@media (max-width: 480px) {
+  .gear-id-list li.gear-id-row { grid-template-columns: 52px 1fr auto; }
+  .gear-id-row .identify-bar { display: none; }
+  .gear-id-row img, .gear-id-nophoto { width: 52px; height: 40px; }
+}
+.gear-nav { margin: 20px 0 4px; }
+.gear-section { margin-top: 28px; scroll-margin-top: 80px; }
+.gear-section h2 { font-size: 22px; margin-bottom: 12px; }
+.gear-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.gear-card { border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-sm); display: grid; grid-template-rows: auto 1fr; overflow: hidden; scroll-margin-top: 80px; }
+.gear-card:target { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+.gear-card-body { padding: 12px 16px 16px; display: grid; align-content: start; gap: 8px; }
+.gear-card-body h3 { font-size: 16px; color: var(--ink); }
+.gear-card-body h3 .name-en { display: block; font-size: 12px; font-weight: 500; color: var(--ink-3, var(--ink-2)); }
+.gear-card-body p { margin: 0; font-size: 14px; color: var(--ink-2); }
+.gear-tip strong { color: var(--ink); }
+.gear-fish a, .gear-more { color: var(--brand-strong); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: color-mix(in srgb, var(--brand) 40%, transparent); }
+.gear-more { font-size: 14px; }
+.gear-photo { margin: 0; display: grid; }
+.gear-photo-frame { height: 190px; overflow: hidden; background: var(--surface-2, #f4f4f2); }
+.gear-photo-frame img { display: block; width: 100%; height: 190px; max-height: 190px; object-fit: contain; }
+/* The credit wraps rather than being cut: a CC BY photo's author, licence and
+   link must stay readable, and on a phone one line cut off the licence link. */
+.gear-photo figcaption { padding: 4px 10px; font-size: 11px; line-height: 1.35; color: var(--ink-3, var(--ink-2)); overflow-wrap: anywhere; }
+.gear-photo figcaption a { color: inherit; text-decoration: underline; }
+.gear-no-photo { height: 190px; place-items: center; font-size: 13px; color: var(--ink-3, var(--ink-2)); background: var(--surface-2, #f4f4f2); }
+.handbook-gear { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.handbook-gear-item { display: grid; gap: 4px; width: 96px; font-size: 12px; line-height: 1.25; color: var(--ink-2); text-decoration: none; }
+.handbook-gear-item img { width: 96px; height: 72px; max-height: 72px; object-fit: contain; border-radius: 8px; background: var(--surface-2, #f4f4f2); border: 1px solid var(--line); }
+.handbook-gear-item:hover span { text-decoration: underline; }
+.home-action > svg { flex-shrink: 0; }

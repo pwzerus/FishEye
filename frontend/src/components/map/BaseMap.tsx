@@ -19,29 +19,6 @@ function hasWebGL(): boolean {
 }
 
 /**
- * MapTiler's Free plan requires its logo, linking to maptiler.com, on every
- * published map; the text credit in the attribution doesn't count.
- */
-function mapTilerLogo(): L.Control {
-  const control = new L.Control({ position: "bottomright" });
-  control.onAdd = () => {
-    const link = L.DomUtil.create("a");
-    link.href = "https://www.maptiler.com/";
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    const logo = L.DomUtil.create("img", "", link);
-    logo.src = "https://api.maptiler.com/resources/logo.svg";
-    logo.alt = "MapTiler";
-    logo.width = 67;
-    logo.height = 20;
-    logo.style.display = "block";
-    L.DomEvent.disableClickPropagation(link);
-    return link;
-  };
-  return control;
-}
-
-/**
  * The background under every map in the app: a vector basemap when one is
  * configured, the raster tiles otherwise.
  *
@@ -103,14 +80,9 @@ export function BaseMap() {
     };
   }, [map, mode]);
 
-  const fromMapTiler = (mode === "vector" ? MAP_STYLE_URL : TILE_URL)?.includes("api.maptiler.com");
-  useEffect(() => {
-    if (!fromMapTiler) return;
-    const logo = mapTilerLogo().addTo(map);
-    return () => {
-      logo.remove();
-    };
-  }, [map, fromMapTiler]);
-
+  // No MapTiler logo: the site is on MapTiler's paid Flex plan (since
+  // 2026-11-05), which requires the logo only on 3D maps. The text credit
+  // "© MapTiler © OpenStreetMap contributors" in the attribution stays, as
+  // every plan requires it.
   return mode === "raster" ? <TileLayer attribution={TILE_ATTRIBUTION} url={TILE_URL} /> : null;
 }

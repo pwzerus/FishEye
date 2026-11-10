@@ -1388,6 +1388,19 @@
   font-size: 17px;
   color: var(--ink);
 }
+.identify-note {
+  font-size: 14px;
+  color: var(--ink-2);
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--brand-soft);
+}
+.identify-answer .hint {
+  margin-bottom: -6px;
+}
+.state-picker-inline {
+  margin-top: 6px;
+}
 .identify-list {
   list-style: none;
   padding: 0;

@@ -1,6 +1,6 @@
 """Which GBIF photos the fish recognizer is measured and fitted on (no network)."""
 from app.cli.fish_id_photos import LOOKALIKES, pick_photos, targets
-from app.services.fish_id_classes import CLASSES, OTHER_FISH
+from app.services.fish_id_classes import CLASSES, OTHER_FISH, SAME_FISH
 
 CC_BY = "http://creativecommons.org/licenses/by/4.0/"
 CC_BY_NC = "http://creativecommons.org/licenses/by-nc/4.0/"
@@ -37,6 +37,17 @@ def test_stops_at_what_is_wanted_and_skips_observations_already_held():
 
 
 def test_photos_cover_every_fish_class_the_recognizer_knows():
-    fish = {c.slug for c in CLASSES if c.kind != "not_fish"}
+    # A steelhead has no species of its own: its photos come from Commons
+    # (fish_id_commons.py), not from a species search.
+    fish = {c.slug for c in CLASSES if c.kind != "not_fish"} - set(SAME_FISH)
     assert set(targets()) == fish
-    assert set(LOOKALIKES) == {c.slug for c in CLASSES if c.kind == OTHER_FISH}
+    assert set(LOOKALIKES) == {c.slug for c in CLASSES if c.kind == OTHER_FISH} - set(SAME_FISH)
+
+
+def test_commons_photos_are_open_licences_only():
+    from app.cli.fish_id_commons import licence_ok
+
+    for ok in ("Public domain", "CC0", "CC BY 2.0", "CC BY 4.0", "No restrictions"):
+        assert licence_ok(ok), ok
+    for refused in ("CC BY-SA 4.0", "CC BY-NC 2.0", "CC BY-ND 3.0", "GFDL", "", None):
+        assert not licence_ok(refused), refused

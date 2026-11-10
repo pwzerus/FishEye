@@ -35,6 +35,7 @@ from app.services.rag.retriever import (
     explain_empty,
     is_howto,
     is_on_topic,
+    topic_fish_passages,
     names_unguided_fish,
     query_terms,
     resolve_species,
@@ -103,6 +104,11 @@ class HybridRetriever:
         sims = qvec @ self._vecs.T
         named, residual = self._resolve(question, qvec)
         routed = named or species or ()
+        topics = topic_fish_passages(question)
+        if topics:
+            # Fish the handbook covers but no guide does (salmon, steelhead,
+            # lake trout…): the keyword side's routing to their topics.
+            return self.bm25.search(question, k, species)
         if routed:
             if is_howto(residual if named else question):
                 return self.bm25.howto(routed[0], k)

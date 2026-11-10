@@ -12,11 +12,15 @@ at the lake. Buy the domain first: DNS can take hours to reach everyone.
 
 | | Monthly |
 |---|---|
-| `t3.small` server, $0.0208/hour x 730 hours | about $15 |
+| `t3.medium` server, $0.0416/hour x 730 hours | about $30 |
 | 20 GB gp3 disk (EBS) | about $1.60 |
 | Public IPv4 address (Elastic IP), $0.005/hour | about $3.60 |
 | Data out to the internet | $0: the first 100 GB a month are free, and the map tiles go from MapTiler to the phone, not through the server |
-| **Total** | **about $20**, plus about $12 a year for a `.com` |
+| **Total** | **about $35**, plus about $12 a year for a `.com` |
+
+The server was a `t3.small` (2 GB, about $15) until 2026-11-07; it became a
+`t3.medium` (4 GB) so the larger gear camera model fits beside the fish check
+(ADR 0048).
 
 A stopped server costs only the disk and the IP (about $5 a month). An
 Elastic IP that is kept but not attached is still billed: release it when
@@ -51,9 +55,11 @@ new server, a database dump and restore, and pointing DNS at the new IP.
 EC2, Launch instance:
 
 - **Image**: Ubuntu Server 24.04 LTS.
-- **Type**: `t3.small` (2 vCPU, 2 GB RAM). x86, not ARM (`t4g`, `g` in the
-  name): the PostGIS image is built for x86. Not `nano`/`micro`: the backend
-  with Ask's semantic model needs about 450 MB, the whole stack about 1 GB.
+- **Type**: `t3.medium` (2 vCPU, 4 GB RAM). x86, not ARM (`t4g`, `g` in the
+  name): the PostGIS image is built for x86. The stack with the fish check
+  and the large gear camera model uses about 1.75 GB; a `t3.small` (2 GB)
+  runs it only with the small gear model. Not `nano`/`micro`: the backend
+  with Ask's semantic model alone needs about 450 MB.
 - **Key pair**: create one, keep the `.pem` file safe; it is the only way in.
   On Windows, if ssh says "unprotected private key file", remove every user
   but yourself from the file's Security permissions.
@@ -75,8 +81,8 @@ ssh -i fisheye.pem ubuntu@<ELASTIC_IP>
 curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker ubuntu && exit        # log in again afterwards
 
-# 2 GB of RAM is tight while the images build (Next.js, and the semantic
-# model being compressed); swap keeps the build from being killed.
+# Building the images (Next.js, and the semantic model being compressed)
+# takes a lot of memory at once; swap keeps the build from being killed.
 sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
 sudo mkswap /swapfile && sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
@@ -272,12 +278,43 @@ turns the check off instead (not for a public site).
 
 Size: `image_int8.onnx` is 309 MB to copy up. Loaded, the model adds about
 330 MB to the backend (measured on Windows: 108 → 440 MB, 506 MB while
-reading a photo), so the stack stays near 1.4 GB of the server's 2 GB. A
+reading a photo), so the stack without the gear camera stays near 1.4 GB. A
 photo takes about 1 s on two CPU threads (measured on a desktop; expect 1.5
-to 2 s on the t3.small), once: checking it again on save reuses the result.
+to 2 s on a t3), once: checking it again on save reuses the result.
 If that proves too slow or too big, the lighter BioCLIP is built with
 `build_fish_id_model --model bioclip` (89 MB, about +115 MB of memory, 0.3 s),
 at the cost of accuracy (ADR 0037 has both measured).
+
+### The gear camera on /gear (ADR 0048)
+
+Two builds, made on your machine (`backend/tools/gear_id/README.md`); copy up
+one of them, into the server's `backend/models/gear-id/` either way:
+
+| Build | Copy up | Memory | A photo | Item right / in top 3 |
+|---|---|---|---|---|
+| `models/gear-id` (PE-Core L) | 338 MB | about +360 MB | 2.6 s on 2 threads here; more on a t3 | 87% / 97% |
+| `models/gear-id-small` (PE-Core B) | 100 MB | about +120 MB | 0.3 s | 77% / 88% |
+
+With the fish check loaded, the large one takes the stack to about 1.75 GB,
+which the t3.medium's 4 GB holds: copy up the large one. (On a t3.small,
+2 GB, that is too close; copy up the small one there instead.)
+
+```
+ssh -i fisheye.pem ubuntu@<ELASTIC_IP> "mkdir -p ~/FishEye/backend/models/gear-id"
+scp -i fisheye.pem models/gear-id/image_int8.onnx models/gear-id/text.npy models/gear-id/head.npz models/gear-id/classes.json models/gear-id/SOURCE.json models/gear-id/TRAINING_CREDITS.json ubuntu@<ELASTIC_IP>:~/FishEye/backend/models/gear-id/
+```
+
+(`models/gear-id-small/...` instead for the small one.) A photo costs about
+5 to 8 CPU-seconds; the t3.medium earns enough credit for about 200 photos an
+hour around the clock without extra charge. After `$DC up -d backend`,
+this prints `True`, and the model loads on the first photo:
+
+```bash
+$DC exec -T backend python -c "from app.services.gear_id import installed; print(installed())"
+```
+
+Without the files, /gear shows no camera and nothing else changes;
+`GEAR_ID=off` in `.env` hides it on purpose.
 
 ### Catches on named water (ADR 0040)
 

@@ -7,6 +7,7 @@
 import { ApiError, noReason, unreachable } from "./client";
 import type {
   AiAllowance,
+  VisitSummary,
   AskRequest,
   AskResponse,
   AdminLakeReport,
@@ -18,6 +19,7 @@ import type {
   AuditEntry,
   AuthProviders,
   FishIdResult,
+  GearIdResult,
   LakeReportInput,
   Paged,
   PinDetail,
@@ -107,8 +109,9 @@ export const checkPasswordReset = (token: string) =>
   sfetch<{ valid: boolean; email: string | null }>("/api/auth/password-reset/check", json("POST", { token }));
 export const confirmPasswordReset = (token: string, new_password: string) =>
   sfetch<User>("/api/auth/password-reset/confirm", json("POST", { token, new_password }));
-export const sendFeedback = (message: string, page: string, lang: string) =>
-  sfetch<{ id: number }>("/api/feedback", json("POST", { message, page, lang }));
+/** `contact` is for signed-out senders: an address to reply to, or nothing. */
+export const sendFeedback = (message: string, page: string, lang: string, contact?: string) =>
+  sfetch<{ id: number }>("/api/feedback", json("POST", { message, page, lang, contact: contact || null }));
 // Confirming the email address: a new link, and the link's token itself.
 export const sendVerificationEmail = () => sfetch<User>("/api/auth/verify-email/send", { method: "POST" });
 export const confirmEmail = (token: string) =>
@@ -189,6 +192,14 @@ export function identifyFish(photo: File, claim: { species_slug?: string; specie
   if (claim.species_slug) form.set("species_slug", claim.species_slug);
   if (claim.species_other) form.set("species_other", claim.species_other);
   return sfetch<FishIdResult>("/api/fish-id", { method: "POST", body: form });
+}
+
+/** What gear a photo shows (the camera on /gear). Read on FishEye's server
+ * and not kept; signed out, a few a day. */
+export function identifyGear(photo: File) {
+  const form = new FormData();
+  form.append("photo", photo, photo.name);
+  return sfetch<GearIdResult>("/api/gear/identify", { method: "POST", body: form });
 }
 
 export const getPin = (id: number) => sfetch<PinDetail>(`/api/pins/${id}`);
@@ -306,6 +317,7 @@ export function adminFeedback(params: { status?: string; q?: string; page?: numb
   for (const [k, v] of Object.entries(params)) if (v) qs.set(k, String(v));
   return sfetch<Paged<AdminFeedback>>(`/api/admin/feedback?${qs}`);
 }
+export const adminVisits = (days: number) => sfetch<VisitSummary>(`/api/visits/summary?days=${days}`);
 export const adminFeedbackExport = (status?: string) =>
   sfetch<{ count: number; text: string }>(`/api/admin/feedback/export${status ? `?status=${status}` : ""}`);
 export const adminUpdateFeedback = (id: number, status: "new" | "done") =>

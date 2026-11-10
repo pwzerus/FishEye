@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -10,20 +9,20 @@ import { useToast } from "@/components/ui/Toast";
 import { useLocale, useT } from "@/i18n/client";
 import { ApiError } from "@/lib/api/client";
 import { sendFeedback } from "@/lib/api/session";
-import { LEGAL } from "@/lib/legal";
 
 const MAX = 2000;
 
-/** One box and one button, sent from the account (backend services/feedback.py).
- * Signed out, it asks to sign in; the address is for someone who can't. */
+/** One box and one button (backend services/feedback.py). Signed in, it is
+ * sent from the account; signed out, no account is needed, and an email
+ * address is asked for only if they want a reply. */
 export function FeedbackDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user } = useAuth();
   const t = useT().feedback;
-  const common = useT().common;
   const locale = useLocale();
   const pathname = usePathname() ?? "/";
   const toast = useToast();
   const [message, setMessage] = useState("");
+  const [contact, setContact] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,8 +30,9 @@ export function FeedbackDialog({ open, onClose }: { open: boolean; onClose: () =
     setBusy(true);
     setError(null);
     try {
-      await sendFeedback(message.trim(), pathname, locale);
+      await sendFeedback(message.trim(), pathname, locale, user ? undefined : contact.trim());
       setMessage("");
+      setContact("");
       toast(t.thanks);
       onClose();
     } catch (err) {
@@ -42,25 +42,6 @@ export function FeedbackDialog({ open, onClose }: { open: boolean; onClose: () =
     }
   }
 
-  if (!user) {
-    return (
-      <Modal
-        open={open}
-        onClose={onClose}
-        title={t.title}
-        footer={
-          <Link href={`/login?next=${encodeURIComponent(pathname)}`} className="btn btn-primary btn-sm" onClick={onClose}>
-            {common.signIn}
-          </Link>
-        }
-      >
-        <p>{t.signInFirst}</p>
-        <p className="muted small">
-          {t.cantSignIn} <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a>
-        </p>
-      </Modal>
-    );
-  }
   return (
     <Modal
       open={open}
@@ -88,7 +69,23 @@ export function FeedbackDialog({ open, onClose }: { open: boolean; onClose: () =
           {error}
         </p>
       )}
-      <p className="muted small">{t.fromAccount(user.email)}</p>
+      {user ? (
+        <p className="muted small">{t.fromAccount(user.email)}</p>
+      ) : (
+        <>
+          <label className="field">
+            <span>{t.contactLabel}</span>
+            <input
+              type="email"
+              autoComplete="email"
+              maxLength={254}
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+            />
+          </label>
+          <p className="muted small">{t.signedOutNote}</p>
+        </>
+      )}
     </Modal>
   );
 }

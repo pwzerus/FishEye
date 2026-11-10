@@ -42,6 +42,10 @@ class Passage:
     # A state code for a passage that states that state's rules, else "all"
     # (knowledge/jurisdictions.py, docs/adr/0027).
     region: str = "all"
+    # The question library only (knowledge/angling_qa.py, docs/adr/0051).
+    title_zh: str = ""
+    text_zh: str = ""  # the answer alone, no header
+    basis: str = ""  # "guide", "official", "maker" or "general"; "" for the guides
 
 
 def _bullets(items: tuple[str, ...]) -> str:

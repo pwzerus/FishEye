@@ -14,6 +14,7 @@ from app.models.community import (  # noqa: F401
     UserSession,
 )
 from app.models.shop import TackleShop  # noqa: F401
+from app.models.visits import PageVisit  # noqa: F401
 from app.models.water import River, RiverReach, WaterPiece  # noqa: F401
 from app.models.waterbody import (  # noqa: F401
     AccessPoint,

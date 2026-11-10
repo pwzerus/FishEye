@@ -36,12 +36,22 @@ from app.services.fish_id import CONFIRMED, POLICY, FishRecognizer
 TRAIN = Path("fishid_cache/train")
 
 
-def fit(x: np.ndarray, y: np.ndarray, w0: np.ndarray, trainable: np.ndarray, pull: float, steps: int = 800, lr: float = 1.0) -> tuple[np.ndarray, np.ndarray]:
+def fit(
+    x: np.ndarray, y: np.ndarray, w0: np.ndarray, trainable: np.ndarray, pull: float,
+    steps: int = 800, lr: float = 1.0, alpha: float = 1.0,
+) -> tuple[np.ndarray, np.ndarray]:
     """Multinomial logistic regression by full-batch Adam, from w0, with
-    (pull/2)·|W − w0|² on the trainable rows; the others stay w0."""
+    (pull/2)·|W − w0|² on the trainable rows; the others stay w0.
+
+    A class's photos weigh count**-alpha each: alpha 1 makes every class weigh
+    the same in total (a fish with 5 photos as much as one with 160), alpha
+    0.5 gives a thin class less say, so its few photos can't pull its
+    look-alikes into it (2026-11-06: 11 golden trout photos took cutthroat
+    and rainbow trout)."""
     n_cls = w0.shape[0]
     counts = np.bincount(y, minlength=n_cls).astype(np.float64)
-    sample_w = (1.0 / counts[y]) / np.count_nonzero(counts)  # each class weighs the same in total
+    sample_w = counts[y] ** -alpha
+    sample_w /= sample_w.sum()
     w, b = w0.copy(), np.zeros(n_cls)
     m_w, v_w, m_b, v_b = (np.zeros_like(w), np.zeros_like(w), np.zeros(n_cls), np.zeros(n_cls))
     onehot = np.eye(n_cls)[y]
@@ -63,15 +73,33 @@ def fit(x: np.ndarray, y: np.ndarray, w0: np.ndarray, trainable: np.ndarray, pul
     return w.astype(np.float32), b.astype(np.float32)
 
 
+def _number(photo: dict) -> int:
+    """Newer observations have higher numbers: iNaturalist's observation
+    number, or a Commons photo's page id (gbif_id "c<pageid>")."""
+    key = str(photo["gbif_id"])
+    if key.startswith("c"):
+        return int(key[1:])
+    return int(re.search(r"(\d+)\D*$", photo["observation"]).group(1))
+
+
 def accuracy(x: np.ndarray, y: np.ndarray, w: np.ndarray, b: np.ndarray) -> float:
     return float(((x @ w.T + b).argmax(axis=1) == y).mean())
+
+
+def per_class_accuracy(x: np.ndarray, y: np.ndarray, w: np.ndarray, b: np.ndarray) -> float:
+    """The mean over classes of each class's accuracy: a thin class counts as
+    much as a big one, so a head can't win by sacrificing the rare fish."""
+    right = (x @ w.T + b).argmax(axis=1) == y
+    return float(np.mean([right[y == c].mean() for c in np.unique(y)]))
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--model-dir", type=Path, default=Path("models/fish-id"))
     parser.add_argument("--pull", type=float, default=None, help="skip the search and use this")
+    parser.add_argument("--alpha", type=float, default=None, help="class weighting (see fit); skip its search")
     parser.add_argument("--sweep", action="store_true", help="also score the check's thresholds on the held-out fifth")
+    parser.add_argument("--min-photos", type=int, default=8, help="a class with fewer keeps its zero-shot weights")
     args = parser.parse_args(argv)
 
     recognizer = FishRecognizer(args.model_dir, use_head=False)
@@ -82,12 +110,19 @@ def main(argv: list[str] | None = None) -> int:
     y = np.array([index[p["slug"]] for p in photos])
     w0 = recognizer.zero_shot_weights().astype(np.float64)
     trainable = np.zeros(len(classes), dtype=bool)
-    trainable[np.unique(y)] = True
+    counts = np.bincount(y, minlength=len(classes))
+    trainable[counts >= args.min_photos] = True
+    # A class too thin to learn from keeps BioCLIP's own weights, and its few
+    # photos are left out rather than pulling a fixed row.
+    keep = trainable[y]
+    photos = [p for p, k in zip(photos, keep) if k]
+    x, y = x[keep], y[keep]
 
     # Held out: each class's newest fifth of observations (iNaturalist numbers
     # them in order). Like the test set, they are later than what the head
     # learns from, so the pull and thresholds are chosen for photos to come.
-    numbers = np.array([int(re.search(r"(\d+)\D*$", p["observation"]).group(1)) for p in photos])
+    # (A Commons photo's page has no number; its id, c<pageid>, does.)
+    numbers = np.array([_number(p) for p in photos])
     held = np.zeros(len(y), dtype=bool)
     for cls in np.unique(y):
         idx = np.flatnonzero(y == cls)
@@ -96,18 +131,22 @@ def main(argv: list[str] | None = None) -> int:
           f"{accuracy(x[held], y[held], w0, np.zeros(len(classes))):.3f}")
     # The data term is a mean over photos (about 1), the pull a sum over
     # 512 dimensions of every class: useful pulls are small.
-    pulls = [args.pull] if args.pull is not None else [1e-5, 3e-5, 1e-4, 3e-4, 1e-3]
-    best = (-1.0, pulls[0])
-    for pull in pulls:
-        w, b = fit(x[~held], y[~held], w0, trainable, pull)
-        acc = accuracy(x[held], y[held], w, b)
-        print(f"  pull {pull:<5} held-out accuracy {acc:.3f}")
-        best = max(best, (acc, pull))
-    pull = best[1]
+    pulls = [args.pull] if args.pull is not None else [1e-5, 3e-5, 1e-4, 3e-4]
+    alphas = [args.alpha] if args.alpha is not None else [1.0, 0.75, 0.5]
+    # Chosen on the held-out fifth by the mean of per-class accuracy, so the
+    # rare fish count; plain accuracy is printed beside it.
+    best = (-1.0, pulls[0], alphas[0])
+    for alpha in alphas:
+        for pull in pulls:
+            w, b = fit(x[~held], y[~held], w0, trainable, pull, alpha=alpha)
+            acc, macro = accuracy(x[held], y[held], w, b), per_class_accuracy(x[held], y[held], w, b)
+            print(f"  alpha {alpha:<4} pull {pull:<6} held-out accuracy {acc:.3f}, per class {macro:.3f}")
+            best = max(best, (macro, pull, alpha))
+    _, pull, alpha = best
     if args.sweep:
         # The thresholds of services/fish_id.Policy, judged on the held-out
         # fifth by a head fitted without it: never on the test set.
-        w, b = fit(x[~held], y[~held], w0, trainable, pull)
+        w, b = fit(x[~held], y[~held], w0, trainable, pull, alpha=alpha)
         recognizer._w, recognizer._b = w, b
         held_photos = [p for p, h in zip(photos, held) if h]
         # `contradict` only changes which refusal is said, not whether.
@@ -122,8 +161,11 @@ def main(argv: list[str] | None = None) -> int:
                     f"{pct(r['same_group'][CONFIRMED], r['same_group']['claims']):>6} "
                     f"{pct(r['lookalike_other_group']['accepted'], r['lookalike_other_group']['claims']):>6}"
                 )
-    w, b = fit(x, y, w0, trainable, pull)
-    np.savez(args.model_dir / "head.npz", w=w, b=b, pull=np.float32(pull), classes_digest=np.array(classes_digest()))
+    w, b = fit(x, y, w0, trainable, pull, alpha=alpha)
+    np.savez(
+        args.model_dir / "head.npz", w=w, b=b, pull=np.float32(pull), alpha=np.float32(alpha),
+        classes_digest=np.array(classes_digest()),
+    )
     credits = [
         {"observation": p["observation"], "creator": p["creator"], "licence": p["licence"]}
         for p in photos
@@ -132,7 +174,8 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps(
             {
                 "about": "Photos the classifier head was fitted on: research-grade iNaturalist observations "
-                "via GBIF, CC0 1.0 or CC BY 4.0. With thanks to their creators.",
+                "via GBIF (CC0 1.0 or CC BY 4.0), and steelhead photos from Wikimedia Commons (public "
+                "domain, CC0 or CC BY). With thanks to their creators.",
                 "photos": credits,
             },
             indent=1,
@@ -140,7 +183,8 @@ def main(argv: list[str] | None = None) -> int:
         + "\n",
         encoding="utf-8",
     )
-    print(f"head.npz written (pull {pull}, {len(y)} photos); credits in TRAINING_CREDITS.json")
+    print(f"head.npz written (pull {pull}, alpha {alpha}, {len(y)} photos, {trainable.sum()} classes fitted); "
+          "credits in TRAINING_CREDITS.json")
     return 0
 
 

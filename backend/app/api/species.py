@@ -1,10 +1,12 @@
 """GET /api/species/guides — how to catch each species (app/knowledge/species_guides.py).
 GET /api/species/handbook — what applies to every fish (app/knowledge/angling_handbook.py).
+GET /api/species/questions — the question library (app/knowledge/angling_qa.py).
 GET /api/species/photos — a real photo per species, with credit (services/species_photos.py)."""
 from dataclasses import asdict
 
 from fastapi import APIRouter, HTTPException
 
+from app.knowledge import angling_qa
 from app.knowledge.angling_handbook import CATEGORIES, TOPICS
 from app.knowledge.species_guides import (
     GENERAL_SUMMARIES,
@@ -19,6 +21,7 @@ from app.knowledge.species_guides import (
 from app.schemas.species_guide import (
     GuideSourceOut,
     HandbookTopicOut,
+    QuestionOut,
     SpeciesGuideOut,
     SpeciesPhotoOut,
     TackleSetupOut,
@@ -34,6 +37,12 @@ def source_out(s: Source) -> GuideSourceOut:
 
 def _sources(ids: tuple[str, ...]) -> list[GuideSourceOut]:
     return [source_out(s) for s in sources_for(ids)]
+
+
+def _unique_sources(ids: tuple[str, ...]) -> list[GuideSourceOut]:
+    """One entry per page: the same page can be registered under two ids."""
+    by_url = {s.url: s for s in reversed(sources_for(ids))}
+    return [source_out(s) for s in reversed(list(by_url.values()))]
 
 
 def to_out(guide: SpeciesGuide) -> SpeciesGuideOut:
@@ -112,6 +121,35 @@ def list_handbook() -> list[HandbookTopicOut]:
         )
         for _, t in ranked
     ]
+
+
+@router.get("/questions", response_model=list[QuestionOut])
+def list_questions(lang: str = "en") -> list[QuestionOut]:
+    """In page order, in Chinese for `lang=zh` and in English otherwise (the
+    library has only those two)."""
+    zh = lang == "zh"
+    order = {c: i for i, c in enumerate(angling_qa.CATEGORIES)}
+    ranked = sorted(enumerate(angling_qa.ITEMS), key=lambda pair: (order[pair[1].category], pair[0]))
+    return [
+        QuestionOut(
+            id=i.id,
+            category=i.category,
+            category_label=angling_qa.CATEGORIES[i.category]["zh" if zh else "en"],
+            question=i.question_zh if zh else i.question,
+            short=i.short_zh if zh else i.short,
+            body=i.body_zh if zh else i.body,
+            basis=i.basis,
+            sources=_unique_sources(i.source_ids),
+        )
+        for _, i in ranked
+    ]
+
+
+@router.get("/questions/sources", response_model=list[GuideSourceOut])
+def list_question_sources() -> list[GuideSourceOut]:
+    """Each source the library cites, once, for /sources."""
+    ids = list(dict.fromkeys(s for i in angling_qa.ITEMS for s in i.source_ids))
+    return _unique_sources(tuple(ids))
 
 
 @router.get("/photos", response_model=dict[str, SpeciesPhotoOut | None])

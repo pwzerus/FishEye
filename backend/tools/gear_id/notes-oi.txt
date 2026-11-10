@@ -1,0 +1,124 @@
+# Open Images test photos, checked by eye (handcheck.py apply ... oi ...).
+# "drop": the gear is too small or hidden to say what it is.
+1 rod?
+2 drop
+3 rod-spinning+reel-spinning
+4 rod-fly
+5 drop
+6 rod?      # rods on a pod
+7 rod-fly
+8 drop
+9 drop
+10 drop
+11 rod?
+12 rod?
+13 no       # coat hooks on a kitchen wall
+14 drop     # a trout held over a cooler
+15 drop     # a fish on a line
+16 drop     # kayak far away
+17 rod?
+18 drop
+19 drop
+20 rod?+reel-baitcasting   # trolling rods, conventional reels
+21 drop
+22 rod?
+23 drop
+24 rod?
+25 drop
+26 drop     # silhouettes far away
+27 rod?+reel?
+28 lure?    # a board of lures
+29 rod?
+30 rod?
+31 rod?
+32 rod?
+33 rod?
+34 rod?
+35 rod?
+36 rod?
+37 rod?
+38 rod?+reel?
+39 drop     # a fish held up
+40 drop     # a flatfish on a deck
+41 rod-spinning+reel-spinning
+42 reel-baitcasting+rod?   # conventional reel on a boat
+43 no       # a building
+44 no       # a model battlefield
+45 rod?     # a rod on a bicycle on a pier
+46 no       # sculptures
+47 no       # a cameraman
+48 no       # a quote over a park
+49 no       # a cyclist
+50 no       # a horse
+51 no       # drums
+52 no       # a fish held up, no gear seen
+53 no       # a school bus
+54 no       # football
+55 no       # a window
+56 no       # logs
+57 no       # soldiers
+58 no       # a sign
+59 drop     # beach, unclear
+60 no       # a cider press
+61 no       # a statue outside a restaurant
+62 no       # deck chairs
+63 no       # a parrot
+64 no       # people at night
+65 no       # a shop counter
+66 no       # a conference
+67 drop     # a girl holding a black pole, unclear
+68 no       # a parade
+69 no       # a street
+70 no       # two girls
+71 no       # show jumping
+72 rod?     # two anglers with long rods
+73 no       # people in a river
+74 no       # a woman with flowers
+75 no       # a bird at a feeder
+76 drop     # children holding something, unclear
+77 no       # houses
+78 no       # a mother and child
+79 no       # houses
+80 no       # birds
+81 no       # a woman on a sea wall
+82 no       # a pool
+83 no       # Open Images "Tackle" is the sports tackle: football from here on
+84 no
+85 no
+86 no
+87 no
+88 no
+89 no
+90 no
+91 no
+92 no
+93 no
+94 no
+95 no
+96 no
+97 no
+98 no
+99 no
+100 no
+101 no
+102 no
+103 no
+104 no
+105 no
+106 no
+107 no
+108 no
+109 no
+110 no
+111 no
+112 no
+113 no
+114 no
+115 no
+116 no
+117 no
+118 no
+119 no
+120 no
+121 no
+122 no

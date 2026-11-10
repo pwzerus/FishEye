@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 // What this says must stay true of the code: the account and pin models
 // (backend app/models/community.py), photo cleaning (services/media.py),
 // where others see a catch (docs/adr/0038), the AI summaries (services/rag),
+// signed-out feedback (services/feedback.py), the visit count (services/visits.py),
 // and the hosts the browser talks to (lib/map/tiles.ts, the fish photos).
 export default function PrivacyPage() {
   return (
@@ -29,7 +30,10 @@ export default function PrivacyPage() {
 
       <section>
         <h2>What we collect</h2>
-        <p>You can use the map, the fish guides and Ask without an account. When you create one, or share a catch, we keep:</p>
+        <p>
+          You can use the map, the fish guides, Ask, photo ID (a few photos a day) and feedback without an account.
+          What we keep:
+        </p>
         <ul>
           <li>
             <strong>Your account:</strong> your email address and display name, and your password stored only as a
@@ -52,8 +56,10 @@ export default function PrivacyPage() {
             <strong>AI summaries:</strong> how many you use each day, so the daily allowance works.
           </li>
           <li>
-            <strong>Feedback you send:</strong> your message, the page you were on and your language, with your account,
-            so we can reply. If you delete your account we keep the message without saying who sent it.
+            <strong>Feedback you send:</strong> your message, the page you were on and your language. Signed in, it is
+            kept with your account so we can reply; if you delete your account we keep the message without saying who
+            sent it. Signed out, it is kept with no account, and with an email address only if you leave one for a
+            reply.
           </li>
           <li>
             <strong>Questions Ask couldn&apos;t answer:</strong> the question, its language and the state or fish you
@@ -61,8 +67,16 @@ export default function PrivacyPage() {
             phone numbers and links first, and we delete them after 90 days.
           </li>
           <li>
+            <strong>Visit counts:</strong> how many times each page was opened each day, and the website a link to us
+            was on (its name only, such as reddit.com) or a tag in the link (such as ?ref=reddit). That is all: no IP
+            address, no cookie or other identifier, nothing that tells one visitor from another or follows anyone
+            between pages. We use it to see whether anyone is finding FishEye, and from where.
+          </li>
+          <li>
             <strong>Server logs:</strong> like most websites, our server records each request (IP address, page, time,
-            browser) to keep the site running and secure. We keep these only as long as needed for that.
+            browser) to keep the site running and secure. We keep these only as long as needed for that. To stop abuse,
+            the server also counts requests per IP address in its memory (for example, the free photo checks a day
+            without an account); those counts aren&apos;t written down and are gone within a day.
           </li>
         </ul>
       </section>
@@ -81,13 +95,18 @@ export default function PrivacyPage() {
         <h2>What we do with it</h2>
         <ul>
           <li>Run your account and show your catches to you and, if you made them public, to others.</li>
-          <li>Check that a catch photo shows the fish you named. This runs on our own server; your photos aren&apos;t sent to another company for it.</li>
+          <li>
+            Identify a fish or a piece of fishing gear from a photo, and check that a catch photo shows the fish you
+            named. This runs on our own server; your photos aren&apos;t sent to another company for it, and a photo
+            checked on its own isn&apos;t kept.
+          </li>
           <li>Keep FishEye safe: limit spam and abuse, act on reports, and keep the service working.</li>
           <li>Answer you when you write to us.</li>
         </ul>
         <p>
           We don&apos;t sell or rent personal information, we don&apos;t share it for advertising, and FishEye has no
-          ads, analytics or tracking cookies.
+          ads, no tracking cookies and no outside analytics service. The visit counts above are our own and say nothing
+          about who visited.
         </p>
       </section>
 
@@ -126,7 +145,8 @@ export default function PrivacyPage() {
         <h2>Cookies and browser storage</h2>
         <p>
           One cookie keeps you signed in. Your browser also stores a few preferences, such as the state you picked
-          for fishing rules. Nothing is used for advertising or tracking.
+          for fishing rules. Counting visits uses no cookie and stores nothing in your browser. Nothing is used for
+          advertising or tracking.
         </p>
       </section>
 

@@ -5,14 +5,16 @@ import math
 from datetime import date
 from typing import NoReturn
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.api import rate_limits
 from app.api.auth_deps import optional_user, require_user, same_origin
 from app.api.deps import get_db
+from app.api.rate_limits import client_ip
 from app.api.params import MAX_ID, DbId
 from app.core.config import get_settings
 from app.core.security import RateLimiter
@@ -50,7 +52,7 @@ from app.knowledge.jurisdictions import STATE_NAMES
 from app.services import audit, counties, email_verification, fish_id, water
 from app.services import pins as svc
 from app.services.email_verification import VerificationError
-from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, group_label
+from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, SAME_FISH, group_label
 from app.services.media import PhotoRejected, clean_photo, get_store
 from app.services.pins import PinError
 
@@ -62,6 +64,13 @@ create_by_user = RateLimiter(limit=30, window_seconds=60 * 60)
 report_by_user = RateLimiter(limit=20, window_seconds=60 * 60)
 # Each check is a few hundred milliseconds of the server's CPU.
 fish_id_by_user = RateLimiter(limit=60, window_seconds=60 * 60)
+# Signed out, a photo check is a trial: a few a day from one address, and a
+# daily total across every signed-out visitor, so a script can't keep the
+# server's CPU busy. The model runs on this server; no paid API is called.
+fish_id_trial_by_ip = RateLimiter(limit=5, window_seconds=24 * 60 * 60)
+fish_id_trial_everyone = RateLimiter(limit=500, window_seconds=24 * 60 * 60)
+TRIAL_USED = "You've used today's free photo checks. Sign in (it's free) to check more."
+TRIAL_FULL = "Free photo checks are at today's limit. Sign in (it's free) to keep checking."
 
 
 def _raise(exc: PinError) -> NoReturn:
@@ -528,18 +537,51 @@ def report_pin(
 # ------------------------------------------------------------ photo check
 
 
+def _top_group(ident: fish_id.Identification) -> str | None:
+    """The likeliest fish's kind, when it has look-alikes to share it with."""
+    top = ident.fish(1)
+    c = BY_SLUG.get(top[0].slug) if top else None
+    if c is None or c.group is None or sum(1 for o in BY_SLUG.values() if o.group == c.group) < 2:
+        return None
+    return c.group
+
+
+def _trial(request: Request) -> None:
+    """A signed-out photo check: refused before any work once the address or
+    everyone signed out has used the day's allowance."""
+    if not get_settings().rate_limits_enabled:
+        return
+    ip = client_ip(request)
+    own = fish_id_trial_by_ip.blocked_for(ip)
+    shared = fish_id_trial_everyone.blocked_for(rate_limits.EVERYONE)
+    if own > 0 or shared > 0:
+        raise HTTPException(
+            status_code=429,
+            detail=TRIAL_USED if own > 0 else TRIAL_FULL,
+            headers={"Retry-After": str(int(max(own, shared)) + 1)},
+        )
+    fish_id_trial_by_ip.hit(ip)
+    fish_id_trial_everyone.hit(rate_limits.EVERYONE)
+
+
 @router.post("/fish-id", response_model=FishIdOut)
 def identify_fish(
+    request: Request,
     photo: UploadFile = File(...),
     species_slug: str | None = Form(default=None),
     species_other: str | None = Form(default=None, max_length=120),
-    user: User = Depends(require_user),
+    user: User | None = Depends(optional_user),
 ) -> FishIdOut:
     """What fish a photo shows, and, given one, whether it backs the claim:
     the catch form asks as soon as a photo is chosen, so a mismatch is said
     before anything is saved. Saving checks again (services/pins.py); this
-    answer is advice to the form, never trusted."""
-    _throttle(fish_id_by_user, user)
+    answer is advice to the form, never trusted.
+
+    Signed out, it is a trial with a small daily allowance (_trial)."""
+    if user is None:
+        _trial(request)
+    else:
+        _throttle(fish_id_by_user, user)
     data = _read_uploads([photo], 1)[0]
     try:
         cleaned = clean_photo(data)
@@ -562,9 +604,17 @@ def identify_fish(
         model=recognizer.name,
         fish_probability=round(ident.fish_probability, 3),
         candidates=[
-            FishCandidateOut(slug=c.slug, label=c.label, probability=round(c.probability, 3), in_guides=c.kind == GUIDE)
+            FishCandidateOut(
+                slug=c.slug,
+                label=c.label,
+                probability=round(c.probability, 3),
+                in_guides=c.kind == GUIDE,
+                guide_slug=c.slug if c.kind == GUIDE else SAME_FISH.get(c.slug),
+            )
             for c in ident.fish(3)
         ],
+        group=_top_group(ident),
+        group_probability=round(ident.group_probability(_top_group(ident)), 3) if _top_group(ident) else None,
         verdict=FishVerdictOut(
             status=verdict.status,
             accepted=verdict.accepted,

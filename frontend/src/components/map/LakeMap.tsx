@@ -25,6 +25,7 @@ import { waterIcon } from "./waterIcon";
 import { useT } from "@/i18n/client";
 import { DraftMarker, PinMarkers, PlaceOnClick, WaterGroupMarkers } from "./PinLayer";
 import { ShopMarkers } from "./ShopLayer";
+import { MAP_POPUP_PAD } from "./popupPad";
 import { StatesLayer } from "./StatesLayer";
 import { displayLongitude, type StateRegion } from "./usStates";
 import { SEARCH_ZOOM, US_CENTER, US_ZOOM, type MapMode, locationZoom, zoomLimitsFor } from "./zoomPolicy";
@@ -423,7 +424,7 @@ function LakeMarker({ lake, onSelect, region }: { lake: WaterbodyListItem; onSel
       title={`${lake.name}, ${isOsm ? t.lakeUnverified : t.lakeVerified}`}
       eventHandlers={{ click: () => onSelect(lake.id) }}
     >
-      <Popup>
+      <Popup {...MAP_POPUP_PAD}>
         <strong>{lake.name}</strong>
         {isOsm ? (
           <div style={{ fontSize: 12, color: "#6b7280" }}>

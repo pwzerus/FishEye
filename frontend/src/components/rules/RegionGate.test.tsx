@@ -143,11 +143,11 @@ describe("state-aware rules (backend ADR 0027)", () => {
       expect(container.querySelector("a")).toBeNull();
     });
 
-    it("lists every state's agency when none is chosen", async () => {
+    it("asks for the state when none is chosen, instead of listing every agency", async () => {
       render(<LimitsNote texasUrl={TEXAS} />);
-      expect(screen.getByText(/vary by state, species and lake/)).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: "Texas (TPWD)" })).toHaveAttribute("href", TEXAS);
-      expect(await screen.findByRole("link", { name: "Georgia (Georgia WRD)" })).toBeInTheDocument();
+      expect(screen.getByText(/Pick your state to see where its limits are/)).toBeInTheDocument();
+      expect(await screen.findByRole("combobox")).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Georgia (Georgia WRD)" })).not.toBeInTheDocument();
     });
   });
 

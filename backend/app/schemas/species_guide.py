@@ -65,6 +65,20 @@ class HandbookTopicOut(BaseModel):
     sources: list[GuideSourceOut]
 
 
+class QuestionOut(BaseModel):
+    """One answer of the question library (app/knowledge/angling_qa.py), in the
+    language asked for. `id` is its anchor on /questions, where Ask links."""
+
+    id: str
+    category: str
+    category_label: str
+    question: str
+    short: str
+    body: str
+    basis: str  # "guide", "official", "maker" or "general"
+    sources: list[GuideSourceOut]
+
+
 class SpeciesPhotoOut(BaseModel):
     """A real, freely licensed photo (services/species_photos.py). The UI
     must show `author` and `license` with it — that's the licence's term."""

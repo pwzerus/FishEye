@@ -11,11 +11,10 @@ import { fishSlug, localFishName } from "@/i18n/names";
 import { listPins, type PinScope } from "@/lib/api/session";
 import type { PinSummary, WaterGroup } from "@/lib/api/types";
 import { catchIcon } from "./catchIcon";
+import { MAP_POPUP_PAD } from "./popupPad";
 import { MIN_PLACE_ZOOM } from "./zoomPolicy";
 
-// Keeps a popup clear of what floats over the map's top (the search bar and
-// the buttons) when Leaflet pans to show it.
-const POPUP_PAD = { autoPanPaddingTopLeft: [12, 150] as [number, number], autoPanPaddingBottomRight: [12, 40] as [number, number] };
+const POPUP_PAD = MAP_POPUP_PAD;
 
 /** A catch's fish in the chosen language: its guide name when it has one. */
 function useFishLabel() {

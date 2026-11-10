@@ -33,12 +33,14 @@ import type {
 import { useJurisdictions } from "@/lib/jurisdiction";
 import { AdminFeedbackTab } from "./AdminFeedback";
 import { Users } from "./AdminUsers";
+import { AdminVisitsTab } from "./AdminVisits";
 import { ACTION_LABEL, Pager, detailText, errText, when, type Pending } from "./shared";
 import { TpwdRefresh } from "./TpwdRefresh";
 
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "feedback", label: "Feedback" },
+  { id: "visits", label: "Visits" },
   { id: "reports", label: "Reports" },
   { id: "lakes", label: "Lake reports" },
   { id: "pins", label: "Catches" },
@@ -121,6 +123,7 @@ export function AdminConsole() {
       <div className="admin-body" key={tab}>
         {tab === "overview" && <Overview onGo={(t) => router.replace(`${pathname}?tab=${t}`, { scroll: false })} />}
         {tab === "feedback" && <AdminFeedbackTab />}
+        {tab === "visits" && <AdminVisitsTab />}
         {tab === "reports" && <Reports confirmThen={confirmThen} />}
         {tab === "lakes" && <LakeReports confirmThen={confirmThen} />}
         {tab === "pins" && <Pins confirmThen={confirmThen} />}

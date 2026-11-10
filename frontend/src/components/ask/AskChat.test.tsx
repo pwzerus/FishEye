@@ -409,11 +409,11 @@ describe("AskChat", () => {
       await waitFor(() => expect(mockedAsk).toHaveBeenCalledWith(expect.objectContaining({ question: "What bait for bluegill?" })));
     });
 
-    it("asks a signed-out visitor to sign in", async () => {
-      vi.mocked(identifyFish).mockRejectedValue(new ApiError("Sign in first.", 401));
+    it("asks a signed-out visitor to sign in once the day's free checks are used", async () => {
+      vi.mocked(identifyFish).mockRejectedValue(new ApiError("You've used today's free photo checks.", 429));
       render(<AskChat suggestions={SUGGESTIONS} />);
       pick();
-      expect(await screen.findByText(/needs a free FishEye account/)).toBeInTheDocument();
+      expect(await screen.findByText(/A free FishEye account lets you check more/)).toBeInTheDocument();
       expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login?next=%2Fask");
     });
   });

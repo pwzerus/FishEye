@@ -152,6 +152,30 @@ TEXT: dict[str, dict[str, str]] = {
         "ko": "오늘 많이 보내 주셨어요. 감사합니다! 내일 다시 시도해 주세요.",
         "ja": "今日はたくさん送っていただきました。ありがとうございます！また明日お試しください。",
     },
+    "We've had a lot of messages today. Please try again tomorrow, or sign in to send one now.": {
+        "zh": "今天收到的留言很多，请明天再试，或者登录后马上发送。",
+        "es": "Hoy recibimos muchos mensajes. Inténtalo mañana, o inicia sesión para enviarlo ahora.",
+        "ko": "오늘 의견이 많이 들어왔어요. 내일 다시 시도하거나, 로그인하면 지금 보낼 수 있어요.",
+        "ja": "今日はたくさんのメッセージが届いています。明日またお試しいただくか、ログインすれば今すぐ送れます。",
+    },
+    "That doesn't look like an email address. Leave it empty if you don't want a reply.": {
+        "zh": "这看起来不像邮箱地址。不需要回复的话可以留空。",
+        "es": "Eso no parece un correo electrónico. Déjalo vacío si no quieres respuesta.",
+        "ko": "이메일 주소가 아닌 것 같아요. 답장이 필요 없으면 비워 두세요.",
+        "ja": "メールアドレスではないようです。返信が不要なら空欄のままにしてください。",
+    },
+    "You've used today's free photo checks. Sign in (it's free) to check more.": {
+        "zh": "今天的免费识别次数已用完。登录（免费）后可以继续识别。",
+        "es": "Ya usaste las revisiones de fotos gratis de hoy. Inicia sesión (es gratis) para revisar más.",
+        "ko": "오늘의 무료 사진 판별을 다 썼어요. 로그인하면(무료) 더 판별할 수 있어요.",
+        "ja": "今日の無料の写真判定を使い切りました。ログイン（無料）すると続けて判定できます。",
+    },
+    "Free photo checks are at today's limit. Sign in (it's free) to keep checking.": {
+        "zh": "今天的免费识别已达上限。登录（免费）后可以继续识别。",
+        "es": "Las revisiones de fotos gratis llegaron al límite de hoy. Inicia sesión (es gratis) para seguir.",
+        "ko": "오늘의 무료 사진 판별이 한도에 다다랐어요. 로그인하면(무료) 계속 판별할 수 있어요.",
+        "ja": "今日の無料の写真判定は上限に達しました。ログイン（無料）すると続けて判定できます。",
+    },
     "Write a few words first.": {
         "zh": "请先写几个字。", "es": "Escribe unas palabras primero.",
         "ko": "먼저 몇 마디 적어 주세요.", "ja": "先に何か書いてください。",
@@ -456,6 +480,12 @@ PATTERNS: list[Pattern] = [
     (re.compile(rf"^Photo check: this looks like {_A}\.$"),
      lambda m, lang: {"zh": f"照片核对：看起来是{_fish(m[1], lang)}。", "es": f"Revisión de la foto: parece ser {_fish(m[1], lang)}.",
                    "ko": f"사진 확인: {_fish(m[1], lang)}인 것 같아요.", "ja": f"写真チェック：{_fish(m[1], lang)}のようです。"}[lang]),
+    # One fish under two names (services/fish_id_classes.SAME_FISH).
+    (re.compile(rf"^Photo check: this looks like {_A}, which is {_A}\.$"),
+     lambda m, lang: {"zh": f"照片核对：看起来是{_fish(m[1], lang)}，也就是{_fish(m[2], lang)}。",
+                   "es": f"Revisión de la foto: parece ser {_fish(m[1], lang)}, que es {_fish(m[2], lang)}.",
+                   "ko": f"사진 확인: {_fish(m[1], lang)}인 것 같아요. {_fish(m[2], lang)}와 같은 물고기예요.",
+                   "ja": f"写真チェック：{_fish(m[1], lang)}のようです。{_fish(m[2], lang)}と同じ魚です。"}[lang]),
     (re.compile(rf"^Photo check: this looks like {_A}\. Which kind, the photo can't show, so the species is your call\.$"),
      lambda m, lang: {"zh": f"照片核对：看起来是{_fish(m[1], lang)}。具体哪一种照片看不出来，由你判断。",
                    "es": f"Revisión de la foto: parece ser {_fish(m[1], lang)}. La especie exacta no se ve en la foto: la decides tú.",

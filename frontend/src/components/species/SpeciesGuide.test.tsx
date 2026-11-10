@@ -97,13 +97,9 @@ describe("SpeciesGuideBody", () => {
     expect(screen.getByRole("link", { name: "Sources" }).getAttribute("href")).toMatch(/^\/sources#fish-/);
   });
 
-  it("links to the agencies' limits instead of stating them", () => {
-    // No state chosen and the state list not loaded: Texas's link, from the guide.
+  it("doesn't state limits: with no state chosen it asks for one", () => {
     render(<SpeciesGuideBody guide={bass} compact />);
-    expect(screen.getByRole("link", { name: /texas \(tpwd\)/i })).toHaveAttribute(
-      "href",
-      "https://tpwd.texas.gov/limits",
-    );
+    expect(screen.getByText(/Pick your state to see where its limits are/)).toBeInTheDocument();
   });
 
   it("shows a bait fish's cast-net and bait-for sections, and no rod setups", () => {

@@ -1,0 +1,103 @@
+# Commons test photos, checked by eye (handcheck.py apply). Drawings,
+# engravings and paintings are dropped: the app reads photos.
+1 drop      # baiting a hook on a boat, bait unclear
+2 lure-grub+lure-soft-worm+bait-nightcrawler   # pale curly worm on a line
+3 drop      # engraving
+4 drop      # plate of drawings
+5 drop      # boilies, not on the list
+6 bait-shrimp+hook-j
+7 no        # bait shop shed and ice machine
+8 float?    # casting floats and beads
+9 drop      # drawing
+10 no       # factory hall
+11 float-slip
+12 drop     # diagram
+13 no       # pelican
+14 hook-treble+jig-head
+15 drop     # painting
+16 hook-circle
+17 drop     # drawing
+18 drop     # diagram
+19 drop     # engraving
+20 drop     # engraving
+21 drop     # engraving
+22 jig-head+bait-waxworm   # ice jig with grubs
+23 drop     # museum stone lure
+24 drop     # museum
+25 drop     # museum
+26 drop     # museum
+27 jig-head # teardrop ice jig
+28 drop     # drawing
+29 drop     # drawing
+30 drop     # drawing
+31 tool-ice-auger
+32 lure-spoon
+33 drop     # painting
+34 lure-popper+lure-jerkbait
+35 drop     # children at a craft table
+36 lure-spoon
+37 lure-spoon
+38 lure-spoon
+39 lure-spoon # casting jigs, nearest item
+40 lure-swimbait
+41 lure-grub
+42 soft-lure?   # soft plastics, mixed
+43 lure-swimbait
+44 soft-lure?   # creature baits
+45 lure-soft-worm
+46 hard-lure?   # crankbaits and minnow plugs, mixed
+47 lure-jerkbait
+48 lure-spoon
+49 lure-spoon
+50 bait-corn    # artificial corn
+51 bait-roe+bait-waxworm  # bead eggs, soft maggot
+52 bait-waxworm+lure-grub
+53 metal-lure?  # tail spinners
+54 drop         # a squid caught on a jig
+55 drop         # a trout with a lure in its mouth
+56 drop         # fly tying show
+57 drop         # fly tying materials
+58 fly-dry
+59 fly-dry
+60 fly-dry
+61 fly-dry
+62 reel-baitcasting
+63 drop     # a fish with a fly rod behind
+64 drop     # a sunfish with a fly reel
+65 drop     # a trout with a fly reel
+66 reel-spinning+rod-spinning+tool-net
+67 rod-fly  # fly reels in a shop
+68 drop     # engraving
+69 drop     # old print
+70 drop     # catalogue drawing
+71 reel-baitcasting
+72 reel-spinning+rod-spinning
+73 rod-fly
+74 reel-baitcasting  # big conventional reel
+75 reel-spinning+rod-spinning
+76 drop     # trout on a log
+77 no       # a building
+78 rod-fly  # fly reel and lines in a box
+79 rod-fly
+80 drop     # old photo of a catch
+81 drop     # comic cover
+82 drop     # comic cover
+83 drop     # comic cover
+84 drop     # vintage advert photo
+85 rod?     # rod on a rest
+86 rod?
+87 drop     # drawing
+88 no       # a dinosaur model
+89 drop     # a bass with a fly rod
+90 drop     # old photo
+91 drop     # old photo
+92 drop     # engraving
+93 reel-spinning+rod-spinning
+94 no       # a pier, no gear seen
+95 drop     # anglers too small to see
+96 rod?
+97 rod?     # carp rods on a pod
+98 drop     # old photo
+99 drop     # rod barely seen
+100 drop    # river, float barely seen
+101 drop     # commercial nets

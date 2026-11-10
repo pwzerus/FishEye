@@ -71,9 +71,14 @@ def _allowance_out(db: Session, user: User | None) -> AiAllowanceOut:
 
 
 def _response(
-    result: rag_ask.AskResult, ai: AiAllowanceOut, state: str | None = None, lakes: AskLakesOut | None = None
+    result: rag_ask.AskResult,
+    ai: AiAllowanceOut,
+    state: str | None = None,
+    lakes: AskLakesOut | None = None,
+    lang: str | None = None,
 ) -> AskResponse:
     t = result.trace
+    zh_reply = replies.reply_lang(result.question, lang) == "zh"
     return AskResponse(
         lakes=lakes,
         state=rag_ask.answer_state(result.question, state),
@@ -86,10 +91,12 @@ def _response(
                 species_slug=p.species_slug,
                 species_name=p.species_name,
                 section=p.section,
-                title=p.title,
-                excerpt=rag_ask.body_of(p),
+                title=p.title_zh if zh_reply and p.text_zh else p.title,
+                excerpt=p.text_zh if zh_reply and p.text_zh else rag_ask.body_of(p),
                 region=p.region,
                 sources=[source_out(s) for s in sources_for(p.source_ids)],
+                basis=p.basis,
+                lang="zh" if zh_reply and p.text_zh else "en",
             )
             for p in result.citations
         ],
@@ -132,7 +139,7 @@ def search_guides(
         result.trace.outcome = rag_ask.OUTCOME_NO_MATCH
     # What Ask can't answer, without who asked (services/ask_misses.py).
     ask_misses.record(db, payload.question, result.trace.outcome, payload.lang or "en", state, slug)
-    return _response(result, _allowance_out(db, user), state, lakes)
+    return _response(result, _allowance_out(db, user), state, lakes, payload.lang)
 
 
 @router.get("/allowance", response_model=AiAllowanceOut)
@@ -183,4 +190,4 @@ def summarize(
     result = rag_ask.ask(payload.question, species_slug=slug, state=state, lang=payload.lang)
     if result.answer_source != rag_ask.ANSWER_LLM or result.trace.cache_hit:
         ai_quota.give_back(db, user, day)
-    return _response(result, _allowance_out(db, user), state)
+    return _response(result, _allowance_out(db, user), state, lang=payload.lang)

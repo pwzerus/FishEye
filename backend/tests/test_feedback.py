@@ -28,8 +28,51 @@ def _admin(make_client, db_session):
     return a
 
 
-def test_signed_out_is_refused(client):
-    assert client.post(URL, json={"message": "hello there"}).status_code == 401
+def test_signed_out_it_is_saved_without_an_account(client, db_session):
+    r = client.post(URL, json={"message": "Nice map", "page": "/map", "contact": " me@example.com "})
+    assert r.status_code == 201
+    row = db_session.scalar(select(Feedback))
+    assert row.user_id is None and row.signed_out is True and row.contact == "me@example.com"
+    assert row.message == "Nice map" and row.page == "/map"
+
+
+def test_signed_out_the_address_is_optional_but_checked(client, db_session):
+    assert client.post(URL, json={"message": "No reply needed"}).status_code == 201
+    assert db_session.scalar(select(Feedback)).contact is None
+    assert client.post(URL, json={"message": "Reply please", "contact": "not an address"}).status_code == 422
+
+
+def test_signed_in_a_typed_address_is_dropped(make_client, db_session):
+    c = make_client()
+    signup(c)
+    assert c.post(URL, json={"message": "hello there", "contact": "other@example.com"}).status_code == 201
+    row = db_session.scalar(select(Feedback))
+    assert row.contact is None and row.signed_out is False
+
+
+def test_signed_out_limited_per_address(client):
+    codes = [client.post(URL, json={"message": f"thought {i}"}).status_code for i in range(6)]
+    assert codes == [201] * 5 + [429]
+
+
+def test_signed_out_all_together_have_a_ceiling(client, monkeypatch):
+    monkeypatch.setattr(feedback_api.signed_out_everyone, "limit", 2)
+    monkeypatch.setattr(feedback_api.by_ip, "limit", 50)
+    codes = [client.post(URL, json={"message": f"thought {i}"}).status_code for i in range(3)]
+    assert codes == [201, 201, 429]
+
+
+def test_signed_out_a_double_tap_is_one_message(client):
+    first = client.post(URL, json={"message": "Please add Lake X"}).json()["id"]
+    assert client.post(URL, json={"message": "Please add Lake X"}).json()["id"] == first
+
+
+def test_admins_see_a_signed_out_message_as_such(make_client, db_session):
+    make_client().post(URL, json={"message": "From a visitor", "contact": "v@example.com"})
+    a = _admin(make_client, db_session)
+    item = a.get("/api/admin/feedback").json()["items"][0]
+    assert item["signed_out"] is True and item["contact"] == "v@example.com" and item["user_id"] is None
+    assert "signed out" in svc.as_text(list(db_session.scalars(select(Feedback)).all()))
 
 
 def test_it_is_saved_with_the_account_and_page(make_client, db_session):

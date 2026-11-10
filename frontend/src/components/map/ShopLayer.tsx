@@ -5,6 +5,7 @@ import { Marker, Popup } from "react-leaflet";
 
 import { useT } from "@/i18n/client";
 import type { Shop } from "@/lib/api/types";
+import { MAP_POPUP_PAD } from "./popupPad";
 import { directionsUrl } from "./shops";
 import { displayLongitude, type StateRegion } from "./usStates";
 
@@ -32,7 +33,7 @@ export function ShopMarkers({ shops, region = null }: { shops: Shop[]; region?: 
           title={`${s.name}, ${t[s.kind]}`}
           zIndexOffset={200}
         >
-          <Popup className="shop-popup">
+          <Popup className="shop-popup" {...MAP_POPUP_PAD}>
             <div className="shop-pop">
               <span className="shop-pop-kind">{t[s.kind]}</span>
               <strong>{s.name}</strong>

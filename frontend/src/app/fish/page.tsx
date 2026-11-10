@@ -8,8 +8,8 @@ import { Handbook } from "@/components/fish/Handbook";
 import { PageTransition } from "@/components/motion/Transition";
 import { BaitRules } from "@/components/rules/RegionGate";
 import { StatePicker } from "@/components/ui/StatePicker";
-import { listHandbook, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
-import type { HandbookTopic, SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
+import { listGear, listHandbook, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
+import type { GearItem, HandbookTopic, SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
 
 // Render on each request, not once during `next build`. A build made
 // without the API running (a Docker image, CI) would otherwise bake in the
@@ -29,12 +29,14 @@ export default async function FishGuidePage() {
   let guides: SpeciesGuide[] = [];
   let photos: SpeciesPhotos = {};
   let handbook: HandbookTopic[] = [];
+  let gear: GearItem[] = [];
   let backendError: string | null = null;
   try {
-    [guides, photos, handbook] = await Promise.all([
+    [guides, photos, handbook, gear] = await Promise.all([
       listSpeciesGuides(),
       listSpeciesPhotos(),
       listHandbook().catch(() => []),
+      listGear().then((g) => g.items).catch(() => []),
     ]);
   } catch {
     backendError = t.loadError;
@@ -55,7 +57,7 @@ export default async function FishGuidePage() {
           <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
             {t.lede}
           </p>
-          <div className="guide-shortcuts"><a href="#fish-species">{t.toSpecies}</a><a href="#handbook">{t.toBasics}</a><Link href="/identify">{t.photoId}</Link></div>
+          <div className="guide-shortcuts"><a href="#fish-species">{t.toSpecies}</a><a href="#handbook">{t.toBasics}</a><Link href="/gear">{t.gearLink}</Link><Link href="/questions">{t.questionsLink}</Link><Link href="/identify">{t.photoId}</Link></div>
           <StatePicker />
         </section>
 
@@ -65,7 +67,7 @@ export default async function FishGuidePage() {
           <div id="fish-species"><FishGrid guides={guides} photos={photos} /></div>
         )}
 
-        {!backendError && <Handbook topics={handbook} />}
+        {!backendError && <Handbook topics={handbook} gear={gear} />}
 
         {baitRules.length > 0 && (
           <div className="rules-stack reveal" style={{ "--i": 6 } as React.CSSProperties}>

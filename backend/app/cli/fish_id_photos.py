@@ -36,7 +36,7 @@ from typing import Any
 
 from app.data_import.provenance import USER_AGENT
 from app.knowledge.species_guides import GUIDES
-from app.services.fish_id_classes import BY_SLUG, CLASSES, OTHER_FISH
+from app.services.fish_id_classes import BY_SLUG, CLASSES, OTHER_FISH, SAME_FISH
 
 CACHE = Path("fishid_cache")
 GBIF = "https://api.gbif.org/v1"
@@ -46,7 +46,10 @@ PAUSE_S = 1.0
 
 # Freshwater fish an angler in the US may well catch that have no guide:
 # the recognizer's "other fish" classes.
-LOOKALIKES = {c.slug: c.scientific for c in CLASSES if c.kind == OTHER_FISH}
+# A steelhead has no taxon of its own (it is a rainbow trout, SAME_FISH):
+# a search by its scientific name would bring rainbow trout, so its photos
+# come from fish_id_commons.py instead.
+LOOKALIKES = {c.slug: c.scientific for c in CLASSES if c.kind == OTHER_FISH and c.slug not in SAME_FISH}
 
 
 def targets() -> dict[str, str]:
@@ -86,7 +89,7 @@ def pick_photos(results: list[dict[str, Any]], want: int, seen: set[str]) -> lis
     return picked
 
 
-def fetch(per_species: int, lookalikes: int, cache: Path = CACHE, years: str = "2024,2026") -> dict[str, Any]:
+def fetch(per_species: int, lookalikes: int, cache: Path = CACHE, years: str = "2024,2026", scan: int = 900) -> dict[str, Any]:
     import httpx
 
     client = httpx.Client(headers={"User-Agent": USER_AGENT}, timeout=60, follow_redirects=True)
@@ -116,7 +119,9 @@ def fetch(per_species: int, lookalikes: int, cache: Path = CACHE, years: str = "
             continue
         seen = {p["observation"] for p in mine}
         picked: list[dict[str, Any]] = []
-        for offset in range(0, 900, 300):
+        # Only some photos are CC0 or CC BY (iNaturalist's default is CC BY-NC),
+        # so a fish with few photos needs a deeper scan (--scan).
+        for offset in range(0, scan, 300):
             page = get(
                 f"{GBIF}/occurrence/search",
                 taxonKey=key, mediaType="StillImage", datasetKey=INATURALIST_DATASET,
@@ -142,14 +147,58 @@ def fetch(per_species: int, lookalikes: int, cache: Path = CACHE, years: str = "
     return manifest
 
 
+def fetch_steelhead(cache: Path = CACHE / "train") -> int:
+    """Rainbow trout observations whose text calls them steelhead (GBIF's
+    full-text `q`), every year, CC0 or CC BY: a steelhead has no taxon of
+    its own. Into the training set only, for a person to look over before
+    fitting (fish_id_commons.py says why: what's called steelhead often
+    isn't a photo of one)."""
+    import httpx
+
+    client = httpx.Client(headers={"User-Agent": USER_AGENT}, timeout=60, follow_redirects=True)
+    key = client.get(f"{GBIF}/species/match", params={"name": "Oncorhynchus mykiss"}).json()["usageKey"]
+    time.sleep(PAUSE_S)
+    page = client.get(
+        f"{GBIF}/occurrence/search",
+        params={"taxonKey": key, "q": "steelhead", "mediaType": "StillImage", "datasetKey": INATURALIST_DATASET,
+                "license": ["CC0_1_0", "CC_BY_4_0"], "limit": 300},
+    ).json()
+    manifest_path = cache / "manifest.json"
+    manifest = json.loads(manifest_path.read_text("utf-8"))
+    have = {str(p["gbif_id"]) for p in manifest["photos"]}
+    folder = cache / "photos" / "steelhead"
+    folder.mkdir(parents=True, exist_ok=True)
+    added = 0
+    for photo in pick_photos(page["results"], 300, set()):
+        if str(photo["gbif_id"]) in have:
+            continue
+        time.sleep(PAUSE_S)
+        target = folder / f"{photo['gbif_id']}.jpg"
+        try:
+            target.write_bytes(client.get(photo["url"]).content)
+        except Exception as exc:  # noqa: BLE001 - one bad photo must not stop the set
+            print(f"  steelhead: {photo['url']}: {exc}", file=sys.stderr)
+            continue
+        manifest["photos"].append({**photo, "slug": "steelhead", "file": str(target.relative_to(cache)).replace("\\", "/")})
+        added += 1
+    manifest_path.write_text(json.dumps(manifest, indent=1), encoding="utf-8")
+    print(f"steelhead: {added} iNaturalist photos added to {cache}")
+    return added
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--per-species", type=int, default=50)
     parser.add_argument("--lookalikes", type=int, default=20, help="photos per look-alike species")
     parser.add_argument("--train", action="store_true", help="the training set: 2015-2023, fishid_cache/train/")
+    parser.add_argument("--scan", type=int, default=900, help="observations to look through per fish for open photos")
+    parser.add_argument("--steelhead", action="store_true", help="only: rainbow trout observations called steelhead, into training")
     args = parser.parse_args(argv)
+    if args.steelhead:
+        fetch_steelhead()
+        return 0
     cache = CACHE / "train" if args.train else CACHE
-    manifest = fetch(args.per_species, args.lookalikes, cache, "2015,2023" if args.train else "2024,2026")
+    manifest = fetch(args.per_species, args.lookalikes, cache, "2015,2023" if args.train else "2024,2026", args.scan)
     print(f"{len(manifest['photos'])} photos in {cache / 'manifest.json'}")
     return 0
 

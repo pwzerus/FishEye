@@ -9,6 +9,8 @@ class FeedbackIn(BaseModel):
     message: str = Field(max_length=MAX_CHARS)
     page: str | None = Field(default=None, max_length=500)
     lang: str | None = Field(default=None, max_length=8)
+    # Signed out only: where to reply, if they want one.
+    contact: str | None = Field(default=None, max_length=254)
 
 
 class FeedbackSentOut(BaseModel):
@@ -27,6 +29,9 @@ class AdminFeedbackOut(BaseModel):
     user_id: int | None
     author_name: str | None
     author_email: str | None
+    # Sent without an account, and the address they left, if any.
+    signed_out: bool = False
+    contact: str | None = None
 
 
 class AdminFeedbackPage(BaseModel):

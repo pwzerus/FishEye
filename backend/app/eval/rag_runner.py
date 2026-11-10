@@ -40,6 +40,8 @@ from app.services.rag.chunking import SHARED_SLUG
 
 from .rag_cases import (
     AMBIGUOUS_CASES,
+    BEGINNER_CASES,
+    BOOKLET_CASES,
     CASES,
     HOLDOUT_CASES,
     NEW_TOPIC_CASES,
@@ -103,6 +105,8 @@ class RagReport:
     stress: SetScore
     holdout: SetScore
     new_topics: SetScore
+    beginner: SetScore  # BEGINNER_CASES (2026-11-08)
+    booklet: SetScore  # BOOKLET_CASES (2026-11-08)
     ambiguous_resolved: float
     ambiguous_wrong: list[str]
     wrong_fish: list[str]  # "<case id>: <passage ids about a fish not asked about>"
@@ -159,6 +163,8 @@ def run(retriever: Retriever | None = None, k: int = rag.DEFAULT_K) -> RagReport
     zh_leaks = [q for q in ZH_OFF_TOPIC if retr.search(q, k=k)]
     zh_nc_ok = sum(1 for q in ZH_NOT_COVERED if not retr.search(q, k=k))
     new_topics, _ = _score(retr, NEW_TOPIC_CASES, k)
+    beginner, _ = _score(retr, BEGINNER_CASES, k)
+    booklet, _ = _score(retr, BOOKLET_CASES, k)
     ambiguous_wrong = [
         f"{cid}: {q} -> {', '.join(retr.resolve(q)[0]) or 'no fish'}"
         for cid, q, want in AMBIGUOUS_CASES
@@ -201,6 +207,8 @@ def run(retriever: Retriever | None = None, k: int = rag.DEFAULT_K) -> RagReport
         stress=stress,
         holdout=holdout,
         new_topics=new_topics,
+        beginner=beginner,
+        booklet=booklet,
         ambiguous_resolved=1 - len(ambiguous_wrong) / len(AMBIGUOUS_CASES),
         ambiguous_wrong=ambiguous_wrong,
         wrong_fish=wrong,
@@ -223,6 +231,8 @@ def _compare() -> int:
         ("paraphrase hit@4", lambda r: f"{r.paraphrase.hit_at_k:.0%}"),
         ("paraphrase MRR", lambda r: f"{r.paraphrase.mrr:.2f}"),
         ("new topics hit@4", lambda r: f"{r.new_topics.hit_at_k:.0%}"),
+        ("beginner questions hit@4", lambda r: f"{r.beginner.hit_at_k:.0%}"),
+        ("booklet questions hit@4", lambda r: f"{r.booklet.hit_at_k:.0%}"),
         ("everyday-word names right", lambda r: f"{r.ambiguous_resolved:.0%}"),
         ("rephrased hit@4", lambda r: f"{r.stress.hit_at_k:.0%}"),
         ("rephrased, untuned hit@4", lambda r: f"{r.holdout.hit_at_k:.0%}"),
@@ -238,7 +248,8 @@ def _compare() -> int:
         print(f"{label:28}" + "".join(f"{fmt(r):>10}" for r in reports))
     for r in reports:
         all_misses = (r.misses + r.chinese.misses + r.paraphrase.misses + r.stress.misses
-                      + r.holdout.misses + r.new_topics.misses)
+                      + r.holdout.misses + r.new_topics.misses + r.beginner.misses
+                      + r.booklet.misses)
         print(f"\n[{r.retriever}] misses: {', '.join(all_misses) or '-'}")
         for w in r.wrong_fish:
             print(f"[{r.retriever}] wrong fish: {w}")
@@ -284,6 +295,10 @@ def main(argv: list[str] | None = None) -> int:
     print(f"rephrased hit@{report.k}:    {report.stress.hit_at_k:.0%}  ({report.stress.cases}), "
           f"untuned {report.holdout.hit_at_k:.0%} ({report.holdout.cases})")
     print(f"new topics hit@{report.k}:   {report.new_topics.hit_at_k:.0%}  ({report.new_topics.cases} questions)")
+    print(f"beginner hit@{report.k}:     {report.beginner.hit_at_k:.0%}  ({report.beginner.cases} questions), "
+          f"misses: {', '.join(report.beginner.misses) or '-'}")
+    print(f"booklet hit@{report.k}:      {report.booklet.hit_at_k:.0%}  ({report.booklet.cases} questions), "
+          f"misses: {', '.join(report.booklet.misses) or '-'}")
     print(f"everyday-word names right: {report.ambiguous_resolved:.0%}  ({len(AMBIGUOUS_CASES)} questions)")
     print(f"wrong-fish answers: {len(report.wrong_fish)}")
     for w in report.wrong_fish:

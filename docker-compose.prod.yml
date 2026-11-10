@@ -65,6 +65,10 @@ services:
       # doesn't carry. Without it, a catch that names a fish waits (503)
       # rather than going up unchecked; everything else works.
       - ./backend/models/fish-id:/app/models/fish-id:ro
+      # The gear camera's model (docs/adr/0048), copied up the same way:
+      # either build (models/gear-id or models/gear-id-small) goes in this
+      # one folder. Empty, /gear simply shows no camera.
+      - ./backend/models/gear-id:/app/models/gear-id:ro
 
   frontend:
     restart: unless-stopped

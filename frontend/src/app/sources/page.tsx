@@ -6,7 +6,7 @@ import { RevealFromHash } from "@/components/sources/RevealFromHash";
 import { localCategory, localFishName, localStateName, localTopicTitle } from "@/i18n/names";
 import { getLocale, getT } from "@/i18n/server";
 import type { Messages } from "@/i18n/messages";
-import { listHandbook, listJurisdictions, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
+import { listHandbook, listJurisdictions, listQuestionSources, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
 import type { GuideSource, HandbookTopic, Jurisdiction, SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
 import { DATA_SOURCES } from "@/lib/dataSources";
 
@@ -56,13 +56,15 @@ export default async function SourcesPage() {
   const t: Messages["sourcesPage"] = all.sourcesPage;
   const guideSite = all.fish.guideSite;
 
-  const [guides, handbook, states, photos]: [SpeciesGuide[], HandbookTopic[], Jurisdiction[], SpeciesPhotos] =
-    await Promise.all([
-      listSpeciesGuides().catch(() => []),
-      listHandbook().catch(() => []),
-      listJurisdictions().catch(() => []),
-      listSpeciesPhotos().catch(() => ({})),
-    ]);
+  const [guides, handbook, states, photos, questionSources]: [
+    SpeciesGuide[], HandbookTopic[], Jurisdiction[], SpeciesPhotos, GuideSource[],
+  ] = await Promise.all([
+    listSpeciesGuides().catch(() => []),
+    listHandbook().catch(() => []),
+    listJurisdictions().catch(() => []),
+    listSpeciesPhotos().catch(() => ({})),
+    listQuestionSources().catch(() => []),
+  ]);
 
   const general = handbook.filter((h) => h.region === "all");
   const categories = [...new Map(general.map((h) => [h.category, h.category_label])).entries()];
@@ -119,6 +121,11 @@ export default async function SourcesPage() {
               </dl>
             </article>
           ))}
+        </Group>
+
+        <Group id="questions" title={t.questions} count={t.count(questionSources.length)}>
+          <p className="muted">{t.questionsLede}</p>
+          <p><Links sources={questionSources} guideSite={guideSite} /></p>
         </Group>
 
         <Group id="rules" title={t.rules} count={t.count(stateRows.length)}>

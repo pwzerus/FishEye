@@ -28,6 +28,7 @@ vi.mock("@/lib/api/client", () => ({
   listSpeciesGuides: async () => [walleye],
   listHandbook: async () => [topic("bait-worms", "all"), topic("rule-license-al", "AL")],
   listJurisdictions: async () => [alabama, montana],
+  listQuestionSources: async () => [agency],
   listSpeciesPhotos: async () => ({
     walleye: { url: "x", width: 1, height: 1, author: "USFWS", license: "Public domain", license_url: null, file_page: "https://commons.example/w", source: "wikimedia" },
   }),

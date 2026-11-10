@@ -1,0 +1,914 @@
+# Labels given by eye, 2026-11-07, for work/check-openf.json (CC BY 2.0
+# Flickr photos from YFCC100M's OpenAI subset, found by their title, tags or
+# description; sheets open2/sheets/openf-NN.jpg). Codes as in notes-open1.txt.
+1 reel-spinning  # reel on a bag with a boilie
+2 drop
+3 no
+4 drop
+5 no
+6 no
+7 no
+8 no
+9 no
+10 no
+11 no
+12 no
+13 no
+14 no
+15 no
+16 no
+17 no  # carp catch shots
+18 no  # carp catch shots
+19 no  # carp catch shots
+20 no  # carp catch shots
+21 no  # carp catch shots
+22 no  # carp catch shots
+23 no  # carp catch shots
+24 no  # carp catch shots
+25 no  # carp catch shots
+26 no  # carp catch shots
+27 no  # carp catch shots
+28 no
+29 drop
+30 no
+31 no
+32 no
+33 no
+34 no
+35 no
+36 no
+37 no
+38 no
+39 no
+40 no
+41 no
+42 no
+43 no
+44 no
+45 no
+46 no
+47 no
+48 drop
+49 no
+50 no
+51 no
+52 no  # a shoal of small fish
+53 tool-bucket  # mesh bait container
+54 drop
+55 no
+56 no
+57 no
+58 bait-corn  # two boilies on a hair rig
+59 no
+60 no
+61 no
+62 drop
+63 no
+64 no
+65 no
+66 no
+67 tool-lifejacket
+68 no
+69 no
+70 no
+71 no
+72 no
+73 no
+74 no
+75 no
+76 no
+77 drop
+78 no
+79 no
+80 no
+81 no
+82 no
+83 drop
+84 no
+85 no
+86 no
+87 no
+88 no
+89 no
+90 no
+91 bait-nightcrawler  # worms in bait cups
+92 bait-nightcrawler
+93 drop
+94 no
+95 no
+96 no
+97 no
+98 no
+99 no
+100 no
+101 no
+102 drop
+103 no
+104 no
+105 no
+106 no
+107 no
+108 no
+109 no
+110 no
+111 no
+112 no
+113 no
+114 no
+115 no
+116 no
+117 no
+118 no
+119 no
+120 no
+121 no
+122 no
+123 no
+124 no
+125 no
+126 no
+127 no
+128 drop  # a pile of shrimp
+129 no
+130 no
+131 no
+132 no
+133 no
+134 no
+135 no
+136 no
+137 drop
+138 no
+139 drop
+140 no
+141 no
+142 no
+143 no
+144 no
+145 no
+146 drop
+147 bait-crayfish  # live crayfish in a hand
+148 no
+149 no
+150 no
+151 no
+152 no
+153 no
+154 no
+155 no
+156 drop
+157 no
+158 no
+159 no
+160 no
+161 no
+162 no
+163 drop
+164 no
+165 tool-lifejacket
+166 no
+167 no
+168 no
+169 no
+170 no
+171 no
+172 no
+173 drop
+174 drop
+175 drop
+176 no
+177 no
+178 no
+179 no
+180 drop
+181 no
+182 drop
+183 no
+184 no
+185 no
+186 no
+187 no
+188 no
+189 no
+190 no
+191 no
+192 no
+193 no
+194 no
+195 no
+196 no
+197 drop
+198 no
+199 no
+200 drop
+201 drop
+202 no
+203 fly-dry  # flies on a display block
+204 fly-dry
+205 fly-dry
+206 fly-dry  # big pike fly
+207 drop
+208 drop
+209 drop
+210 fly-dry
+211 fly-dry
+212 fly-dry
+213 fly-dry
+214 drop
+215 no
+216 drop
+217 no
+218 no
+219 no
+220 drop
+221 fly-dry
+222 fly-dry
+223 fly-dry
+224 no
+225 no
+226 fly-dry  # realistic beetle fly
+227 fly-dry
+228 fly-dry  # tube fly
+229 fly-dry  # bass bugs
+230 drop
+231 fly-dry
+232 fly-dry  # deer-hair mouse
+233 fly-dry
+234 drop
+235 no
+236 fly-dry
+237 fly-dry
+238 drop
+239 drop
+240 drop
+241 fly-dry
+242 fly-dry
+243 drop
+244 fly-dry  # deer-hair frog
+245 no
+246 no
+247 drop
+248 drop
+249 drop
+250 drop
+251 drop
+252 drop
+253 drop
+254 fly-dry
+255 drop
+256 no
+257 drop
+258 drop
+259 fly-dry
+260 drop
+261 no
+262 drop
+263 no
+264 drop
+265 drop
+266 drop
+267 fly-dry  # salmon flies in a case
+268 drop
+269 fly-dry
+270 fly-dry  # studio fly photo
+271 fly-dry  # studio fly photo
+272 fly-dry  # studio fly photo
+273 fly-dry  # studio fly photo
+274 fly-dry  # studio fly photo
+275 fly-dry  # studio fly photo
+276 fly-dry  # studio fly photo
+277 fly-dry  # studio fly photo
+278 fly-dry  # studio fly photo
+279 fly-dry  # studio fly photo
+280 fly-dry  # studio fly photo
+281 fly-dry  # studio fly photo
+282 fly-dry  # studio fly photo
+283 fly-dry  # studio fly photo
+284 fly-dry  # studio fly photo
+285 fly-dry  # studio fly photo
+286 fly-dry  # studio fly photo
+287 fly-dry  # studio fly photo
+288 fly-dry  # studio fly photo
+289 no
+290 drop
+291 no
+292 no
+293 drop
+294 no
+295 sinker-bank  # pear-shaped carp leads
+296 sinker-bank
+297 reel-spinning+sinker-bank
+298 reel-spinning+sinker-bank
+299 sinker-bank
+300 drop
+301 drop
+302 drop
+303 float?
+304 drop
+305 no
+306 rod?  # spinning rod and reel in an angler's hands
+307 no
+308 no
+309 no
+310 no
+311 drop
+312 no
+313 drop
+314 no
+315 no
+316 no
+317 lure?  # a board of lures
+318 no
+319 no
+320 no
+321 no
+322 no
+323 no
+324 no
+325 drop
+326 no  # hook-shaped pendant
+327 no
+328 no
+329 no
+330 no
+331 no
+332 no
+333 drop
+334 no
+335 no
+336 no
+337 rod?  # rods leaning on a pier rail
+338 drop
+339 no
+340 no
+341 no
+342 no
+343 no
+344 no
+345 no
+346 no
+347 no
+348 no
+349 no
+350 no
+351 drop
+352 no
+353 no
+354 no
+355 no
+356 tool-net+reel-spinning
+357 drop
+358 drop
+359 no
+360 no
+361 no
+362 no
+363 drop
+364 no
+365 no
+366 drop
+367 no
+368 no
+369 no
+370 drop
+371 no
+372 drop
+373 no  # cabinet hooks
+374 no
+375 no
+376 no
+377 no
+378 no
+379 no
+380 no
+381 no
+382 no
+383 rod?  # rod sections in a case
+384 no
+385 no
+386 no
+387 no
+388 drop
+389 no
+390 no
+391 drop
+392 no
+393 no
+394 drop
+395 reel-baitcasting  # big conventional reel
+396 no
+397 drop
+398 no
+399 no
+400 hook-j
+401 no
+402 no
+403 no
+404 no
+405 no
+406 no
+407 no
+408 no
+409 drop
+410 no
+411 drop
+412 no
+413 drop
+414 no
+415 no
+416 no
+417 no
+418 no
+419 no
+420 no
+421 no
+422 no
+423 no
+424 no
+425 drop
+426 drop
+427 drop
+428 no
+429 drop
+430 drop
+431 drop
+432 reel-spinning
+433 drop
+434 no
+435 rod?  # a rack of poles
+436 drop
+437 no
+438 no
+439 no
+440 no
+441 no
+442 reel?  # reel close-up on a rod
+443 no
+444 no
+445 no
+446 no
+447 no
+448 no
+449 drop
+450 no
+451 no
+452 no
+453 rod?  # surf rods standing at the water
+454 drop
+455 no
+456 no
+457 rod-ice  # small ice rod and a lure on a table
+458 drop
+459 float-slip  # float on the line beside a rod
+460 no
+461 no
+462 no
+463 drop
+464 no
+465 no
+466 no
+467 drop
+468 no
+469 no
+470 no
+471 no
+472 no
+473 no
+474 no
+475 no
+476 no
+477 no
+478 no
+479 no
+480 no
+481 no
+482 no
+483 no
+484 no
+485 drop
+486 no
+487 no
+488 no
+489 no
+490 no
+491 no
+492 reel-baitcasting
+493 drop
+494 no
+495 no
+496 no
+497 drop
+498 drop
+499 no
+500 drop
+501 no
+502 drop
+503 no
+504 no
+505 no
+506 no
+507 no
+508 no
+509 no
+510 no
+511 no
+512 no
+513 no
+514 no
+515 no
+516 no
+517 no
+518 no
+519 no
+520 no
+521 no
+522 no
+523 no
+524 hard-lure?  # four stickbaits on a table
+525 no
+526 drop
+527 no
+528 tool-tackle-box  # tackle bag and net on a dock
+529 drop
+530 no
+531 drop
+532 no
+533 no
+534 no
+535 rod?  # rod and reel in a child's hands
+536 no
+537 no
+538 no
+539 no
+540 no
+541 no
+542 drop
+543 no
+544 drop
+545 drop
+546 no
+547 drop
+548 no
+549 no
+550 no
+551 no
+552 no
+553 no
+554 no
+555 drop
+556 drop
+557 no
+558 no
+559 no
+560 no
+561 no
+562 reel-baitcasting  # old casting reel on a bench
+563 no
+564 no
+565 no
+566 no
+567 no
+568 no
+569 no
+570 no
+571 no
+572 no
+573 drop
+574 no
+575 no
+576 drop
+577 drop
+578 no
+579 tool-lifejacket
+580 drop
+581 no
+582 drop
+583 no
+584 no
+585 drop
+586 no
+587 no
+588 no
+589 no
+590 no
+591 no
+592 no
+593 no
+594 no
+595 no
+596 drop
+597 no
+598 no
+599 hard-lure?  # minnow plug
+600 drop
+601 no
+602 no
+603 no
+604 drop
+605 no
+606 no
+607 no
+608 no
+609 drop
+610 drop
+611 drop
+612 drop
+613 drop
+614 drop
+615 drop
+616 no
+617 no
+618 no
+619 no
+620 bait-minnow  # small bait fish in cupped hands
+621 no
+622 no
+623 no
+624 no
+625 drop  # dog life vest
+626 no
+627 no
+628 tool-net
+629 drop
+630 no
+631 drop
+632 no
+633 no
+634 no
+635 no
+636 no
+637 no
+638 no
+639 drop
+640 no
+641 no
+642 no
+643 no
+644 no
+645 drop
+646 no
+647 drop
+648 no
+649 no
+650 no
+651 no
+652 no
+653 no
+654 no
+655 no
+656 no
+657 no
+658 no
+659 no
+660 no
+661 no
+662 no
+663 no
+664 drop
+665 drop
+666 no
+667 no
+668 no
+669 no
+670 no
+671 drop
+672 no
+673 no
+674 no
+675 no
+676 no
+677 no
+678 drop
+679 no
+680 no
+681 no
+682 no
+683 no
+684 no
+685 no
+686 no
+687 no
+688 no
+689 no
+690 no
+691 no
+692 no
+693 no
+694 no
+695 no
+696 no
+697 no
+698 no
+699 no
+700 no
+701 no
+702 no
+703 no
+704 no
+705 no
+706 no
+707 no
+708 no
+709 no
+710 no
+711 fly-dry  # streamer fly on a fish
+712 no
+713 no
+714 no
+715 no
+716 no
+717 rod-ice  # ice rods on a bucket
+718 no
+719 no
+720 no
+721 no
+722 no
+723 no
+724 hard-lure?  # minnow plug hanging on its line
+725 no
+726 no
+727 no
+728 no
+729 no
+730 no
+731 drop
+732 no
+733 drop
+734 no
+735 no
+736 rod?  # rod and reel on the grass by a catfish
+737 no
+738 no
+739 drop
+740 drop
+741 no
+742 no
+743 no
+744 no
+745 reel-baitcasting
+746 reel-baitcasting
+747 no
+748 drop
+749 no
+750 no
+751 rod-ice  # tip-up on the ice
+752 no
+753 no
+754 drop
+755 rod-fly
+756 rod-fly  # fly reels on a display
+757 rod-fly  # fly reel close-up
+758 rod-fly  # fly reel close-up
+759 rod-fly  # fly reel close-up
+760 rod-fly  # fly reel close-up
+761 rod-fly  # fly reel close-up
+762 rod-fly  # fly reel close-up
+763 rod-fly  # fly reel close-up
+764 rod-fly  # fly reel close-up
+765 rod-fly  # fly reel close-up
+766 rod-fly  # fly reel close-up
+767 rod-fly  # fly reel close-up
+768 rod-fly  # fly reel close-up
+769 rod-fly
+770 rod-fly  # fly rod, sections, grip, tube
+771 rod-fly  # fly rod, sections, grip, tube
+772 rod-fly  # fly rod, sections, grip, tube
+773 rod-fly  # fly rod, sections, grip, tube
+774 rod-fly  # fly rod, sections, grip, tube
+775 rod-fly  # fly rod, sections, grip, tube
+776 rod-fly  # fly rod, sections, grip, tube
+777 rod-fly  # fly rod, sections, grip, tube
+778 rod-fly  # fly rod, sections, grip, tube
+779 rod-fly  # fly rod, sections, grip, tube
+780 rod-fly  # fly rod, sections, grip, tube
+781 rod-fly  # fly rod, sections, grip, tube
+782 drop
+783 no
+784 rod-fly
+785 fly-dry  # salmon fly beside a salmon
+786 rod?  # rod sections on gravel
+787 rod-fly  # fly reel with line beside a fish
+788 no
+789 rod-fly
+790 no
+791 drop
+792 no
+793 rod-ice  # small rod at an ice hole
+794 rod-fly  # guides and ferrules
+795 rod-fly
+796 rod-fly
+797 rod-fly
+798 drop  # rod tube cap
+799 rod-fly  # cork grip
+800 rod-fly
+801 rod-fly
+802 rod-fly
+803 rod-fly
+804 no
+805 no
+806 no
+807 no
+808 no
+809 drop
+810 drop
+811 drop
+812 drop
+813 drop
+814 no
+815 no
+816 no
+817 no
+818 drop
+819 drop
+820 no
+821 no
+822 drop
+823 no
+824 drop
+825 no
+826 drop
+827 no
+828 rod-fly  # fly reel on a quilt
+829 drop
+830 no
+831 rod-spinning+reel-spinning
+832 no
+833 no
+834 no
+835 no
+836 no
+837 no
+838 no
+839 no
+840 lure-spoon  # engraved spoons
+841 no
+842 drop
+843 no
+844 tool-tackle-box  # tin tackle box
+845 no
+846 no
+847 no
+848 drop
+849 drop
+850 drop
+851 no
+852 drop
+853 sinker-bank
+854 drop
+855 no
+856 no
+857 no
+858 no
+859 tool-lifejacket
+860 drop
+861 drop
+862 no
+863 no
+864 drop
+865 tool-lifejacket  # life jacket loaner station
+866 no
+867 no
+868 no
+869 drop
+870 no
+871 tool-lifejacket  # old cork life vest
+872 no
+873 no
+874 no
+875 no
+876 no
+877 drop
+878 no
+879 no
+880 no
+881 no
+882 no
+883 no
+884 drop
+885 tool-ice-auger
+886 no
+887 no
+888 no
+889 drop
+890 no
+891 no
+892 no
+893 no
+894 tool-stringer  # a stringer of fish
+895 tool-lifejacket
+896 no
+897 no
+898 no
+899 no
+900 no
+901 no
+902 tool-lifejacket
+903 no
+904 no
+905 tool-lifejacket
+906 drop
+907 drop
+908 tool-lifejacket
+909 tool-lifejacket
+910 drop
+911 no

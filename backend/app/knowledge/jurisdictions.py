@@ -314,7 +314,7 @@ STATE_BAIT_RULES: dict[str, tuple[str, ...]] = {
     "RI": (
         'Goldfish may not be used as bait in fresh or estuarine waters, and nonnative bait fish, including goldfish, green sunfish and fathead minnows, may not be imported, sold or held for bait.',
         'Releasing any live fish or invertebrate bait into fresh water is prohibited.',
-        'Freshwater minnows (not young game fish) may be taken for bait with minnow traps, dip nets and seines up to 8 ft by 4 ft (1/4 in mesh); cast nets are banned. Holding more than 100 live minnows, or selling them, needs a DEM licence. Corn and chumming are banned on designated trout waters.',
+        'Nets and seines may not take fish in fresh water except to land a hooked fish or to catch baitfish; cast nets are banned. Holding more than 100 live freshwater minnows, or selling them, needs a DEM licence. Corn and chumming are banned on designated trout waters.',
     ),
     "SC": (
         'No game fish may be used as bait except bream (not redbreast sunfish); trout only on Lakes Hartwell, Russell, Thurmond, Tugaloo, Yonah, Stevens Creek Reservoir and the Savannah River. Game fish used as bait count toward the daily creel limit.',
@@ -568,13 +568,17 @@ _AGENCIES: dict[str, tuple[str, str, str, str]] = {
 }
 
 
+# Where one page doesn't hold all of a state's bait rules (checked 2026-11-06).
+_MORE_BAIT_SOURCES: dict[str, tuple[str, ...]] = {"NC": ("bait-nc-nongame",)}
+
+
 def _uncovered(code: str, name: str) -> Jurisdiction:
     agency, short, limits_url, license_url = _AGENCIES.get(code, (None, None, None, None))
     bait = STATE_BAIT_RULES.get(code, ())
     return Jurisdiction(
         code=code, name=name, agency=agency, agency_short=short, limits_url=limits_url, license_url=license_url,
         bait_rules=bait,
-        bait_rules_source_ids=(f"bait-{code.lower()}",) if bait else (),
+        bait_rules_source_ids=(f"bait-{code.lower()}", *_MORE_BAIT_SOURCES.get(code, ())) if bait else (),
         bait_rules_on_every_bait_question=code in _LIVE_FISH_LIMITED,
         license_from_age=license_age(code),
         license_topic=f"rule-license-{code.lower()}" if code in STATE_LICENSES else None,
@@ -594,6 +598,27 @@ SOURCES.update(
             f"license-{code.lower()}", f"{JURISDICTIONS[code].agency_label}: fishing license rules", entry.url, "agency"
         )
         for code, entry in STATE_LICENSES.items()
+    }
+)
+
+# How many fish may be kept, and how big, per state: the agency's limits page
+# (added 2026-11-08). The numbers aren't copied: they change every year. The
+# three states with written rules keep their agencies' prefixes, as their
+# other pages do.
+_LIMITS_SOURCE_IDS = {"TX": "tpwd-limits", "GA": "garegs-limits", "CA": "cdfw-limits"}
+
+
+def limits_source_id(code: str) -> str:
+    return _LIMITS_SOURCE_IDS.get(code, f"limits-{code.lower()}")
+
+
+SOURCES.update(
+    {
+        limits_source_id(code): Source(
+            limits_source_id(code), f"{j.agency_label}: size and bag limits", j.limits_url, "agency"
+        )
+        for code, j in JURISDICTIONS.items()
+        if j.limits_url
     }
 )
 

@@ -57,7 +57,7 @@ def classes_digest() -> str:
     return hashlib.sha256(text.encode()).hexdigest()[:16]
 
 
-def build(dest: Path, model_name: str) -> int:
+def build(dest: Path, model_name: str, text_only: bool = False) -> int:
     try:
         import numpy as np
         import open_clip
@@ -113,6 +113,20 @@ def build(dest: Path, model_name: str) -> int:
     dest.mkdir(parents=True, exist_ok=True)
     np.save(dest / "text.npy", np.stack(rows).astype(np.float32))
     (dest / "classes.json").write_text(json.dumps(labels, indent=1) + "\n", encoding="utf-8")
+    if text_only:
+        # The image encoder is unchanged (same weights, same commit), so the
+        # ONNX files and every cached photo vector stay as they are: only the
+        # class list and its text vectors are new.
+        source = json.loads((dest / "SOURCE.json").read_text("utf-8"))
+        if source.get("revision") != info.sha:
+            print(f"{dest} holds another revision ({source.get('revision')}); build it in full.", file=sys.stderr)
+            return 1
+        source["classes_digest"] = classes_digest()
+        source["text_built_at"] = datetime.now(UTC).isoformat(timespec="seconds")
+        (dest / "SOURCE.json").write_text(json.dumps(source, indent=2) + "\n", encoding="utf-8")
+        print(f"Text vectors for {len(labels)} classes saved to {dest}; the image encoder was left as it is.")
+        print("Next: python -m app.cli.fish_id_train (the old head no longer fits the class list)")
+        return 0
 
     class ImageEncoder(torch.nn.Module):
         def __init__(self, clip: torch.nn.Module) -> None:
@@ -176,10 +190,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dest", type=Path, default=DEFAULT_DIR)
     parser.add_argument("--model", choices=sorted(SOURCES), default="bioclip-2")
     parser.add_argument("--quantize-only", action="store_true", help="only compress an existing build")
+    parser.add_argument("--text-only", action="store_true", help="only the class list and its text vectors (the classes changed, the model didn't)")
     args = parser.parse_args(argv)
     if args.quantize_only:
         return quantize(args.dest)
-    return build(args.dest, args.model)
+    return build(args.dest, args.model, text_only=args.text_only)
 
 
 if __name__ == "__main__":

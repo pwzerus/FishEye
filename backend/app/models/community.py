@@ -176,6 +176,12 @@ class Feedback(Base):
     message: Mapped[str] = mapped_column(Text)
     page: Mapped[str | None] = mapped_column(String(200), nullable=True)
     lang: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    # Sent without an account. Null on rows from before signed-out feedback,
+    # which all came from an account; a null user_id alone can also mean
+    # the account was deleted since.
+    signed_out: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    # An address a signed-out sender left so we can reply; optional.
+    contact: Mapped[str | None] = mapped_column(String(254), nullable=True)
     status: Mapped[str] = mapped_column(String(16), default=FEEDBACK_NEW, index=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
     handled_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)

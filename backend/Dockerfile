@@ -15,7 +15,7 @@ RUN pip install -r requirements.txt -r requirements-semantic.txt
 # commit that was reviewed, then compressed to int8. The uncompressed copy
 # is deleted: the app uses the int8 file, and it saves 470 MB of image.
 # Only its script is copied in first, so editing app code doesn't redo this:
-# compressing takes about 1.4 GB of memory, and the server has 2.
+# compressing takes about 1.4 GB of memory, and the server has 4.
 COPY app/__init__.py ./app/
 COPY app/cli/__init__.py app/cli/fetch_embedding_model.py ./app/cli/
 ARG E5_REVISION=614241f622f53c4eeff9890bdc4f31cfecc418b3

@@ -150,11 +150,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model-dir", type=Path, default=Path("models/fish-id"))
     parser.add_argument("--out", type=Path)
     parser.add_argument("--sweep", action="store_true", help="also try other thresholds")
+    parser.add_argument("--set", type=Path, default=CACHE, help="a folder with a manifest.json (fishid_cache/commons: the Commons set)")
     args = parser.parse_args(argv)
 
-    photos = json.loads((CACHE / "manifest.json").read_text("utf-8"))["photos"]
+    photos = [p for p in json.loads((args.set / "manifest.json").read_text("utf-8"))["photos"] if p["slug"] in BY_SLUG]
     recognizer = FishRecognizer(args.model_dir)
-    vecs = vectors(recognizer, photos)
+    vecs = vectors(recognizer, photos, args.set)
     res = evaluate(recognizer, photos, vecs, POLICY)
     text = report(res, recognizer.name, len(photos), POLICY)
     print(text)

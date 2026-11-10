@@ -63,4 +63,4 @@ def test_the_reply_counts_the_guides_and_says_what_rules_there_are():
     assert "nineteen" not in replies.coverage("en")
     assert "license rules" in replies.coverage("en") and "执照" in replies.coverage("zh")
     n, dc = j.license_count()
-    assert n == 45 and dc
+    assert n == 50 and dc

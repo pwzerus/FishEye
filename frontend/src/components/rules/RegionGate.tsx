@@ -4,6 +4,9 @@ import type { ReactNode } from "react";
 
 import { useLocale, useT } from "@/i18n/client";
 import { localStateName } from "@/i18n/names";
+import { StatePicker } from "@/components/ui/StatePicker";
+import Link from "next/link";
+import { stateSlug } from "@/lib/stateSlug";
 import type { Jurisdiction } from "@/lib/api/types";
 import { useJurisdictions, useSelectedJurisdiction, useSelectedState } from "@/lib/jurisdiction";
 
@@ -44,13 +47,13 @@ export function OtherStateRules({ subject }: { subject?: string }) {
 }
 
 /** "Check TPWD's current limits": the selected state's agency when FishEye
- * has one, every agency it has when no state is chosen, and a plain pointer
- * otherwise — a link only where one was reviewed. `texasUrl` stands in
- * while the state list loads. */
-export function LimitsNote({ texasUrl, className }: { texasUrl: string; className?: string }) {
+ * has one, and a plain pointer otherwise — a link only where one was
+ * reviewed. With no state chosen, the state picker (2026-11-06: not every
+ * agency in the country). `texasUrl` is no longer used; callers still pass it. */
+export function LimitsNote({ className }: { texasUrl?: string; className?: string }) {
   const state = useSelectedState();
   const list = useJurisdictions();
-  const { stateRules: t, common } = useT();
+  const { stateRules: t } = useT();
   const locale = useLocale();
   const j = state ? list?.find((x) => x.code === state) ?? null : null;
   // Every state's agency page is on file now, not only the states FishEye
@@ -62,7 +65,10 @@ export function LimitsNote({ texasUrl, className }: { texasUrl: string; classNam
         <a href={j.limits_url} target="_blank" rel="noreferrer">
           {t.checkLimits(j.agency_short ?? j.agency ?? j.name)}
         </a>
-        {t.beforeKeep}
+        {t.beforeKeep}{" "}
+        <Link href={`/rules/${stateSlug(j.name)}`} className="rules-limits-link">
+          {t.allRules(localStateName(j.code, j.name, locale))}
+        </Link>
       </p>
     );
   }
@@ -76,22 +82,13 @@ export function LimitsNote({ texasUrl, className }: { texasUrl: string; classNam
       <p className={className}>{t.limitsVaryYours}</p>
     );
   }
-  const covered: Pick<Jurisdiction, "code" | "name" | "agency_short" | "limits_url">[] = list
-    ? list.filter((x) => x.covered && x.limits_url)
-    : [{ code: "TX", name: "Texas", agency_short: "TPWD", limits_url: texasUrl }];
+  // No state chosen: one line and the picker, not every agency in the
+  // country (a list of 40-odd links that nobody reads).
   return (
-    <p className={className}>
-      {t.currentLimits}
-      {covered.map((x, i) => (
-        <span key={x.code}>
-          {i > 0 && common.listSep}
-          <a href={x.limits_url ?? undefined} target="_blank" rel="noreferrer">
-            {localStateName(x.code, x.name, locale)} ({x.agency_short})
-          </a>
-        </span>
-      ))}
-      {t.elsewhere}
-    </p>
+    <div className={className}>
+      <p>{t.limitsPickState}</p>
+      <StatePicker className="state-picker state-picker-inline" />
+    </div>
   );
 }
 

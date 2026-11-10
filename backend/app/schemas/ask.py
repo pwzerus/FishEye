@@ -42,6 +42,10 @@ class AskCitationOut(BaseModel):
     excerpt: str
     region: str  # a state code for a passage stating that state's rules, else "all"
     sources: list[GuideSourceOut]
+    # The question library only (docs/adr/0051): what the answer rests on, and
+    # the language of title and excerpt when it isn't the guides' English.
+    basis: str = ""
+    lang: str = "en"
 
 
 class AskRetrievedOut(BaseModel):

@@ -87,8 +87,11 @@ export default async function FieldHome() {
     </section>
     <section className="home-actions" aria-label={t.actions}>
       {([
-        { icon: "map", title: t.actionMap, text: t.actionMapText, href: "/map" },
+        // Learning first (the product owner, 2026-11-06): the fish, the rules, then where and questions.
         { icon: "fish", title: t.actionFish, text: t.actionFishText, href: "/fish" },
+        { icon: "pin", title: t.actionRules, text: t.actionRulesText, href: "/rules" },
+        { icon: "hook", title: t.actionGear, text: t.actionGearText, href: "/gear" },
+        { icon: "map", title: t.actionMap, text: t.actionMapText, href: "/map" },
         { icon: "ask", title: t.actionAsk, text: t.actionAskText, href: "/ask" },
       ] as const).map((action) => <Link key={action.href} href={action.href} className="home-action"><span className="home-action-icon"><ActionIcon name={action.icon}/></span><span><h2>{action.title}</h2><p>{action.text}</p></span><ActionIcon name="arrow"/></Link>)}
     </section>

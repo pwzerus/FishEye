@@ -36,6 +36,9 @@ export function LegalLinks({ className = "legal-links" }: { className?: string }
       <Link href="/privacy">{t.privacy}</Link>
       <Link href="/terms">{t.terms}</Link>
       <Link href="/copyright">{t.copyright}</Link>
+      <Link href="/rules">{t.rules}</Link>
+      <Link href="/gear">{t.gear}</Link>
+      <Link href="/questions">{t.questions}</Link>
       <Link href="/sources">{t.sources}</Link>
       <a href={`mailto:${LEGAL.contactEmail}`}>{t.contact}</a>
     </nav>

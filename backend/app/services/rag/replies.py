@@ -135,6 +135,10 @@ def coverage(lang: str) -> str:
     )
 
 
+# When every passage shown is one the question library has in Chinese.
+PASSAGES_INTRO_ZH_ORIGINAL = "以下是 FishEye 里的相关内容："
+
+
 def passages_intro(lang: str) -> str:
     if lang == "zh":
         return "以下是 FishEye 指南里的相关内容（原文为英文）："

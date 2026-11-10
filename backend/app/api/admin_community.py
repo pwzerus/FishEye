@@ -556,6 +556,8 @@ def _feedback_out(r: Feedback) -> AdminFeedbackOut:
         user_id=r.user_id,
         author_name=r.user.display_name if r.user else None,
         author_email=r.user.email if r.user else None,
+        signed_out=bool(r.signed_out),
+        contact=r.contact,
     )
 
 

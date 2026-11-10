@@ -12,4 +12,5 @@ export const DATA_SOURCES = [
   { id: "nws", label: "National Weather Service", url: "https://www.weather.gov/" },
   { id: "census", label: "US Census Bureau: county boundaries", url: "https://www.census.gov/geographies/mapping-files/time-series/geo/cartographic-boundary.html" },
   { id: "bioclip", label: "BioCLIP 2 (Imageomics), with iNaturalist photos through GBIF", url: "https://huggingface.co/imageomics/bioclip-2" },
+  { id: "gearcam", label: "Perception Encoder (Meta), with Open Images V7 (Google) and Wikimedia Commons photos", url: "https://huggingface.co/timm/PE-Core-L-14-336" },
 ] as const;

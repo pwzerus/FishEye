@@ -142,7 +142,8 @@ CASES: tuple[RagCase, ...] = (
     _c("texas-rig", "how do I texas rig a worm", "largemouth-bass#setup-2"),
     _c("striper-rod", "what rod for stripers", "striped-bass#setup-1", "striped-bass#setup-2", "striped-bass#setup-3"),
     _c("bluecat-line", "what line strength for blue catfish", "blue-catfish#setup-1", "blue-catfish#setup-2"),
-    _c("kid-pole", "easiest setup for a kid who has never fished", "bluegill#setup-1", "bluegill#setup-2", note="no species named"),
+    _c("kid-pole", "easiest setup for a kid who has never fished", "bluegill#setup-1", "bluegill#setup-2",
+       "all-fish#method-kids", note="no species named; Taking kids fishing (2026-11-08) gives the same setup"),
     _c("spotted-finesse", "spotted bass finesse rig", "spotted-bass#setup-1", "spotted-bass#setup-2"),
     # --- where and when ---
     _c("bluegill-summer", "where do bluegill hang out in summer", "bluegill#where_and_when"),
@@ -269,6 +270,15 @@ CASES: tuple[RagCase, ...] = (
 # guides use. Kept apart from CASES so each retriever's numbers on the old
 # set stay comparable with the history in ADRs 0014 and 0024.
 ZH_CASES: tuple[RagCase, ...] = (
+    # Cold-water fish and why bait works, added 2026-11-06.
+    _c("zh-gear-beginner", "钓鱼新手需要买什么装备", "all-fish#start-what-to-buy"),
+    _c("zh-cw-steelhead", "硬头鳟和虹鳟是同一种鱼吗", "all-fish#id-steelhead-rainbow"),
+    _c("zh-cw-salmon-id", "怎么分辨国王鲑和银鲑", "all-fish#id-salmon"),
+    _c("zh-cw-salmon-run", "三文鱼什么时候洄游", "all-fish#timing-runs"),
+    _c("zh-cw-laketrout", "湖鳟吃什么，在多深的地方", "all-fish#method-lake-trout"),
+    _c("zh-cw-thermocline", "夏天为什么鱼都在深水里", "all-fish#cond-thermocline"),
+    _c("zh-cw-senses", "鱼是靠嗅觉还是视觉找饵的", "all-fish#bait-why-it-works"),
+    _c("zh-cw-sturgeon", "鲟鱼怎么钓", "all-fish#method-sturgeon"),
     _c("zh-bass-bait", "鲈鱼用什么饵", "largemouth-bass#live_baits", "largemouth-bass#why_these_baits",
        "spotted-bass#why_these_baits", "guadalupe-bass#why_these_baits"),
     _c("zh-kill", "怎么杀鱼最人道", "all-fish#care-dispatch-bleed"),
@@ -320,7 +330,8 @@ PARAPHRASE_CASES: tuple[RagCase, ...] = (
     # cast-spinning counts: it is the passage that says a spincast reel's
     # enclosed housing is what stops it tangling (docs/adr/0026).
     _c("para-kid-reel", "my six year old wants to try, which reel is least likely to tangle",
-       "all-fish#tackle-reels", "all-fish#cast-spinning"),
+       "all-fish#tackle-reels", "all-fish#cast-spinning", "all-fish#method-kids",
+       note="Taking kids fishing (2026-11-08) names the spincast reel and why it tangles less"),
     _c("para-braid-knot", "which knot holds best on braided line", "all-fish#knot-palomar"),
     _c("para-invisible-line", "which line is hardest for fish to see", "all-fish#tackle-line"),
     _c("para-grasshopper", "how do I put a grasshopper on", "all-fish#bait-insects"),
@@ -577,6 +588,23 @@ AMBIGUOUS_CASES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
 
 # ===== the topics added with docs/adr/0026 =====
 NEW_TOPIC_CASES: tuple[RagCase, ...] = (
+    # Cold-water fish and why bait works, added 2026-11-06.
+    # What to buy (app/knowledge/gear.py), added 2026-11-06.
+    _c("gear-beginner", "what gear does a beginner need", "all-fish#start-what-to-buy"),
+    _c("gear-buy", "what do I need to buy to start fishing", "all-fish#start-what-to-buy"),
+    _c("gear-split-shot", "what is a split shot", "all-fish#tackle-split-shot"),
+    _c("cw-steelhead-rainbow", "is a steelhead the same as a rainbow trout", "all-fish#id-steelhead-rainbow"),
+    _c("cw-steelhead-bait", "what bait do I use for steelhead in a river", "all-fish#method-steelhead"),
+    _c("cw-steelhead-when", "when do steelhead run up the rivers", "all-fish#timing-runs"),
+    _c("cw-chinook-coho", "how can I tell a chinook from a coho", "all-fish#id-salmon"),
+    _c("cw-salmon-troll", "how do you troll for salmon on lake michigan", "all-fish#method-great-lakes-trolling"),
+    _c("cw-laketrout", "where do lake trout live and what do they eat", "all-fish#method-lake-trout"),
+    _c("cw-sturgeon", "how do people catch lake sturgeon", "all-fish#method-sturgeon"),
+    _c("cw-cisco", "what is the difference between a cisco and a whitefish", "all-fish#id-whitefish-cisco"),
+    _c("cw-thermocline", "why are fish deep in the middle of summer", "all-fish#cond-thermocline"),
+    _c("cw-senses", "how do fish find bait, by smell or sight", "all-fish#bait-why-it-works"),
+    _c("cw-perch-ice", "how do I ice fish for perch", "all-fish#method-ice-perch", "yellow-perch#where_and_when", "yellow-perch#live_baits"),
+    _c("cw-stream-drift", "how do I drift a worm for trout in a stream", "all-fish#method-stream-trout-bait", "all-fish#method-stream"),
     # The handbook topics added 2026-11-01.
     _c("rig-wacky", "how do I set up a wacky rig", "all-fish#rig-wacky"),
     _c("rig-drop", "what is a drop shot rig", "all-fish#rig-drop-shot"),
@@ -637,4 +665,179 @@ NEW_TOPIC_CASES: tuple[RagCase, ...] = (
     _c("freeze", "how do I freeze the fish I caught", "all-fish#cook-freezing"),
     _c("freezer-burn", "what causes freezer burn on fish", "all-fish#cook-freezing"),
     _c("keep-hot-day", "how do I stop my catch from going bad on a hot day", "all-fish#care-keeping"),
+)
+
+
+# Questions beginners ask (2026-11-08), written for FishEye in our own words,
+# plus a few met on forums and paraphrased (data-sourcing skill, QUESTIONS
+# ONLY): no post's wording is stored. They were put to Ask before the
+# handbook topics on bites, landing, no bites, bait thieves, snags, line
+# twist, manners, kids, lightning, heat and cold water were written, and
+# found those gaps (docs/adr/0049). State-less, like the other sets; the
+# state rules they also asked about (limits, a second rod) are tests in
+# tests/test_rag.py. Still not covered, so not here: caring for a reel,
+# when to change line, a hook in your own skin, muddy-tasting fish.
+_A = "all-fish#"
+BEGINNER_CASES: tuple[RagCase, ...] = (
+    # gear
+    _c("bg-first-setup", "I've never fished before, what do I actually need to buy", f"{_A}start-what-to-buy"),
+    _c("bg-spin-vs-bait", "should a beginner get a spinning reel or a baitcaster", f"{_A}tackle-reels", f"{_A}cast-baitcast"),
+    _c("bg-push-button", "are push button reels any good", f"{_A}tackle-reels", f"{_A}cast-spinning", f"{_A}method-kids"),
+    _c("bg-rod-length", "what length rod should I get for fishing ponds", f"{_A}tackle-rods"),
+    _c("bg-rod-power", "what does medium light mean on a rod", f"{_A}tackle-rods"),
+    _c("bg-braid-mono", "should I use braid or mono", f"{_A}tackle-line"),
+    _c("bg-hook-numbers", "why is a size 1/0 hook bigger than a size 6", f"{_A}tackle-hooks"),
+    _c("bg-landing-net", "do I need a landing net", f"{_A}start-what-to-buy", f"{_A}technique-landing"),
+    # rigging
+    _c("bg-tie-hook", "how do I tie a hook onto my line", f"{_A}knot-improved-clinch", f"{_A}knot-palomar"),
+    _c("bg-spool", "how do I put new line on a spinning reel", f"{_A}trouble-line-twist", f"{_A}knot-arbor"),
+    _c("bg-line-to-reel", "how do I tie the line to the reel spool", f"{_A}knot-arbor"),
+    _c("bg-bobber-depth", "how deep should I set my bobber", f"{_A}rig-slip-bobber", f"{_A}tackle-bobbers"),
+    _c("bg-swivel", "do I need a swivel", f"{_A}tackle-leaders", note="was turned away by the gate"),
+    _c("bg-knot-slips", "my knot keeps coming undone", f"{_A}knot-tips", note="was turned away by the gate"),
+    # bait and lures
+    _c("bg-worm-on", "how do I put a worm on a hook so it stays on", f"{_A}bait-worms", f"{_A}trouble-stolen-bait"),
+    _c("bg-keep-worms", "how do I keep nightcrawlers alive", f"{_A}bait-worms"),
+    _c("bg-keep-minnows", "how do I keep minnows alive all day", f"{_A}bait-minnows"),
+    _c("bg-lure-color", "what color lure should I use", f"{_A}cond-clarity"),
+    _c("bg-crankbait", "how do I fish a crankbait", f"{_A}lure-crankbaits"),
+    _c("bg-topwater", "when should I throw a topwater lure", f"{_A}lure-topwater"),
+    _c("bg-jig", "how do you work a jig", f"{_A}rig-jigs", f"{_A}lure-soft-plastics"),
+    _c("bg-catfish-bait", "what is the best bait for channel catfish", "channel-catfish#why_these_baits",
+       "channel-catfish#live_baits"),
+    # where and when
+    _c("bg-best-time", "what time of day is best to fish", f"{_A}timing-day"),
+    _c("bg-rain", "is it good to fish in the rain", f"{_A}cond-light"),
+    _c("bg-wind", "does wind help or hurt fishing", f"{_A}cond-wind"),
+    _c("bg-front", "why did the fish stop biting after the cold front", f"{_A}cond-fronts"),
+    _c("bg-river", "where do fish hide in a river", f"{_A}method-stream"),
+    _c("bg-depth", "how do I know how deep the fish are", f"{_A}cond-thermocline"),
+    _c("bg-white-bass-run", "when is the white bass run", "white-bass#where_and_when"),
+    # bites, playing and landing
+    _c("bg-know-bite", "how do I know if a fish is biting", f"{_A}technique-bite", note="was not covered"),
+    _c("bg-set-hook", "how do you set the hook", f"{_A}technique-bite", f"{_A}tackle-circle-hooks"),
+    _c("bg-bobber-down", "my bobber went under, what do I do", f"{_A}technique-bite"),
+    _c("bg-fight", "how do I reel in a big fish without breaking the line", f"{_A}technique-landing",
+       f"{_A}technique-drag"),
+    _c("bg-drag", "how tight should my drag be", f"{_A}technique-drag"),
+    _c("bg-lost-fish", "why do fish keep coming off before I land them", f"{_A}technique-landing",
+       note="was not covered"),
+    _c("bg-net-how", "how do you use a landing net", f"{_A}technique-landing", note="was turned away by the gate"),
+    _c("bg-out-of-water", "how do I get the fish out of the water once it's close", f"{_A}technique-landing"),
+    _c("bg-hold-catfish", "how do I hold a catfish without getting stung", f"{_A}safe-handling"),
+    _c("bg-unhook", "how do I take the hook out of a fish", f"{_A}care-release", f"{_A}safe-handling"),
+    _c("bg-swallowed", "the fish swallowed the hook, what should I do", f"{_A}care-deep-hook", f"{_A}care-release"),
+    # when it isn't working
+    _c("bg-no-bites", "I've been fishing for hours and haven't had a single bite, what am I doing wrong",
+       f"{_A}trouble-no-bites", note="was not covered"),
+    _c("bg-bait-stolen", "something keeps stealing my bait but I never hook it", f"{_A}trouble-stolen-bait"),
+    _c("bg-snag", "my hook is stuck on something underwater, how do I get it free", f"{_A}trouble-snags"),
+    _c("bg-snags-avoid", "how do I stop getting snagged all the time", f"{_A}trouble-snags"),
+    _c("bg-line-twist", "my line keeps twisting and coming off the reel in loops", f"{_A}trouble-line-twist"),
+    _c("bg-backlash", "how do I fix a backlash bird's nest on my baitcaster", f"{_A}cast-baitcast"),
+    _c("bg-skunked-docks", "I keep coming home with nothing when I fish around docks and rocks",
+       f"{_A}trouble-no-bites", f"{_A}cond-cover", note="paraphrased from a forum"),
+    _c("bg-backlash-line", "is my line making my reel backlash or is it just my thumb", f"{_A}cast-baitcast",
+       note="paraphrased from a forum"),
+    # keeping, eating and safety
+    _c("bg-keep-or-release", "should I keep the fish or let it go", f"{_A}care-release"),
+    _c("bg-on-ice", "how long can I keep fish on ice", f"{_A}care-keeping"),
+    _c("bg-salt-ice", "does adding salt to the ice keep my fish colder", f"{_A}care-keeping",
+       note="paraphrased from a forum"),
+    _c("bg-safe-eat", "is it safe to eat fish from a city pond", f"{_A}care-eating-safely", f"{_A}care-advisories"),
+    _c("bg-freeze", "how long can I freeze fish", f"{_A}cook-freezing"),
+    _c("bg-lightning", "is it safe to fish when there's thunder", f"{_A}safe-lightning", note="was not covered"),
+    _c("bg-heat", "how do I stay safe fishing in the summer heat", f"{_A}safe-heat", note="was not covered"),
+    _c("bg-cold-water", "what happens if I fall into cold water", f"{_A}safe-cold-water",
+       note="was turned away by the gate"),
+    _c("bg-ice", "how thick does ice need to be to walk on", f"{_A}safe-ice"),
+    _c("bg-manners", "how close can I fish to someone else on the bank", f"{_A}rule-manners", note="was not covered"),
+    _c("bg-old-line", "what do I do with old fishing line", f"{_A}rule-line-disposal"),
+    _c("bg-kids", "how do I take my kids fishing without them getting bored", f"{_A}method-kids",
+       note="was not covered"),
+    # the same, in Chinese
+    _c("bg-zh-knot", "鱼钩怎么绑在线上", f"{_A}knot-improved-clinch", f"{_A}knot-palomar"),
+    _c("bg-zh-no-bite", "钓了一下午一口都没有是什么原因", f"{_A}trouble-no-bites"),
+    _c("bg-zh-set-hook", "怎么判断鱼咬钩了，什么时候提竿", f"{_A}technique-bite"),
+    _c("bg-zh-snag", "鱼钩挂底了怎么办", f"{_A}trouble-snags"),
+    _c("bg-zh-line-twist", "鱼线老是打卷缠在一起怎么办", f"{_A}trouble-line-twist"),
+    _c("bg-zh-release", "放流的时候怎么做才不会伤到鱼", f"{_A}care-release"),
+    _c("bg-zh-eat-safe", "湖里钓的鱼能吃吗", f"{_A}care-eating-safely"),
+    _c("bg-zh-drag", "卸力应该调多紧", f"{_A}technique-drag", note="was turned away by the gate"),
+    _c("bg-zh-thunder", "打雷的时候还能钓鱼吗", f"{_A}safe-lightning"),
+    # Second pass over BD Outdoors and Anglerboard (2026-11-08, docs/adr/0050):
+    # thread titles only, paraphrased.
+    _c("bg-gone-bad", "how can I tell if a fish has gone bad", f"{_A}care-fresh-or-spoiled",
+       note="paraphrased from a forum; was answered with fish identification"),
+    _c("bg-what-wear", "what should I wear to go fishing", f"{_A}safe-clothing", note="paraphrased from a forum"),
+    _c("bg-winter-boots", "what boots keep my feet warm when fishing in winter", f"{_A}safe-clothing",
+       note="paraphrased from a forum"),
+    _c("bg-tungsten", "are tungsten weights worth the money", f"{_A}tackle-sinkers", f"{_A}tackle-lead",
+       note="paraphrased from a forum; was turned away by the gate"),
+    _c("bg-nothing-all-year", "I haven't caught anything all year, what am I doing wrong", f"{_A}trouble-no-bites",
+       note="paraphrased from a forum; was turned away by the gate"),
+    _c("bg-braid-life", "how long does braided line last before I need to replace it", f"{_A}tackle-new-line",
+       note="paraphrased from a forum; was turned away by the gate"),
+    _c("bg-gritty-reel", "my reel felt smooth and now it feels gritty after one trip, what happened",
+       f"{_A}tackle-care", note="paraphrased from a forum"),
+    _c("bg-casting-weight", "what does the casting weight printed on my rod mean", f"{_A}tackle-rods",
+       note="paraphrased from a forum"),
+    _c("bg-slip-stuck", "my slip bobber won't slide down the line", f"{_A}rig-slip-bobber", f"{_A}tackle-bobbers",
+       note="paraphrased from a forum"),
+    _c("bg-dough-falls-off", "my dough bait keeps falling off the hook", f"{_A}bait-dough-corn",
+       note="paraphrased from a forum"),
+    _c("bg-thaw-quality", "does thawing fish in cold water make it worse", f"{_A}cook-storage",
+       note="paraphrased from a forum"),
+    _c("bg-kill-quickly", "what is the quickest way to kill a fish so it tastes better", f"{_A}care-dispatch-bleed",
+       note="paraphrased from a forum"),
+    _c("bg-night-bite", "what fish bite at night", f"{_A}method-night", note="paraphrased from a forum"),
+    _c("bg-small-or-large", "how do I tell a smallmouth from a largemouth", "largemouth-bass#identification",
+       "smallmouth-bass#identification", note="paraphrased from a forum"),
+)
+
+# Questions on what the state fishing-education booklets taught (2026-11-08,
+# docs/adr/0050): caring for gear, new line, a push-button reel that won't
+# cast, a hook in your skin, black spots in a fillet, lead, trimming a
+# fillet, stocked trout. Written for FishEye; before the booklets, 5 of the 33
+# found their passage. A question about trout may be answered by the rainbow
+# trout guide as well as the handbook card.
+_RT = ("rainbow-trout#setup-1", "rainbow-trout#live_baits", "rainbow-trout#overview")
+BOOKLET_CASES: tuple[RagCase, ...] = (
+    _c("bk-reel-clean", "How do I clean my fishing reel?", f"{_A}tackle-care"),
+    _c("bk-reel-store", "how should I store my rod and reel for the winter", f"{_A}tackle-care"),
+    _c("bk-salt", "what should I do with my reel after fishing in saltwater", f"{_A}tackle-care"),
+    _c("bk-rust", "my hooks keep rusting in my tackle box", f"{_A}tackle-care"),
+    _c("bk-broken-tip", "I broke the tip of my rod, can it be fixed?", f"{_A}tackle-care"),
+    _c("bk-line-often", "how often should I change my fishing line", f"{_A}tackle-new-line"),
+    _c("bk-line-old", "is old fishing line still good to use", f"{_A}tackle-new-line"),
+    _c("bk-spool", "how do I put new line on a spincast reel", f"{_A}tackle-new-line", f"{_A}knot-arbor"),
+    _c("bk-prespooled", "my new reel came with line already on it, should I replace it", f"{_A}tackle-new-line"),
+    _c("bk-zebco", "the button on my zebco doesn't work and no line comes out", f"{_A}trouble-spincast",
+       note="was turned away by the gate"),
+    _c("bk-reel-in", "I turn the handle but the line won't reel in", f"{_A}trouble-spincast"),
+    _c("bk-handle", "the handle fell off my reel", f"{_A}trouble-spincast"),
+    _c("bk-hook-finger", "I got a fishing hook stuck in my finger, what do I do", f"{_A}safe-hook-injury"),
+    _c("bk-hook-skin", "how do you get a fish hook out of your skin", f"{_A}safe-hook-injury"),
+    _c("bk-tetanus", "do I need a tetanus shot after a fish hook went into my hand", f"{_A}safe-hook-injury"),
+    _c("bk-black-spots", "there are black spots in my bluegill fillet, is it safe to eat?", f"{_A}care-black-spots"),
+    _c("bk-black-dots", "my fish has little black dots under the skin", f"{_A}care-black-spots"),
+    _c("bk-lead", "are lead sinkers bad?", f"{_A}tackle-lead"),
+    _c("bk-lead-ducks", "can lead fishing weights hurt ducks", f"{_A}tackle-lead"),
+    _c("bk-teeth", "can I bite split shot onto the line with my teeth", f"{_A}tackle-lead", f"{_A}tackle-split-shot"),
+    _c("bk-dark-strip", "what is the dark strip on a fillet, should I cut it off", f"{_A}clean-trim-fillet",
+       note="was turned away by the gate"),
+    _c("bk-chemicals", "how can I cut down on chemicals when eating fish I caught", f"{_A}clean-trim-fillet",
+       f"{_A}care-advisories"),
+    _c("bk-stocked", "how do I catch stocked trout", f"{_A}method-stocked-trout", *_RT),
+    _c("bk-powerbait", "what rig should I use for powerbait trout in a pond", f"{_A}method-stocked-trout",
+       f"{_A}bait-dough-corn", *_RT),
+    _c("bk-stringer", "how do I use a fish stringer", f"{_A}care-keeping"),
+    _c("bk-rod-label", "what do the numbers printed on my fishing rod mean", f"{_A}tackle-rods"),
+    _c("bk-zh-reel", "渔轮怎么保养", f"{_A}tackle-care"),
+    _c("bk-zh-line", "鱼线多久换一次", f"{_A}tackle-new-line"),
+    _c("bk-zh-hook", "鱼钩扎到手指了怎么办", f"{_A}safe-hook-injury"),
+    _c("bk-zh-spots", "鱼肉里有黑点能吃吗", f"{_A}care-black-spots"),
+    _c("bk-zh-lead", "铅坠对鸟有害吗", f"{_A}tackle-lead"),
+    _c("bk-zh-trout", "放流的虹鳟怎么钓", f"{_A}method-stocked-trout", *_RT),
+    _c("bk-zh-spincast", "按钮式渔轮出不了线", f"{_A}trouble-spincast"),
 )

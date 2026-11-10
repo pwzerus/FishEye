@@ -531,6 +531,10 @@ export interface AskCitation {
   /** A state code for a passage stating that state's rules, else "all". */
   region: string;
   sources: GuideSource[];
+  /** The question library only: what the answer rests on. */
+  basis?: string;
+  /** The language of title and excerpt, when it isn't the guides' English. */
+  lang?: string;
 }
 
 // "passages": the search alone, no model call (POST /api/ask). The other
@@ -782,6 +786,9 @@ export interface FishCandidate {
   label: string;
   probability: number;
   in_guides: boolean; // one of the species a catch can name
+  /** The guide covering this fish: its own, or the species it is a form of
+   * (a steelhead is a rainbow trout); null when FishEye has none. */
+  guide_slug?: string | null;
 }
 
 export interface FishVerdict {
@@ -794,6 +801,10 @@ export interface FishVerdict {
 }
 
 export interface FishIdResult {
+  /** The likeliest fish's kind ("trout") and how sure the photo is of it, all
+   * that kind's fish together; null for a fish with no look-alikes. */
+  group?: string | null;
+  group_probability?: number | null;
   available: boolean; // false: the server doesn't check photos (FISH_ID=off)
   model: string | null;
   fish_probability: number | null;
@@ -937,6 +948,19 @@ export interface AdminFeedback {
   user_id: number | null;
   author_name: string | null;
   author_email: string | null;
+  /** Sent without an account; `contact` is the address they left, if any. */
+  signed_out: boolean;
+  contact: string | null;
+}
+
+/** Page views (backend services/visits.py): counts only, no visitors. */
+export interface VisitSummary {
+  days: number;
+  total: number;
+  by_day: { key: string; count: number }[];
+  by_page: { key: string; count: number }[];
+  by_source: { key: string; count: number }[];
+  text: string;
 }
 
 export interface AuditEntry {
@@ -981,6 +1005,19 @@ export interface HandbookTopic {
   sources: GuideSource[];
 }
 
+/** One answer of the question library (backend app/knowledge/angling_qa.py),
+ * in the language asked for. `id` is its anchor on /questions. */
+export interface LibraryQuestion {
+  id: string;
+  category: string;
+  category_label: string;
+  question: string;
+  short: string;
+  body: string;
+  basis: "guide" | "official" | "maker" | "general";
+  sources: GuideSource[];
+}
+
 /** A state and who runs its fishing rules (backend app/knowledge/jurisdictions.py).
  * `covered`: FishEye has reviewed rule passages for it; the links are null
  * where it doesn't. */
@@ -1003,4 +1040,57 @@ export interface Jurisdiction {
   license_from_age?: number | null;
   license_topic?: string | null;
   first_trip_topic?: string | null;
+}
+
+/** What to buy (backend app/knowledge/gear.py, GET /api/gear). */
+export interface GearPhoto {
+  url: string;
+  width: number;
+  height: number;
+  author: string;
+  license: string;
+  license_url: string | null;
+  file_page: string;
+}
+
+export interface GearItem {
+  id: string;
+  name: string;
+  category: string;
+  what: string;
+  tip: string;
+  /** The handbook topic that explains it: an anchor on /fish. */
+  topic: string | null;
+  /** Guide slugs it's a good choice for. */
+  fish: string[];
+  first_kit: boolean;
+  photo: GearPhoto | null;
+}
+
+export interface Gear {
+  categories: { id: string; label: string }[];
+  items: GearItem[];
+  /** The "what is this?" camera can answer on this server (POST /api/gear/identify). */
+  camera?: boolean;
+}
+
+/** POST /api/gear/identify: what a photo of some gear shows (backend
+ * app/services/gear_id.py). */
+export interface GearCandidate {
+  id: string; // an item of GET /api/gear
+  name: string;
+  category: string;
+  probability: number; // its share of the photo's gear probability
+}
+
+export interface GearIdResult {
+  available: boolean; // false: the server has the camera switched off
+  model: string | null;
+  gear_probability: number | null;
+  /** The first candidate is named outright; otherwise they are offered to compare. */
+  sure: boolean;
+  candidates: GearCandidate[]; // empty when the photo shows no gear
+  /** When it isn't gear, what it looks like most: "fish", "water", ... */
+  not_gear: string | null;
+  message: string | null;
 }

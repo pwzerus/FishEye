@@ -35,7 +35,7 @@ from typing import Any
 from app.knowledge import jurisdictions
 from app.knowledge.species_guides import GUIDES
 from app.services.llm import LLMProvider, LLMUnavailable, get_provider
-from app.services.rag import regional
+from app.services.rag import question_library, regional
 from app.services.rag.chunking import Passage
 from app.services.rag.retriever import (
     EMPTY_NOT_COVERED,
@@ -265,9 +265,16 @@ def parse_and_validate(
 
 
 def body_of(passage: Passage) -> str:
-    """The passage without its "Species — Section:" retrieval header."""
-    _, sep, body = passage.text.partition(": ")
-    return body if sep else passage.text
+    """The passage without its "Species — Section:" retrieval header.
+
+    The header ends at the first ": " after the title, not the first in the
+    text: a title can hold one itself ("Snagged: freeing a hook, and snagging
+    less"), and cutting there left the rest of the title at the start of the
+    excerpt Ask shows under it."""
+    start = passage.text.find(passage.title)
+    after = start + len(passage.title) if start >= 0 else 0
+    cut = passage.text.find(": ", after)
+    return passage.text[cut + 2 :] if cut >= 0 else passage.text
 
 
 def fallback_answer(passages: list[Passage], limit: int = 2) -> tuple[str, list[Passage]]:
@@ -326,7 +333,12 @@ def _search(
                  if jurisdictions.applies(h.passage.region, state)][:k]
     else:
         local = view.search(question, k=k, species=context)
-    if full and not jurisdictions.applies(full[0].passage.region, state):
+    required = _required_rule_id(question, state)
+    local = _with_required_rule(retr, local, question, state, k)
+    # Asked how many may be kept (or about a second rod) and this state's own
+    # card is in: that answers it, whatever another state's rule scored.
+    answered = required is not None and any(h.passage.id == required for h in local)
+    if full and not answered and not jurisdictions.applies(full[0].passage.region, state):
         own = [h for h in local if h.passage.region == state]
         kind = _rule_kind(full[0].passage.section)
         # A state with only its bait rules written doesn't answer a licence
@@ -385,6 +397,67 @@ def _with_required_bait_rules(
     return (hits[:1] + [rule] + hits[1:])[:k]
 
 
+# "How many can I keep", "how big does it have to be": the answer is the
+# state's limits card (where its numbers are), never a fish guide's passage
+# that happens to share words with the question (added 2026-11-08). Chinese
+# and Spanish arrive here in the glossary's English (限额 -> limit, cuántos ->
+# how many, quedarme -> keep).
+_LIMITS_QUESTION_RE = re.compile(
+    r"\bhow\s+many\b.*\b(keep|take\s+home|bring\s+home)\b"
+    r"|\b(bag|creel|daily|size|length|slot|possession)\s+limits?\b"
+    r"|\bhow\s+(big|long|large)\b.*\bkeep\b"
+    r"|\b(legal|minimum|keeper)\s+(size|length)\b"
+    r"|\bcan\s+i\s+keep\b|\ballowed\s+to\s+keep\b|(?<!speed )(?<!time )\blimits?\b",
+    re.I,
+)
+# "Two rods at once": some states write it into the license (California's
+# Second Rod validation), so the license card answers it.
+_RODS_QUESTION_RE = re.compile(
+    r"\b(two|2|second|another|extra|more\s+than\s+one|multiple|several)\s+(rods?|poles?)\b|两根竿|几根竿", re.I
+)
+
+
+def _required_rule(question: str, state: str | None) -> tuple[str, str | None] | None:
+    """The card a limits or second-rod question must show in `state`, and a
+    word that card must contain to answer it (None: any card of that id)."""
+    if not state:
+        return None
+    code = state.lower()
+    if _LIMITS_QUESTION_RE.search(question):
+        return f"all-fish#rule-limits-{code}", None
+    if _RODS_QUESTION_RE.search(question):
+        j = jurisdictions.get(state)
+        return f"all-fish#{(j and j.license_topic) or f'rule-license-{code}'}", "rod"
+    return None
+
+
+def _required_rule_id(question: str, state: str | None) -> str | None:
+    required = _required_rule(question, state)
+    return required[0] if required else None
+
+
+def _with_required_rule(
+    retr: Retriever, hits: list[ScoredPassage], question: str, state: str | None, k: int
+) -> list[ScoredPassage]:
+    """A question about how many fish may be kept, or how many rods may be
+    fished, in a known state puts that state's own rule card first: it is
+    the answer, and the passages below share only a word."""
+    required = _required_rule(question, state)
+    if required is None:
+        return hits
+    pid, needs = required
+    passage = next((p for p in getattr(retr, "passages", []) if p.id == pid), None)
+    if passage is None or (needs and needs not in passage.text.lower()):
+        return hits
+    rest = [h for h in hits if h.passage.id != pid]
+    card = ScoredPassage(passage, hits[0].score if hits else 0.0)
+    # The state's own card on the subject (Georgia's "keeping fish within the
+    # limit") stays on top, with the rule card under it.
+    if rest and rest[0].passage.region == state:
+        return [rest[0], card, *rest[1:]][:k]
+    return [card, *rest][:k]
+
+
 def search_guides(
     question: str,
     species_slug: str | None = None,
@@ -407,6 +480,8 @@ def search_guides(
     state = answer_state(query, state)
     hits, dropped = _search(retr, query, k, context, state)
     hits = _only_the_rule(hits)
+    if not dropped:
+        hits = question_library.merge(hits, query, k, retr)
     named, _ = split_species(query)
     trace = AskTrace(
         trace_id=str(uuid.uuid4()),
@@ -417,7 +492,9 @@ def search_guides(
     if not hits:
         return _empty(question, context, retr, trace, state if dropped else None, query=query, lang=reply)
     passages = [h.passage for h in hits]
-    return AskResult(question, replies.passages_intro(reply), ANSWER_PASSAGES, passages, trace)
+    all_translated = reply == "zh" and all(p.text_zh for p in passages)
+    intro = replies.PASSAGES_INTRO_ZH_ORIGINAL if all_translated else replies.passages_intro(reply)
+    return AskResult(question, intro, ANSWER_PASSAGES, passages, trace)
 
 
 def answer_state(question: str, picked: str | None) -> str | None:
@@ -477,6 +554,8 @@ def ask(
     state = answer_state(query, state)
     hits, dropped = _search(retr, query, k, context, state)
     hits = _only_the_rule(hits)
+    if not dropped:
+        hits = question_library.merge(hits, query, k, retr)
 
     named, _ = split_species(query)
     trace = AskTrace(

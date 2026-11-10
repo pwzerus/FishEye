@@ -98,6 +98,10 @@ SYNONYMS: dict[str, tuple[str, ...]] = {
     "easiest": ("beginner",),
     "easier": ("beginner",),
     "kid": ("beginner",),
+    # Added 2026-11-08 (beginner questions): "my hook is stuck on something".
+    "stuck": ("snag",),
+    "unstuck": ("snag",),
+    "hung": ("snag",),
     "net": ("net", "cast"),
     "tell": ("recognise",),
     "deep": ("deep", "ft"),  # depths in the guides are written "5 ft", "10 ft deep"
@@ -212,6 +216,16 @@ FISHING_TERMS = frozenset(
     """rod reel tackle hook bobber sinker spincast baitcaster baitcasting
     monofilament fluorocarbon livewell palomar
     """
+    # Added 2026-11-08 from beginner questions the gate turned away ("do I
+    # need a swivel", "my knot keeps coming undone", "how do I stop getting
+    # snagged"): in a fishing app these mean fishing.
+    """swivel swivels knot knots snagged hookset hooksets
+    """
+    # Added 2026-11-08 (gear care, from the fishing-education booklets): the
+    # push-button reel most beginners own is often called by its maker's name.
+    # Tungsten is only ever a sinker or a jig head in a question here.
+    """zebco spincasting tungsten
+    """
     # Other fish people catch that have no guide yet: the gate admits the
     # question, and retrieval says honestly what the guides don't cover.
     """panfish gamefish walleye sauger gar pike muskie muskellunge
@@ -222,6 +236,7 @@ AMBIGUOUS_TERMS = frozenset(
     pond river reservoir creek troll drift worm cricket shrimp liver corn
     cheese dough chum eat feed food diet deep shallow depth cover brush
     school slab spoon plug popper grub spinner gear pole equipment float slip
+    beginner beginners starter tackle
     leader swivel braid mono shot weight catch caught bite water pound lb
     release stringer cooler clean fillet gut scale skin bleed cook
     farther further distance accuracy backlashes tangle tangles drift
@@ -233,7 +248,9 @@ AMBIGUOUS_TERMS = frozenset(
     freeze freezer frozen thaw thawed fridge refrigerator vacuum glaze
     measure measuring length ruler mount
     drain dry invasive mussel mussels zebra trailer launch ramp
-    monofilament recycle recycling discard discarded ice thick thickness knot knots""".split()
+    monofilament recycle recycling discard discarded ice thick thickness knot knots
+    kayak kayaks canoe canoes paddleboard far thunder lightning storm storms
+    hypothermia""".split()
 )
 # Two everyday words that together name a piece of tackle or a practice.
 FISHING_PHRASES = (
@@ -270,6 +287,35 @@ FISHING_PHRASES = (
     "punch bait",
     "dip bait",
     "cut bait",
+    # Added 2026-11-08 (beginner questions): what may be kept, landing a
+    # fish, and falling in.
+    "landing net",
+    "bag limit",
+    "creel limit",
+    "size limit",
+    "length limit",
+    "can i keep",
+    "allowed to keep",
+    "set the hook",
+    "line twist",
+    "into cold water",
+    "in cold water",
+    "cold water shock",
+    "cold shock",
+    "overboard",
+    # "What's the dark strip on a fillet?": a fillet with nothing else
+    # fishing in the question is still a fish's.
+    "a fillet",
+    "the fillet",
+    "my fillet",
+    "fish fillet",
+    "fillet knife",
+    # "I haven't caught anything all year", "how long does braided line
+    # last" (forum questions, second pass).
+    "caught anything",
+    "catch anything",
+    "catching anything",
+    "braided line",
 )
 _GATE_WORD_RE = re.compile(r"[a-z]+")
 
@@ -277,6 +323,8 @@ _GATE_WORD_RE = re.compile(r"[a-z]+")
 def is_on_topic(question: str) -> bool:
     lowered = question.lower()
     if zh.is_on_topic(lowered):
+        return True
+    if topic_fish_passages(lowered):
         return True
     if any(phrase in lowered for phrase in FISHING_PHRASES):
         return True
@@ -433,7 +481,7 @@ UNGUIDED_FISH = (
     "speckled trout", "spotted seatrout", "seatrout", "sea trout",
     "white perch", "sauger", "alligator gar", "gar", "muskellunge",
     "muskie", "bowfin", "warmouth", "longear sunfish",
-    "longear", "green sunfish", "flounder", "sheepshead", "tilapia", "salmon",
+    "longear", "green sunfish", "flounder", "sheepshead", "tilapia",
     "tuna", "snapper", "mackerel", "shark", "sharks", "buffalo fish",
 )
 # Chinese names (docs/adr/0025). Chinese has no spaces, so these match as
@@ -519,9 +567,83 @@ ZH_SPECIES_ALIASES: dict[str, tuple[str, ...]] = {
 }
 ZH_UNGUIDED_FISH = (
     "红鼓鱼", "红鼓", "黑鼓", "海鳟", "斑点海鳟",
-    "梭鱼", "雀鳝", "弓鳍鱼", "罗非鱼", "鲑鱼", "三文鱼", "金枪鱼",
+    "梭鱼", "雀鳝", "弓鳍鱼", "罗非鱼", "金枪鱼",
     "鲨鱼", "比目鱼", "鲈鲉", "海鲈",
 )
+# Fish with no guide that handbook topics cover (added 2026-11-06): a
+# question naming one is answered from those topics, first, rather than
+# refused as a fish with no guide. They are masked like the unguided fish,
+# so "lake trout" is never read as the trout guides and "king salmon" never
+# as kokanee.
+_STEELHEAD = (f"{SHARED_SLUG}#id-steelhead-rainbow", f"{SHARED_SLUG}#method-steelhead", f"{SHARED_SLUG}#timing-runs")
+_SALMON = (f"{SHARED_SLUG}#id-salmon", f"{SHARED_SLUG}#timing-runs", f"{SHARED_SLUG}#method-great-lakes-trolling")
+_LAKE_TROUT = (f"{SHARED_SLUG}#method-lake-trout", f"{SHARED_SLUG}#method-great-lakes-trolling")
+_STURGEON = (f"{SHARED_SLUG}#method-sturgeon",)
+_WHITEFISH = (f"{SHARED_SLUG}#id-whitefish-cisco",)
+TOPIC_FISH: dict[str, tuple[str, ...]] = {
+    "steelhead": _STEELHEAD, "steelies": _STEELHEAD, "steelie": _STEELHEAD,
+    "chinook salmon": _SALMON, "chinook": _SALMON, "king salmon": _SALMON,
+    "coho salmon": _SALMON, "coho": _SALMON, "silver salmon": _SALMON,
+    "pink salmon": _SALMON, "humpy": _SALMON, "humpies": _SALMON, "salmon": _SALMON,
+    "lake trout": _LAKE_TROUT, "laker": _LAKE_TROUT, "lakers": _LAKE_TROUT,
+    "lake sturgeon": _STURGEON, "sturgeon": _STURGEON,
+    "burbot": _WHITEFISH, "eelpout": _WHITEFISH, "lake whitefish": _WHITEFISH,
+    "whitefish": _WHITEFISH, "cisco": _WHITEFISH, "tullibee": _WHITEFISH, "lake herring": _WHITEFISH,
+}
+ZH_TOPIC_FISH: dict[str, tuple[str, ...]] = {
+    "硬头鳟": _STEELHEAD, "钢头鳟": _STEELHEAD,
+    "奇努克鲑": _SALMON, "国王鲑": _SALMON, "帝王鲑": _SALMON, "大鳞大麻哈鱼": _SALMON,
+    "银鲑": _SALMON, "驼背大麻哈鱼": _SALMON, "粉鲑": _SALMON,
+    "鲑鱼": _SALMON, "三文鱼": _SALMON, "大麻哈鱼": _SALMON,
+    "湖红点鲑": _LAKE_TROUT, "湖鳟": _LAKE_TROUT,
+    "湖鲟": _STURGEON, "鲟鱼": _STURGEON,
+    "江鳕": _WHITEFISH, "白鲑": _WHITEFISH,
+}
+_TOPIC_PATTERNS = [
+    (re.compile(rf"\b{re.escape(name)}\b"), ids) for name, ids in sorted(TOPIC_FISH.items(), key=lambda kv: -len(kv[0]))
+]
+_ZH_TOPIC = sorted(ZH_TOPIC_FISH.items(), key=lambda kv: -len(kv[0]))
+
+
+# "How do I cook salmon" is a kitchen question about a fish from the store,
+# not a fishing one (the eval's off-topic set): a topic fish with these words
+# and no fishing word isn't routed.
+_KITCHEN = frozenset({"cook", "cooking", "cooked", "recipe", "recipes", "bake", "baked", "grill", "grilled",
+                      "fry", "fried", "smoked", "sushi", "poach", "poached", "marinade", "oven", "sashimi"})
+
+
+def topic_fish_passages(question: str) -> tuple[str, ...]:
+    """Ids of the handbook passages for the topic fish the question names,
+    in order, without repeats; none for a kitchen question (_KITCHEN)."""
+    text = question.lower()
+    words = set(_GATE_WORD_RE.findall(text))
+    if words & _KITCHEN and not ({stem(w) for w in words} | words) & FISHING_TERMS:
+        return ()
+    out: list[str] = []
+    for pattern, ids in _TOPIC_PATTERNS:
+        if pattern.search(text):
+            out += [i for i in ids if i not in out]
+            text = pattern.sub(" ", text)
+    for name, ids in _ZH_TOPIC:
+        if name in text:
+            out += [i for i in ids if i not in out]
+            text = text.replace(name, " ")
+    return tuple(out)
+
+
+def with_topic_fish(hits: list[ScoredPassage], topics: tuple[str, ...], passages: list, k: int) -> list[ScoredPassage]:
+    """A topic fish's own passages first (those the words matched, best
+    first, then the rest in order), then whatever else matched."""
+    if not topics:
+        return hits[:k]
+    matched = [h for h in hits if h.passage.id in topics]
+    have = {h.passage.id for h in matched}
+    by_id = {p.id: p for p in passages}
+    rest_topics = [ScoredPassage(by_id[i], 0.0) for i in topics if i in by_id and i not in have]
+    others = [h for h in hits if h.passage.id not in topics]
+    return (matched + rest_topics + others)[:k]
+
+
 _ZH_ALIASES = sorted(ZH_SPECIES_ALIASES.items(), key=lambda kv: -len(kv[0]))
 _ZH_UNGUIDED = sorted(ZH_UNGUIDED_FISH, key=len, reverse=True)
 
@@ -650,8 +772,11 @@ AMBIGUOUS_ALIASES: dict[str, AmbiguousName] = {
     "spots": AmbiguousName(
         ("spotted-bass",),
         ("Parking spots, a good spot to eat, tourist spots to visit.",
-         "A spot on a shirt, a stain, a mark, a skin spot."),
-        frozenset("parking park tourist visit city town restaurant restaurants eat picnic hotel stain shirt skin face mark remove".split()),
+         "A spot on a shirt, a stain, a mark, a skin spot.",
+         # Added 2026-11-08: "black spots in my fish" is a parasite, not
+         # spotted bass (all-fish#care-black-spots).
+         "Black spots or dots in the meat of a fillet, a parasite."),
+        frozenset("parking park tourist visit city town restaurant restaurants eat picnic hotel stain shirt skin face mark remove dots fillet fillets parasite parasites".split()),
         False,
     ),
     "cats": AmbiguousName(
@@ -821,7 +946,11 @@ def mask_unguided(text: str) -> str:
     a piece of a longer one: the "bass" of "rock bass" never counts."""
     for pattern in _UNGUIDED_PATTERNS:
         text = pattern.sub(lambda m: "#" * len(m.group()), text)
+    for pattern, _ids in _TOPIC_PATTERNS:
+        text = pattern.sub(lambda m: "#" * len(m.group()), text)
     for name in _ZH_UNGUIDED:
+        text = text.replace(name, "#" * len(name))
+    for name, _ids in _ZH_TOPIC:
         text = text.replace(name, "#" * len(name))
     return text
 
@@ -1035,10 +1164,11 @@ class BM25Retriever:
         """
         named, residual = self.resolve(question)
         routed = named or species or ()
+        topics = topic_fish_passages(question)
 
         if routed:
             allowed = set(routed) | {SHARED_SLUG}
-            if is_howto(residual if named else question):
+            if is_howto(residual if named else question) and not topics:
                 return self.howto(routed[0], k)
             query = query_terms(question, residual, named)
             if not query:
@@ -1046,8 +1176,18 @@ class BM25Retriever:
             hits = self._rank(query, allowed)
             if not hits and wants_howto(residual if named else question):
                 return self.howto(routed[0], k)
-            return arrange_routed(hits, query, k)
+            routed_hits = arrange_routed(hits, query, k)
+            if topics:
+                # "Steelhead or rainbow trout?": the comparison belongs with
+                # the rainbow's own passages.
+                best = with_topic_fish(hits, topics, self.passages, 1)
+                routed_hits = (best + [h for h in routed_hits if h.passage.id != best[0].passage.id])[:k]
+            return routed_hits
 
+        if topics:
+            query = query_terms(question, question, ())
+            hits = self._rank(query, {SHARED_SLUG}) if query else []
+            return with_topic_fish(hits, topics, self.passages, k)
         if not is_on_topic(question) or names_unguided_fish(question):
             return []
         query = query_terms(question, question, ())

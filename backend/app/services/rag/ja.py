@@ -39,6 +39,25 @@ STATE_NAMES: dict[str, str] = {
 
 # Japanese phrase -> the English words the guides use for it.
 GLOSSARY: dict[str, str] = {
+    # Added 2026-11-06: salmon, steelhead and other cold-water fish; thermocline; senses.
+    "スチールヘッド": "steelhead rainbow trout",
+    "サケ": "salmon",
+    "サーモン": "salmon",
+    "キングサーモン": "chinook king salmon",
+    "マスノスケ": "chinook king salmon",
+    "ギンザケ": "coho silver salmon",
+    "カラフトマス": "pink salmon",
+    "レイクトラウト": "lake trout",
+    "チョウザメ": "sturgeon",
+    "カワメンタイ": "burbot",
+    "トローリング": "trolling troll",
+    "氷上釣り": "ice fishing",
+    "ワカサギ釣り": "ice fishing",
+    "水温躍層": "thermocline layers",
+    "側線": "lateral line vibration",
+    "嗅覚": "smell scent",
+    "イクラ": "eggs spawn sac",
+    "渓流": "stream river",
     # fish
     "ラージマウスバス": "largemouth bass", "ラージマウス": "largemouth bass", "オオクチバス": "largemouth bass",
     "スモールマウスバス": "smallmouth bass", "スモールマウス": "smallmouth bass", "コクチバス": "smallmouth bass",

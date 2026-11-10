@@ -9,6 +9,8 @@ import type {
   SpeciesPhotos,
   GeocodeResult,
   HandbookTopic,
+  LibraryQuestion,
+  GuideSource,
   Jurisdiction,
   LakeMatch,
   PinDetail,
@@ -20,6 +22,7 @@ import type {
   Weather,
   WaterbodyDetail,
   WaterbodyListItem,
+  Gear,
 } from "./types";
 
 const PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -248,6 +251,18 @@ export function listSpeciesGuides(): Promise<SpeciesGuide[]> {
 
 export function listHandbook(): Promise<HandbookTopic[]> {
   return apiFetch<HandbookTopic[]>("/api/species/handbook");
+}
+
+export function listQuestions(lang: "en" | "zh"): Promise<LibraryQuestion[]> {
+  return apiFetch<LibraryQuestion[]>(`/api/species/questions?lang=${lang}`);
+}
+
+export function listQuestionSources(): Promise<GuideSource[]> {
+  return apiFetch<GuideSource[]>("/api/species/questions/sources");
+}
+
+export function listGear(): Promise<Gear> {
+  return apiFetch<Gear>("/api/gear");
 }
 
 export function listBaits(): Promise<BaitCard[]> {

@@ -1,0 +1,296 @@
+[
+{
+"id": "qa-abu",
+"label": "Abu Garcia: Reel Maintenance & Care",
+"url": "https://www.abugarcia.com/blogs/news/dock-talk-reel-maintenance-care",
+"kind": "guide"
+},
+{
+"id": "qa-ak-general",
+"label": "ADF&G: Fishing and hunting license FAQ",
+"url": "https://www.adfg.alaska.gov/index.cfm?adfg=license.general",
+"kind": "agency"
+},
+{
+"id": "qa-cdfw-app",
+"label": "CDFW: License App",
+"url": "https://wildlife.ca.gov/LicenseApp",
+"kind": "agency"
+},
+{
+"id": "qa-cdfw-license",
+"label": "CDFW: Fishing licenses and report cards",
+"url": "https://wildlife.ca.gov/Licensing/Fishing",
+"kind": "agency"
+},
+{
+"id": "qa-ct-defs",
+"label": "Connecticut DEEP: Freshwater fishing guide, definitions",
+"url": "https://portal.ct.gov/deep/fishing/freshwater-fishing-guide/definitions",
+"kind": "agency"
+},
+{
+"id": "qa-ct-salt-defs",
+"label": "Connecticut DEEP: Saltwater fishing guide, definitions",
+"url": "https://portal.ct.gov/deep/fishing/saltwater-fishing-guide/definitions",
+"kind": "agency"
+},
+{
+"id": "qa-daiwa-sc",
+"label": "Daiwa Scandinavia: FAQ",
+"url": "https://www.daiwa.com/scandinavia/service/faq",
+"kind": "guide"
+},
+{
+"id": "qa-daiwa-us",
+"label": "Daiwa US: Reel maintenance FAQ",
+"url": "https://daiwa.us/pages/general-reel-maintenance-faq-s",
+"kind": "agency"
+},
+{
+"id": "qa-fs-tlc",
+"label": "Florida Sportsman: TLC for Spinners (2012)",
+"url": "https://www.floridasportsman.com/editorial/tlc-for-spinners/401013",
+"kind": "guide"
+},
+{
+"id": "qa-il-lead",
+"label": "Illinois Department of Public Health: Lead Safety for Fishermen (PDF)",
+"url": "https://dph.illinois.gov/content/dam/soi/en/web/idph/files/publications/lead-safety-fishermen-041516.pdf",
+"kind": "agency"
+},
+{
+"id": "qa-infisherman-moon",
+"label": "In-Fisherman: Understanding Moon Phases",
+"url": "https://www.in-fisherman.com/editorial/understanding-moon-phases-moon-phase-can-point-best-times-fish/155854",
+"kind": "guide"
+},
+{
+"id": "qa-issues-pain",
+"label": "Issues in Science and Technology: Debating Fish Pain",
+"url": "https://issues.org/debating-fish-pain-forum/",
+"kind": "guide"
+},
+{
+"id": "qa-mi-defs",
+"label": "Michigan fishing regulations, definitions (eRegulations)",
+"url": "https://www.eregulations.com/michigan/fishing/definitions",
+"kind": "guide"
+},
+{
+"id": "qa-nc-license",
+"label": "North Carolina fishing license information (eRegulations)",
+"url": "https://www.eregulations.com/northcarolina/fishing/license-information",
+"kind": "guide"
+},
+{
+"id": "qa-nj-license",
+"label": "New Jersey freshwater fishing license information (eRegulations)",
+"url": "https://www.eregulations.com/newjersey/fishing/freshwater/license-information",
+"kind": "guide"
+},
+{
+"id": "qa-pdf-cdfw-after",
+"label": "CDFW: After the Catch (PDF)",
+"url": "https://nrm.dfg.ca.gov/FileHandler.ashx?DocumentID=28754&inline",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-ct",
+"label": "Connecticut DEEP: CARE workbook (PDF)",
+"url": "https://portal.ct.gov/-/media/deep/fishing/care/care2015workbookpdf.pdf",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-de-st",
+"label": "Sachsen-Anhalt: Angling exam question catalogue (PDF)",
+"url": "https://fischerpruefung.sachsen-anhalt.de/api/exam/question/export",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-fff",
+"label": "Future Fisherman Foundation: Fishing Is Simple Handbook (PDF)",
+"url": "https://nrm.dfg.ca.gov/FileHandler.ashx?DocumentID=28748&inline",
+"kind": "publication"
+},
+{
+"id": "qa-pdf-ie-bass",
+"label": "Inland Fisheries Ireland: Bass Angling in Ireland (PDF)",
+"url": "https://www.fisheriesireland.ie/sites/default/files/migrated/docman/Eng%20Bass%20Web.pdf",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-ie-hooked",
+"label": "Inland Fisheries Ireland: Getting Hooked (PDF)",
+"url": "https://www.fisheriesireland.ie/sites/default/files/2021-11/getting-hooked-fishing-handbook.pdf",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-ie-lure",
+"label": "Inland Fisheries Ireland: Lure Angling in Ireland (PDF)",
+"url": "https://www.fisheriesireland.ie/sites/default/files/migrated/docman/Eng%20Lure%20Angling%20Web.pdf",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-ie-pike",
+"label": "Inland Fisheries Ireland: Pike Angling in Ireland (PDF)",
+"url": "https://www.fisheriesireland.ie/sites/default/files/migrated/docman/Eng%20Pike%20Web.pdf",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-ie-shore",
+"label": "Inland Fisheries Ireland: Shore Angling in Ireland (PDF)",
+"url": "https://www.fisheriesireland.ie/sites/default/files/migrated/docman/Eng%20Shore%20Web.pdf",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-il",
+"label": "Illinois DNR: Knot-Tying Guide (PDF)",
+"url": "https://dnr.illinois.gov/content/dam/soi/en/web/dnr/publications/documents/00000150.pdf",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-nc",
+"label": "North Carolina WRC: CATCH student workbook (PDF)",
+"url": "https://ncwildlife.gov/catch-student-handbook/download",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-noaa",
+"label": "Cornell / New York Sea Grant: Handling Your Catch (NOAA library PDF)",
+"url": "https://repository.library.noaa.gov/view/noaa/35462/noaa_35462_DS1.pdf",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-sc-fresh",
+"label": "South Carolina DNR: Beginner's Guide to Fishing (PDF)",
+"url": "https://www.dnr.sc.gov/aquaticed/pdf/FishingGuide.pdf",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-sc-salt",
+"label": "South Carolina DNR: Beginner's Guide to Saltwater Fishing (PDF)",
+"url": "https://www.dnr.sc.gov/fish/pdf/BeginnerguidetoSWfishing.pdf",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-usfws",
+"label": "USFWS: Fishing Is Fun for Everyone (PDF)",
+"url": "https://nrm.dfg.ca.gov/FileHandler.ashx?DocumentID=28814&inline",
+"kind": "agency"
+},
+{
+"id": "qa-pdf-uw4h",
+"label": "University of Wyoming 4-H: Sportfishing manual (PDF)",
+"url": "https://4-h.ksu.edu/projects/natural-resources/sport-fishing/docs/sportfishing%20manual.pdf",
+"kind": "publication"
+},
+{
+"id": "qa-saltstrong",
+"label": "Salt Strong: How To Store Soft Plastics (2020)",
+"url": "https://www.saltstrong.com/?p=34345",
+"kind": "guide"
+},
+{
+"id": "qa-sc-points",
+"label": "South Carolina points and suspension system (eRegulations)",
+"url": "https://www.eregulations.com/southcarolina/fishing/point-suspension-systems",
+"kind": "guide"
+},
+{
+"id": "qa-slco-lead",
+"label": "Salt Lake County: Fishing lead safety (PDF)",
+"url": "https://www.saltlakecounty.gov/globalassets/1-site-files/health/print-materials/lead/lead_safety_fishing.pdf",
+"kind": "agency"
+},
+{
+"id": "qa-solunar-2023",
+"label": "SN Applied Sciences (2023): Solunar tables and trout catch",
+"url": "https://doaj.org/article/90e34b295b8a4d1b833e9a0fac84f226",
+"kind": "guide"
+},
+{
+"id": "qa-timberjay-spl",
+"label": "Timberjay: Lure litter or worse",
+"url": "https://www.timberjay.com/stories/lure-litter-or-worse,15241",
+"kind": "guide"
+},
+{
+"id": "qa-tpwd-defs",
+"label": "TPWD: Definitions in the fishing regulations",
+"url": "https://tpwd.texas.gov/regulations/outdoor-annual/fishing/general-rules-regulations/definitions",
+"kind": "agency"
+},
+{
+"id": "qa-tpwd-faq",
+"label": "TPWD: Fishing license FAQ",
+"url": "https://tpwd.texas.gov/regulations/outdoor-annual/licenses/faqs",
+"kind": "agency"
+},
+{
+"id": "qa-tpwd-gear",
+"label": "TPWD: Fishing Gear Maintenance and Repair (PDF)",
+"url": "https://tpwd.texas.gov/education/angler-education/fishing-gear-maintenance-and-repair.pdf",
+"kind": "agency"
+},
+{
+"id": "qa-tpwd-general",
+"label": "TPWD: General fishing regulations",
+"url": "https://tpwd.texas.gov/regulations/outdoor-annual/fishing/general-rules-regulations/general-fishing-regulations/",
+"kind": "agency"
+},
+{
+"id": "qa-tpwd-penalties",
+"label": "TPWD: Laws, Penalties & Restitution",
+"url": "https://tpwd.texas.gov/regulations/outdoor-annual/fishing/general-rules-regulations/laws-penalties-restitution",
+"kind": "agency"
+},
+{
+"id": "qa-tpwd-purchase",
+"label": "TPWD: License purchase requirements",
+"url": "https://tpwd.texas.gov/regulations/outdoor-annual/licenses/purchase-requirements",
+"kind": "agency"
+},
+{
+"id": "qa-tpwd-release-2026",
+"label": "TPWD news release (2026-08-13)",
+"url": "https://tpwd.texas.gov/newsmedia/releases/?req=20260813b",
+"kind": "agency"
+},
+{
+"id": "qa-tsa-lures",
+"label": "TSA: What Can I Bring, small fishing lures",
+"url": "https://www.tsa.gov/travel/security-screening/whatcanibring/items/small-fishing-lures",
+"kind": "agency"
+},
+{
+"id": "qa-tsa-pole",
+"label": "TSA: What Can I Bring, fishing poles",
+"url": "https://www.tsa.gov/travel/security-screening/whatcanibring/items/fishing-pole",
+"kind": "agency"
+},
+{
+"id": "qa-va-lure",
+"label": "Virginia DWR: Artificial lure definition",
+"url": "https://dwr.virginia.gov/fishing/trout/artificial-lure/",
+"kind": "agency"
+},
+{
+"id": "qa-vt-lead",
+"label": "Vermont fishing regulations: Toxic lead (eRegulations)",
+"url": "https://www.eregulations.com/vermont/fishing/toxic-lead",
+"kind": "guide"
+},
+{
+"id": "qa-wac",
+"label": "Washington Administrative Code, WAC 220-300-160",
+"url": "https://lawfilesext.leg.wa.gov/law/WAC/WAC%20220%20%20TITLE/WAC%20220%20-300%20%20CHAPTER/WAC%20220%20-300%20-160.htm",
+"kind": "agency"
+},
+{
+"id": "qa-wi-proof",
+"label": "Wisconsin DNR: Acceptable proof of license",
+"url": "https://dnr.wisconsin.gov/GoWild/conservationCard.html",
+"kind": "agency"
+}
+]

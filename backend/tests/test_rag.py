@@ -538,3 +538,18 @@ def test_a_chinese_question_about_keeping_fish_finds_georgias_limit_card(client)
     body = client.post("/api/ask", json={"question": "在佐治亚一次能带走几条鱼？", "state": "GA"}).json()
     assert body["trace"]["outcome"] == "ok"
     assert "all-fish#care-possession-ga" in [c["id"] for c in body["citations"]]
+
+
+def test_an_excerpt_starts_after_a_title_that_has_a_colon_of_its_own():
+    # "Snagged: freeing a hook, and snagging less": cutting at the first ": "
+    # left "freeing a hook, and snagging less (When it isn't working):" at the
+    # start of the excerpt under the title (docs/ui-review-2026-11-08.md).
+    by_id = {p.id: p for p in build_passages()}
+    for pid in ("all-fish#trouble-snags", "all-fish#safe-heat", "all-fish#tackle-new-line"):
+        p = by_id[pid]
+        assert ":" in p.title
+        body = rag.body_of(p)
+        assert not body.startswith(p.title.split(":", 1)[1].strip()[:12]), pid
+        assert p.text.endswith(body)
+    setup = by_id["largemouth-bass#setup-1"]
+    assert rag.body_of(setup).startswith("Your first bass setup")

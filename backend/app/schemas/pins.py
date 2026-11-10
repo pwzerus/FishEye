@@ -110,6 +110,9 @@ class FishCandidateOut(BaseModel):
     label: str
     probability: float
     in_guides: bool  # one of the species a catch can name
+    # The guide that covers this fish: its own, or the species it is a form
+    # of (a steelhead is a rainbow trout); None when FishEye has no guide.
+    guide_slug: str | None = None
 
 
 class FishVerdictOut(BaseModel):
@@ -127,6 +130,11 @@ class FishIdOut(BaseModel):
     fish_probability: float | None
     candidates: list[FishCandidateOut]  # the likeliest fish first
     verdict: FishVerdictOut | None  # only when a species was given
+    # The likeliest fish's kind ("trout", "catfish") and how sure the photo
+    # is of that kind, all its fish together: a photo that can't say which
+    # trout can still say it's a trout. None for a fish with no kind.
+    group: str | None = None
+    group_probability: float | None = None
 
 
 class PinOptionsOut(BaseModel):

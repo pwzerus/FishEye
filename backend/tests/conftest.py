@@ -14,6 +14,8 @@ os.environ.setdefault("RAG_SEMANTIC", "off")
 # No photo check either (a 300 MB model); tests/test_fish_id.py drives it
 # with a stand-in recognizer.
 os.environ.setdefault("FISH_ID", "off")
+# Nor the gear camera; tests/test_gear_id.py uses a stand-in.
+os.environ.setdefault("GEAR_ID", "off")
 
 from app.api.deps import get_db  # noqa: E402
 from app.db.session import Base, enforce_sqlite_foreign_keys  # noqa: E402
@@ -164,8 +166,11 @@ def _isolated_community_state(tmp_path, monkeypatch):
     """Photos go to a temp folder, and in-memory rate limits start empty,
     for every test."""
     from app.api import auth as auth_api
+    from app.api import feedback as feedback_api
+    from app.api import gear as gear_api
     from app.api import lake_reports as lake_reports_api
     from app.api import rate_limits
+    from app.api import visits as visits_api
     from app.api import pins as pins_api
     from app.core.config import get_settings
 
@@ -179,10 +184,19 @@ def _isolated_community_state(tmp_path, monkeypatch):
         pins_api.create_by_user,
         pins_api.report_by_user,
         pins_api.fish_id_by_user,
+        pins_api.fish_id_trial_by_ip,
+        pins_api.fish_id_trial_everyone,
+        feedback_api.by_user,
+        feedback_api.by_ip,
+        feedback_api.signed_out_everyone,
+        gear_api.gear_id_by_user,
+        gear_api.gear_id_trial_by_ip,
+        gear_api.gear_id_trial_everyone,
         lake_reports_api.report_by_ip,
     ):
         limiter.reset()
     rate_limits.reset_all()
+    visits_api.VISITS.reset()
     yield
 
 

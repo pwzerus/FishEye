@@ -39,7 +39,7 @@ import numpy as np
 from PIL import Image
 
 from app.core.config import get_settings
-from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, GUIDED_SINCE_BUILD, LOOK_ALIKES, NOT_FISH, OTHER_FISH, group_label
+from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, GUIDED_SINCE_BUILD, LOOK_ALIKES, NOT_FISH, OTHER_FISH, SAME_FISH, group_label
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +159,12 @@ def check_claim(ident: Identification, claimed: str | None, policy: Policy = POL
     label = claim.common if claim else _label(claimed)
     if claim is not None and best.slug == claimed and best_p >= policy.confirm:
         return Verdict(CONFIRMED, claimed, claimed, best_p, f"Photo check: this looks like {_a(label)}.")
+    # A steelhead is a rainbow trout: both its names back the claim.
+    if claim is not None and SAME_FISH.get(best.slug) == claimed:
+        same_p = (best.probability + ident.probability(claimed)) / fish_p
+        if same_p >= policy.confirm:
+            return Verdict(CONFIRMED, claimed, best.slug, same_p,
+                           f"Photo check: this looks like {_a(best.label)}, which is {_a(label)}.")
     group_p = (ident.group_probability(group) if group else 0.0) / fish_p
     best_group = LOOK_ALIKES.get(best.slug) or (BY_SLUG[best.slug].group if best.slug in BY_SLUG else None)
     if best.slug in LOOK_ALIKES and best_group == group:
@@ -200,7 +206,7 @@ class FishRecognizer:
         opts = ort.SessionOptions()
         opts.log_severity_level = 3
         # No memory arena: it keeps a photo's peak working memory for good,
-        # and the server has 2 GB for everything.
+        # and the server has 4 GB for everything.
         opts.enable_cpu_mem_arena = False
         self._session = ort.InferenceSession(str(onnx_path), opts, providers=["CPUExecutionProvider"])
         self._text = np.load(model_dir / "text.npy")

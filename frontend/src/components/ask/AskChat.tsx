@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { BaitChips, BaitText } from "@/components/baits/BaitTip";
 import { LakeAnswer } from "@/components/ask/LakeAnswer";
+import { useSignedIn } from "@/components/auth/AuthProvider";
 import { FishArt } from "@/components/fish/FishArt";
 import { FishIdAnswer, likelyFish } from "@/components/identify/IdentifyFish";
 import { useLocale, useT } from "@/i18n/client";
@@ -67,6 +68,7 @@ type Turn =
 const MAX_LEN = 300;
 
 function citationHref(c: AskCitation): string {
+  if (c.section.startsWith("qa-")) return `/questions#${c.section}`;
   if (!c.species_slug || c.species_slug === "all-fish") return `/fish#${c.section}`;
   return `/fish/${c.species_slug}#${c.section}`;
 }
@@ -144,7 +146,7 @@ function StateRulesLinks({ r }: { r: AskResponse }) {
  * translated; anything else (a state's bait rules) keeps the guide's
  * English, as the passage itself does. */
 export function citationTitle(c: Pick<AskCitation, "section" | "title">, f: Messages["fish"], locale: Locale): string {
-  if (locale === "en") return c.title;
+  if (locale === "en" || c.section.startsWith("qa-")) return c.title;
   const sections: Record<string, string> = {
     overview: f.tabOverview, diet: f.whatItEats, identification: f.recognise, habitat: f.habitat, habits: f.habits,
     where_and_when: f.whereWhen, live_baits: f.liveBait, lures: f.lures, why_these_baits: f.whyBaits,
@@ -185,7 +187,7 @@ function Citations({ items, compact }: { items: AskCitation[]; compact: boolean 
                   </span>
                 )}
                 <span className="citation-body">
-                  <span className="citation-title">
+                  <span className="citation-title" lang={c.lang === "zh" ? "zh-CN" : undefined}>
                     {c.species_name ? `${(fish && localFishName(fish, locale)) || c.species_name} · ` : ""}
                     {citationTitle(c, all.fish, locale)}
                     {c.region !== "all" && (
@@ -194,7 +196,8 @@ function Citations({ items, compact }: { items: AskCitation[]; compact: boolean 
                       </span>
                     )}
                   </span>
-                  <span className="citation-excerpt" lang="en">{c.excerpt}</span>
+                  {c.basis === "general" && <span className="badge badge-muted citation-region">{all.questionsPage.basis.general}</span>}
+                  <span className="citation-excerpt" lang={c.lang === "zh" ? "zh-CN" : "en"}>{c.excerpt}</span>
                   {c.sources[0] && <span className="citation-source" lang="en">{c.sources[0].label}</span>}
                 </span>
               </Link>
@@ -354,6 +357,7 @@ export function AskChat({
     [busy, speciesSlug, state, locale],
   );
 
+  const signedIn = useSignedIn();
   const identify = useCallback(
     async (file: File | undefined) => {
       if (!file) return;
@@ -372,13 +376,14 @@ export function AskChat({
       try {
         setCheck({ status: "done", result: await identifyFish(file) });
       } catch (e) {
-        if (e instanceof ApiError && e.status === 401) setCheck({ status: "signin" });
+        // Signed out, 429 is the day's free checks used up (api/pins._trial).
+        if (e instanceof ApiError && (e.status === 401 || (e.status === 429 && !signedIn))) setCheck({ status: "signin" });
         else setCheck({ status: "error", message: e instanceof ApiError ? e.message : all.identify.checkFailed });
       } finally {
         setCheckingPhoto(false);
       }
     },
-    [all.identify.checkFailed],
+    [all.identify.checkFailed, signedIn],
   );
 
   // The photos in the thread are this page's own copies; let them go.

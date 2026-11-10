@@ -78,6 +78,9 @@ _NULLABLE_COLUMNS = (
     ("catch_pins", "photo_at_spot", "BOOLEAN"),
     ("pin_photos", "gps_latitude", "FLOAT"),
     ("pin_photos", "gps_longitude", "FLOAT"),
+    # Feedback without an account (services/feedback.py).
+    ("feedback", "signed_out", "BOOLEAN"),
+    ("feedback", "contact", "VARCHAR(254)"),
 )
 
 # NOT NULL columns with a constant default, added since: (table, column,
@@ -129,7 +132,7 @@ def ensure_waterbody_ranking_schema(engine: Engine) -> None:
 
     columns = {
         table: {c["name"] for c in inspector.get_columns(table)}
-        for table in ("waterbodies", "source_records", "catch_pins", "users", "pin_photos")
+        for table in ("waterbodies", "source_records", "catch_pins", "users", "pin_photos", "feedback")
         if inspector.has_table(table)
     }
     with engine.begin() as conn:
