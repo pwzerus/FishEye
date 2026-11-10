@@ -48,6 +48,7 @@ export function LoginForm() {
   const [mode, setMode] = useState<Mode>(params.get("mode") === "signup" ? "signup" : "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [name, setName] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -85,6 +86,7 @@ export function LoginForm() {
   }
 
   const pwTooShort = mode === "signup" && password.length > 0 && password.length < 8;
+  const pwDiffer = mode === "signup" && confirm.length > 0 && confirm !== password;
 
   return (
     <div className="auth-card reveal">
@@ -195,13 +197,39 @@ export function LoginForm() {
           )}
         </div>
 
+        {mode === "signup" && (
+          <div className="field">
+            <label htmlFor="auth-confirm" className="field-label">
+              {t.confirmPassword}
+            </label>
+            <input
+              id="auth-confirm"
+              type={showPw ? "text" : "password"}
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              autoComplete="new-password"
+              required
+              aria-describedby={pwDiffer ? "pw-differ" : undefined}
+            />
+            {pwDiffer && (
+              <small id="pw-differ" className="hint hint-warn" role="alert">
+                {t.pwMismatch}
+              </small>
+            )}
+          </div>
+        )}
+
         {error && (
           <p className="form-error" role="alert">
             {error}
           </p>
         )}
 
-        <button type="submit" className="btn btn-primary auth-submit" disabled={busy || !email || !password}>
+        <button
+          type="submit"
+          className="btn btn-primary auth-submit"
+          disabled={busy || !email || !password || (mode === "signup" && confirm !== password)}
+        >
           {busy ? <span className="spinner" aria-hidden="true" /> : null}
           {mode === "signin" ? t.signIn : t.createAccount}
         </button>

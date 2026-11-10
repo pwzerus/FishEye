@@ -1,9 +1,9 @@
 import type { GearPhoto as Photo } from "@/lib/api/types";
 
 /**
- * A gear photo from Wikimedia Commons, whole (object-fit: contain), with the
- * credit its licence asks for under it (backend app/knowledge/gear.py).
- * Hot-linked as served, like the fish photos (ADR 0015).
+ * A gear photo, whole (object-fit: contain), with the credit its licence asks
+ * for under it (backend app/knowledge/gear.py). Commons photos are hot-linked
+ * as served, like the fish photos (ADR 0015); Flickr ones are in /gear-photos.
  */
 export function GearPhoto({ photo, alt, small = false }: { photo: Photo; alt: string; small?: boolean }) {
   return (
@@ -13,6 +13,7 @@ export function GearPhoto({ photo, alt, small = false }: { photo: Photo; alt: st
         <img src={photo.url} alt={alt} width={photo.width} height={photo.height} loading="lazy" />
       </div>
       <figcaption>
+        {photo.title ? `“${photo.title}” · ` : null}
         {photo.author} ·{" "}
         {photo.license_url ? (
           <a href={photo.license_url} target="_blank" rel="noreferrer">
@@ -23,7 +24,7 @@ export function GearPhoto({ photo, alt, small = false }: { photo: Photo; alt: st
         )}{" "}
         ·{" "}
         <a href={photo.file_page} target="_blank" rel="noreferrer">
-          Wikimedia
+          {photo.file_page.includes("flickr.com") ? "Flickr" : "Wikimedia"}
         </a>
       </figcaption>
     </figure>

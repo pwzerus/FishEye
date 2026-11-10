@@ -27,7 +27,7 @@ export function SpeciesHowTo({ commonName }: { commonName: string }) {
     setOpen(next);
     if (next && guide === null) {
       setError(null);
-      getSpeciesGuide(slug)
+      getSpeciesGuide(slug, locale)
         .then(setGuide)
         .catch((e: unknown) => {
           setError(

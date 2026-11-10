@@ -2,6 +2,7 @@
 stand-in recognizer (the real model is 300 MB and not in the test suite)."""
 from __future__ import annotations
 
+import dataclasses
 import io
 from pathlib import Path
 
@@ -26,6 +27,22 @@ def ident(**probs: float) -> Identification:
 
 
 # ---------------------------------------------------------------- policy
+
+
+def test_the_gate_turns_away_a_photo_that_only_looks_like_some_fish():
+    # What a screenshot of a document does to the classes (docs/adr/0053).
+    screenshot = dataclasses.replace(ident(bluegill=0.2, common_carp=0.2, walleye=0.2), gate=0.01)
+    assert screenshot.fish_probability == 0.0
+    assert check_claim(screenshot, None).status == NO_FISH
+    assert check_claim(screenshot, "bluegill").status == NO_FISH
+
+
+def test_the_gate_leaves_a_real_catch_alone():
+    plain = ident(bluegill=0.9)
+    assert dataclasses.replace(plain, gate=0.95).fish_probability == plain.fish_probability
+    assert dataclasses.replace(plain, gate=fish_id.POLICY.min_photo).fish_probability == plain.fish_probability
+    # A model folder without the gate behaves as before.
+    assert plain.gate is None and check_claim(plain, "bluegill").status == CONFIRMED
 
 
 def test_the_species_shown_is_confirmed():
@@ -147,6 +164,16 @@ def test_a_catch_whose_photo_shows_the_fish_is_saved_as_checked(make_client, che
     assert resp.status_code == 201, resp.text
     pin = resp.json()
     assert pin["species_check"] == "confirmed" and pin["species_check_label"] is None
+
+
+def test_a_photo_with_no_fish_gets_no_guesses(make_client, monkeypatch):
+    class Screenshot(StandIn):
+        def identify(self, photo: bytes) -> Identification:
+            return dataclasses.replace(ident(grass_carp=0.4, common_carp=0.3), gate=0.01)
+
+    monkeypatch.setattr(fish_id, "get_recognizer", lambda: Screenshot())
+    body = make_client().post("/api/fish-id", files={"photo": ("p.jpg", jpeg("green"), "image/jpeg")}).json()
+    assert body["fish_probability"] == 0 and body["candidates"] == [] and body["group"] is None
 
 
 def test_a_catch_whose_photo_shows_another_fish_is_refused(make_client, checking):

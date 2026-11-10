@@ -38,46 +38,46 @@ export function DietTypeTag({ guide }: { guide: SpeciesGuide }) {
   return <span className={`guide-tag guide-tag-diet guide-tag-diet-${guide.diet_type}`}>{label}</span>;
 }
 
-function SetupCard({ setup }: { setup: TackleSetup }) {
+function SetupCard({ setup, lang }: { setup: TackleSetup; lang: string }) {
   const t = useT().fish;
   return (
     <li className="guide-setup">
-      <div className="guide-setup-name" lang="en">{setup.name}</div>
-      <div className="guide-setup-when" lang="en">{setup.use_when}</div>
+      <div className="guide-setup-name" lang={lang}>{setup.name}</div>
+      <div className="guide-setup-when" lang={lang}>{setup.use_when}</div>
       <dl className="guide-setup-specs">
         <dt>{t.rod}</dt>
-        <dd lang="en">{setup.rod}</dd>
+        <dd lang={lang}>{setup.rod}</dd>
         <dt>{t.reel}</dt>
-        <dd lang="en">{setup.reel}</dd>
+        <dd lang={lang}>{setup.reel}</dd>
         <dt>{t.line}</dt>
-        <dd lang="en">{setup.line}</dd>
+        <dd lang={lang}>{setup.line}</dd>
         <dt>{t.hookRig}</dt>
-        <dd lang="en">{setup.terminal}</dd>
+        <dd lang={lang}>{setup.terminal}</dd>
       </dl>
     </li>
   );
 }
 
-function SetupGroup({ title, setups }: { title: string; setups: TackleSetup[] }) {
+function SetupGroup({ title, setups, lang }: { title: string; setups: TackleSetup[]; lang: string }) {
   if (setups.length === 0) return null;
   return (
     <section className="guide-section guide-setup-group">
       <h4>{title}</h4>
       <ul className="guide-setups">
         {setups.map((setup) => (
-          <SetupCard key={setup.name} setup={setup} />
+          <SetupCard key={setup.name} setup={setup} lang={lang} />
         ))}
       </ul>
     </section>
   );
 }
 
-function Bullets({ title, items }: { title: string; items: string[] }) {
+function Bullets({ title, items, lang }: { title: string; items: string[]; lang: string }) {
   if (items.length === 0) return null;
   return (
     <section className="guide-section">
       <h4>{title}</h4>
-      <ul lang="en">
+      <ul lang={lang}>
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}
@@ -95,44 +95,45 @@ export function SpeciesGuideBody({
 }) {
   const isForage = guide.role === "forage";
   const t = useT().fish;
+  const lang = guide.text_lang ?? "en";
 
   return (
     <div className={compact ? "guide-body guide-body-compact" : "guide-body"}>
-      {!compact && <p className="guide-summary" lang="en"><GuideSummary guide={guide} /></p>}
+      {!compact && <p className="guide-summary" lang={lang}><GuideSummary guide={guide} /></p>}
 
       {!compact && (
         <section className="guide-section">
           <h4>
             {t.whatItEats} <DietTypeTag guide={guide} />
           </h4>
-          <p lang="en">{guide.diet}</p>
+          <p lang={lang}>{guide.diet}</p>
         </section>
       )}
 
-      {!compact && <Bullets title={t.recognise} items={guide.identification} />}
-      {!compact && <Bullets title={t.whereWhen} items={guide.where_and_when} />}
+      {!compact && <Bullets lang={lang} title={t.recognise} items={guide.identification} />}
+      {!compact && <Bullets lang={lang} title={t.whereWhen} items={guide.where_and_when} />}
 
       {isForage ? (
         <>
-          <Bullets title={t.howToGetShort} items={guide.how_to_get} />
-          <Bullets title={t.baitFor} items={guide.bait_for} />
+          <Bullets lang={lang} title={t.howToGetShort} items={guide.how_to_get} />
+          <Bullets lang={lang} title={t.baitFor} items={guide.bait_for} />
         </>
       ) : (
         <>
-          <Bullets title={t.liveBait} items={guide.live_baits} />
-          <Bullets title={t.lures} items={guide.lures} />
+          <Bullets lang={lang} title={t.liveBait} items={guide.live_baits} />
+          <Bullets lang={lang} title={t.lures} items={guide.lures} />
           <p className="guide-setups-intro">{t.setupsNote}</p>
-          <SetupGroup title={t.lureFishing} setups={groupSetups(guide.setups).lure} />
-          <SetupGroup title={t.baitFishing} setups={groupSetups(guide.setups).bait} />
+          <SetupGroup lang={lang} title={t.lureFishing} setups={groupSetups(guide.setups).lure} />
+          <SetupGroup lang={lang} title={t.baitFishing} setups={groupSetups(guide.setups).bait} />
         </>
       )}
 
-      <Bullets title={t.tips} items={guide.tips} />
+      <Bullets lang={lang} title={t.tips} items={guide.tips} />
 
       {!compact && guide.legal_notes.length > 0 && (
         <section className="guide-section guide-legal">
           <h4>{t.baitRules}</h4>
-          <ul lang="en">
+          <ul lang={lang}>
             {guide.legal_notes.map((note) => (
               <li key={note}>{note}</li>
             ))}

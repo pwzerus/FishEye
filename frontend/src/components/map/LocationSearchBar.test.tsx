@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api/client";
 import type { GeocodeResult } from "@/lib/api/types";
+import { suggestPlaces } from "@/lib/usCities";
 import { LocationSearchBar } from "./LocationSearchBar";
 
 vi.mock("@/lib/api/client", async () => {
@@ -29,9 +30,41 @@ function search(text: string) {
   fireEvent.click(screen.getByRole("button", { name: /search/i }));
 }
 
+describe("Chinese names", () => {
+  it("suggests a city typed in Chinese, under its English name", () => {
+    expect(suggestPlaces("纽约")).toEqual(["New York, NY"]);
+    expect(suggestPlaces("圣")).toContain("San Diego, CA");
+    expect(suggestPlaces("不存在的地方")).toEqual([]);
+  });
+});
+
 describe("LocationSearchBar", () => {
   beforeEach(() => {
     vi.mocked(geocodePlace).mockReset();
+  });
+
+  it("offers places as you type and searches the one picked", async () => {
+    vi.mocked(geocodePlace).mockResolvedValue(mockResult);
+    const onLocate = vi.fn();
+    render(<LocationSearchBar onLocate={onLocate} />);
+    fireEvent.change(screen.getByLabelText("Search for a location"), { target: { value: "s" } });
+    const names = screen.getAllByRole("option").map((o) => o.textContent);
+    expect(names).toEqual(expect.arrayContaining(["San Antonio, TX", "San Diego, CA"]));
+    fireEvent.click(screen.getByRole("option", { name: "San Diego, CA" }));
+    await waitFor(() => expect(geocodePlace).toHaveBeenCalledWith("San Diego, CA"));
+    await waitFor(() => expect(onLocate).toHaveBeenCalled());
+    expect(screen.queryByRole("option")).not.toBeInTheDocument();
+  });
+
+  it("goes through the suggestions with the arrow keys", async () => {
+    vi.mocked(geocodePlace).mockResolvedValue(mockResult);
+    render(<LocationSearchBar onLocate={vi.fn()} />);
+    const box = screen.getByLabelText("Search for a location");
+    fireEvent.change(box, { target: { value: "seat" } });
+    fireEvent.keyDown(box, { key: "ArrowDown" });
+    expect(screen.getByRole("option", { name: "Seattle, WA" })).toHaveAttribute("aria-selected", "true");
+    fireEvent.keyDown(box, { key: "Enter" });
+    await waitFor(() => expect(geocodePlace).toHaveBeenCalledWith("Seattle, WA"));
   });
 
   it("geocodes the typed query and reports the resolved point", async () => {

@@ -114,7 +114,7 @@ export default async function SourcesPage() {
               <dl>
                 {general.filter((h) => h.category === id).map((h) => (
                   <div key={h.id} id={`topic-${h.id}`}>
-                    <dt><Link href={`/fish#${h.id}`}>{localTopicTitle(h.id, locale) ?? h.title}</Link></dt>
+                    <dt><Link href={`/handbook#${h.id}`}>{localTopicTitle(h.id, locale) ?? h.title}</Link></dt>
                     <dd><Links sources={h.sources} guideSite={guideSite} /></dd>
                   </div>
                 ))}
@@ -142,7 +142,7 @@ export default async function SourcesPage() {
                 )}
                 {topics.map((h) => (
                   <div key={h.id}>
-                    <dt><Link href={`/fish#${h.id}`}>{localTopicTitle(h.id, locale) ?? h.title}</Link></dt>
+                    <dt><Link href={`/handbook#${h.id}`}>{localTopicTitle(h.id, locale) ?? h.title}</Link></dt>
                     <dd><Links sources={h.sources} guideSite={guideSite} /></dd>
                   </div>
                 ))}

@@ -52,12 +52,12 @@ export async function generateMetadata(props: PageProps<"/fish/[slug]">): Promis
 /** `index` is the number shown, counted within its group; `anchor` is the
  * setup's place in the whole guide, which is what Ask's citations link to
  * (`#setup-2` is the guide's second setup, whichever group it is in). */
-function SetupCard({ setup, index, anchor, t }: { setup: TackleSetup; index: number; anchor?: string; t: Messages["fish"] }) {
+function SetupCard({ setup, index, anchor, t, lang }: { setup: TackleSetup; index: number; anchor?: string; t: Messages["fish"]; lang: string }) {
   return (
     <article id={anchor} className="setup-card">
       <header>
         <span className="setup-num">{index}</span>
-        <div lang="en">
+        <div lang={lang}>
           <h3>{setup.name}</h3>
           <p className="muted">{setup.use_when}</p>
         </div>
@@ -65,19 +65,19 @@ function SetupCard({ setup, index, anchor, t }: { setup: TackleSetup; index: num
       <dl className="setup-specs">
         <div>
           <dt>{t.rod}</dt>
-          <dd lang="en">{setup.rod}</dd>
+          <dd lang={lang}>{setup.rod}</dd>
         </div>
         <div>
           <dt>{t.reel}</dt>
-          <dd lang="en">{setup.reel}</dd>
+          <dd lang={lang}>{setup.reel}</dd>
         </div>
         <div>
           <dt>{t.line}</dt>
-          <dd lang="en">{setup.line}</dd>
+          <dd lang={lang}>{setup.line}</dd>
         </div>
         <div className="wide">
           <dt>{t.hookRig}</dt>
-          <dd lang="en">{setup.terminal}</dd>
+          <dd lang={lang}>{setup.terminal}</dd>
         </div>
       </dl>
     </article>
@@ -85,12 +85,12 @@ function SetupCard({ setup, index, anchor, t }: { setup: TackleSetup; index: num
 }
 
 /** `baitsFor`: the baits named are tappable (components/baits/BaitTip.tsx). */
-function ListBlock({ id, title, items, baitsFor }: { id: string; title: string; items: string[]; baitsFor?: string }) {
+function ListBlock({ id, title, items, baitsFor, lang }: { id: string; title: string; items: string[]; baitsFor?: string; lang: string }) {
   if (items.length === 0) return null;
   return (
     <section id={id} className="guide-block">
       <h2>{title}</h2>
-      <ul className="nice-list" lang="en">
+      <ul className="nice-list" lang={lang}>
         {items.map((item) => (
           <li key={item}>{baitsFor ? <BaitText text={item} fish={baitsFor} /> : item}</li>
         ))}
@@ -120,7 +120,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
   const t = MESSAGES[locale].fish;
   let guide: SpeciesGuide;
   try {
-    guide = await getSpeciesGuide(slug);
+    guide = await getSpeciesGuide(slug, locale);
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) notFound();
     return (
@@ -130,7 +130,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
     );
   }
   const [all, photos, gear] = await Promise.all([
-    listSpeciesGuides().catch(() => [guide]),
+    listSpeciesGuides(locale).catch(() => [guide]),
     listSpeciesPhotos(),
     // First-kit things first: the strip reads as a shopping list.
     listGear()
@@ -143,6 +143,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
   const [wa, wb] = waterFor(guide.slug);
   const photo = photos[guide.slug] ?? null;
   const isForage = guide.role === "forage";
+  const lang = guide.text_lang ?? "en";
   const name = (g: SpeciesGuide) => localFishName(g.slug, locale) ?? g.common_name;
 
   return (
@@ -171,28 +172,28 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
             <p className="sci reveal" style={{ "--i": 3 } as React.CSSProperties}>
               {guide.scientific_name}
             </p>
-            <p className="lede reveal" lang="en" style={{ "--i": 4 } as React.CSSProperties}>
+            <p className="lede reveal" lang={lang} style={{ "--i": 4 } as React.CSSProperties}>
               <GuideSummary guide={guide} />
             </p>
             <div id="diet" className="fact reveal" style={{ "--i": 5 } as React.CSSProperties}>
               <span className="fact-label">
                 {t.whatItEats} <DietTypeTag guide={guide} />
               </span>
-              <span lang="en">{guide.diet}</span>
+              <span lang={lang}>{guide.diet}</span>
             </div>
           </div>
         </section>
 
 
         <SectionTabs links={sectionLinks(guide, t)} />
-        {locale !== "en" && <p className="hint guide-english-note">{t.englishContent}</p>}
+        {locale !== "en" && !guide.text_lang && <p className="hint guide-english-note">{t.englishContent}</p>}
 
         <div className="guide-columns">
           <div className="guide-main">
-            <ListBlock id="identification" title={t.recognise} items={guide.identification} />
-            <ListBlock id="habitat" title={t.habitat} items={guide.habitat} />
-            <ListBlock id="habits" title={t.habits} items={guide.habits} />
-            <ListBlock id="where_and_when" title={t.whereWhen} items={guide.where_and_when} />
+            <ListBlock id="identification" title={t.recognise} items={guide.identification} lang={lang} />
+            <ListBlock id="habitat" title={t.habitat} items={guide.habitat} lang={lang} />
+            <ListBlock id="habits" title={t.habits} items={guide.habits} lang={lang} />
+            <ListBlock id="where_and_when" title={t.whereWhen} items={guide.where_and_when} lang={lang} />
 
             {(guide.live_baits.length > 0 || guide.lures.length > 0) && (
               <section id="bait" className="guide-block">
@@ -202,7 +203,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
                     <div id="live_baits" className="bait-card">
                       <h3>{t.liveBait}</h3>
                       <LiveBaitWarning />
-                      <ul className="nice-list" lang="en">
+                      <ul className="nice-list" lang={lang}>
                         {guide.live_baits.map((b) => (
                           <li key={b}>
                             <BaitText text={b} fish={slug} />
@@ -214,7 +215,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
                   {guide.lures.length > 0 && (
                     <div id="lures" className="bait-card">
                       <h3>{t.lures}</h3>
-                      <ul className="nice-list" lang="en">
+                      <ul className="nice-list" lang={lang}>
                         {guide.lures.map((b) => (
                           <li key={b}>
                             <BaitText text={b} fish={slug} />
@@ -246,9 +247,9 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
               </section>
             )}
 
-            <ListBlock id="why_these_baits" title={t.whyBaits} items={guide.why_these_baits} baitsFor={slug} />
-            <ListBlock id="how_to_get" title={t.howToGet} items={guide.how_to_get} />
-            <ListBlock id="bait_for" title={t.baitFor} items={guide.bait_for} />
+            <ListBlock id="why_these_baits" title={t.whyBaits} items={guide.why_these_baits} baitsFor={slug} lang={lang} />
+            <ListBlock id="how_to_get" title={t.howToGet} items={guide.how_to_get} lang={lang} />
+            <ListBlock id="bait_for" title={t.baitFor} items={guide.bait_for} lang={lang} />
 
             {guide.setups.length > 0 &&
               (() => {
@@ -270,7 +271,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
                         <h3>{t.lureFishing}</h3>
                         <div className="setup-list">
                           {lure.map((s, i) => (
-                            <SetupCard key={s.name} setup={s} index={i + 1} anchor={anchorFor(s)} t={t} />
+                            <SetupCard key={s.name} setup={s} index={i + 1} anchor={anchorFor(s)} t={t} lang={lang} />
                           ))}
                         </div>
                       </div>
@@ -280,7 +281,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
                         <h3>{t.baitFishing}</h3>
                         <div className="setup-list">
                           {bait.map((s, i) => (
-                            <SetupCard key={s.name} setup={s} index={i + 1} anchor={anchorFor(s)} t={t} />
+                            <SetupCard key={s.name} setup={s} index={i + 1} anchor={anchorFor(s)} t={t} lang={lang} />
                           ))}
                         </div>
                       </div>
@@ -289,11 +290,11 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
                 );
               })()}
 
-            <ListBlock id="tips" title={t.tips} items={guide.tips} />
-            <ListBlock id="eating" title={t.eating} items={guide.eating} />
+            <ListBlock id="tips" title={t.tips} items={guide.tips} lang={lang} />
+            <ListBlock id="eating" title={t.eating} items={guide.eating} lang={lang} />
             {guide.eating.length > 0 && (
               <p className="muted">
-                {t.cleaningIn}<Link href="/fish#care">{t.handbookLink}</Link>{t.cleaningEnd}
+                {t.cleaningIn}<Link href="/handbook#care">{t.handbookLink}</Link>{t.cleaningEnd}
               </p>
             )}
 

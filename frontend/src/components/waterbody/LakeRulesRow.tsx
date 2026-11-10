@@ -44,7 +44,7 @@ export function LakeRulesRow({ stateCode }: { stateCode: string | null | undefin
         )}
       </p>
       {baitOpen && (
-        <ul lang="en">
+        <ul lang={j.bait_rules_lang ?? "en"}>
           {j.bait_rules.map((rule) => (
             <li key={rule}>{rule}</li>
           ))}

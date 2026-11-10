@@ -454,6 +454,49 @@ Unchanged (ADR 0012): CC0 and CC BY records only in a commercial build
   Federal works; credited anyway. Stop Aquatic Hitchhikers (a campaign site, no
   licence stated) is used for facts + link only.
 
+### More gear photos, 2026-11-10
+
+Every item on `/gear` now has its own photo, and no photo is used twice
+(`tests/test_gear.py`). Commons had no good picture of some things. Each photo
+was looked at by eye against its card; shop and catalogue photos were not used,
+because they are the seller's copyright.
+
+Flickr, CC BY 2.0 (licence read from the photo's page, title and author shown
+beside the photo). Resized; `leader-wire` was turned upright. Kept in
+`frontend/public/gear-photos/`:
+
+- `leader-wire`: "wobbler med tafs" by Fiske 2012, https://www.flickr.com/photos/sportfiskeakademin2012/8028982344/
+- `line-mono`: "Shur Strike fishing line" by Mark Morgan Trinidad, https://www.flickr.com/photos/markmorgantrinidad/5126907049/
+- `bobber`: "Fishing Bobber in Concrete" by Steve Snodgrass, https://www.flickr.com/photos/stevensnodgrass/5490362799/
+- `tool-tackle-box`: "Lure Selection" by Podknox, https://www.flickr.com/photos/wapster/2540046676/
+- `tool-bucket`: "Alive or Dead?" by jo9ce4line0, https://www.flickr.com/photos/jo9ce4line0/3281395956/
+- `tool-stringer`: "Stringer of Fish" by Richard Elzey, https://www.flickr.com/photos/elzey/6556540231/
+- `swivel`: "Swivels and bomb" by zimpenfish, https://www.flickr.com/photos/zimpenfish/3288356589/
+
+Close crops of whole Commons photos, kept in the same folder:
+
+- `hook-treble`: from `File:Ein goldener Blinker.jpg`, CC0, Danndorfer1914.
+- `sinker-egg`: from `File:Fishing weights smaller sizes.jpg`, CC0.
+- `bait-cut`: from `File:Preparing bait for salmon trolling.jpg`, public domain,
+  NOAA Photo Library (Historic Fisheries Collection, fish5726).
+
+Added from Commons and hot-linked: `File:Circle-hook.jpg`, `File:ストレートワーム.jpg`,
+`File:バイブレーション.jpg` (public domain), `File:Shimano Corsair CS 400 fishing reel
+20200613 001.jpg` and `File:Zwei Twister.jpg` (CC0).
+
+## Fish photo gate: training photos, 2026-11-10
+
+`models/fish-id/gate.npz` (ADR 0053) was fitted on the fish training photos
+below, on photos with no fish already collected for the gear camera (Open
+Images, PD12M, YFCC100M, CommonCatalog and Commons, listed under the next
+heading), and on about 1,000 more photos with no fish and 31 of people with
+their catch, found for this gate on Wikimedia Commons and on Flickr through
+Openverse. All are PD, CC0 or CC BY. Their creators are in
+`models/fish-id/GATE_CREDITS.json`. It also used screenshots of FishEye and
+synthetic screens made by `tools/fish_gate/make_screens.py` from FishEye's own
+text. Only the weights ship. Another 431 open-licence photos from Commons and
+31 more catches were used only to test it, and are not kept in the repository.
+
 ## Gear photo recognition: training photos, 2026-11-06
 
 Photos used only to fit and test a gear recogniser (no photo is shown in the

@@ -50,7 +50,7 @@ class Policy:
     """Thresholds; see docs/adr/0048 for how they were measured."""
 
     # Below this much "some gear" in total, the photo isn't of gear.
-    min_gear: float = 0.5
+    min_gear: float = 0.75
     # The likeliest item is named outright with at least this share of the
     # gear probability; below it, the page offers the likeliest few.
     sure: float = 0.6

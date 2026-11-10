@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useState } from "react";
 
+import { useLocale } from "@/i18n/client";
 import { listJurisdictions } from "@/lib/api/client";
 import type { Jurisdiction } from "@/lib/api/types";
 
@@ -53,24 +54,27 @@ export function useSelectedState(): string | null {
   return useSyncExternalStore(subscribe, readState, () => null);
 }
 
-let jurisdictions: Promise<Jurisdiction[]> | null = null;
+const jurisdictions = new Map<string, Promise<Jurisdiction[]>>();
 
-/** The states and their agencies, fetched once. Null while loading or if the
- * request failed: callers fall back to the state code. */
+/** The states and their agencies, fetched once per language (their bait rules
+ * are translated). Null while loading or if the request failed: callers fall
+ * back to the state code. */
 export function useJurisdictions(): Jurisdiction[] | null {
+  const locale = useLocale();
   const [list, setList] = useState<Jurisdiction[] | null>(null);
   useEffect(() => {
     let live = true;
-    jurisdictions ??= listJurisdictions();
-    jurisdictions
+    const pending = jurisdictions.get(locale) ?? listJurisdictions(locale);
+    jurisdictions.set(locale, pending);
+    pending
       .then((l) => live && setList(l))
       .catch(() => {
-        jurisdictions = null; // a later mount retries
+        jurisdictions.delete(locale); // a later mount retries
       });
     return () => {
       live = false;
     };
-  }, []);
+  }, [locale]);
   return list;
 }
 

@@ -26,6 +26,7 @@ import numpy as np
 from app.services.rag import zh
 from app.services.rag.chunking import SHARED_SLUG
 from app.services.rag.embeddings import Embedder, passage_vectors
+from app.services.rag.zh_search import ZhTopics
 from app.services.rag.retriever import (
     AMBIGUOUS_ALIASES,
     AmbiguousName,
@@ -50,6 +51,8 @@ RRF_K = 60
 # rests on a cosine threshold (ADR 0025 has the measurements).
 DENSE_TOP = 5
 DENSE_W = 0.5
+# A Chinese question's closest handbook topics (zh_search.py), per place in that list.
+ZH_TOPIC_W = 0.5
 
 
 class HybridRetriever:
@@ -62,6 +65,7 @@ class HybridRetriever:
         self._vecs = vectors if vectors is not None else passage_vectors(embedder, [p.text for p in self.passages])
         self._slugs = np.array([p.species_slug for p in self.passages])
         self._index = {p.id: i for i, p in enumerate(self.passages)}
+        self._zh = ZhTopics(self.passages)
         # One vector per decoy sentence, for the ambiguous names
         # (retriever.AmbiguousName). About 30 short sentences, encoded once.
         decoys = [(alias, d) for alias, n in AMBIGUOUS_ALIASES.items() for d in n.decoys]
@@ -140,6 +144,9 @@ class HybridRetriever:
             fused[i] = fused.get(i, 0.0) + 1 / (RRF_K + rank + 1)
         for rank, i in enumerate(dense):
             fused[i] = fused.get(i, 0.0) + DENSE_W / (RRF_K + rank + 1)
+        if chinese:
+            for rank, i in enumerate(self._zh.rank(residual if named else question)):
+                fused[i] = fused.get(i, 0.0) + ZH_TOPIC_W / (RRF_K + rank + 1)
         hits = [ScoredPassage(self.passages[i], s) for i, s in fused.items()]
         hits.sort(key=lambda h: (-h.score, h.passage.id))
         if routed:

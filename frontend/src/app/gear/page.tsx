@@ -4,11 +4,11 @@ import Link from "next/link";
 import { GearPhoto } from "@/components/gear/GearPhoto";
 import { IdentifyGear } from "@/components/gear/IdentifyGear";
 import { PageTransition } from "@/components/motion/Transition";
-import { localFishName, localGearCategory, localGearName } from "@/i18n/names";
+import { localGearCategory, localGearName } from "@/i18n/names";
 import { getLocale, getT } from "@/i18n/server";
 import type { Locale } from "@/i18n/config";
-import { listGear, listSpeciesGuides } from "@/lib/api/client";
-import type { Gear, GearItem, SpeciesGuide } from "@/lib/api/types";
+import { listGear } from "@/lib/api/client";
+import type { Gear, GearItem } from "@/lib/api/types";
 
 // From the API at request time, like /fish: a build has no API to ask.
 export const dynamic = "force-dynamic";
@@ -18,10 +18,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: `${t.title} · FishEye`, description: t.lede };
 }
 
-function Card({ item, locale, fishName, t }: {
+function Card({ item, locale, t }: {
   item: GearItem;
   locale: Locale;
-  fishName: (slug: string) => string;
   t: Awaited<ReturnType<typeof getT>>["gearPage"];
 }) {
   const local = localGearName(item.id, locale);
@@ -33,21 +32,9 @@ function Card({ item, locale, fishName, t }: {
           {local ?? item.name}
           {local && <span className="name-en" lang="en">{item.name}</span>}
         </h3>
-        <p lang="en">{item.what}</p>
-        <p className="gear-tip" lang="en"><strong>{t.tip}</strong> {item.tip}</p>
-        {item.fish.length > 0 && (
-          <p className="gear-fish">
-            {t.goodFor}{" "}
-            {item.fish.slice(0, 6).map((slug, i) => (
-              <span key={slug}>
-                {i > 0 && ", "}
-                <Link href={`/fish/${slug}`}>{fishName(slug)}</Link>
-              </span>
-            ))}
-            {item.fish.length > 6 && "…"}
-          </p>
-        )}
-        {item.topic && <Link className="gear-more" href={`/fish#${item.topic}`}>{t.learnMore}</Link>}
+        <p lang={item.text_lang ?? "en"}>{item.what}</p>
+        <p className="gear-tip" lang={item.text_lang ?? "en"}><strong>{t.tip}</strong> {item.tip}</p>
+        {item.topic && <Link className="gear-more" href={`/handbook#${item.topic}`}>{t.learnMore}</Link>}
       </div>
     </article>
   );
@@ -55,7 +42,7 @@ function Card({ item, locale, fishName, t }: {
 
 /**
  * What to buy: every piece of gear the guides mention, with a real photo,
- * what it's for and which fish it suits, and a short first-trip list on top
+ * what it's for, and a short first-trip list on top
  * (backend app/knowledge/gear.py). FishEye sells nothing and names no brands.
  */
 export default async function GearPage() {
@@ -63,15 +50,12 @@ export default async function GearPage() {
   const t = all.gearPage;
   const locale = await getLocale();
   let gear: Gear | null = null;
-  let guides: SpeciesGuide[] = [];
   try {
-    [gear, guides] = await Promise.all([listGear(), listSpeciesGuides().catch(() => [])]);
+    gear = await listGear(locale);
   } catch (e) {
     console.error("gear page", e);
     gear = null;
   }
-  const english = new Map(guides.map((g) => [g.slug, g.common_name]));
-  const fishName = (slug: string) => localFishName(slug, locale) ?? english.get(slug) ?? slug;
 
   return (
     <PageTransition>
@@ -80,7 +64,7 @@ export default async function GearPage() {
           <p className="eyebrow">FishEye</p>
           <h1>{t.title}</h1>
           <p className="lede">{t.lede}</p>
-          {locale !== "en" && <p className="hint">{all.fish.englishContent}</p>}
+          {locale !== "en" && gear?.items.some((i) => !i.text_lang) && <p className="hint">{all.fish.englishContent}</p>}
         </header>
         {!gear ? (
           <div className="backend-error">{t.loadError}</div>
@@ -116,7 +100,7 @@ export default async function GearPage() {
                 <section key={c.id} id={`gear-${c.id}`} className="gear-section">
                   <h2>{localGearCategory(c.id, locale) ?? c.label}</h2>
                   <div className="gear-grid">
-                    {items.map((i) => <Card key={i.id} item={i} locale={locale} fishName={fishName} t={t} />)}
+                    {items.map((i) => <Card key={i.id} item={i} locale={locale} t={t} />)}
                   </div>
                 </section>
               );

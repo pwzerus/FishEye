@@ -462,6 +462,8 @@ export interface TackleSetup {
 }
 
 export interface SpeciesGuide {
+  /** The language of the guide's text when it isn't English. */
+  text_lang?: string | null;
   slug: string;
   common_name: string;
   scientific_name: string;
@@ -1000,6 +1002,8 @@ export interface HandbookTopic {
   category_label: string;
   title: string;
   body: string[];
+  /** The body's language when it isn't English (the API was asked for it and has it). */
+  body_lang?: string | null;
   /** A state code for a topic stating that state's rules, else "all". */
   region: string;
   sources: GuideSource[];
@@ -1031,6 +1035,8 @@ export interface Jurisdiction {
   license_url: string | null;
   /** What may go on the hook and where; empty where FishEye hasn't written them. */
   bait_rules: string[];
+  /** Their language when it isn't English. */
+  bait_rules_lang?: string | null;
   bait_rules_sources: GuideSource[];
   /** The bait rules contradict the guides' live-bait advice (California):
    * the live-bait list carries a warning there. */
@@ -1051,6 +1057,8 @@ export interface GearPhoto {
   license: string;
   license_url: string | null;
   file_page: string;
+  /** The work's own title, shown where its licence asks for it (CC BY 2.0). */
+  title?: string | null;
 }
 
 export interface GearItem {
@@ -1059,7 +1067,9 @@ export interface GearItem {
   category: string;
   what: string;
   tip: string;
-  /** The handbook topic that explains it: an anchor on /fish. */
+  /** The language of what and tip when it isn't English. */
+  text_lang?: string | null;
+  /** The handbook topic that explains it: an anchor on /handbook. */
   topic: string | null;
   /** Guide slugs it's a good choice for. */
   fish: string[];

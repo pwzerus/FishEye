@@ -71,7 +71,10 @@ this PC, 2.6 s a photo on two threads, and about 360 MB more memory.
 `models/gear-id-small/` is the same build on PE-Core B (100 MB, 0.27 s,
 about 120 MB): item right 76.7%, in the top three 87.9%.
 
-Thresholds (`services/gear_id.Policy`): under 0.5 of "some gear", the photo
+Thresholds (`services/gear_id.Policy`): under 0.75 of "some gear" (0.5 until
+2026-11-10, when a chair and a portrait were being named as tackle: on the test
+photos, not-gear let through fell from 19 to 8 of 524 and real gear answered from
+95% to 92.5%), the photo
 isn't gear (and if it looks most like a fish, the page points to the fish
 check); a likeliest item with 0.6 of the gear share is named outright,
 otherwise the three likeliest are offered with their photos to compare; under

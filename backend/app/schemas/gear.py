@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 
 class GearPhotoOut(BaseModel):
-    """A Wikimedia Commons photo; the UI shows `author` and `license` with it."""
+    """A Commons or Flickr photo; the UI shows `author` and `license` with it."""
 
     url: str
     width: int
@@ -12,6 +12,7 @@ class GearPhotoOut(BaseModel):
     license: str
     license_url: str | None
     file_page: str
+    title: str | None = None  # the work's own title, shown where its licence asks for it
 
 
 class GearItemOut(BaseModel):
@@ -20,7 +21,9 @@ class GearItemOut(BaseModel):
     category: str
     what: str
     tip: str
-    topic: str | None  # the handbook topic (an anchor on /fish) that explains it
+    # The language of what/tip when it isn't English (asked for and there).
+    text_lang: str | None = None
+    topic: str | None  # the handbook topic (an anchor on /handbook) that explains it
     fish: list[str]  # guide slugs
     first_kit: bool
     photo: GearPhotoOut | None

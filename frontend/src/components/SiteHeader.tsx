@@ -27,6 +27,7 @@ const NAV = [
   { href: "/", label: "home", icon: "home" },
   { href: "/map", label: "map", icon: "map" },
   { href: "/fish", label: "fish", icon: "fish" },
+  { href: "/handbook", label: "handbook", icon: "handbook" },
   { href: "/community", label: "catches", icon: "community" },
   { href: "/ask", label: "ask", icon: "ask" },
 ] as const satisfies readonly { href: string; label: keyof Messages["nav"]; icon: string }[];
@@ -104,6 +105,14 @@ function NavIcon({ name }: { name: (typeof NAV)[number]["icon"] }) {
         <svg {...common}>
           <path d="M3 12c3-5 9-6 13-3l5-3v12l-5-3c-4 3-10 2-13-3z" />
           <circle cx="8" cy="11" r="0.8" fill="currentColor" />
+        </svg>
+      );
+    case "handbook":
+      return (
+        <svg {...common}>
+          <path d="M4 5a2 2 0 0 1 2-2h14v15H6a2 2 0 0 0-2 2V5z" />
+          <path d="M4 20a2 2 0 0 0 2 2h14v-4" />
+          <path d="M9 8h7" />
         </svg>
       );
     case "community":

@@ -17,7 +17,10 @@ How a photo is read:
    accurate (82.4% of honest claims accepted against 82.1%, the same false
    ones), at twice the time.
 2. Its similarity to every class of fish_id_classes.py (guide species, fish
-   with no guide, things that aren't fish) becomes a probability.
+   with no guide, things that aren't fish) becomes a probability. A second,
+   separate look (models/fish-id/gate.npz) says whether the photo shows a fish
+   at all: a screenshot spreads over many fish classes and looks like "some
+   fish" to the first one (docs/adr/0053).
 3. `check_claim` compares that with what the angler said: the same species
    (confirmed), the same group of look-alikes (accepted; the species stays
    the angler's call, and the pin says so), or not (refused).
@@ -70,6 +73,8 @@ class Candidate:
 class Identification:
     candidates: tuple[Candidate, ...]  # every class, most likely first
     model: str
+    # How sure the gate is that the photo shows a fish at all; None without one.
+    gate: float | None = None
 
     @property
     def top(self) -> Candidate:
@@ -77,6 +82,9 @@ class Identification:
 
     @property
     def fish_probability(self) -> float:
+        """Nothing if the gate says there's no fish; else the share on the fish classes."""
+        if self.gate is not None and self.gate < POLICY.min_photo:
+            return 0.0
         return sum(c.probability for c in self.candidates if c.kind != NOT_FISH)
 
     def probability(self, slug: str) -> float:
@@ -109,6 +117,9 @@ class Policy:
 
     # Below this much "some fish" in total, the photo isn't of a fish.
     min_fish: float = 0.5
+    # Below this from the gate, neither is it (docs/adr/0053). Low on purpose:
+    # refusing someone's real catch is worse than letting a strange photo by.
+    min_photo: float = 0.3
     # The rest are shares of the fish probability, not of everything.
     # Chosen on the training set's held-out newest observations
     # (fish_id_train.py --sweep, BioCLIP 2 + head, 2026-10-27), for accuracy
@@ -229,6 +240,15 @@ class FishRecognizer:
                 raise FileNotFoundError(f"{head} was fitted for another class list; refit it")
             self._w, self._b = fitted["w"], fitted["b"]
             self.name = f"{self.encoder}+head"
+        self._gate: tuple[np.ndarray, float] | None = None
+        gate = model_dir / "gate.npz"
+        if use_head and gate.exists():
+            fitted = np.load(gate)
+            if str(fitted["encoder"]) == self.encoder:
+                self._gate = (fitted["w"], float(fitted["b"]))
+                self.name = f"{self.name}+gate"
+            else:
+                logger.warning("%s was fitted for another encoder; not used", gate)
 
     def zero_shot_weights(self) -> np.ndarray:
         return (self._scale * self._text).astype(np.float32)
@@ -268,12 +288,16 @@ class FishRecognizer:
         p = np.exp(logits - logits.max())
         p /= p.sum()
         order = np.argsort(-p)
+        gate = None
+        if self._gate is not None:
+            gate = float(1 / (1 + np.exp(-(self._gate[0] @ vec + self._gate[1]))))
         return Identification(
             tuple(
                 Candidate(self._classes[i]["slug"], self._classes[i]["label"], self._classes[i]["kind"], float(p[i]))
                 for i in order
             ),
             self.name,
+            gate,
         )
 
     def identify(self, photo: bytes | Image.Image) -> Identification:

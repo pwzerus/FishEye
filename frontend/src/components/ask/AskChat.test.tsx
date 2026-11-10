@@ -225,7 +225,7 @@ describe("AskChat", () => {
     const fishLink = screen.getByText(/White Crappie · Live and natural bait/).closest("a");
     expect(fishLink).toHaveAttribute("href", "/fish/white-crappie#live_baits");
     const rulesLink = screen.getByText("Texas bait rules").closest("a");
-    expect(rulesLink).toHaveAttribute("href", "/fish#bait_rules");
+    expect(rulesLink).toHaveAttribute("href", "/handbook#bait_rules");
   });
 
   it("keeps how the answer was found to developers: no scores, model usage or trace id", async () => {

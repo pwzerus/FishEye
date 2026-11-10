@@ -51,7 +51,7 @@ CATEGORIES: dict[str, str] = {
     "methods": "Ways to fish",
     "conditions": "Weather, water and where fish hold",
     "safety": "Staying safe on the water",
-    "rules": "License, and rules that follow you home",
+    "rules": "Licenses and fishing rules",
     # Added 2026-11-08, from the questions beginners actually ask.
     "trouble": "When it isn't working",
 }

@@ -175,6 +175,18 @@ def no_lake(name: str, lang: str) -> str:
     return f"FishEye has no lake called {name} on record. Check the spelling, or search for it on the map."
 
 
+def use_the_map(lang: str) -> str:
+    if lang == "zh":
+        return "附近哪里能钓，地图最清楚：打开顶部的“找钓点”，点“用我的位置”或者搜城市名，就能看到周围的湖和里面有什么鱼。"
+    if lang == "es":
+        return "Para saber dónde pescar cerca de ti, usa el mapa: abre «Dónde pescar», usa tu ubicación o busca una ciudad y verás los lagos de la zona y sus peces."
+    if lang == "ko":
+        return "주변 낚시터는 지도에서 확인하세요. 위쪽의 ‘낚시터 찾기’를 열고 내 위치를 쓰거나 도시를 검색하면 근처 호수와 어종이 나옵니다."
+    if lang == "ja":
+        return "近くの釣り場は地図で確認できます。上の「釣り場を探す」を開き、現在地を使うか都市名を検索すると、周辺の湖とそこにいる魚が表示されます。"
+    return "For water near you, use the map: open Find water, use your location or search a city, and you'll see the lakes around you and what fish are in them."
+
+
 def off_topic(lang: str) -> str:
     if lang == "zh":
         return f"这看起来不像钓鱼问题，或者我没看懂。{coverage(lang)}试着说出一种鱼、一种饵或一件装备，用中文、英文、西班牙语、韩语或日语都行。"

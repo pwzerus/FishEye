@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useLocale, useT } from "@/i18n/client";
 import { localStateName } from "@/i18n/names";
@@ -8,6 +8,7 @@ import { ApiError, geocodePlace, searchLakes } from "@/lib/api/client";
 import type { LakeMatch } from "@/lib/api/types";
 import { kmApart } from "@/lib/geo";
 import { useJurisdictions } from "@/lib/jurisdiction";
+import { suggestPlaces } from "@/lib/usCities";
 
 // A search for water, which FishEye may have by name ("Freeman Lake"). A
 // town or a ZIP goes to the place geocoder, unless a lake FishEye verified
@@ -74,6 +75,12 @@ export function clearPick(
   return close.length === 1 ? close[0] : null;
 }
 
+// What the box offers as you type: lakes come from FishEye's own search, a
+// moment after the typing stops; places from a list in the page (lib/usCities).
+const LAKE_HINTS = 4;
+const LAKE_HINT_DELAY_MS = 250;
+type Hint = { kind: "place"; label: string } | { kind: "lake"; lake: LakeMatch };
+
 export interface LocatedPoint {
   latitude: number;
   longitude: number;
@@ -118,6 +125,18 @@ export function LocationSearchBar({
   const [error, setError] = useState<string | null>(null);
   // Lakes of that name in several places: the person says which.
   const [choices, setChoices] = useState<LakeMatch[] | null>(null);
+  const [places, setPlaces] = useState<string[]>([]);
+  const [lakeHints, setLakeHints] = useState<LakeMatch[]>([]);
+  const [activeHint, setActiveHint] = useState(-1);
+  // Only the newest typing's lake answer is shown.
+  const hintRun = useRef(0);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (hintTimer.current) clearTimeout(hintTimer.current);
+    },
+    [],
+  );
   const states = useJurisdictions();
   const all = useT();
   const t = all.search;
@@ -126,12 +145,90 @@ export function LocationSearchBar({
 
   function pickLake(lake: LakeMatch) {
     setChoices(null);
+    closeHints();
     onLake?.(lake);
+  }
+
+  function closeHints() {
+    hintRun.current += 1;
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    setPlaces([]);
+    setLakeHints([]);
+    setActiveHint(-1);
+  }
+
+  function changeQuery(value: string) {
+    setQuery(value);
+    setError(null);
+    setChoices(null);
+    setActiveHint(-1);
+    const stateNames = (states ?? []).map((s) => s.name);
+    // Typed in another language: its name for the state, offered in English for the geocoder.
+    const typedLocal = value.trim();
+    const localStates = /[^\x00-\x7f]/.test(typedLocal)
+      ? (states ?? []).filter((s) => localStateName(s.code, s.name, locale).includes(typedLocal)).map((s) => s.name).slice(0, 2)
+      : [];
+    setPlaces([...new Set([...localStates, ...suggestPlaces(value, stateNames, 2), ...suggestPlaces(value)])]);
+    const run = ++hintRun.current;
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    const typed = inEnglish(value.trim());
+    if (!onLake || typed.length < 3) {
+      setLakeHints([]);
+      return;
+    }
+    hintTimer.current = setTimeout(() => {
+      const { name, state } = splitState(typed, states ?? []);
+      searchLakes(name, state ?? stateCode, near)
+        .then((found) => {
+          if (run === hintRun.current) setLakeHints(found.slice(0, LAKE_HINTS));
+        })
+        .catch(() => {
+          if (run === hintRun.current) setLakeHints([]);
+        });
+    }, LAKE_HINT_DELAY_MS);
+  }
+
+  const hints: Hint[] = [
+    ...places.map((label): Hint => ({ kind: "place", label })),
+    ...lakeHints.map((lake): Hint => ({ kind: "lake", lake })),
+  ];
+
+  function takeHint(hint: Hint) {
+    if (hint.kind === "lake") {
+      setQuery(hint.lake.name);
+      pickLake(hint.lake);
+      return;
+    }
+    setQuery(hint.label);
+    closeHints();
+    setError(null);
+    searchPlaces(hint.label);
+  }
+
+  function hintKeys(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Escape") {
+      closeHints();
+      return;
+    }
+    if (hints.length === 0) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const step = e.key === "ArrowDown" ? 1 : -1;
+      setActiveHint((i) => {
+        const next = i + step;
+        if (next >= hints.length) return -1;
+        return next < -1 ? hints.length - 1 : next;
+      });
+    } else if (e.key === "Enter" && activeHint >= 0 && activeHint < hints.length) {
+      e.preventDefault();
+      takeHint(hints[activeHint]);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const typed = query.trim();
+    closeHints();
     // Nothing to look for, so the last search's lakes shouldn't stay up.
     if (typed.length < 2 || !/[\p{L}\p{N}]/u.test(typed)) {
       setChoices(null);
@@ -237,12 +334,22 @@ export function LocationSearchBar({
         <input
           type="search"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => changeQuery(e.target.value)}
+          onKeyDown={hintKeys}
+          onBlur={() => {
+            // After a tap on a suggestion has landed.
+            setTimeout(closeHints, 150);
+          }}
           placeholder={t.placeholder}
           autoComplete="off"
           enterKeyHint="search"
           className="location-search-input"
           aria-label={t.label}
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={hints.length > 0}
+          aria-controls="location-hints"
+          aria-activedescendant={activeHint >= 0 && activeHint < hints.length ? `location-hint-${activeHint}` : undefined}
         />
         <button type="submit" className="location-search-button" disabled={searching}>
           {searching ? t.searching : t.search}
@@ -257,6 +364,38 @@ export function LocationSearchBar({
       >
         {locating ? t.locating : t.useLocation}
       </button>
+      {hints.length > 0 && (
+        <div className="location-search-choices location-search-hints">
+          <ul id="location-hints" role="listbox" aria-label={t.suggestions}>
+            {hints.map((hint, i) => (
+              <li key={hint.kind === "lake" ? `lake-${hint.lake.id}` : hint.label} role="presentation">
+                <button
+                  type="button"
+                  id={`location-hint-${i}`}
+                  role="option"
+                  aria-selected={i === activeHint}
+                  className={i === activeHint ? "is-active" : undefined}
+                  // Before the input's blur, so the tap isn't lost when the list closes.
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => takeHint(hint)}
+                >
+                  {hint.kind === "lake" ? (
+                    <>
+                      {hint.lake.name}{" "}
+                      <span>
+                        {hint.lake.county ? `${hint.lake.county}, ` : ""}
+                        {localStateName(hint.lake.state_code, hint.lake.state_name ?? "", locale)}
+                      </span>
+                    </>
+                  ) : (
+                    hint.label
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {error && <div className="location-search-error">{error}</div>}
       {choices && (
         <div className="location-search-choices">

@@ -182,8 +182,15 @@ export function FishCheckNote({
       </p>
     );
   }
-  const { verdict, candidates } = check.result;
+  const { verdict, candidates, fish_probability } = check.result;
   if (!verdict) {
+    if ((fish_probability ?? 0) < 0.5) {
+      return (
+        <p className="fish-check is-bad" role="status">
+          {t.verdictNoFish}
+        </p>
+      );
+    }
     const fish = candidates.filter((c) => c.probability >= 0.05).slice(0, 3);
     if (fish.length === 0) return null;
     return (
@@ -196,7 +203,7 @@ export function FishCheckNote({
             </button>
           ) : (
             <button key={c.slug} type="button" className="chip fish-check-chip" onClick={() => onPickOther(c.label)}>
-              {c.label} <small>{percent(c.probability)}</small>
+              {name(c.slug, c.label)} <small>{percent(c.probability)}</small>
             </button>
           ),
         )}
@@ -411,6 +418,23 @@ export function PinForm({
   const blocked =
     named && check?.state !== "off" && (photos.length === 0 || check?.state === "checking" || (verdict !== null && !verdict.accepted));
   const offWater = (water.state === "off" && water.required) || water.state === "checking";
+  // Why the button is off, right beside it: the note about the pin is at the
+  // top of a long form, out of sight by the time you reach the button.
+  const whyOff = busy
+    ? null
+    : water.state === "off" && water.required
+      ? t.notOnWater
+      : water.state === "checking"
+        ? t.chipChecking
+        : blocked
+          ? photos.length === 0
+            ? t.needPhoto
+            : check?.state === "checking"
+              ? t.checking
+              : t.photoMismatch
+          : !named && title.trim().length < 3 && photos.length === 0
+            ? t.needPhotoOrTitle
+            : null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -556,6 +580,12 @@ export function PinForm({
           <span style={{ transform: `scaleX(${progress ?? 0})` }} />
           <small>{(progress ?? 0) < 1 ? t.uploading(Math.round((progress ?? 0) * 100)) : t.checkingSaving}</small>
         </div>
+      )}
+
+      {whyOff && (
+        <p className="hint hint-warn" role="status">
+          {whyOff}
+        </p>
       )}
 
       <div className="form-actions">

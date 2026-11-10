@@ -48,14 +48,20 @@ def test_eval_case_ids_are_unique_and_labels_point_at_real_passages():
         PARAPHRASE_CASES,
         STRESS_CASES,
         ZH_CASES,
+        ZH_EVERYDAY_CASES,
     )
     from app.services.rag.chunking import build_passages
 
     ids = {p.id for p in build_passages()}
-    every = (*CASES, *ZH_CASES, *PARAPHRASE_CASES, *NEW_TOPIC_CASES, *STRESS_CASES, *HOLDOUT_CASES)
+    every = (*CASES, *ZH_CASES, *ZH_EVERYDAY_CASES, *PARAPHRASE_CASES, *NEW_TOPIC_CASES, *STRESS_CASES, *HOLDOUT_CASES)
     assert len({c.id for c in every}) == len(every)
     for case in every:
         assert case.relevant <= ids, case.id
+
+
+def test_everyday_chinese_questions_keep_finding_the_right_topic():
+    # Keyword search alone, as in this suite; with the model it's 95% (docs/adr/0052).
+    assert run().everyday.hit_at_k >= 0.6
 
 
 def test_keyword_search_answers_chinese_questions_through_the_glossary():

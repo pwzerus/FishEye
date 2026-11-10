@@ -2,11 +2,13 @@
 
     python -m app.cli.gear_photos          # from backend/, after picking
 
-Input, in gear_cache/ (git-ignored): candidates.json, the Commons search
-results with their licence and creator (PD, CC0 or CC BY only, checked with
-fish_id_commons.licence_ok when they were fetched), and picks.tsv, one line
-per gear item: `<item id><TAB><Commons file title>`. Only the metadata is
-kept; the photo stays on Wikimedia and is hot-linked with its credit.
+Input, in gear_cache/ (git-ignored): candidates*.json, the search results
+with their licence and creator (PD, CC0 or CC BY only, checked with
+fish_id_commons.licence_ok), and picks.tsv, one line per gear item:
+`<item id><TAB><file title>`. Only the metadata is kept. A Commons photo stays
+on Wikimedia and is hot-linked with its credit; a Flickr photo (titled
+`Flickr:<id>`) or a crop of a Commons one (`Crop:<name>`) lives in
+frontend/public/gear-photos/<item>.jpg.
 """
 from __future__ import annotations
 
@@ -46,7 +48,7 @@ def build(cache: Path = CACHE) -> dict[str, dict]:
     # Every candidate seen in any search round, by file title.
     by_title: dict[str, dict] = {}
     for path in sorted(cache.glob("candidates*.json")):
-        for found in json.loads(path.read_text()).values():
+        for found in json.loads(path.read_text(encoding="utf-8")).values():
             for c in found:
                 by_title.setdefault(c["title"], c)
     photos: dict[str, dict] = {}
@@ -66,15 +68,17 @@ def build(cache: Path = CACHE) -> dict[str, dict]:
             "licence": c["licence"],
             "licence_url": c.get("licence_url") or None,
             "page": c["page_url"],
+            "title": c.get("work_title"),
         }
     return photos
 
 
 def render(photos: dict[str, dict]) -> str:
     lines = [
-        '"""Gear photos picked by eye from Wikimedia Commons (written by app/cli/gear_photos.py;',
-        'edit gear_cache/picks.txt and re-run rather than editing this file). Public domain,',
-        'CC0 or CC BY only; each is shown with its author and licence (app/knowledge/gear.py)."""',
+        '"""Gear photos picked by eye from Wikimedia Commons and Flickr (written by',
+        'app/cli/gear_photos.py; edit gear_cache/picks.tsv and re-run rather than editing this',
+        'file). Public domain, CC0 or CC BY only; each is shown with its author and licence',
+        '(app/knowledge/gear.py)."""',
         "from app.knowledge.gear import GearPhoto",
         "",
         "PHOTOS: dict[str, GearPhoto] = {",
@@ -82,8 +86,9 @@ def render(photos: dict[str, dict]) -> str:
     for item in sorted(photos):
         p = photos[item]
         lines.append(f"    {item!r}: GearPhoto(")
-        for key in ("file", "url", "width", "height", "author", "licence", "licence_url", "page"):
-            lines.append(f"        {key}={p[key]!r},")
+        for key in ("file", "url", "width", "height", "author", "licence", "licence_url", "page", "title"):
+            if key != "title" or p[key]:
+                lines.append(f"        {key}={p[key]!r},")
         lines.append("    ),")
     lines.append("}")
     return "\n".join(lines) + "\n"

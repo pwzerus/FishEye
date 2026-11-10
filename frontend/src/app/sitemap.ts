@@ -22,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page("/", 1, "weekly"),
     page("/map", 0.9, "daily"),
     page("/fish", 0.9, "weekly"),
+    page("/handbook", 0.8, "weekly"),
     page("/identify", 0.8, "monthly"),
     page("/ask", 0.8, "monthly"),
     page("/start", 0.7, "monthly"),

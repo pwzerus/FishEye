@@ -51,6 +51,7 @@ from .rag_cases import (
     PARAPHRASE_CASES,
     UNNAMED_FISHING,
     ZH_CASES,
+    ZH_EVERYDAY_CASES,
     ZH_NOT_COVERED,
     ZH_OFF_TOPIC,
     RagCase,
@@ -107,6 +108,7 @@ class RagReport:
     new_topics: SetScore
     beginner: SetScore  # BEGINNER_CASES (2026-11-08)
     booklet: SetScore  # BOOKLET_CASES (2026-11-08)
+    everyday: SetScore  # ZH_EVERYDAY_CASES (2026-11-10)
     ambiguous_resolved: float
     ambiguous_wrong: list[str]
     wrong_fish: list[str]  # "<case id>: <passage ids about a fish not asked about>"
@@ -165,6 +167,7 @@ def run(retriever: Retriever | None = None, k: int = rag.DEFAULT_K) -> RagReport
     new_topics, _ = _score(retr, NEW_TOPIC_CASES, k)
     beginner, _ = _score(retr, BEGINNER_CASES, k)
     booklet, _ = _score(retr, BOOKLET_CASES, k)
+    everyday, _ = _score(retr, ZH_EVERYDAY_CASES, k)
     ambiguous_wrong = [
         f"{cid}: {q} -> {', '.join(retr.resolve(q)[0]) or 'no fish'}"
         for cid, q, want in AMBIGUOUS_CASES
@@ -209,6 +212,7 @@ def run(retriever: Retriever | None = None, k: int = rag.DEFAULT_K) -> RagReport
         new_topics=new_topics,
         beginner=beginner,
         booklet=booklet,
+        everyday=everyday,
         ambiguous_resolved=1 - len(ambiguous_wrong) / len(AMBIGUOUS_CASES),
         ambiguous_wrong=ambiguous_wrong,
         wrong_fish=wrong,
@@ -233,6 +237,8 @@ def _compare() -> int:
         ("new topics hit@4", lambda r: f"{r.new_topics.hit_at_k:.0%}"),
         ("beginner questions hit@4", lambda r: f"{r.beginner.hit_at_k:.0%}"),
         ("booklet questions hit@4", lambda r: f"{r.booklet.hit_at_k:.0%}"),
+        ("everyday Chinese hit@4", lambda r: f"{r.everyday.hit_at_k:.0%}"),
+        ("everyday Chinese MRR", lambda r: f"{r.everyday.mrr:.2f}"),
         ("everyday-word names right", lambda r: f"{r.ambiguous_resolved:.0%}"),
         ("rephrased hit@4", lambda r: f"{r.stress.hit_at_k:.0%}"),
         ("rephrased, untuned hit@4", lambda r: f"{r.holdout.hit_at_k:.0%}"),

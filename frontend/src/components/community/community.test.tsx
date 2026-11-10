@@ -205,7 +205,8 @@ describe("PinForm", () => {
     renderApp(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
     await screen.findByRole("option", { name: "Bluegill" });
     fireEvent.change(screen.getByLabelText("Fish"), { target: { value: "bluegill" } });
-    expect(screen.getByText(/Add a photo of the fish/)).toBeInTheDocument();
+    // Beside the photos, and again by the button, which may be all that's on screen.
+    expect(screen.getAllByText(/Add a photo of the fish/)).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Share catch" })).toBeDisabled();
   });
 

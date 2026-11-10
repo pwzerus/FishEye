@@ -10,13 +10,14 @@ Text is ours, written from the handbook topics it links (which carry the
 agency sources). No brands and no prices: those go stale and FishEye sells
 nothing.
 
-Photos are Wikimedia Commons files picked by eye on 2026-11-06 (one per
-item, a clear picture of the thing itself), public domain, CC0 or CC BY
-only, so they are safe in a commercial product with their credit
-(docs/data-sources.md, "Gear photos"). They are hot-linked from Wikimedia
-with the credit beside them, like the fish photos (ADR 0015); nothing is
-copied into the repo. An item without a good open photo has none: the text
-still says what to look for.
+Photos are picked by eye, one per item and never the same one twice: a clear
+picture of the thing itself, public domain, CC0 or CC BY only, so they are
+safe in a commercial product with their credit (docs/data-sources.md, "Gear
+photos"). Most are Wikimedia Commons files, hot-linked with the credit beside
+them, like the fish photos (ADR 0015). Commons has no good picture of a few
+things; those are CC BY 2.0 photos from Flickr, or a close crop of a CC0
+Commons photo, kept in frontend/public/gear-photos/ so the page doesn't
+depend on another site for them.
 """
 from __future__ import annotations
 
@@ -35,14 +36,15 @@ CATEGORIES: dict[str, str] = {
 
 @dataclass(frozen=True)
 class GearPhoto:
-    file: str  # "File:Spinning reel.jpg"
-    url: str  # a 960 px (or smaller, whole) thumbnail on upload.wikimedia.org
+    file: str  # "File:Spinning reel.jpg", "Crop:Spinning reel.jpg" or "Flickr:8028982344"
+    url: str  # a 960 px (or smaller, whole) Commons thumbnail, or /gear-photos/<item>.jpg
     width: int
     height: int
     author: str
     licence: str  # "CC BY 4.0", "Public domain"
     licence_url: str | None
-    page: str  # the file's page on Commons
+    page: str  # the photo's page on Commons or Flickr
+    title: str | None = None  # the work's own title, which CC BY 2.0 asks to show
 
 
 @dataclass(frozen=True)

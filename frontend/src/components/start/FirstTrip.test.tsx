@@ -34,7 +34,7 @@ describe("LicenseLine", () => {
     render(<LicenseLine state={GEORGIA} />);
     expect(screen.getByText("In Georgia you need one from age 16. Under 16, you don't.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Get a license ↗" })).toHaveAttribute("href", GEORGIA.license_url);
-    expect(screen.getByRole("link", { name: "Details" })).toHaveAttribute("href", "/fish#rule-license-ga");
+    expect(screen.getByRole("link", { name: "Details" })).toHaveAttribute("href", "/handbook#rule-license-ga");
   });
 
   it("sends anywhere else to the agency, without guessing an age", () => {
@@ -88,6 +88,17 @@ describe("FirstTrip", () => {
     fireEvent.click(screen.getByRole("button", { name: "Find spots near me" }));
     expect(await screen.findByText("No official lakes within 25 miles yet.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open the map" })).toHaveAttribute("href", "/map");
+  });
+
+  it("remembers what was ticked off for the next visit", () => {
+    const first = render(<FirstTrip />);
+    fireEvent.click(screen.getAllByRole("checkbox")[0]);
+    expect(screen.getAllByRole("checkbox")[0]).toBeChecked();
+    first.unmount();
+    render(<FirstTrip />);
+    expect(screen.getAllByRole("checkbox")[0]).toBeChecked();
+    expect(screen.getAllByRole("checkbox")[1]).not.toBeChecked();
+    window.localStorage.removeItem("fisheye.kit");
   });
 
   it("names the kit in the chosen language, with the English the shop uses", async () => {

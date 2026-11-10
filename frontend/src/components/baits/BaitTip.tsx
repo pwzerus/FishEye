@@ -111,7 +111,7 @@ export function BaitTip({ card, fish, children }: { card: BaitCard; fish?: strin
           )}
           <span className="bait-tip-links">
             <Link href="/map">{t.shopsOnMap}</Link>
-            <Link href={`/fish#${card.topic}`}>{t.readMore}</Link>
+            <Link href={`/handbook#${card.topic}`}>{t.readMore}</Link>
             <Link href={`/ask?q=${encodeURIComponent(t.askQuestion(title))}`}>{t.askMore}</Link>
           </span>
         </span>

@@ -253,6 +253,20 @@ def _lakes_for(
     return _load(db, [w.id for w in rows[:MAX_LAKES]])
 
 
+_NEARBY_EN = re.compile(r"\b(near me|nearby|close to me|around me|around here|near my (?:house|home))\b", re.I)
+_WATER_EN = re.compile(r"\b(fish|fishing|lakes?|ponds?|rivers?|spots?)\b", re.I)
+_WHERE_EN = re.compile(r"\b(where|any|best|good|find|places?|spots?)\b", re.I)
+
+
+def asks_where_nearby(question: str) -> bool:
+    """"Where can I fish near me": only the map knows where the person is."""
+    if any(w in question for w in ("附近", "周围", "周边")):
+        return any(w in question for w in ("哪", "有没有", "什么地方", "推荐")) and any(
+            w in question for w in ("钓", "鱼", "湖", "水库", "河")
+        )
+    return bool(_NEARBY_EN.search(question) and _WATER_EN.search(question) and _WHERE_EN.search(question))
+
+
 def missing_lake(question: str, routed: tuple[str, ...]) -> str | None:
     """The name, when the question asks what's in a lake `answer` didn't find."""
     if routed or not _ASKS_WHATS_THERE.search(question):

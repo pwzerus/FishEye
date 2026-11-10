@@ -34,10 +34,41 @@ FISHING_TERMS = (
     "纺车轮", "水滴轮",
     # Added 2026-11-08: "卸力应该调多紧" (how tight a drag) was turned away.
     "卸力", "挂底", "抄网", "遛鱼",
+    # Added 2026-11-10: a tester's "蚯蚓怎么保存" and "怎么放生" were turned away.
+    "蚯蚓", "放生", "咬铅", "穿心铅", "子弹铅", "钓点", "渔具", "中鱼", "中了鱼",
+    "中暑", "量鱼", "飞钓",
 )
 
 # Chinese term -> the English words the guides use for it.
 GLOSSARY: dict[str, str] = {
+    # Added 2026-11-10: everyday words from a tester's questions (eval: ZH_EVERYDAY_CASES).
+    "冬天": "winter ice", "冬季": "winter ice", "春天": "spring", "春季": "spring",
+    "秋天": "fall autumn", "秋季": "fall autumn",
+    "雷雨天": "lightning thunderstorm",
+    "下雨": "rain cloud", "雨天": "rain cloud", "阴天": "cloud overcast", "晴天": "sun bright",
+    "天气": "weather fronts pressure wind rain", "适合钓鱼": "best time weather fronts wind",
+    "风大": "wind", "大风": "wind", "刮风": "wind", "有风": "wind",
+    "咬铅": "split shot", "穿心铅": "egg sinker sliding", "子弹铅": "bullet sinker",
+    "放生": "catch and release handling", "放回": "release",
+    "抛竿": "cast casting", "抛投": "cast casting", "怎么抛": "cast casting",
+    "多长": "length", "长度": "length", "多少磅": "pound test line strength", "几磅": "pound test line strength",
+    "拉力": "pound test strength",
+    "夜钓": "night dusk after dark", "夜里": "night dusk after dark", "夜间": "night dusk after dark",
+    "晚上钓": "night dusk after dark",
+    "位置": "points drop-offs cover bank", "钓点": "points drop-offs cover", "湖边": "bank shore",
+    "河边": "bank shore", "岸边": "bank shore", "岸钓": "bank shore",
+    "办证": "license", "办执照": "license", "没有执照": "license", "没证": "license",
+    "保存": "keep alive cool store", "存放": "keep alive cool store",
+    "缠在一起": "line twist tangles", "缠": "line twist tangles", "打扭": "line twist tangles",
+    "乱线": "line twist tangles", "炸线": "backlash baitcaster tangles",
+    "被吃掉": "bait keeps disappearing nothing hooked", "吃掉": "bait keeps disappearing nothing hooked",
+    "中了鱼": "playing landing fish net", "中鱼": "playing landing fish net", "拉上来": "playing landing fish net",
+    "新手": "beginner", "入门": "beginner", "装备": "gear what to buy", "多大合适": "size",
+    "量鱼": "measure fish length", "水浑": "muddy stained water clarity", "浑水": "muddy stained water clarity",
+    "太浑": "muddy stained water clarity", "水清": "clear water clarity", "很清": "clear water clarity",
+    "颜色": "color", "铅头钩": "jig head jigs", "飞钓": "fly fishing basics", "鱼鳞": "scaling scale",
+    "做好吃": "cook cooking", "扎人": "spines handling", "会坏": "spoiled fresh refrigerator", "变质": "spoiled fresh",
+    "放几天": "refrigerator days keep fresh",
     "夏天": "summer", "夏季": "summer", "深水": "deep water", "水温": "water temperature",
     # Added 2026-11-06: salmon, steelhead and other cold-water fish; thermocline; senses.
     "硬头鳟": "steelhead rainbow trout",
@@ -295,6 +326,8 @@ AMBIGUOUS_TERMS = (
     "季节", "早上", "清晨", "傍晚", "晚上", "什么时候", "刀", "肉质", "刺", "杀", "鳞", "腥",
     # Rules words: with a fish, a question about what may be kept.
     "带走", "执照", "几条", "规定", "尺寸",
+    # Line that won't behave, getting a hooked fish in, fish gone off, a fall in the water.
+    "线", "缠在一起", "拉上来", "会坏", "变质", "放几天", "冷水", "落水", "掉进", "中暑", "出不了线",
 )
 
 

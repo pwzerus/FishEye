@@ -91,7 +91,7 @@ def _response(
                 species_slug=p.species_slug,
                 species_name=p.species_name,
                 section=p.section,
-                title=p.title_zh if zh_reply and p.text_zh else p.title,
+                title=(p.title_zh or p.title) if zh_reply and p.text_zh else p.title,
                 excerpt=p.text_zh if zh_reply and p.text_zh else rag_ask.body_of(p),
                 region=p.region,
                 sources=[source_out(s) for s in sources_for(p.source_ids)],
@@ -135,6 +135,10 @@ def search_guides(
         result.trace.outcome = rag_ask.OUTCOME_LAKE
     elif lakes is None and (name := lake_facts.missing_lake(payload.question, routed)):
         reply = replies.no_lake(name, replies.reply_lang(payload.question, payload.lang))
+        result = replace(result, answer=reply, answer_source=rag_ask.ANSWER_NO_MATCH, citations=[])
+        result.trace.outcome = rag_ask.OUTCOME_NO_MATCH
+    elif lakes is None and lake_facts.asks_where_nearby(payload.question):
+        reply = replies.use_the_map(replies.reply_lang(payload.question, payload.lang))
         result = replace(result, answer=reply, answer_source=rag_ask.ANSWER_NO_MATCH, citations=[])
         result.trace.outcome = rag_ask.OUTCOME_NO_MATCH
     # What Ask can't answer, without who asked (services/ask_misses.py).

@@ -599,6 +599,8 @@ def identify_fish(
         _raise(exc)
     ident = recognizer.identify(cleaned.full)
     verdict = fish_id.check_claim(ident, claim) if (species_slug or species_other) else None
+    # No guesses about a photo that shows no fish: the form used to offer them.
+    shows_fish = ident.fish_probability >= fish_id.POLICY.min_fish
     return FishIdOut(
         available=True,
         model=recognizer.name,
@@ -611,10 +613,10 @@ def identify_fish(
                 in_guides=c.kind == GUIDE,
                 guide_slug=c.slug if c.kind == GUIDE else SAME_FISH.get(c.slug),
             )
-            for c in ident.fish(3)
+            for c in (ident.fish(3) if shows_fish else ())
         ],
-        group=_top_group(ident),
-        group_probability=round(ident.group_probability(_top_group(ident)), 3) if _top_group(ident) else None,
+        group=_top_group(ident) if shows_fish else None,
+        group_probability=round(ident.group_probability(_top_group(ident)), 3) if shows_fish and _top_group(ident) else None,
         verdict=FishVerdictOut(
             status=verdict.status,
             accepted=verdict.accepted,

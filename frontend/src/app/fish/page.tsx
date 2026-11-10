@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 
-import { getT } from "@/i18n/server";
+import { getLocale, getT } from "@/i18n/server";
 import Link from "next/link";
 
 import { FishGrid } from "@/components/fish/FishGrid";
-import { Handbook } from "@/components/fish/Handbook";
+import { HandbookRedirect } from "@/components/fish/HandbookRedirect";
 import { PageTransition } from "@/components/motion/Transition";
-import { BaitRules } from "@/components/rules/RegionGate";
 import { StatePicker } from "@/components/ui/StatePicker";
-import { listGear, listHandbook, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
-import type { GearItem, HandbookTopic, SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
+import { listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
+import type { SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
 
 // Render on each request, not once during `next build`. A build made
 // without the API running (a Docker image, CI) would otherwise bake in the
@@ -25,24 +24,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function FishGuidePage() {
   const t = (await getT()).fish;
-  const tr = (await getT()).stateRules;
   let guides: SpeciesGuide[] = [];
   let photos: SpeciesPhotos = {};
-  let handbook: HandbookTopic[] = [];
-  let gear: GearItem[] = [];
   let backendError: string | null = null;
   try {
-    [guides, photos, handbook, gear] = await Promise.all([
-      listSpeciesGuides(),
-      listSpeciesPhotos(),
-      listHandbook().catch(() => []),
-      listGear().then((g) => g.items).catch(() => []),
-    ]);
+    [guides, photos] = await Promise.all([listSpeciesGuides(await getLocale()), listSpeciesPhotos()]);
   } catch {
     backendError = t.loadError;
   }
-
-  const baitRules = guides.find((g) => g.legal_notes.length > 0)?.legal_notes ?? [];
 
   return (
     <PageTransition>
@@ -57,7 +46,7 @@ export default async function FishGuidePage() {
           <p className="lede reveal" style={{ "--i": 2 } as React.CSSProperties}>
             {t.lede}
           </p>
-          <div className="guide-shortcuts"><a href="#fish-species">{t.toSpecies}</a><a href="#handbook">{t.toBasics}</a><Link href="/gear">{t.gearLink}</Link><Link href="/questions">{t.questionsLink}</Link><Link href="/identify">{t.photoId}</Link></div>
+          <div className="guide-shortcuts"><a href="#fish-species">{t.toSpecies}</a><Link href="/handbook">{t.handbook}</Link><Link href="/gear">{t.gearLink}</Link><Link href="/questions">{t.questionsLink}</Link><Link href="/identify">{t.photoId}</Link></div>
           <StatePicker />
         </section>
 
@@ -67,13 +56,7 @@ export default async function FishGuidePage() {
           <div id="fish-species"><FishGrid guides={guides} photos={photos} /></div>
         )}
 
-        {!backendError && <Handbook topics={handbook} gear={gear} />}
-
-        {baitRules.length > 0 && (
-          <div className="rules-stack reveal" style={{ "--i": 6 } as React.CSSProperties}>
-            <BaitRules texasRules={baitRules} texasUrl={guides[0]?.limits_url ?? ""} suffix={tr.forEveryFish} />
-          </div>
-        )}
+        <HandbookRedirect />
       </main>
     </PageTransition>
   );

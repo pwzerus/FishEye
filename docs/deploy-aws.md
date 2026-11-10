@@ -256,7 +256,7 @@ app uses `image_int8.onnx`):
 
 ```
 ssh -i fisheye.pem ubuntu@<ELASTIC_IP> "mkdir -p ~/FishEye/backend/models/fish-id"
-scp -i fisheye.pem models/fish-id/image_int8.onnx models/fish-id/text.npy models/fish-id/head.npz models/fish-id/classes.json models/fish-id/SOURCE.json models/fish-id/TRAINING_CREDITS.json ubuntu@<ELASTIC_IP>:~/FishEye/backend/models/fish-id/
+scp -i fisheye.pem models/fish-id/image_int8.onnx models/fish-id/text.npy models/fish-id/head.npz models/fish-id/gate.npz models/fish-id/GATE_CREDITS.json models/fish-id/classes.json models/fish-id/SOURCE.json models/fish-id/TRAINING_CREDITS.json ubuntu@<ELASTIC_IP>:~/FishEye/backend/models/fish-id/
 scp -i fisheye.pem osm_cache/tackle_shops.json ubuntu@<ELASTIC_IP>:~/data/osm_cache/
 ```
 

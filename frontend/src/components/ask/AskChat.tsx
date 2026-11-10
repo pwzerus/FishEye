@@ -69,7 +69,7 @@ const MAX_LEN = 300;
 
 function citationHref(c: AskCitation): string {
   if (c.section.startsWith("qa-")) return `/questions#${c.section}`;
-  if (!c.species_slug || c.species_slug === "all-fish") return `/fish#${c.section}`;
+  if (!c.species_slug || c.species_slug === "all-fish") return `/handbook#${c.section}`;
   return `/fish/${c.species_slug}#${c.section}`;
 }
 
@@ -555,7 +555,7 @@ export function AskChat({
                 </div>
                 {r.lakes && <LakeAnswer lakes={r.lakes} />}
                 {r.answer && (
-                  <div className="answer-text" lang={r.answer_source === "passages" ? "en" : undefined}>
+                  <div className="answer-text">
                     {r.answer.split("\n\n").map((para, i) => (
                       <p key={i}>{para}</p>
                     ))}

@@ -1,11 +1,14 @@
 """What to buy (app/knowledge/gear.py, GET /api/gear)."""
 import re
+from pathlib import Path
 
 from app.cli.fish_id_commons import licence_ok
 from app.knowledge import gear
 from app.knowledge.angling_handbook import TOPICS
 from app.knowledge.gear_photos import PHOTOS
 from app.knowledge.species_guides import GUIDES
+
+PUBLIC = Path(__file__).resolve().parents[2] / "frontend" / "public"
 
 
 def test_every_item_links_a_real_topic_and_real_fish():
@@ -23,11 +26,29 @@ def test_photos_are_open_licence_and_credited():
         assert item in gear.ITEM_BY_ID, item
         assert licence_ok(p.licence), (item, p.licence)
         assert p.author and p.author.lower() not in ("own work", "unknown author"), item
+        if p.url.startswith("/gear-photos/"):
+            # Self-hosted (a Flickr photo or a crop of a Commons one), so the file has to be in the repo.
+            assert p.url == f"/gear-photos/{item}.jpg", item
+            if p.file.startswith("Flickr:"):
+                assert p.page.startswith("https://www.flickr.com/photos/"), item
+                assert p.title, item  # CC BY 2.0 wants the work's title shown
+            else:
+                assert p.file.startswith("Crop:") and p.page.startswith("https://commons.wikimedia.org/wiki/File:"), item
+            if PUBLIC.is_dir():  # the frontend isn't there when only the backend is checked out
+                assert (PUBLIC / p.url.lstrip("/")).is_file(), item
+            continue
         assert p.url.startswith("https://") and "wikimedia.org" in p.url, item
         assert p.page.startswith("https://commons.wikimedia.org/wiki/File:"), item
         # Wikimedia serves only its standard thumbnail widths (or the original).
         width = re.search(r"/(\d+)px-", p.url)
         assert width is None or width.group(1) in ("250", "330", "500", "960", "1280"), item
+
+
+def test_every_item_has_a_photo_of_its_own():
+    assert set(PHOTOS) == set(gear.ITEM_BY_ID)
+    for field in ("file", "url", "page"):
+        values = [getattr(p, field) for p in PHOTOS.values()]
+        assert len(set(values)) == len(values), field
 
 
 def test_no_brands_or_prices_in_the_text():

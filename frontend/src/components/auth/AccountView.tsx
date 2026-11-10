@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { PinCard } from "@/components/community/PinCard";
 import { Modal } from "@/components/ui/Modal";
+import { StatePicker } from "@/components/ui/StatePicker";
 import { useToast } from "@/components/ui/Toast";
 import { useT } from "@/i18n/client";
 import { ApiError } from "@/lib/api/client";
@@ -146,6 +147,11 @@ export function AccountView() {
           <Section title={t.profile}>
             {/* Keyed on the saved name so the field resets after a save. */}
             <ProfileForm key={user.display_name} initial={user.display_name} />
+          </Section>
+
+          <Section title={t.preferences}>
+            <StatePicker label={t.homeState} />
+            <p className="muted small">{t.homeStateHint}</p>
           </Section>
 
           <Section title={t.methods}>

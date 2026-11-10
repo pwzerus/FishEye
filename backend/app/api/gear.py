@@ -8,6 +8,7 @@ from app.api.rate_limits import client_ip
 from app.core.config import get_settings
 from app.core.security import RateLimiter
 from app.knowledge import gear
+from app.knowledge.translations import Translator
 from app.models.community import User
 from app.schemas.gear import GearCandidateOut, GearCategoryOut, GearIdOut, GearItemOut, GearOut, GearPhotoOut
 from app.services import gear_id
@@ -27,23 +28,25 @@ TRIAL_FULL = "Free gear photos are at today's limit. Sign in (it's free) to keep
 CANDIDATES = 3
 
 
-def item_out(i: gear.GearItem) -> GearItemOut:
+def item_out(i: gear.GearItem, lang: str = "en") -> GearItemOut:
     p = i.photo
+    words = Translator("gear", lang, f"{i.id}.")
+    what, tip = words.text("what", i.what), words.text("tip", i.tip)
     return GearItemOut(
-        id=i.id, name=i.name, category=i.category, what=i.what, tip=i.tip, topic=i.topic,
+        id=i.id, name=i.name, category=i.category, what=what, tip=tip, text_lang=words.language, topic=i.topic,
         fish=list(i.fish), first_kit=i.first_kit,
         photo=GearPhotoOut(
             url=p.url, width=p.width, height=p.height, author=p.author, license=p.licence,
-            license_url=p.licence_url, file_page=p.page,
+            license_url=p.licence_url, file_page=p.page, title=p.title,
         ) if p else None,
     )
 
 
 @router.get("", response_model=GearOut)
-def list_gear() -> GearOut:
+def list_gear(lang: str = "en") -> GearOut:
     return GearOut(
         categories=[GearCategoryOut(id=c, label=label) for c, label in gear.CATEGORIES.items()],
-        items=[item_out(i) for i in gear.items()],
+        items=[item_out(i, lang) for i in gear.items()],
         camera=gear_id.installed(),
     )
 

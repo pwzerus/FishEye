@@ -46,7 +46,7 @@ def test_messages():
     assert "fish, not fishing gear" in message(reading(0.2, ("rod-spinning", 0.5), not_gear="x-fish"))
     assert message(reading(0.2, ("rod-spinning", 0.5), not_gear="x-city")).startswith("We couldn't find fishing gear")
     # Gear, maybe, but nothing stands out: nothing is offered.
-    blurred = reading(0.7, ("float-slip", 0.09), ("lure-grub", 0.06), not_gear="x-fish")
+    blurred = reading(0.8, ("float-slip", 0.09), ("lure-grub", 0.06), not_gear="x-fish")
     assert not blurred.is_gear and message(blurred).startswith("We couldn't tell what gear this is")
 
 

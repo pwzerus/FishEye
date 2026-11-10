@@ -187,7 +187,7 @@ describe("state-aware rules (backend ADR 0027)", () => {
       setState("CA");
       render(<LiveBaitWarning />);
       expect(await screen.findByRole("note")).toHaveTextContent("doesn't allow fish as bait");
-      expect(screen.getByRole("link", { name: "bait rules" })).toHaveAttribute("href", "/fish#bait_rules-ca");
+      expect(screen.getByRole("link", { name: "bait rules" })).toHaveAttribute("href", "/handbook#bait_rules-ca");
     });
 
     it("stays silent in Texas and with no state", async () => {

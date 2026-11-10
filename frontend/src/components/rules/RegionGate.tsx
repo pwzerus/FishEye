@@ -120,7 +120,8 @@ export function BaitRules({
   const t = useT().stateRules;
   const locale = useLocale();
   const withRules = list?.filter((j) => j.covered && j.bait_rules.length > 0) ?? null;
-  type Card = Pick<Jurisdiction, "code" | "name" | "bait_rules"> & Partial<Pick<Jurisdiction, "bait_rules_sources">>;
+  type Card = Pick<Jurisdiction, "code" | "name" | "bait_rules"> &
+    Partial<Pick<Jurisdiction, "bait_rules_sources" | "bait_rules_lang">>;
   const loading: Card[] = [{ code: "TX", name: "Texas", bait_rules: texasRules }];
 
   let shown: Card[];
@@ -140,7 +141,7 @@ export function BaitRules({
             {t.baitRulesOf(localStateName(j.code, j.name, locale))}
             {suffix}
           </h2>
-          <ul lang="en">
+          <ul lang={j.bait_rules_lang ?? "en"}>
             {j.bait_rules.map((rule) => (
               <li key={rule}>{rule}</li>
             ))}
@@ -176,7 +177,7 @@ export function LiveBaitWarning() {
   return (
     <p className="bait-warning" role="note">
       {t.liveBaitWarning(name)}
-      <a href={`/fish#${baitRulesAnchor(j.code)}`}>{t.bait}</a>
+      <a href={`/handbook#${baitRulesAnchor(j.code)}`}>{t.bait}</a>
       {t.liveBaitWarningTail(name)}
     </p>
   );

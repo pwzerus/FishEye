@@ -9,7 +9,7 @@ import pytest
 
 from app.knowledge import jurisdictions as j
 from app.knowledge.angling_handbook import TOPICS
-from app.services.rag import ask as rag_ask
+from app.services.rag import ask as rag_ask, replies
 from app.services.rag.chunking import build_passages
 
 RULE_QUESTION = "do I need a fishing licence"
@@ -222,7 +222,7 @@ def test_a_state_named_in_the_question_wins_over_the_one_picked():
 
 def test_a_question_in_chinese_is_introduced_in_chinese():
     result = rag_ask.search_guides("钓鲶鱼用什么饵")
-    assert result.citations and result.answer == rag_ask.PASSAGES_INTRO_ZH
+    assert result.citations and result.answer == replies.PASSAGES_INTRO_ZH_ORIGINAL
 
 
 def test_the_same_question_in_texas_or_without_a_state_gets_the_texas_rules():

@@ -26,6 +26,7 @@ from dataclasses import dataclass
 
 from app.knowledge.angling_handbook import CATEGORIES, TOPICS, HandbookTopic
 from app.knowledge.species_guides import GUIDES, SpeciesGuide
+from app.knowledge.translations import table
 
 SHARED_SLUG = "all-fish"  # passages that apply to every species
 
@@ -42,9 +43,10 @@ class Passage:
     # A state code for a passage that states that state's rules, else "all"
     # (knowledge/jurisdictions.py, docs/adr/0027).
     region: str = "all"
-    # The question library only (knowledge/angling_qa.py, docs/adr/0051).
+    # The Chinese version where there is one (knowledge/translations/,
+    # knowledge/angling_qa.py): the answer alone, no header.
     title_zh: str = ""
-    text_zh: str = ""  # the answer alone, no header
+    text_zh: str = ""
     basis: str = ""  # "guide", "official", "maker" or "general"; "" for the guides
 
 
@@ -52,8 +54,36 @@ def _bullets(items: tuple[str, ...]) -> str:
     return " ".join(item if item.endswith((".", "!", "?")) else f"{item}." for item in items)
 
 
+def _zh_sentences(parts: list[str | None]) -> str:
+    """Chinese sentences run together, or "" if any isn't translated."""
+    if not parts or not all(parts):
+        return ""
+    return "".join(p if p.endswith(("。", "！", "？")) else f"{p}。" for p in parts)
+
+
+def _zh_guide(guide: SpeciesGuide, field: str, items: tuple[str, ...] | None = None) -> str:
+    """A guide field in Chinese: one string, or its list of bullets (`items`)."""
+    words = table("guides", "zh")
+    if items is None:
+        return words.get(f"{guide.slug}.{field}", "")
+    return _zh_sentences([words.get(f"{guide.slug}.{field}#{i}") for i in range(len(items))])
+
+
+def _zh_setup(guide: SpeciesGuide, index: int) -> tuple[str, str]:
+    """A setup's name and body in Chinese, or two empty strings."""
+    words = table("guides", "zh")
+    key = f"{guide.slug}.setups#{index}"
+    parts = {f: words.get(f"{key}.{f}") for f in ("name", "use_when", "rod", "reel", "line", "terminal")}
+    if not all(parts.values()):
+        return "", ""
+    body = _zh_sentences([parts["use_when"], f"竿：{parts['rod']}", f"轮：{parts['reel']}", f"线：{parts['line']}",
+                          f"钩和钓组：{parts['terminal']}"])
+    return parts["name"] or "", body
+
+
 def _passage(
-    guide: SpeciesGuide, section: str, title: str, body: str, source_ids: tuple[str, ...]
+    guide: SpeciesGuide, section: str, title: str, body: str, source_ids: tuple[str, ...],
+    text_zh: str = "", title_zh: str = "",
 ) -> Passage:
     return Passage(
         id=f"{guide.slug}#{section}",
@@ -63,6 +93,8 @@ def _passage(
         title=title,
         text=f"{guide.common_name} — {title}: {body}",
         source_ids=source_ids,
+        title_zh=title_zh,
+        text_zh=text_zh,
     )
 
 
@@ -78,47 +110,61 @@ def passages_for(guide: SpeciesGuide) -> list[Passage]:
             "Overview",
             f"{guide.summary} ({guide.scientific_name}; {kind.strip()}.)",
             src,
+            text_zh=_zh_guide(guide, "summary"),
         )
     )
-    out.append(_passage(guide, "diet", "What it eats", guide.diet, src))
+    out.append(_passage(guide, "diet", "What it eats", guide.diet, src, text_zh=_zh_guide(guide, "diet")))
     if guide.identification:
         out.append(
-            _passage(guide, "identification", "How to recognise it", _bullets(guide.identification), src)
+            _passage(guide, "identification", "How to recognise it", _bullets(guide.identification), src,
+                     text_zh=_zh_guide(guide, "identification", guide.identification))
         )
     if guide.habitat:
-        out.append(_passage(guide, "habitat", "Habitat: where it lives", _bullets(guide.habitat), src))
+        out.append(_passage(guide, "habitat", "Habitat: where it lives", _bullets(guide.habitat), src,
+                            text_zh=_zh_guide(guide, "habitat", guide.habitat)))
     if guide.habits:
         out.append(
-            _passage(guide, "habits", "Habits: behavior, spawning and growth", _bullets(guide.habits), src)
+            _passage(guide, "habits", "Habits: behavior, spawning and growth", _bullets(guide.habits), src,
+                     text_zh=_zh_guide(guide, "habits", guide.habits))
         )
     if guide.where_and_when:
         out.append(
-            _passage(guide, "where_and_when", "Where and when to find it", _bullets(guide.where_and_when), src)
+            _passage(guide, "where_and_when", "Where and when to find it", _bullets(guide.where_and_when), src,
+                     text_zh=_zh_guide(guide, "where_and_when", guide.where_and_when))
         )
     if guide.live_baits:
-        out.append(_passage(guide, "live_baits", "Live and natural bait", _bullets(guide.live_baits), src))
+        out.append(_passage(guide, "live_baits", "Live and natural bait", _bullets(guide.live_baits), src,
+                            text_zh=_zh_guide(guide, "live_baits", guide.live_baits)))
     if guide.lures:
-        out.append(_passage(guide, "lures", "Lures", _bullets(guide.lures), src))
+        out.append(_passage(guide, "lures", "Lures", _bullets(guide.lures), src,
+                            text_zh=_zh_guide(guide, "lures", guide.lures)))
     if guide.why_these_baits:
         out.append(
-            _passage(guide, "why_these_baits", "Why these baits work", _bullets(guide.why_these_baits), src)
+            _passage(guide, "why_these_baits", "Why these baits work", _bullets(guide.why_these_baits), src,
+                     text_zh=_zh_guide(guide, "why_these_baits", guide.why_these_baits))
         )
     for i, setup in enumerate(guide.setups, start=1):
         body = (
             f"{setup.use_when} Rod: {setup.rod}. Reel: {setup.reel}. Line: {setup.line}. "
             f"Hook and rig: {setup.terminal}"
         )
+        name_zh, body_zh = _zh_setup(guide, i - 1)
         out.append(
-            _passage(guide, f"setup-{i}", f"Rod and reel setup — {setup.name}", body, setup.source_ids)
+            _passage(guide, f"setup-{i}", f"Rod and reel setup — {setup.name}", body, setup.source_ids,
+                     text_zh=body_zh, title_zh=f"Rod and reel setup — {name_zh}" if name_zh else "")
         )
     if guide.how_to_get:
-        out.append(_passage(guide, "how_to_get", "How to get it for bait", _bullets(guide.how_to_get), src))
+        out.append(_passage(guide, "how_to_get", "How to get it for bait", _bullets(guide.how_to_get), src,
+                            text_zh=_zh_guide(guide, "how_to_get", guide.how_to_get)))
     if guide.bait_for:
-        out.append(_passage(guide, "bait_for", "Use it as bait for", _bullets(guide.bait_for), src))
+        out.append(_passage(guide, "bait_for", "Use it as bait for", _bullets(guide.bait_for), src,
+                            text_zh=_zh_guide(guide, "bait_for", guide.bait_for)))
     if guide.tips:
-        out.append(_passage(guide, "tips", "Tips", _bullets(guide.tips), src))
+        out.append(_passage(guide, "tips", "Tips", _bullets(guide.tips), src,
+                            text_zh=_zh_guide(guide, "tips", guide.tips)))
     if guide.eating:
-        out.append(_passage(guide, "eating", "On the table: cleaning and cooking it", _bullets(guide.eating), src))
+        out.append(_passage(guide, "eating", "On the table: cleaning and cooking it", _bullets(guide.eating), src,
+                            text_zh=_zh_guide(guide, "eating", guide.eating)))
     return out
 
 
@@ -136,6 +182,7 @@ def handbook_passage(topic: HandbookTopic) -> Passage:
         text=f"{topic.title} ({CATEGORIES[topic.category]}): {' '.join(topic.body)}",
         source_ids=topic.source_ids,
         region=topic.region,
+        text_zh=_zh_sentences([table("handbook", "zh").get(f"{topic.id}#{i}") for i in range(len(topic.body))]),
     )
 
 
@@ -158,6 +205,8 @@ def shared_passages() -> list[Passage]:
             text=f"{j.name} bait rules (all fish): " + " ".join(j.bait_rules),
             source_ids=j.bait_rules_source_ids,
             region=j.code,
+            title_zh=f"{jurisdictions.ZH_STATE_NAMES.get(j.code, j.name)}的饵料规定",
+            text_zh=_zh_sentences([table("bait_rules", "zh").get(f"{j.code}#{i}") for i in range(len(j.bait_rules))]),
         )
         for j in jurisdictions.covered()
         if j.bait_rules

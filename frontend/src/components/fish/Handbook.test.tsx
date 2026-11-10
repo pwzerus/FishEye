@@ -43,7 +43,7 @@ describe("Handbook", () => {
     const { container } = render(<Handbook topics={topics} />);
     expect(container.querySelector("#baits")).not.toBeNull();
     expect(container.querySelector("#care")).not.toBeNull();
-    expect(screen.getByRole("link", { name: "Live and natural bait" })).toHaveAttribute("href", "#baits");
+    expect(screen.getByRole("link", { name: /Live and natural bait/ })).toHaveAttribute("href", "#baits");
     expect(container.querySelectorAll("#baits article")).toHaveLength(2);
   });
 
@@ -71,6 +71,12 @@ describe("Handbook", () => {
       first.unmount();
       window.localStorage.setItem("fisheye.state", "TX");
       expect(render(<Handbook topics={withRules} />).container.querySelector("#rule-license")).not.toBeNull();
+    });
+
+    it("counts only what the chosen state will see", () => {
+      window.localStorage.setItem("fisheye.state", "CO");
+      const { container } = render(<Handbook topics={[...withRules, topic("rule-a", "rules", "Rules", "All", "all")]} />);
+      expect(container.querySelector('a[href="#rules"]')).toHaveTextContent("1 topic");
     });
 
     it("is left out for someone in another state; every other topic stays", () => {

@@ -50,17 +50,21 @@ class SpeciesGuideOut(BaseModel):
     legal_notes_region: str
     limits_url: str
     sources: list[GuideSourceOut]
+    # The language of the text above when it isn't English (asked for and all there).
+    text_lang: str | None = None
 
 
 class HandbookTopicOut(BaseModel):
     """One topic of the angler's handbook (app/knowledge/angling_handbook.py).
-    `id` is the anchor on the fish guide page that answers cite."""
+    `id` is the anchor on the handbook page that answers cite."""
 
     id: str
     category: str
     category_label: str
     title: str
     body: list[str]
+    # The body's language when it isn't English (asked for and all there).
+    body_lang: str | None = None
     region: str  # a state code for a topic stating that state's rules, else "all"
     sources: list[GuideSourceOut]
 

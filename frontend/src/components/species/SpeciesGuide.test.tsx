@@ -148,7 +148,7 @@ describe("SpeciesHowTo", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "How to catch it" }));
     await waitFor(() => expect(screen.getByText("Beginner spinning")).toBeInTheDocument());
-    expect(getSpeciesGuide).toHaveBeenCalledWith("largemouth-bass");
+    expect(getSpeciesGuide).toHaveBeenCalledWith("largemouth-bass", "en");
     expect(screen.getByRole("link", { name: /full largemouth bass guide/i })).toHaveAttribute(
       "href",
       "/fish/largemouth-bass",

@@ -47,7 +47,7 @@ from app.services.rag.retriever import (
     split_species,
     unguided_fish_named,
 )
-from app.services.rag import es, ja, ko, replies
+from app.services.rag import es, ja, ko, replies, spelling
 
 DEFAULT_K = 4
 MAX_ATTEMPTS = 2
@@ -102,7 +102,7 @@ def searchable(question: str) -> str:
         return ja.to_english(question)
     if ko.is_korean(question):
         return ko.to_english(question)
-    return es.to_english(question) if es.is_spanish(question) else question
+    return es.to_english(question) if es.is_spanish(question) else spelling.fix(question)
 
 SPECIES_VOCABULARY = tuple(sorted((g.common_name.lower() for g in GUIDES), key=len, reverse=True))
 

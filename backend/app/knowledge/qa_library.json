@@ -617,7 +617,7 @@
 "short": "The number is a rough size class: bigger means a larger spool, more line and a stronger body and drag.",
 "body": "As a rough guide, 1000 to 2000 suits panfish and trout on light line, 2500 to 3000 suits bass, walleye and general freshwater, and 4000 and up moves into inshore saltwater and larger fish. The number doesn't state capacity or strength, and it isn't a shared standard: a 3000 from one maker can be closer to a 2500 from another, and some brands use two-digit sizes such as 30. Compare the line capacity, spool diameter and maximum drag on the spec sheet. Fish size matters less than the line you plan to use and how much of it a fish can pull off.",
 "short_zh": "这个数字大致代表尺寸级别：数字越大，线杯越大、容线越多，机身和卸力也更强。",
-"body_zh": "大致来说，1000 到 2000 号适合用细线钓小型淡水鱼和鳟鱼，2500 到 3000 号适合鲈鱼、大眼梭鲈和一般淡水钓，4000 号及以上就进入近岸海钓和更大的鱼了。数字本身并不等于容线量或强度，也不是通用标准：这家的 3000 可能只相当于那家的 2500，有些品牌还用 30 这样的两位数。选轮时要比较规格表里的容线量、线杯直径和最大卸力。比起鱼有多大，更要看你打算用什么线，以及鱼可能拉走多少线。",
+"body_zh": "大致来说，1000 到 2000 号适合用细线钓小型淡水鱼和鳟鱼，2500 到 3000 号适合鲈鱼、大眼鲈和一般淡水钓，4000 号及以上就进入近岸海钓和更大的鱼了。数字本身并不等于容线量或强度，也不是通用标准：这家的 3000 可能只相当于那家的 2500，有些品牌还用 30 这样的两位数。选轮时要比较规格表里的容线量、线杯直径和最大卸力。比起鱼有多大，更要看你打算用什么线，以及鱼可能拉走多少线。",
 "basis": "general",
 "source_ids": []
 },
@@ -641,7 +641,7 @@
 "short": "A 2500 or 3000.",
 "body": "That size holds enough 6 to 10 lb mono or light braid for most lake and pond fish. It balances a medium-light or medium rod of about 6 to 7 feet and has enough drag for bass, walleye and trout. Go down to a 1000 or 2000 for panfish and trout on very light line. Go up to a 4000 if you target pike or fish in heavy current.",
 "short_zh": "2500 或 3000 号。",
-"body_zh": "这个大小能容下足够的 6 到 10 磅尼龙线或细编织线，应付多数湖泊和池塘的鱼；能平衡 6 到 7 英尺的中轻或中等硬度竿；卸力也够钓鲈鱼、大眼梭鲈和鳟鱼。用很细的线钓小型淡水鱼和鳟鱼，可以降到 1000 或 2000 号。钓白斑狗鱼或在急流中钓，可以升到 4000 号。",
+"body_zh": "这个大小能容下足够的 6 到 10 磅尼龙线或细编织线，应付多数湖泊和池塘的鱼；能平衡 6 到 7 英尺的中轻或中等硬度竿；卸力也够钓鲈鱼、大眼鲈和鳟鱼。用很细的线钓小型淡水鱼和鳟鱼，可以降到 1000 或 2000 号。钓白斑狗鱼或在急流中钓，可以升到 4000 号。",
 "basis": "guide",
 "source_ids": []
 },
@@ -700,11 +700,11 @@
 "id": "qa-gear-reel-spinning-8",
 "category": "reels",
 "question": "What size suits bass and walleye with 8 to 15 lb braid?",
-"question_zh": "用 8 到 15 磅编织线钓鲈鱼和大眼梭鲈，适合多大的轮？",
+"question_zh": "用 8 到 15 磅编织线钓鲈鱼和大眼鲈，适合多大的轮？",
 "short": "A 2500 or 3000, and a 4000 if you want extra line or drag.",
 "body": "Braid of 8 to 15 lb is thin, so a 2500 holds plenty, especially with a mono backing. A 2500 or 3000 also balances a medium spinning rod of 6½ to 7 feet. A shallow spool saves on backing. FishEye's walleye guide adds a length of clear monofilament as a leader when you fish braid.",
 "short_zh": "2500 或 3000 号，想要更多容线或卸力就选 4000 号。",
-"body_zh": "8 到 15 磅编织线很细，2500 号就能容下足够的线，加尼龙底线更是如此。2500 或 3000 号也能平衡 6½ 到 7 英尺的中等硬度直柄竿。浅线杯可以省下底线。FishEye 的大眼梭鲈指南建议，用编织线时接一段透明尼龙线作前导。",
+"body_zh": "8 到 15 磅编织线很细，2500 号就能容下足够的线，加尼龙底线更是如此。2500 或 3000 号也能平衡 6½ 到 7 英尺的中等硬度直柄竿。浅线杯可以省下底线。FishEye 的大眼鲈指南建议，用编织线时接一段透明尼龙线作前导。",
 "basis": "general",
 "source_ids": [
 "mndnr-walleye"
@@ -2022,7 +2022,7 @@
 "short": "Use the lightest head that lets you feel the bottom and keeps the lure where it belongs.",
 "body": "A common range is 1/32 to 1/16 ounce for crappie and 1/8 to 1/4 ounce for tubes, Ned rigs, walleye and bass. In wind, current or deeper water, go heavier. A rough start is 1/8 ounce down to about 10 feet and 1/4 ounce from 10 to 20 feet. If you can't feel it touch bottom, go heavier. If it falls too fast or snags constantly, go lighter. Bulky plastics sink more slowly.",
 "short_zh": "用能感觉到水底、又能让饵留在目标水层的最轻铅头。",
-"body_zh": "常见范围是：莓鲈 1/32 到 1/16 盎司，管状软饵、内德钓组、大眼梭鲈和鲈鱼 1/8 到 1/4 盎司。有风、有水流或水深时加重。粗略的起点是：约 10 英尺以内用 1/8 盎司，10 到 20 英尺用 1/4 盎司。感觉不到触底就加重；下落太快或总挂底就减轻。体积大的软饵下沉更慢。",
+"body_zh": "常见范围是：莓鲈 1/32 到 1/16 盎司，管状软饵、内德钓组、大眼鲈和鲈鱼 1/8 到 1/4 盎司。有风、有水流或水深时加重。粗略的起点是：约 10 英尺以内用 1/8 盎司，10 到 20 英尺用 1/4 盎司。感觉不到触底就加重；下落太快或总挂底就减轻。体积大的软饵下沉更慢。",
 "basis": "guide",
 "source_ids": [
 "nydec-walleye",
@@ -2249,7 +2249,7 @@
 "short": "A 6 to 7 foot medium-light or medium spinning rod with a 2500 or 3000 reel.",
 "body": "Load it with 6 to 10 lb mono. It handles bait under a bobber, small jigs, spinners and light crankbaits, and it can land panfish, bass, trout and walleye. If you are setting up for a child, a spincast combo is simpler.",
 "short_zh": "6 到 7 英尺的中轻或中等硬度直柄竿，配 2500 或 3000 号轮。",
-"body_zh": "上 6 到 10 磅尼龙线。它能用浮漂钓天然饵，也能用小铅头钩、旋转亮片和轻型 crankbait，小型淡水鱼、鲈鱼、鳟鱼和大眼梭鲈都能应付。给孩子配的话，卡式轮套装更简单。",
+"body_zh": "上 6 到 10 磅尼龙线。它能用浮漂钓天然饵，也能用小铅头钩、旋转亮片和轻型 crankbait，小型淡水鱼、鲈鱼、鳟鱼和大眼鲈都能应付。给孩子配的话，卡式轮套装更简单。",
 "basis": "guide",
 "source_ids": [
 "tmf-reels",
@@ -2970,7 +2970,7 @@
 "id": "qa-gear-species-setup-6",
 "category": "setup",
 "question": "Is a walleye setup better on spinning gear or casting gear?",
-"question_zh": "钓大眼梭鲈用纺车轮好，还是水滴轮好？",
+"question_zh": "钓大眼鲈用纺车轮好，还是水滴轮好？",
 "short": "Spinning gear is the usual choice for jigs, slip bobbers and live-bait rigs. Casting gear is common for trolling.",
 "body": "FishEye's guide lists medium-action spinning rods with 6 to 10 lb mono or braid for jig-and-minnow, slip-sinker and slip-bobber fishing. For trolling it lists a 7 to 9 foot medium-heavy rod with a baitcasting reel and 10 to 12 lb line. If you are only buying one, go with spinning.",
 "short_zh": "铅头钩、活动浮漂和活饵钓组通常用纺车轮，拖钓常用水滴轮。",
@@ -2992,7 +2992,7 @@
 "short": "A 6½ to 7 foot medium spinning rod, a 2500 or 3000 reel and 8 to 10 lb line.",
 "body": "It handles bass, walleye, catfish of moderate size and larger trout, with bait or lures. Change the leader or hooks rather than the rod. Small fish can still be caught on small hooks. For bigger pike or catfish, add a heavier second outfit.",
 "short_zh": "6½ 到 7 英尺的中等硬度直柄竿、2500 或 3000 号轮和 8 到 10 磅线。",
-"body_zh": "用天然饵或拟饵，都能钓鲈鱼、大眼梭鲈、中等大小的鲶鱼和较大的鳟鱼。要调整时换前导或钩，不用换竿。用小钩照样能钓小鱼。钓更大的白斑狗鱼或鲶鱼，再加一套更重的配置。",
+"body_zh": "用天然饵或拟饵，都能钓鲈鱼、大眼鲈、中等大小的鲶鱼和较大的鳟鱼。要调整时换前导或钩，不用换竿。用小钩照样能钓小鱼。钓更大的白斑狗鱼或鲶鱼，再加一套更重的配置。",
 "basis": "general",
 "source_ids": []
 },
@@ -4102,7 +4102,7 @@
 "short": "About 4 to 6 inches for panfish, 7 to 9 inches for larger fish.",
 "body": "A short, flexible blade follows the ribs of a bluegill or crappie easily. A longer one lets you make a single, smooth cut on bass, walleye or catfish. Very large fish may need a 10-inch blade or a stiffer knife.",
 "short_zh": "小型淡水鱼用 4 到 6 英寸，较大的鱼用 7 到 9 英寸。",
-"body_zh": "短而有弹性的刀刃，能轻松贴着蓝鳃太阳鱼或莓鲈的肋骨走。长一些的刀刃，可以在鲈鱼、大眼梭鲈或鲶鱼身上一刀划下去。特别大的鱼可能要用 10 英寸的刀，或者更硬的刀。",
+"body_zh": "短而有弹性的刀刃，能轻松贴着蓝鳃太阳鱼或莓鲈的肋骨走。长一些的刀刃，可以在鲈鱼、大眼鲈或鲶鱼身上一刀划下去。特别大的鱼可能要用 10 英寸的刀，或者更硬的刀。",
 "basis": "guide",
 "source_ids": [
 "ks-cleaning",
@@ -4534,7 +4534,7 @@
 "short": "Usually only a moment, once the bobber goes under or the fish starts to pull.",
 "body": "When the bobber goes under, a fish has the bait: reel up the slack and set the hook. Given time, a fish swallows the bait, which is hard on one you mean to release. There are exceptions. With a walleye on a slip-sinker rig, let line run for several seconds, reel until tight, then set. With a circle hook, don't jerk at all.",
 "short_zh": "通常只要等一下，浮漂沉下去或鱼开始拉线就可以提竿。",
-"body_zh": "浮漂沉下去，就说明鱼已经吃了饵：收掉松线，提竿。等太久，鱼会把饵吞下去，不利于放流。也有例外。用游动铅钓组钓大眼梭鲈时，要让线跑几秒钟，收紧后再提竿。用圆形钩时，完全不要猛提。",
+"body_zh": "浮漂沉下去，就说明鱼已经吃了饵：收掉松线，提竿。等太久，鱼会把饵吞下去，不利于放流。也有例外。用游动铅钓组钓大眼鲈时，要让线跑几秒钟，收紧后再提竿。用圆形钩时，完全不要猛提。",
 "basis": "guide",
 "source_ids": [
 "mdc-tips",
@@ -5488,7 +5488,7 @@
 "short": "When you need a bait to hold just above the bottom in current.",
 "body": "A three-way swivel has one eye to your main line, one to a sinker on a dropper, usually 12 to 20 inches long, and one to a longer leader with a hook or lure. It is useful for drifting or trolling over deep water or rivers for walleye, salmon, catfish and striped bass, especially in strong current or over rock, where a jig can't stay down or a bottom bouncer keeps hanging up. If the sinker snags, only the dropper breaks, so use lighter line for it.",
 "short_zh": "需要让饵在水流中悬在水底上方时。",
-"body_zh": "三向转环的一端接主线，一端接脑线和铅坠，脑线通常长 12 到 20 英寸，另一端接较长的前导和钩或饵。在深水或河流中漂钓或拖钓大眼梭鲈、鲑鱼、鲶鱼和条纹鲈时很有用，水流急、水底多石，铅头钩沉不下去或弹跳铅老挂底时尤其合适。铅坠挂底时只断脑线，所以脑线要用细一点的。",
+"body_zh": "三向转环的一端接主线，一端接脑线和铅坠，脑线通常长 12 到 20 英寸，另一端接较长的前导和钩或饵。在深水或河流中漂钓或拖钓大眼鲈、鲑鱼、鲶鱼和条纹鲈时很有用，水流急、水底多石，铅头钩沉不下去或弹跳铅老挂底时尤其合适。铅坠挂底时只断脑线，所以脑线要用细一点的。",
 "basis": "general",
 "source_ids": []
 },
@@ -6602,11 +6602,11 @@
 "id": "qa-fb-pike-walleye-salmon-2",
 "category": "species",
 "question": "What is a straightforward way to start fishing for walleye?",
-"question_zh": "开始钓大眼梭鲈，有什么直接的方法？",
+"question_zh": "开始钓大眼鲈，有什么直接的方法？",
 "short": "A jig and minnow near the bottom, early or late in the day.",
 "body": "Use a 1/8 to 3/8 ounce jig tipped with a minnow on a medium spinning rod with 6 to 10 lb line. Fish at first and last light around points and reefs. Or use a slip bobber with a leech or nightcrawler. Walleye openers vary, so look up your state's season.",
 "short_zh": "清晨或傍晚，在水底用铅头钩挂小鱼。",
-"body_zh": "用 1/8 到 3/8 盎司铅头钩挂小鱼，配中等硬度直柄竿和 6 到 10 磅线。清晨和傍晚在岬角和礁石附近钓。也可以用活动浮漂挂水蛭或蚯蚓。大眼梭鲈的开钓日各地不同，出发前要看所在州的规定。",
+"body_zh": "用 1/8 到 3/8 盎司铅头钩挂小鱼，配中等硬度直柄竿和 6 到 10 磅线。清晨和傍晚在岬角和礁石附近钓。也可以用活动浮漂挂水蛭或蚯蚓。大眼鲈的开钓日各地不同，出发前要看所在州的规定。",
 "basis": "guide",
 "source_ids": [
 "nydec-walleye",
@@ -6673,7 +6673,7 @@
 "short": "Quite sensitive, especially near spawning or in cold water.",
 "body": "Fish don't regulate their body temperature, so water temperature controls their activity. Spawning starts at certain temperatures: largemouth at about 60°F and crappie at 60 to 70°F, though South Carolina's guide puts largemouth at 65 to 75°F, so these vary by region. A few degrees of warming in spring can bring fish shallow, and a sudden drop after a front can slow fishing. As a rough guide, cold-water fish such as trout do best at 40 to 60°F, cool-water fish such as walleye and pike at 55 to 75°F, and warm-water fish such as bluegill and largemouth at 65 to 80°F.",
 "short_zh": "相当敏感，产卵前后和冷水时尤其如此。",
-"body_zh": "鱼不能调节自己的体温，所以水温决定了它们的活跃程度。产卵要到一定的水温才开始：大口黑鲈约 60°F，莓鲈 60 到 70°F；不过南卡的指南把大口黑鲈写成 65 到 75°F，各地会有差别。春天水温升几度，鱼就可能到浅水来；锋面过后水温骤降，鱼可能变得不爱咬钩。大致来说，鳟这类冷水鱼最适应 40 到 60°F，大眼梭鲈、白斑狗鱼这类温凉水鱼是 55 到 75°F，蓝鳃太阳鱼和大口黑鲈这类暖水鱼是 65 到 80°F。",
+"body_zh": "鱼不能调节自己的体温，所以水温决定了它们的活跃程度。产卵要到一定的水温才开始：大口黑鲈约 60°F，莓鲈 60 到 70°F；不过南卡的指南把大口黑鲈写成 65 到 75°F，各地会有差别。春天水温升几度，鱼就可能到浅水来；锋面过后水温骤降，鱼可能变得不爱咬钩。大致来说，鳟这类冷水鱼最适应 40 到 60°F，大眼鲈、白斑狗鱼这类温凉水鱼是 55 到 75°F，蓝鳃太阳鱼和大口黑鲈这类暖水鱼是 65 到 80°F。",
 "basis": "guide",
 "source_ids": [
 "qa-pdf-uw4h",
@@ -7234,7 +7234,7 @@
 "short": "Support large fish horizontally, and stay away from the gills.",
 "body": "Hold a small fish, under about 5 lb, by the lower jaw, and support a big one horizontally with two hands. Bass, crappie and small catfish can be held by the lower lip. Hold walleye, pike, gar and big trout over the back of the head. Hold a catfish from behind its spines. Never hang a large fish straight up by the jaw, because its weight can tear organs and dislocate the spine. Most saltwater fish have sharp teeth, so keep your fingers out of their mouths.",
 "short_zh": "大鱼要水平托住，手不要碰鱼鳃。",
-"body_zh": "约 5 磅以下的小鱼可以握住下颌，大鱼要用双手水平托住。鲈鱼、莓鲈和小鲶鱼可以握下唇。大眼梭鲈、白斑狗鱼、雀鳝和大鳟鱼，要从头后方的背部握住。鲶鱼要从硬棘后方握住。不要把大鱼竖着提起来，自身重量可能拉伤内脏，甚至让脊椎脱位。海水鱼大多牙齿锋利，手指不要伸进鱼嘴。",
+"body_zh": "约 5 磅以下的小鱼可以握住下颌，大鱼要用双手水平托住。鲈鱼、莓鲈和小鲶鱼可以握下唇。大眼鲈、白斑狗鱼、雀鳝和大鳟鱼，要从头后方的背部握住。鲶鱼要从硬棘后方握住。不要把大鱼竖着提起来，自身重量可能拉伤内脏，甚至让脊椎脱位。海水鱼大多牙齿锋利，手指不要伸进鱼嘴。",
 "basis": "official",
 "source_ids": [
 "qa-pdf-sc-salt",

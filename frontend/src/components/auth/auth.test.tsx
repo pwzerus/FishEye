@@ -65,7 +65,13 @@ describe("LoginForm", () => {
     fireEvent.change(screen.getByPlaceholderText("What other anglers see"), { target: { value: "Angler Amy" } });
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "amy@example.com" } });
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "tight-lines-42" } });
-    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+    const create = screen.getByRole("button", { name: "Create account" });
+    expect(create).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "tight-lines-4" } });
+    expect(screen.getByText("The two passwords don't match.")).toBeInTheDocument();
+    expect(create).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "tight-lines-42" } });
+    fireEvent.click(create);
     await waitFor(() => expect(session.register).toHaveBeenCalledWith("amy@example.com", "tight-lines-42", "Angler Amy"));
     await waitFor(() => expect(router.replace).toHaveBeenCalledWith("/map?addPin=1"));
   });

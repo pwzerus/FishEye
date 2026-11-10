@@ -243,14 +243,14 @@ export function speciesSlug(commonName: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export function listSpeciesGuides(): Promise<SpeciesGuide[]> {
+export function listSpeciesGuides(locale = "en"): Promise<SpeciesGuide[]> {
   // Reviewed reference content that changes only with a deploy: the default
   // short revalidation in apiFetch is plenty.
-  return apiFetch<SpeciesGuide[]>("/api/species/guides");
+  return apiFetch<SpeciesGuide[]>(`/api/species/guides?lang=${locale}`);
 }
 
-export function listHandbook(): Promise<HandbookTopic[]> {
-  return apiFetch<HandbookTopic[]>("/api/species/handbook");
+export function listHandbook(locale = "en"): Promise<HandbookTopic[]> {
+  return apiFetch<HandbookTopic[]>(`/api/species/handbook?lang=${locale}`);
 }
 
 export function listQuestions(lang: "en" | "zh"): Promise<LibraryQuestion[]> {
@@ -261,20 +261,20 @@ export function listQuestionSources(): Promise<GuideSource[]> {
   return apiFetch<GuideSource[]>("/api/species/questions/sources");
 }
 
-export function listGear(): Promise<Gear> {
-  return apiFetch<Gear>("/api/gear");
+export function listGear(locale = "en"): Promise<Gear> {
+  return apiFetch<Gear>(`/api/gear?lang=${locale}`);
 }
 
 export function listBaits(): Promise<BaitCard[]> {
   return apiFetch<BaitCard[]>("/api/baits");
 }
 
-export function listJurisdictions(): Promise<Jurisdiction[]> {
-  return apiFetch<Jurisdiction[]>("/api/jurisdictions");
+export function listJurisdictions(locale = "en"): Promise<Jurisdiction[]> {
+  return apiFetch<Jurisdiction[]>(`/api/jurisdictions?lang=${locale}`);
 }
 
-export function getSpeciesGuide(slug: string): Promise<SpeciesGuide> {
-  return apiFetch<SpeciesGuide>(`/api/species/guides/${encodeURIComponent(slug)}`);
+export function getSpeciesGuide(slug: string, locale = "en"): Promise<SpeciesGuide> {
+  return apiFetch<SpeciesGuide>(`/api/species/guides/${encodeURIComponent(slug)}?lang=${locale}`);
 }
 
 export async function listSpeciesPhotos(): Promise<SpeciesPhotos> {

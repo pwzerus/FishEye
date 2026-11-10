@@ -14,9 +14,10 @@ export const dynamic = "force-dynamic";
 
 async function find(
   slug: string,
+  locale: string,
 ): Promise<{ state: Jurisdiction | null; alias: Jurisdiction | null; topics: HandbookTopic[]; failed: boolean }> {
   try {
-    const [states, handbook] = await Promise.all([listJurisdictions(), listHandbook().catch(() => [])]);
+    const [states, handbook] = await Promise.all([listJurisdictions(locale), listHandbook(locale).catch(() => [])]);
     const state = states.find((j) => stateSlug(j.name) === slug) ?? null;
     // "/rules/tx": a state's code is what people type; it leads to the page.
     const alias = state ? null : (states.find((j) => j.code.toLowerCase() === slug.toLowerCase()) ?? null);
@@ -29,7 +30,7 @@ async function find(
 export async function generateMetadata({ params }: PageProps<"/rules/[state]">): Promise<Metadata> {
   const t = (await getT()).rulesPage;
   const locale = await getLocale();
-  const { state } = await find((await params).state);
+  const { state } = await find((await params).state, locale);
   if (!state) return { title: `${t.indexTitle} · FishEye` };
   const name = localStateName(state.code, state.name, locale);
   return { title: `${t.title(name)} · FishEye`, description: t.lede(name) };
@@ -61,7 +62,7 @@ export default async function StateRulesPage({ params }: PageProps<"/rules/[stat
   const all = await getT();
   const t = all.rulesPage;
   const locale = await getLocale();
-  const { state, alias, topics, failed } = await find((await params).state);
+  const { state, alias, topics, failed } = await find((await params).state, locale);
   if (failed) {
     return (
       <main className="page-scroll rules-page">
@@ -92,7 +93,9 @@ export default async function StateRulesPage({ params }: PageProps<"/rules/[stat
           {license ? (
             <>
               {license.body.map((line) => (
-                <p key={line}>{line}</p>
+                <p key={line} lang={license.body_lang ?? "en"}>
+                  {line}
+                </p>
               ))}
               <Sources sources={license.sources} />
             </>
@@ -125,7 +128,7 @@ export default async function StateRulesPage({ params }: PageProps<"/rules/[stat
         {state.bait_rules.length > 0 && (
           <section className="rules-card">
             <h2>{t.baitHeading}</h2>
-            <ul>
+            <ul lang={state.bait_rules_lang ?? "en"}>
               {state.bait_rules.map((rule) => (
                 <li key={rule}>{rule}</li>
               ))}
@@ -141,7 +144,9 @@ export default async function StateRulesPage({ params }: PageProps<"/rules/[stat
               <details key={h.id} className="rules-topic">
                 <summary>{localTopicTitle(h.id, locale) ?? h.title}</summary>
                 {h.body.map((line) => (
-                  <p key={line}>{line}</p>
+                  <p key={line} lang={h.body_lang ?? "en"}>
+                    {line}
+                  </p>
                 ))}
                 <Sources sources={h.sources} />
               </details>
@@ -156,7 +161,7 @@ export default async function StateRulesPage({ params }: PageProps<"/rules/[stat
           <ul>
             {state.first_trip_topic && (
               <li>
-                <Link href={`/fish#${state.first_trip_topic}`}>{t.firstTrip(name)}</Link>
+                <Link href={`/handbook#${state.first_trip_topic}`}>{t.firstTrip(name)}</Link>
               </li>
             )}
             <li>

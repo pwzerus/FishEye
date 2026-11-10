@@ -55,7 +55,7 @@ describe("/sources", () => {
     expect(container.querySelector("#topic-rule-license-al")).toBeNull();
     const al = within(container.querySelector<HTMLElement>("#rules-al")!);
     expect(al.getByText("Bait rules")).toBeInTheDocument();
-    expect(al.getByRole("link", { name: "rule-license-al" })).toHaveAttribute("href", "/fish#rule-license-al");
+    expect(al.getByRole("link", { name: "rule-license-al" })).toHaveAttribute("href", "/handbook#rule-license-al");
     expect(container.querySelector("#rules-mt")).toBeNull();
   });
 

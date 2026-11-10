@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { PageTransition } from "@/components/motion/Transition";
+import { QuestionLibrary } from "@/components/questions/QuestionLibrary";
 import { RevealFromHash } from "@/components/sources/RevealFromHash";
 import { getLocale, getT } from "@/i18n/server";
 import { listQuestions } from "@/lib/api/client";
@@ -26,13 +27,6 @@ export default async function QuestionsPage() {
   const lang = locale === "zh" ? "zh" : "en";
   const questions: LibraryQuestion[] = await listQuestions(lang).catch(() => []);
 
-  const groups: { category: string; label: string; items: LibraryQuestion[] }[] = [];
-  for (const q of questions) {
-    const last = groups[groups.length - 1];
-    if (last && last.category === q.category) last.items.push(q);
-    else groups.push({ category: q.category, label: q.category_label, items: [q] });
-  }
-
   return (
     <PageTransition>
       <main className="page-scroll sources-page">
@@ -46,42 +40,7 @@ export default async function QuestionsPage() {
         {questions.length === 0 && <div className="backend-error">{all.fish.loadError}</div>}
         {questions.length > 0 && locale !== "en" && locale !== "zh" && <p className="hint">{t.englishOnly}</p>}
 
-        <nav className="chip-row handbook-nav" aria-label={t.title}>
-          {groups.map((g) => (
-            <a key={g.category} className="chip" href={`#${g.category}`} lang={lang}>
-              {g.label}
-            </a>
-          ))}
-        </nav>
-
-        {groups.map((g) => (
-          <details key={g.category} id={g.category} className="handbook-group" suppressHydrationWarning>
-            <summary>
-              <h3 lang={lang}>{g.label}</h3>
-              <span>{t.count(g.items.length)}</span>
-            </summary>
-            <div className="handbook-grid">
-              {g.items.map((q) => (
-                <article key={q.id} id={q.id} className="handbook-card">
-                  <h4 lang={lang}>{q.question}</h4>
-                  <p lang={lang}><strong>{q.short}</strong></p>
-                  <p lang={lang}>{q.body}</p>
-                  <p className="handbook-sources">
-                    <span className={q.basis === "general" ? "badge badge-muted" : undefined}>{t.basis[q.basis]}</span>
-                    {q.sources.map((s) => (
-                      <span key={s.url}>
-                        {" · "}
-                        <a href={s.url} target="_blank" rel="noreferrer" lang="en">
-                          {s.label}
-                        </a>
-                      </span>
-                    ))}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </details>
-        ))}
+        {questions.length > 0 && <QuestionLibrary questions={questions} lang={lang} />}
 
         <p className="sources-link">
           <Link href="/sources#questions">{all.fish.sources}</Link>
