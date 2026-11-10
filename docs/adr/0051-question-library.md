@@ -21,10 +21,15 @@ or general knowledge. "General knowledge" means no published source was
 checked, and the page says so. This is the one place in FishEye where an
 answer may rest on no source; the guides' rule (ADR 0011) is unchanged.
 
-**A forum answer is still never a source.** 35 answers had been improved
-from forum and article-site reading. In FishEye they use the wording they
-had before that reading. The questions themselves are new wording; no post
-text, user name or link to a post is stored (`docs/data-sources.md`).
+**A forum answer is still never cited as a source.** 35 answers also draw on
+forum and article-site reading. On 2026-11-10 the product owner decided that
+the objective rules among those points, such as how gear works and how to
+test, fix or use it, are general knowledge. They are in FishEye in its own
+words, with no forum named or cited, and 33 of the 35 are labelled general
+knowledge. The other 2 rest on tackle makers' pages. Preferences, and claims
+about one brand that could not be confirmed, were left out. The questions
+themselves are new wording; no post text, user name or link to a post is
+stored (`docs/data-sources.md`).
 
 **Ask reaches it second** (`services/rag/question_library.py`). The library
 is not added to the guides' index: 494 question-shaped passages would shift
@@ -58,7 +63,7 @@ citations link, and `/sources#questions` lists the pages cited.
 ## Consequences
 
 - Ask now answers many gear questions it used to call not covered.
-- 231 answers are general knowledge and no expert has reviewed them. They
+- 230 answers are general knowledge and no expert has reviewed them. They
   are labelled, and the review is still to do.
 - The vectors for the library are made once, about 500 more passages, and
   cached like the guides' (ADR 0025).

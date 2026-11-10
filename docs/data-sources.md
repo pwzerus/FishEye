@@ -685,11 +685,16 @@ file's URL, retrieval date, size and SHA-256. 26 PDFs, about 106 MB.
   English shares more than 7 words in a row with any of the 111,056 archived
   submissions, or with the PDFs read for it. Each has a `basis`: `guide`
   (FishEye's guides and handbook), `official`, `maker`, or `general`.
-- **`general` (231 answers)** is general fishing knowledge with no published
+- **`general` (230 answers)** is general fishing knowledge with no published
   source checked. The product owner decided on 2026-11-09 that these may be
   included. They are labelled on the page and in Ask.
-- **Forum answers are not a source.** 35 answers improved from forum and
-  article-site reading use their earlier wording here.
+- **Forum answers are not a source.** No forum is cited or named here, and no
+  post text is kept. 35 answers also draw on forum and article-site reading,
+  done through search summaries. On 2026-11-10 the product owner decided that
+  the objective rules among those points (how gear works, how to test, fix or
+  use it) are general knowledge, so they are written in FishEye's own words.
+  Preferences, and claims about one brand that could not be confirmed, were
+  left out.
 - **Pages cited** are in `backend/app/knowledge/qa_sources.json` and on
   `/sources#questions`. State agency pages and tackle makers' pages are
   RESTRICTED: facts in our own words, with the link.
@@ -800,6 +805,6 @@ Booklets read for it, as facts + link (the files are not in this repository):
     product owner supplied. Only new wording is stored, as under QUESTIONS
     ONLY, but the archive's licence was never confirmed and Reddit's terms
     remain unread (see 14). Confirm this before charging for the app.
-17. **231 answers in the question library are general knowledge** that no
+17. **230 answers in the question library are general knowledge** that no
     expert has reviewed. They are labelled; review them, safety-related ones
-    first.
+    first. 33 of them include points first met in forum reading.
