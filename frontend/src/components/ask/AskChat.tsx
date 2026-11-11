@@ -67,6 +67,14 @@ type Turn =
 
 const MAX_LEN = 300;
 
+/** The lang attribute for a citation's text: Chinese glyphs by how it's
+ * written ("zh-Hant" when the API turned it Traditional), else none. */
+function chineseTag(lang: string | null | undefined): string | undefined {
+  if (lang === "zh") return "zh-CN";
+  if (lang === "zh-Hant") return "zh-TW";
+  return undefined;
+}
+
 function citationHref(c: AskCitation): string {
   if (c.section.startsWith("qa-")) return `/questions#${c.section}`;
   if (!c.species_slug || c.species_slug === "all-fish") return `/handbook#${c.section}`;
@@ -187,7 +195,7 @@ function Citations({ items, compact }: { items: AskCitation[]; compact: boolean 
                   </span>
                 )}
                 <span className="citation-body">
-                  <span className="citation-title" lang={c.lang === "zh" ? "zh-CN" : undefined}>
+                  <span className="citation-title" lang={chineseTag(c.lang)}>
                     {c.species_name ? `${(fish && localFishName(fish, locale)) || c.species_name} · ` : ""}
                     {citationTitle(c, all.fish, locale)}
                     {c.region !== "all" && (
@@ -197,7 +205,7 @@ function Citations({ items, compact }: { items: AskCitation[]; compact: boolean 
                     )}
                   </span>
                   {c.basis === "general" && <span className="badge badge-muted citation-region">{all.questionsPage.basis.general}</span>}
-                  <span className="citation-excerpt" lang={c.lang === "zh" ? "zh-CN" : "en"}>{c.excerpt}</span>
+                  <span className="citation-excerpt" lang={chineseTag(c.lang) ?? "en"}>{c.excerpt}</span>
                   {c.sources[0] && <span className="citation-source" lang="en">{c.sources[0].label}</span>}
                 </span>
               </Link>

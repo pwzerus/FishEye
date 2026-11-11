@@ -1380,6 +1380,15 @@
   border-radius: 12px;
   background: var(--surface-2);
 }
+/* A phone photo is tall: keep it small enough that the answer is near. */
+@media (max-width: 560px) {
+  .identify-preview {
+    max-height: 210px;
+  }
+}
+.identify-result {
+  scroll-margin-top: calc(var(--header-h, 64px) + 12px);
+}
 .identify-answer {
   display: grid;
   gap: 12px;
@@ -1434,7 +1443,4 @@
 .identify-pct {
   font-variant-numeric: tabular-nums;
   color: var(--muted);
-}
-.identify-rules {
-  font-size: 13.5px;
 }

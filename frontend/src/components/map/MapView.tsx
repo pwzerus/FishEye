@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
+import { catchTitle } from "@/components/community/PinCard";
 import { PinForm, WaterLine, type DraftWater } from "@/components/community/PinForm";
 import { useToast } from "@/components/ui/Toast";
 import { useT } from "@/i18n/client";
@@ -182,7 +183,10 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   const [savingMove, setSavingMove] = useState(false);
   const [locating, setLocating] = useState(false);
   const [created, setCreated] = useState<PinDetail | null>(null);
-  const [sheet, setSheet] = useState<"peek" | "half" | "full">(selectedId !== null ? "half" : "peek");
+  // Arriving to share a catch (?addPin=1, the catches page's button) opens the
+  // sheet like the map's own button does: on a phone the "Where did you catch
+  // it?" panel, with "Pin where I am" and Cancel, sits in it.
+  const [sheet, setSheet] = useState<"peek" | "half" | "full">(selectedId !== null || placing ? "half" : "peek");
   const workspace = useRef<HTMLDivElement>(null);
   // The panel: on a phone a sheet over the map's bottom (LakeDetailMap frames
   // a lake above it).
@@ -576,7 +580,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     panel = (
       <div className="place-hint reveal">
         <h2>{tc.moveTitle}</h2>
-        <p className="muted">{moving.title}</p>
+        <p className="muted">{catchTitle(moving, locale)}</p>
         {draft ? <WaterLine water={draftWater} onMissingWater={reportMissingHere} /> : <p className="muted">{tc.moveHint}</p>}
         <div className="form-actions">
           <button
@@ -635,7 +639,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
       <div className="place-hint reveal">
         <h2>{created.visibility === "private" ? tc.createdPrivate : tc.createdLive}</h2>
         <p className="muted">
-          {created.title}
+          {catchTitle(created, locale)}
           {created.water ? ` · ${created.water.name}` : created.lake ? ` · ${created.lake.name}` : ""}
         </p>
         <div className="form-actions">

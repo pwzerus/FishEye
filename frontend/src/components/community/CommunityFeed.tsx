@@ -346,6 +346,7 @@ export function CommunityFeed() {
           <li>{t.guide1}</li>
           <li>{t.guide2}</li>
           <li>{t.guide3}</li>
+          <li>{t.guideRespect}</li>
           <li>{t.guide4}</li>
         </ul>
       </details>

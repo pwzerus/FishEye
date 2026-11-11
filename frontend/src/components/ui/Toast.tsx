@@ -70,3 +70,9 @@ export function useToast() {
   if (!ctx) throw new Error("useToast must be used inside <ToastProvider>");
   return ctx;
 }
+
+/** For a small widget used on many pages: the toast where the app has its
+ * provider, nothing where it doesn't (a test rendering the widget alone). */
+export function useOptionalToast() {
+  return useContext(ToastContext);
+}

@@ -360,6 +360,9 @@
   color: var(--ink);
 }
 .pb-crumbs .text-link {
+  /* A finger-sized target around a short word, without moving the line. */
+  margin: -10px -4px;
+  padding: 10px 4px;
   color: var(--brand);
   font-weight: 600;
 }
@@ -489,7 +492,12 @@
   margin: 24px auto 0;
 }
 
-/* A catch card: the photo first, the rest in three short lines. */
+/* A catch card: the photo first, the rest in three short lines. The column
+   may shrink below its longest line (a narrow card on the account page),
+   which then ends in "…" instead of pushing out of the card. */
+.pin-card-body {
+  grid-template-columns: minmax(0, 1fr);
+}
 .pin-card-body h3 {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -527,12 +535,16 @@
 .pin-card-checks {
   position: absolute;
   left: 8px;
-  right: 48px;
+  right: 8px;
   bottom: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   pointer-events: none;
+}
+/* Clear of the "+2" photo count in the corner, when there is one. */
+.pin-card-count ~ .pin-card-checks {
+  right: 48px;
 }
 .pin-card-checks:empty {
   display: none;

@@ -37,6 +37,9 @@ FISHING_TERMS = (
     # Added 2026-11-10: a tester's "蚯蚓怎么保存" and "怎么放生" were turned away.
     "蚯蚓", "放生", "咬铅", "穿心铅", "子弹铅", "钓点", "渔具", "中鱼", "中了鱼",
     "中暑", "量鱼", "飞钓",
+    # Added 2026-11-11 with 繁體中文: what anglers in Taiwan call a reel and a
+    # bobber (a question in Traditional reaches here in Simplified).
+    "卷线器", "浮标",
 )
 
 # Chinese term -> the English words the guides use for it.
@@ -133,6 +136,7 @@ GLOSSARY: dict[str, str] = {
     "水滴轮": "baitcasting reel",
     "封闭式": "spincast reel",
     "渔轮": "reel",
+    "卷线器": "reel",
     "鱼轮": "reel",
     "鱼竿": "rod",
     "钓竿": "rod",
@@ -150,6 +154,7 @@ GLOSSARY: dict[str, str] = {
     "活动浮漂": "slip bobber",
     "浮漂": "bobber float",
     "浮子": "bobber float",
+    "浮标": "bobber float",
     "子线": "leader",
     "转环": "swivel",
     "帕洛马结": "palomar knot",

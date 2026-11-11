@@ -10,7 +10,7 @@ import { listWaterbodies } from "@/lib/api/client";
 import type { GearPhoto, Jurisdiction, WaterbodyListItem } from "@/lib/api/types";
 import { kmApart } from "@/lib/geo";
 import type { Locale } from "@/i18n/config";
-import { useLocale, useT } from "@/i18n/client";
+import { useLocale, useLocaleTag, useT } from "@/i18n/client";
 import { localStateName } from "@/i18n/names";
 import { useJurisdictions, useSelectedState } from "@/lib/jurisdiction";
 
@@ -28,12 +28,12 @@ import { useJurisdictions, useSelectedState } from "@/lib/jurisdiction";
  * the hook (safe-handling). Hook size from the hooks card (bluegill No. 4–8). */
 export const KIT = [
   // US hook sizes: a Korean 6호 or a Japanese 6号 is a different hook.
-  { en: "Rod and reel combo (spincast or spinning)", zh: "竿轮套装（封闭轮或纺车轮）", es: "Combo de caña y carrete (spincast o spinning)", ko: "낚싯대와 릴 세트(스핀캐스트 또는 스피닝)", ja: "竿とリールのセット（スピンキャストかスピニング）", topic: "tackle-reels", gear: "combo-spincast" },
-  { en: "Small bobbers", zh: "小浮漂", es: "Boyas pequeñas", ko: "작은 찌", ja: "小さめのウキ", topic: "tackle-bobbers", gear: "bobber" },
-  { en: "Hooks, size 6 or 8", zh: "鱼钩，美国号数 6 或 8", es: "Anzuelos, tamaño 6 u 8", ko: "바늘(미국 사이즈 6 또는 8)", ja: "針（米国サイズの6か8）", topic: "tackle-hooks", gear: "hook-j" },
-  { en: "Split shot", zh: "咬铅（夹在线上的小铅坠）", es: "Plomos partidos (split shot)", ko: "좁쌀봉돌", ja: "ガン玉", topic: "tackle-split-shot", gear: "sinker-split-shot" },
-  { en: "Worms or crickets", zh: "蚯蚓或蟋蟀", es: "Lombrices o grillos", ko: "지렁이나 귀뚜라미", ja: "ミミズかコオロギ", topic: "bait-worms", gear: "bait-nightcrawler" },
-  { en: "Needle-nose pliers", zh: "尖嘴钳（摘钩用）", es: "Pinzas de punta", ko: "롱노즈 플라이어(바늘 빼기용)", ja: "ラジオペンチ（針外し用）", topic: "safe-handling", gear: "tool-pliers" },
+  { en: "Rod and reel combo (spincast or spinning)", zh: "竿轮套装（封闭轮或纺车轮）", zht: "竿輪套裝（封閉輪或紡車輪）", es: "Combo de caña y carrete (spincast o spinning)", ko: "낚싯대와 릴 세트(스핀캐스트 또는 스피닝)", ja: "竿とリールのセット（スピンキャストかスピニング）", topic: "tackle-reels", gear: "combo-spincast" },
+  { en: "Small bobbers", zh: "小浮漂", zht: "小浮標", es: "Boyas pequeñas", ko: "작은 찌", ja: "小さめのウキ", topic: "tackle-bobbers", gear: "bobber" },
+  { en: "Hooks, size 6 or 8", zh: "鱼钩，美国号数 6 或 8", zht: "魚鉤，美國號數 6 或 8", es: "Anzuelos, tamaño 6 u 8", ko: "바늘(미국 사이즈 6 또는 8)", ja: "針（米国サイズの6か8）", topic: "tackle-hooks", gear: "hook-j" },
+  { en: "Split shot", zh: "咬铅（夹在线上的小铅坠）", zht: "咬鉛（夾在線上的小鉛墜）", es: "Plomos partidos (split shot)", ko: "좁쌀봉돌", ja: "ガン玉", topic: "tackle-split-shot", gear: "sinker-split-shot" },
+  { en: "Worms or crickets", zh: "蚯蚓或蟋蟀", zht: "蚯蚓或蟋蟀", es: "Lombrices o grillos", ko: "지렁이나 귀뚜라미", ja: "ミミズかコオロギ", topic: "bait-worms", gear: "bait-nightcrawler" },
+  { en: "Needle-nose pliers", zh: "尖嘴钳（摘钩用）", zht: "尖嘴鉗（摘鉤用）", es: "Pinzas de punta", ko: "롱노즈 플라이어(바늘 빼기용)", ja: "ラジオペンチ（針外し用）", topic: "safe-handling", gear: "tool-pliers" },
 ] as const;
 
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
@@ -150,6 +150,7 @@ function parseKit(raw: string): Set<string> {
 function Kit({ photos }: { photos: Record<string, GearPhoto> }) {
   const t = useT().start;
   const locale = useLocale();
+  const tag = useLocaleTag();
   const [shopping, setShopping] = useState(false);
   // Ticked off in the shop; nothing is ticked in the first render, like the server's.
   const raw = useSyncExternalStore(subscribeKit, kitSnapshot, () => NOTHING_TICKED);
@@ -194,7 +195,7 @@ function Kit({ photos }: { photos: Record<string, GearPhoto> }) {
           {KIT.map((item) => (
             <li key={item.topic}>
               {item.en}
-              {locale !== "en" && <span lang={locale}>{item[locale]}</span>}
+              {locale !== "en" && <span lang={tag}>{item[locale]}</span>}
             </li>
           ))}
         </ul>

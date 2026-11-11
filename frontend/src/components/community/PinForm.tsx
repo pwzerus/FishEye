@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { VerifyEmailBanner } from "@/components/auth/VerifyEmailBanner";
-import { useLocale, useT } from "@/i18n/client";
+import { useLocale, useLocaleTag, useT } from "@/i18n/client";
 import { MESSAGES, type Messages } from "@/i18n/messages";
 import { localFishName } from "@/i18n/names";
 import { ApiError } from "@/lib/api/client";
@@ -41,9 +41,10 @@ export function SpeciesOptions({
 }) {
   const t = useT().catch;
   const locale = useLocale();
+  const tag = useLocaleTag();
   const species = (options?.species ?? [])
     .map((s) => ({ slug: s.slug, label: localFishName(s.slug, locale) ?? s.label, english: s.label }))
-    .sort((a, b) => a.label.localeCompare(b.label, locale));
+    .sort((a, b) => a.label.localeCompare(b.label, tag));
   return (
     <>
       <option value="">{allLabel ?? t.notSure}</option>

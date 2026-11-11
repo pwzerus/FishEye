@@ -30,6 +30,7 @@ from app.api import (
     waterbodies,
     weather,
 )
+from app.api.zh_hant import TraditionalChinese
 from app.core.config import get_settings
 from app.db.session import Base, UnstorableText, engine
 from app.db.spatial import ensure_spatial_schema
@@ -118,6 +119,11 @@ def body_limit(path: str, multipart: bool) -> int:
     if multipart and path == f"{settings.api_prefix}/fish-id":
         return MAX_PHOTO_BODY
     return MAX_OTHER_BODY
+
+
+# 繁體中文 ("zht"), answered from the Simplified (api/zh_hant.py). Added
+# before the middleware below, so it runs inside them: after the size check.
+app.add_middleware(TraditionalChinese)
 
 
 @app.middleware("http")

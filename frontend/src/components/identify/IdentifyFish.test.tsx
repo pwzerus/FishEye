@@ -56,8 +56,10 @@ describe("IdentifyFish", () => {
     await screen.findByRole("button", { name: "Take or choose a photo" });
     choose(container);
     expect(await screen.findByText(/This looks like/)).toHaveTextContent("This looks like: Largemouth Bass.");
-    expect(screen.getByRole("link", { name: /How to catch, handle and cook a largemouth bass/ })).toHaveAttribute("href", "/fish/largemouth-bass");
+    expect(screen.getByRole("link", { name: /How to catch a largemouth bass/ })).toHaveAttribute("href", "/fish/largemouth-bass");
     expect(screen.getByText("91%")).toBeInTheDocument();
+    // Only what was asked: what fish, and how to catch it; no limits or cooking.
+    expect(screen.queryByText(/limits|cook/i)).not.toBeInTheDocument();
   });
 
   it("says when it isn't sure, and when the photo isn't of a fish", async () => {
@@ -115,6 +117,6 @@ describe("IdentifyFish", () => {
     expect(await screen.findByText(/This looks like/)).toHaveTextContent("This looks like: Steelhead.");
     expect(screen.getByText(/A steelhead is a rainbow trout/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Steelhead" })).toHaveAttribute("href", "/fish/rainbow-trout");
-    expect(screen.getByRole("link", { name: /How to catch, handle and cook a steelhead/ })).toHaveAttribute("href", "/fish/rainbow-trout");
+    expect(screen.getByRole("link", { name: /How to catch a steelhead/ })).toHaveAttribute("href", "/fish/rainbow-trout");
   });
 });

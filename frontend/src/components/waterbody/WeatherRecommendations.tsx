@@ -55,7 +55,7 @@ function CurrentWeather({ weather }: { weather: Weather }) {
 
 /** The languages that write the clock 24-hour, and how each joins two
  * times into a range ("5:00〜8:00"). */
-const H24: Partial<Record<Locale, string>> = { zh: "–", ja: "〜", ko: "~" };
+const H24: Partial<Record<Locale, string>> = { zh: "–", zht: "–", ja: "〜", ko: "~" };
 
 /**
  * Clock time read straight off the ISO string, which carries the lake's own

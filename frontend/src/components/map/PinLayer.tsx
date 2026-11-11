@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Marker, Popup, Tooltip, useMapEvents } from "react-leaflet";
 import L, { type Marker as LeafletMarker } from "leaflet";
 
-import { checkedGroup, formatDay, placeText, speciesCheckShort } from "@/components/community/PinCard";
+import { catchTitle, checkedGroup, formatDay, placeText, speciesCheckShort } from "@/components/community/PinCard";
 import { useLocale, useLocaleTag, useT } from "@/i18n/client";
 import { fishSlug, localFishName } from "@/i18n/names";
 import { listPins, type PinScope } from "@/lib/api/session";
@@ -47,7 +47,7 @@ export function PinMarkers({ pins }: { pins: PinSummary[] }) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={p.thumb_url} alt="" />
               )}
-              <strong>{p.title}</strong>
+              <strong>{catchTitle(p, locale)}</strong>
               <span>
                 {fish(p.species_slug, p.species_label) ?? t.catch.catch}
                 {p.species_check && (

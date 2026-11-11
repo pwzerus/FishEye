@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
-import { LimitsNote } from "@/components/rules/RegionGate";
 import { useLocale, useT } from "@/i18n/client";
 import { localFishName } from "@/i18n/names";
 import { ApiError } from "@/lib/api/client";
@@ -55,6 +54,7 @@ export function IdentifyFish() {
   const [trialUsed, setTrialUsed] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
+  const answer = useRef<HTMLDivElement>(null);
   const latest = useRef(0);
 
   useEffect(() => {
@@ -62,6 +62,12 @@ export function IdentifyFish() {
       if (preview) URL.revokeObjectURL(preview);
     };
   }, [preview]);
+
+  // On a phone the answer lands below the photo, out of sight: bring it up.
+  const done = state.kind === "done";
+  useEffect(() => {
+    if (done) answer.current?.scrollIntoView?.({ block: "start", behavior: "smooth" });
+  }, [done]);
 
   async function check(file: File | undefined) {
     if (!file) return;
@@ -101,11 +107,13 @@ export function IdentifyFish() {
 
   return (
     <div className="identify-card">
+      {/* No `capture`: on a phone it opens the camera and nothing else, but the
+          button says "take or choose a photo", and the catch is often already
+          in the camera roll. Without it the phone offers both. */}
       <input
         ref={input}
         type="file"
         accept="image/*"
-        capture="environment"
         className="sr-only"
         aria-label={t.photoLabel}
         onChange={(e) => {
@@ -141,7 +149,11 @@ export function IdentifyFish() {
           {state.message}
         </p>
       )}
-      {state.kind === "done" && <FishIdAnswer result={state.result} />}
+      {state.kind === "done" && (
+        <div ref={answer} className="identify-result">
+          <FishIdAnswer result={state.result} />
+        </div>
+      )}
     </div>
   );
 }
@@ -231,6 +243,8 @@ export function FishIdAnswer({ result }: { result: FishIdResult }) {
           <ul className="identify-list">{others.map(row)}</ul>
         </>
       )}
+      {/* What the photo was for: the fish, and how to catch it. Keeping,
+          cleaning and cooking are a tap away in the guide, for whoever asks. */}
       {guide && (
         <p>
           <Link href={`/fish/${guide}`} className="text-link">
@@ -238,7 +252,6 @@ export function FishIdAnswer({ result }: { result: FishIdResult }) {
           </Link>
         </p>
       )}
-      <LimitsNote className="identify-rules muted" texasUrl="" />
       <p className="hint">{t.caution}</p>
     </div>
   );

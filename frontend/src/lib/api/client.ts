@@ -253,7 +253,7 @@ export function listHandbook(locale = "en"): Promise<HandbookTopic[]> {
   return apiFetch<HandbookTopic[]>(`/api/species/handbook?lang=${locale}`);
 }
 
-export function listQuestions(lang: "en" | "zh"): Promise<LibraryQuestion[]> {
+export function listQuestions(lang: "en" | "zh" | "zht"): Promise<LibraryQuestion[]> {
   return apiFetch<LibraryQuestion[]>(`/api/species/questions?lang=${lang}`);
 }
 

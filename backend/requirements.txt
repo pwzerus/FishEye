@@ -22,6 +22,9 @@ Pillow==13.0.0
 # Vector maths for the photo check and Ask (services/fish_id.py, rag/hybrid.py).
 # Both are imported when the app starts, even with their models switched off.
 numpy==2.2.1
+# 繁體中文 from the Simplified (knowledge/zh_hant.py). Apache-2.0; wheels for
+# Linux and Windows, so nothing is compiled.
+opencc==1.4.2
 
 # dev/test
 pytest==8.3.3

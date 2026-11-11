@@ -42,9 +42,18 @@ export function rememberState(code: string | null): void {
 function subscribe(onChange: () => void): () => void {
   window.addEventListener(EVENT, onChange);
   window.addEventListener("storage", onChange); // another tab
+  // Back on a page the browser kept (back/forward cache), or on a tab that
+  // sat in the background: the choice may have changed elsewhere meanwhile,
+  // and a page showing the old state's rules looks like it never updates.
+  window.addEventListener("pageshow", onChange);
+  window.addEventListener("focus", onChange);
+  document.addEventListener("visibilitychange", onChange);
   return () => {
     window.removeEventListener(EVENT, onChange);
     window.removeEventListener("storage", onChange);
+    window.removeEventListener("pageshow", onChange);
+    window.removeEventListener("focus", onChange);
+    document.removeEventListener("visibilitychange", onChange);
   };
 }
 

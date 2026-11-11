@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Jurisdiction } from "@/lib/api/types";
 import { StatePicker } from "@/components/ui/StatePicker";
+import { ToastProvider } from "@/components/ui/Toast";
 import { BaitRules, LimitsNote, LiveBaitWarning, OtherStateRules, RegionGate } from "./RegionGate";
 
 const STATES: Jurisdiction[] = [
@@ -143,6 +144,22 @@ describe("state-aware rules (backend ADR 0027)", () => {
       expect(container.querySelector("a")).toBeNull();
     });
 
+    it("keeps the chosen state in view, and changeable, where a page asks for it", async () => {
+      setState("TX");
+      render(<LimitsNote texasUrl={TEXAS} picker />);
+      const select = await screen.findByRole("combobox", { name: "Fishing in" });
+      expect(select).toHaveValue("TX");
+      fireEvent.change(select, { target: { value: "GA" } });
+      expect(await screen.findByRole("link", { name: "Check Georgia WRD's current limits" })).toBeInTheDocument();
+    });
+
+    it("has no picker of its own unless asked (the page has one)", async () => {
+      setState("TX");
+      render(<LimitsNote texasUrl={TEXAS} />);
+      await screen.findByRole("link", { name: "Check TPWD's current limits" });
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    });
+
     it("asks for the state when none is chosen, instead of listing every agency", async () => {
       render(<LimitsNote texasUrl={TEXAS} />);
       expect(screen.getByText(/Pick your state to see where its limits are/)).toBeInTheDocument();
@@ -209,6 +226,29 @@ describe("state-aware rules (backend ADR 0027)", () => {
       expect(window.localStorage.getItem("fisheye.state")).toBe("CO");
       fireEvent.change(select, { target: { value: "" } });
       expect(window.localStorage.getItem("fisheye.state")).toBeNull();
+    });
+
+    it("says which state it switched to: what changes may be far down the page", async () => {
+      render(
+        <ToastProvider>
+          <StatePicker />
+        </ToastProvider>,
+      );
+      const select = await screen.findByRole("combobox");
+      fireEvent.change(select, { target: { value: "GA" } });
+      expect(await screen.findByText("Switched to Georgia")).toBeInTheDocument();
+      fireEvent.change(select, { target: { value: "" } });
+      expect(await screen.findByText("Showing every state")).toBeInTheDocument();
+    });
+
+    it("follows a choice made in another tab, or while the page sat in the background", async () => {
+      render(<StatePicker />);
+      const select = await screen.findByRole("combobox");
+      window.localStorage.setItem("fisheye.state", "GA"); // no event: like a page back from the cache
+      act(() => {
+        window.dispatchEvent(new Event("pageshow"));
+      });
+      expect(select).toHaveValue("GA");
     });
   });
 });

@@ -11,16 +11,29 @@ import { waterFor } from "@/lib/fishArt";
 import type { PinSummary } from "@/lib/api/types";
 import { SocialCounts } from "./SocialCounts";
 
-/** A day as people read it in this language: "Oct 29, 2026", "2026年10月29日". */
-export function formatDay(iso: string | null, tag = "en-US"): string | null {
+/** A catch's title as the reader's language has it. Left blank when shared,
+ * the title is the fish's English name: then it's the fish's local name
+ * ("黑莓鲈", not "Black Crappie"). A typed title stays as typed. */
+export function catchTitle(
+  pin: Pick<PinSummary, "title" | "species_label" | "species_slug">,
+  locale: Locale,
+): string {
+  if (!pin.species_label || pin.title !== pin.species_label) return pin.title;
+  return localSpecies(pin.species_slug, pin.species_label, locale) ?? pin.title;
+}
+
+/** A day as people read it in this language: "Oct 29, 2026", "2026年10月29日".
+ * `brief` leaves out this year's year ("Oct 29"), for a card's one short line. */
+export function formatDay(iso: string | null, tag = "en-US", brief = false): string | null {
   if (!iso) return null;
   // Dates without a time ("2026-09-20") are calendar days: format them in UTC
   // so a viewer west of Greenwich doesn't see the day before.
   const d = iso.length === 10 ? new Date(`${iso}T12:00:00Z`) : new Date(iso);
+  const thisYear = brief && d.getFullYear() === new Date().getFullYear();
   return d.toLocaleDateString(tag, {
     month: "short",
     day: "numeric",
-    year: "numeric",
+    ...(thisYear ? {} : { year: "numeric" }),
     ...(iso.length === 10 ? { timeZone: "UTC" } : {}),
   });
 }
@@ -149,7 +162,7 @@ export function PinCard({ pin, index = 0 }: { pin: PinSummary; index?: number })
         </div>
       </div>
       <div className="pin-card-body">
-        <h3>{pin.title}</h3>
+        <h3>{catchTitle(pin, locale)}</h3>
         <p className="pin-card-meta">
           {/* The title is the fish's name when none was typed: don't say it twice. */}
           {species && pin.species_label !== pin.title && <span className="pin-species">{species}</span>}
@@ -161,7 +174,7 @@ export function PinCard({ pin, index = 0 }: { pin: PinSummary; index?: number })
         </p>
         <p className="pin-card-by muted">
           <span className="pin-card-who">
-            {pin.is_mine ? t.catch.you : pin.author.display_name} · {formatDay(pin.caught_on ?? pin.created_at, tag)}
+            {pin.is_mine ? t.catch.you : pin.author.display_name} · {formatDay(pin.caught_on ?? pin.created_at, tag, true)}
           </span>
           <SocialCounts pin={pin} />
         </p>

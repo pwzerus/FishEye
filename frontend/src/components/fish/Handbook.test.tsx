@@ -1,8 +1,22 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { HandbookTopic } from "@/lib/api/types";
-import { Handbook } from "./Handbook";
+import type { HandbookTopic, Jurisdiction } from "@/lib/api/types";
+import { rememberState } from "@/lib/jurisdiction";
+import { Handbook, cardKind } from "./Handbook";
+
+function state(code: string, name: string): Jurisdiction {
+  return {
+    code, name, covered: code !== "MI", agency: null, agency_short: null, limits_url: null, license_url: null,
+    bait_rules: [], bait_rules_sources: [], bait_rules_on_every_bait_question: false,
+  };
+}
+const STATES = [state("TX", "Texas"), state("GA", "Georgia"), state("MI", "Michigan")];
+
+vi.mock("@/lib/api/client", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/api/client")>("@/lib/api/client");
+  return { ...actual, listJurisdictions: vi.fn(async () => STATES) };
+});
 
 const source = { label: "TPWD: catch and release tips", url: "https://tpwd.texas.gov/cr", kind: "agency" as const };
 
@@ -86,5 +100,61 @@ describe("Handbook", () => {
       expect(container.querySelector("#rule-license")).toBeNull();
       expect(container.querySelector("#bait-worms")).not.toBeNull();
     });
+  });
+
+  describe("a link to one state's card, read with another state picked", () => {
+    const trips = [
+      ...topics,
+      topic("start-first-trip", "technique", "Technique", "Your first trip in Texas", "TX"),
+      topic("start-first-trip-ga", "technique", "Technique", "Your first trip in Georgia", "GA"),
+    ];
+    afterEach(() => {
+      window.localStorage.clear();
+      window.history.replaceState(null, "", "/");
+    });
+
+    it("opens the picked state's card of the same kind", async () => {
+      window.localStorage.setItem("fisheye.state", "GA");
+      window.history.replaceState(null, "", "#start-first-trip");
+      const { container } = render(<Handbook topics={trips} />);
+      await waitFor(() => expect(window.location.hash).toBe("#start-first-trip-ga"));
+      expect(container.querySelector("#start-first-trip-ga")).not.toBeNull();
+      expect(container.querySelector("#technique")).not.toHaveAttribute("hidden");
+    });
+
+    it("says so where the card was when that state has none, with its rules a tap away", async () => {
+      window.localStorage.setItem("fisheye.state", "MI");
+      window.history.replaceState(null, "", "#start-first-trip");
+      render(<Handbook topics={trips} />);
+      const note = await screen.findByRole("note");
+      // The note takes the card's place and its anchor, so the link lands on it.
+      expect(note).toHaveAttribute("id", "start-first-trip");
+      expect(note).toHaveTextContent("This card is for Texas. Michigan's isn't written yet.");
+      expect(within(note).getByRole("link", { name: "All of Michigan's fishing rules →" })).toHaveAttribute("href", "/rules/michigan");
+      expect(within(note).getByRole("link", { name: "How to get ready for a first trip" })).toHaveAttribute("href", "/start");
+    });
+
+    it("follows the picker both ways without a reload", async () => {
+      window.localStorage.setItem("fisheye.state", "TX");
+      window.history.replaceState(null, "", "#start-first-trip");
+      const { container } = render(<Handbook topics={trips} />);
+      expect(container.querySelector("article#start-first-trip")).not.toBeNull();
+
+      act(() => rememberState("MI"));
+      expect(await screen.findByRole("note")).toHaveTextContent("Michigan's isn't written yet.");
+      expect(container.querySelector("article#start-first-trip")).toBeNull();
+
+      act(() => rememberState("TX"));
+      await waitFor(() => expect(container.querySelector("article#start-first-trip")).not.toBeNull());
+      expect(screen.queryByRole("note")).not.toBeInTheDocument();
+    });
+  });
+
+  it("knows one state's card from another's of the same kind", () => {
+    expect(cardKind({ id: "start-first-trip", region: "TX" })).toBe("start-first-trip");
+    expect(cardKind({ id: "start-first-trip-ga", region: "GA" })).toBe("start-first-trip");
+    expect(cardKind({ id: "safe-lifejacket-tx", region: "TX" })).toBe("safe-lifejacket");
+    expect(cardKind({ id: "rule-license-mi", region: "MI" })).toBe("rule-license");
+    expect(cardKind({ id: "bait-worms", region: "all" })).toBe("bait-worms");
   });
 });

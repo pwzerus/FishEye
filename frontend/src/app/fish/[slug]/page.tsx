@@ -299,11 +299,11 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
             )}
 
             {isForage && guide.legal_notes.length > 0 && (
-              <BaitRules texasRules={guide.legal_notes} texasUrl={guide.limits_url} className="guide-block rules-card" />
+              <BaitRules texasRules={guide.legal_notes} texasUrl={guide.limits_url} className="guide-block rules-card" picker />
             )}
 
             {!(isForage && guide.legal_notes.length > 0) && (
-              <LimitsNote className="limits-note" texasUrl={guide.limits_url} />
+              <LimitsNote className="limits-note" texasUrl={guide.limits_url} picker />
             )}
 
             <p className="sources-link">

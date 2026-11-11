@@ -131,7 +131,15 @@
   display: grid;
   gap: 8px;
   justify-items: center;
+  width: max-content;
+  max-width: calc(100vw - 32px);
   pointer-events: none;
+}
+/* On a phone, above the bottom bar instead of over it. */
+@media (max-width: 760px) {
+  .toast-stack {
+    bottom: calc(var(--mobile-nav-h) + env(safe-area-inset-bottom) + 12px);
+  }
 }
 .toast {
   pointer-events: auto;
@@ -1973,6 +1981,9 @@ button.stat-card:hover {
 .comment-author:hover { text-decoration: underline; }
 .comment-body { margin: 3px 0 2px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
 .comment-actions { display: flex; gap: 12px; margin: 0; font-size: 12.5px; }
+/* Small words, finger-sized targets: the padding is tappable, the layout doesn't move. */
+.comment-actions .text-link { padding: 9px 4px; margin: -9px -4px; }
+.text-link-danger { color: var(--danger, #b42318); }
 .comment-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }
 .comment-form textarea { width: 100%; padding: 10px 12px; font: inherit; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); resize: vertical; }
 

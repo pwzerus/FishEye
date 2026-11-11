@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-import { useLocale, useT } from "@/i18n/client";
+import { useLocale, useLocaleTag, useT } from "@/i18n/client";
 import { localFishName, localTopicTitle } from "@/i18n/names";
 import type { BaitCard } from "@/lib/api/types";
 import { findBaits, useBaitCards } from "@/lib/baits";
@@ -28,6 +28,7 @@ export function BaitTip({ card, fish, children }: { card: BaitCard; fish?: strin
   const all = useT();
   const t = all.baitTip;
   const locale = useLocale();
+  const tag = useLocaleTag();
   const title = localTopicTitle(card.topic, locale) ?? card.title;
 
   useEffect(() => {
@@ -70,7 +71,7 @@ export function BaitTip({ card, fish, children }: { card: BaitCard; fish?: strin
         {children}
       </button>
       {open && (
-        <span id={id} role="dialog" aria-label={title} className="bait-tip" lang={locale}>
+        <span id={id} role="dialog" aria-label={title} className="bait-tip" lang={tag}>
           <span className="bait-tip-head">
             <strong>{title}</strong>
             <button type="button" className="icon-btn" aria-label={all.common.close} onClick={() => setOpen(false)}>

@@ -118,9 +118,20 @@ describe("choosing a language", () => {
   it("offers Chinese, in Chinese, to a Chinese browser that hasn't chosen", () => {
     vi.spyOn(navigator, "languages", "get").mockReturnValue(["zh-CN", "en"]);
     render(<LanguageSuggestion />);
-    fireEvent.click(screen.getByRole("button", { name: "使用中文" }));
+    fireEvent.click(screen.getByRole("button", { name: "使用简体中文" }));
     expect(document.cookie).toContain("fisheye.lang=zh");
     expect(refresh).toHaveBeenCalled();
+  });
+
+  it("offers Traditional Chinese to a browser in Taiwan or Hong Kong", () => {
+    vi.spyOn(navigator, "languages", "get").mockReturnValue(["zh-TW", "en"]);
+    render(<LanguageSuggestion />);
+    fireEvent.click(screen.getByRole("button", { name: "使用繁體中文" }));
+    expect(document.cookie).toContain("fisheye.lang=zht");
+    expect(preferredLocale(["zh-HK"])).toBe("zht");
+    expect(preferredLocale(["zh-Hant-US"])).toBe("zht");
+    expect(preferredLocale(["zh-CN"])).toBe("zh");
+    expect(preferredLocale(["zh"])).toBe("zh");
   });
 
   it("says nothing once a language is chosen", () => {

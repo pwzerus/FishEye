@@ -15,6 +15,16 @@ const FORECASTS: Record<Exclude<Locale, "en">, Record<string, string>> = {
     "showers and thunderstorms likely": "很可能有雷阵雨", "showers and thunderstorms": "雷阵雨",
     "chance thunderstorms": "可能有雷暴", thunderstorms: "雷暴", snow: "雪", "chance snow showers": "可能有阵雪",
   },
+  zht: {
+    sunny: "晴", "mostly sunny": "大部晴", "partly sunny": "晴間多雲", clear: "晴朗", "mostly clear": "大部晴朗",
+    "partly cloudy": "局部多雲", "mostly cloudy": "大部多雲", cloudy: "多雲", overcast: "陰",
+    "patchy fog": "局部有霧", "areas of fog": "部分地區有霧", fog: "霧", haze: "霾",
+    "slight chance rain showers": "小機率陣雨", "chance rain showers": "可能有陣雨", "rain showers likely": "很可能有陣雨",
+    "rain showers": "陣雨", "light rain": "小雨", rain: "雨", "heavy rain": "大雨", drizzle: "毛毛雨",
+    "slight chance showers and thunderstorms": "小機率雷陣雨", "chance showers and thunderstorms": "可能有雷陣雨",
+    "showers and thunderstorms likely": "很可能有雷陣雨", "showers and thunderstorms": "雷陣雨",
+    "chance thunderstorms": "可能有雷暴", thunderstorms: "雷暴", snow: "雪", "chance snow showers": "可能有陣雪",
+  },
   es: {
     sunny: "Soleado", "mostly sunny": "Mayormente soleado", "partly sunny": "Parcialmente soleado",
     clear: "Despejado", "mostly clear": "Mayormente despejado", "partly cloudy": "Parcialmente nublado",
@@ -58,6 +68,10 @@ const DIRECTIONS: Record<Exclude<Locale, "en">, Record<string, string>> = {
     N: "北", NNE: "东北偏北", NE: "东北", ENE: "东北偏东", E: "东", ESE: "东南偏东", SE: "东南", SSE: "东南偏南",
     S: "南", SSW: "西南偏南", SW: "西南", WSW: "西南偏西", W: "西", WNW: "西北偏西", NW: "西北", NNW: "西北偏北",
   },
+  zht: {
+    N: "北", NNE: "東北偏北", NE: "東北", ENE: "東北偏東", E: "東", ESE: "東南偏東", SE: "東南", SSE: "東南偏南",
+    S: "南", SSW: "西南偏南", SW: "西南", WSW: "西南偏西", W: "西", WNW: "西北偏西", NW: "西北", NNW: "西北偏北",
+  },
   es: {
     N: "norte", NNE: "nornoreste", NE: "noreste", ENE: "estenoreste", E: "este", ESE: "estesureste", SE: "sureste",
     SSE: "sursureste", S: "sur", SSW: "sursuroeste", SW: "suroeste", WSW: "oestesuroeste", W: "oeste",
@@ -77,6 +91,7 @@ const DIRECTIONS: Record<Exclude<Locale, "en">, Record<string, string>> = {
  * 時速 and 시속 before the number in Japanese and Korean. */
 const SPEEDS: Record<Exclude<Locale, "en">, (low: string, high: string | null) => string> = {
   zh: (low, high) => `${high ? `${low}–${high}` : low} 英里/小时`,
+  zht: (low, high) => `${high ? `${low}–${high}` : low} 英里/小時`,
   es: (low, high) => `${high ? `${low} a ${high}` : low} mph`,
   ko: (low, high) => `시속 ${high ? `${low}~${high}` : low}마일`,
   ja: (low, high) => `時速${high ? `${low}〜${high}` : low}マイル`,

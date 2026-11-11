@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.security import hash_password, new_token, token_digest
 from app.db.types import utcnow
+from app.knowledge import zh_hant
 from app.models.community import PasswordResetToken, User
 from app.services import audit, mail
 from app.services.auth import AuthError, check_new_password, normalize_email, revoke_all_sessions
@@ -86,6 +87,10 @@ def issue(db: Session, user: User, hours: int) -> tuple[str, datetime]:
 
 
 def mail_for(user: User, link: str, hours: int, lang: str | None = None) -> ResetMail:
+    if lang == zh_hant.ZHT:
+        # 繁體中文: the Chinese mail, turned Traditional (knowledge/zh_hant.py).
+        mail_zh = mail_for(user, link, hours, "zh")
+        return ResetMail(mail_zh.to, zh_hant.traditional(mail_zh.subject), zh_hant.traditional(mail_zh.text))
     lang = lang if lang in _SUBJECT else "en"
     return ResetMail(user.email, _SUBJECT[lang], _BODY[lang].format(name=user.display_name, link=link, hours=hours))
 

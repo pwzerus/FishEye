@@ -16,6 +16,8 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 
+from app.knowledge import zh_hant
+
 LANGS = ("zh", "es", "ko", "ja")
 LANG_COOKIE = "fisheye.lang"  # frontend src/i18n/config.ts LOCALE_COOKIE
 
@@ -511,7 +513,10 @@ PATTERNS: list[Pattern] = [
 
 def tr(message: str, lang: str | None) -> str:
     """`message` in `lang`, or as it was: English, a language this doesn't
-    know, or a message without a translation."""
+    know, or a message without a translation. Traditional Chinese ("zht")
+    is the Simplified, turned (knowledge/zh_hant.py)."""
+    if lang == zh_hant.ZHT and isinstance(message, str):
+        return zh_hant.traditional(tr(message, "zh"))
     if not lang or lang not in LANGS or not isinstance(message, str):
         return message
     found = TEXT.get(message)

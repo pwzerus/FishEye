@@ -85,7 +85,9 @@ function ReportCommentDialog({ pinId, commentId, onClose, onDone }: { pinId: num
           <option value="">{t.reportPick}</option>
           {reasons.map((r) => (
             <option key={r.id} value={r.id}>
-              {r.label}
+              {/* The reader's language, as the catch report has it; a reason
+                  added on the server before its words are here stays English. */}
+              {all.catch.reasons[r.id] ?? r.label}
             </option>
           ))}
         </select>
@@ -130,6 +132,8 @@ export function CommentsSection({ pin }: { pin: PinDetail }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [reporting, setReporting] = useState<number | null>(null);
+  // A delete is two taps: on a phone "Delete" sits a thumb's width from "Report".
+  const [deleting, setDeleting] = useState<number | null>(null);
 
   const load = useCallback(() => {
     listComments(pin.id).then(setComments).catch(() => setComments([]));
@@ -182,21 +186,32 @@ export function CommentsSection({ pin }: { pin: PinDetail }) {
                 </p>
                 <p className="comment-body">{c.body}</p>
                 <p className="comment-actions">
-                  {c.can_delete && (
-                    <button
-                      type="button"
-                      className="text-link"
-                      onClick={async () => {
-                        try {
-                          await deleteComment(pin.id, c.id);
-                          setComments((now) => (now ?? []).filter((o) => o.id !== c.id));
-                        } catch (err) {
-                          toast(err instanceof ApiError ? err.message : t.failed, "error");
-                        }
-                      }}
-                    >
+                  {c.can_delete && deleting !== c.id && (
+                    <button type="button" className="text-link" onClick={() => setDeleting(c.id)}>
                       {t.delete}
                     </button>
+                  )}
+                  {c.can_delete && deleting === c.id && (
+                    <>
+                      <button
+                        type="button"
+                        className="text-link text-link-danger"
+                        onClick={async () => {
+                          try {
+                            await deleteComment(pin.id, c.id);
+                            setComments((now) => (now ?? []).filter((o) => o.id !== c.id));
+                          } catch (err) {
+                            toast(err instanceof ApiError ? err.message : t.failed, "error");
+                          }
+                          setDeleting(null);
+                        }}
+                      >
+                        {t.deleteSure}
+                      </button>
+                      <button type="button" className="text-link" onClick={() => setDeleting(null)}>
+                        {all.common.cancel}
+                      </button>
+                    </>
                   )}
                   {c.can_report && (
                     <button type="button" className="text-link" onClick={() => setReporting(c.id)}>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { PageTransition } from "@/components/motion/Transition";
+import { LOCALE_TAGS } from "@/i18n/config";
 import { localStateName } from "@/i18n/names";
 import { getLocale, getT } from "@/i18n/server";
 import { listJurisdictions } from "@/lib/api/client";
@@ -22,7 +23,8 @@ export default async function RulesIndexPage() {
   const locale = await getLocale();
   const states: Jurisdiction[] = await listJurisdictions().catch(() => []);
   const name = (j: Jurisdiction) => localStateName(j.code, j.name, locale);
-  const sorted = [...states].sort((a, b) => name(a).localeCompare(name(b), locale));
+  // The language's own order (zh-TW sorts by strokes, as Taiwan does).
+  const sorted = [...states].sort((a, b) => name(a).localeCompare(name(b), LOCALE_TAGS[locale]));
   return (
     <PageTransition>
       <main className="page-scroll rules-page">

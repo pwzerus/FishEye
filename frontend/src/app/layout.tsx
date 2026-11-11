@@ -27,6 +27,10 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t.meta.description,
     openGraph: { siteName: "FishEye", type: "website", description: t.meta.description },
     twitter: { card: "summary_large_image" },
+    // Added to an iPhone's home screen, FishEye opens in its own window
+    // under its own name (app/manifest.ts does this for Android).
+    applicationName: "FishEye",
+    appleWebApp: { capable: true, title: "FishEye", statusBarStyle: "default" },
   };
 }
 

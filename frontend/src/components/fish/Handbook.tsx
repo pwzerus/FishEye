@@ -5,9 +5,10 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { RegionGate } from "@/components/rules/RegionGate";
 import { useLocale, useT } from "@/i18n/client";
-import { localCategory, localGearName, localTopicTitle } from "@/i18n/names";
-import type { GearItem, HandbookTopic } from "@/lib/api/types";
-import { useSelectedState } from "@/lib/jurisdiction";
+import { localCategory, localGearName, localStateName, localTopicTitle } from "@/i18n/names";
+import type { GearItem, HandbookTopic, Jurisdiction } from "@/lib/api/types";
+import { useJurisdictions, useSelectedState } from "@/lib/jurisdiction";
+import { stateSlug } from "@/lib/stateSlug";
 
 /**
  * The angler's handbook (backend app/knowledge/angling_handbook.py): baits,
@@ -120,6 +121,39 @@ function GearStrip({ items }: { items: GearItem[] }) {
   );
 }
 
+/** One state's version of a card shares its id with the others but for the
+ * state's code at the end, and Texas's often has none: "start-first-trip",
+ * "start-first-trip-ga"; "rule-license", "rule-license-mi". */
+export function cardKind(t: Pick<HandbookTopic, "id" | "region">): string {
+  const end = `-${t.region.toLowerCase()}`;
+  return t.region !== "all" && t.id.endsWith(end) ? t.id.slice(0, -end.length) : t.id;
+}
+
+/** Where a link opened one state's card for someone who picked a state with
+ * no card of that kind: say so, instead of a card that silently isn't there.
+ * It takes the card's id, so the link still lands here. */
+function OtherStateNote({ id, card, chosen, states }: { id: string; card: string; chosen: string; states: Jurisdiction[] | null }) {
+  const t = useT().stateRules;
+  const locale = useLocale();
+  const of = (code: string) => states?.find((s) => s.code === code) ?? null;
+  const from = of(card);
+  const to = of(chosen);
+  return (
+    <aside id={id} className="hb-elsewhere" role="note">
+      {/* Names only once the list is here: never a bare "MI". */}
+      {from && to && (
+        <>
+          <p>{t.otherStateCard(localStateName(from.code, from.name, locale), localStateName(to.code, to.name, locale))}</p>
+          <p className="hb-elsewhere-links">
+            <Link href={`/rules/${stateSlug(to.name)}`}>{t.allRules(localStateName(to.code, to.name, locale))}</Link>
+            <Link href="/start">{t.firstSteps}</Link>
+          </p>
+        </>
+      )}
+    </aside>
+  );
+}
+
 export function Handbook({
   topics,
   gear = [],
@@ -134,8 +168,18 @@ export function Handbook({
   const locale = useLocale();
   const [query, setQuery] = useState("");
   const state = useSelectedState();
+  const states = useJurisdictions();
   const hash = useSyncExternalStore(subscribeToHash, currentHash, () => "");
   const rail = useRef<HTMLElement>(null);
+
+  // A link to one state's card ("Your first trip in Texas", from the Texas
+  // rules page), read by someone who picked another state: open that state's
+  // card of the same kind, or say there isn't one yet.
+  const linked = topics.find((t) => t.id === hash);
+  const elsewhere = linked && linked.region !== "all" && state !== null && linked.region !== state ? linked : null;
+  const sameHere = elsewhere ? topics.find((t) => t.region === state && cardKind(t) === cardKind(elsewhere)) : undefined;
+  const noteIn = elsewhere && !sameHere ? elsewhere.category : null;
+  const noteReady = Boolean(noteIn && states);
 
   // Another state's rule cards aren't shown (RegionGate), so they aren't counted.
   const applies = (t: HandbookTopic) => t.region === "all" || state === null || t.region === state;
@@ -153,16 +197,33 @@ export function Handbook({
     last.total += 1;
     if (matches(t)) last.topics.push(t);
   }
-  const shown = groups.filter((g) => g.total > 0);
-  const found = groups.filter((g) => g.topics.length > 0);
+  // The chapter holding the note stays even if the note is all it has left.
+  const shown = groups.filter((g) => g.total > 0 || g.category === noteIn);
+  const found = groups.filter((g) => g.topics.length > 0 || (!words && g.category === noteIn));
   // The chapter in the address, or the one holding the topic in it.
   const fromHash = topics.find((t) => t.id === hash)?.category ?? shown.find((g) => g.category === hash)?.category;
   const active = fromHash ?? shown[0]?.category;
 
-  // Landing on a chapter or a topic: it's only visible once `active` is set.
+  useEffect(() => {
+    if (!sameHere) return;
+    // Next.js keeps its own history entry through replaceState; the hash
+    // store only hears hashchange, which replaceState doesn't fire.
+    window.history.replaceState(null, "", `#${sameHere.id}`);
+    window.dispatchEvent(new Event("hashchange"));
+  }, [sameHere]);
+
+  // Landing on a chapter or a topic: it's only visible once `active` is set
+  // (and a note about another state's card, once it has the states' names).
   useEffect(() => {
     if (hash) document.getElementById(hash)?.scrollIntoView?.({ block: "start", behavior: "instant" });
-  }, [hash, active]);
+  }, [hash, active, noteReady]);
+  // A state picked up top changes the linked card far below: bring it into view.
+  const lastState = useRef(state);
+  useEffect(() => {
+    if (lastState.current === state) return;
+    lastState.current = state;
+    if (linked) document.getElementById(hash)?.scrollIntoView?.({ block: "start", behavior: "smooth" });
+  }, [state, hash, linked]);
   // On a phone the chapters are a row: keep the current one in view.
   useEffect(() => {
     const row = rail.current;
@@ -254,6 +315,9 @@ export function Handbook({
                   </div>
                 </header>
                 <div className="hb-articles">
+                  {elsewhere && state && g.category === noteIn && (
+                    <OtherStateNote id={elsewhere.id} card={elsewhere.region} chosen={state} states={states} />
+                  )}
                   {g.topics.map((t) => {
                     const local = localTopicTitle(t.id, locale);
                     const card = (

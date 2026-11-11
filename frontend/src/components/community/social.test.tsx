@@ -144,8 +144,16 @@ describe("CommentsSection", () => {
     renderApp(<CommentsSection pin={pin()} />);
     await screen.findByText("Mine");
     expect(screen.getAllByRole("button", { name: "Delete" })).toHaveLength(1);
+    // One tap only asks: on a phone "Delete" is a thumb's width from "Report".
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(session.deleteComment).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete it?" }));
     await waitFor(() => expect(screen.queryByText("Mine")).not.toBeInTheDocument());
+    expect(session.deleteComment).toHaveBeenCalledTimes(1);
     expect(screen.getByText("Theirs")).toBeInTheDocument();
   });
 });

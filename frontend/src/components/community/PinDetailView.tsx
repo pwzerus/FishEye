@@ -17,7 +17,7 @@ import { waterFor } from "@/lib/fishArt";
 import type { PinDetail, PinOptions, PinVisibility } from "@/lib/api/types";
 import { PhotoPicker } from "./PhotoPicker";
 import { AdminModeration } from "./AdminModeration";
-import { formatDay, PhotoAtSpot, PinBadges, placeText, SpeciesCheck, speciesCheckShort } from "./PinCard";
+import { catchTitle, formatDay, PhotoAtSpot, PinBadges, placeText, SpeciesCheck, speciesCheckShort } from "./PinCard";
 import { ShareSpotToggle, SpeciesOptions, VisibilityToggle } from "./PinForm";
 import { ReportDialog } from "./ReportDialog";
 import { CommentsSection, LikeButton } from "./Social";
@@ -165,7 +165,7 @@ export function PinDetailView({ pinId }: { pinId: number }) {
             </p>
           )}
           <h1 className="reveal" style={{ "--i": 2 } as React.CSSProperties}>
-            {pin.title}
+            {catchTitle(pin, locale)}
           </h1>
           <p className="pin-byline reveal" style={{ "--i": 3 } as React.CSSProperties}>
             <span className="byline-avatar" aria-hidden="true">
@@ -257,7 +257,10 @@ export function PinDetailView({ pinId }: { pinId: number }) {
                 className="btn btn-primary btn-sm"
                 onClick={async () => {
                   const url = window.location.href;
-                  const title = pin.species_label ? `${pin.species_label} · ${pin.title}` : pin.title;
+                  // "Black Crappie · Black Crappie" when the title was left as the fish.
+                  const name = catchTitle(pin, locale);
+                  const fishName = localSpecies(pin.species_slug, pin.species_label, locale);
+                  const title = fishName && fishName !== name ? `${fishName} · ${name}` : name;
                   // The phone's own share sheet where there is one; else the link.
                   if (navigator.share) {
                     try {
@@ -321,11 +324,11 @@ export function PinDetailView({ pinId }: { pinId: number }) {
 
       <CommentsSection pin={pin} />
 
-      <Modal open={lightbox !== null} onClose={() => setLightbox(null)} title={pin.title}>
+      <Modal open={lightbox !== null} onClose={() => setLightbox(null)} title={catchTitle(pin, locale)}>
         {lightbox !== null && pin.photos[lightbox] && (
           <div className="lightbox">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={pin.photos[lightbox].url} alt={t.photoOf(lightbox + 1, pin.title)} />
+            <img src={pin.photos[lightbox].url} alt={t.photoOf(lightbox + 1, catchTitle(pin, locale))} />
             {pin.photos.length > 1 && (
               <div className="lightbox-nav">
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => setLightbox((lightbox + pin.photos.length - 1) % pin.photos.length)}>

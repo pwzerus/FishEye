@@ -32,7 +32,7 @@ export function RegionGate({
 
 /** Where someone in a state FishEye hasn't written rules for is sent
  * instead. Never links an agency page FishEye hasn't reviewed. */
-export function OtherStateRules({ subject }: { subject?: string }) {
+export function OtherStateRules({ subject, picker = false }: { subject?: string; picker?: boolean }) {
   const j = useSelectedJurisdiction();
   const t = useT().stateRules;
   const locale = useLocale();
@@ -42,6 +42,7 @@ export function OtherStateRules({ subject }: { subject?: string }) {
     <section className="rules-card">
       <h2>{t.differ(subject ?? t.fishingRules)}</h2>
       <p>{t.notWritten(name)}</p>
+      {picker && <StatePicker className="state-picker state-picker-inline" />}
     </section>
   );
 }
@@ -50,17 +51,35 @@ export function OtherStateRules({ subject }: { subject?: string }) {
  * has one, and a plain pointer otherwise — a link only where one was
  * reviewed. With no state chosen, the state picker (2026-11-06: not every
  * agency in the country). `texasUrl` is no longer used; callers still pass it. */
-export function LimitsNote({ className }: { texasUrl?: string; className?: string }) {
+export function LimitsNote({
+  className,
+  picker = false,
+}: {
+  texasUrl?: string;
+  className?: string;
+  // Keep the chosen state in view and changeable right here: on a guide page
+  // someone reading "Check TPWD's limits" asks which state that is.
+  picker?: boolean;
+}) {
   const state = useSelectedState();
   const list = useJurisdictions();
   const { stateRules: t } = useT();
   const locale = useLocale();
   const j = state ? list?.find((x) => x.code === state) ?? null : null;
+  const note = (text: ReactNode) =>
+    picker ? (
+      <div className={className}>
+        <p>{text}</p>
+        <StatePicker className="state-picker state-picker-inline" />
+      </div>
+    ) : (
+      <p className={className}>{text}</p>
+    );
   // Every state's agency page is on file now, not only the states FishEye
   // has written rules for (knowledge/jurisdictions.py).
   if (state && j?.limits_url) {
-    return (
-      <p className={className}>
+    return note(
+      <>
         {t.limitsVary}
         <a href={j.limits_url} target="_blank" rel="noreferrer">
           {t.checkLimits(j.agency_short ?? j.agency ?? j.name)}
@@ -69,19 +88,11 @@ export function LimitsNote({ className }: { texasUrl?: string; className?: strin
         <Link href={`/rules/${stateSlug(j.name)}`} className="rules-limits-link">
           {t.allRules(localStateName(j.code, j.name, locale))}
         </Link>
-      </p>
+      </>,
     );
   }
-  if (state && j && !j.covered) {
-    return (
-      <p className={className}>{t.limitsVaryState(localStateName(j.code, j.name, locale))}</p>
-    );
-  }
-  if (state && !j) {
-    return (
-      <p className={className}>{t.limitsVaryYours}</p>
-    );
-  }
+  if (state && j && !j.covered) return note(t.limitsVaryState(localStateName(j.code, j.name, locale)));
+  if (state && !j) return note(t.limitsVaryYours);
   // No state chosen: one line and the picker, not every agency in the
   // country (a list of 40-odd links that nobody reads).
   return (
@@ -109,11 +120,14 @@ export function BaitRules({
   texasUrl,
   suffix = "",
   className = "rules-card",
+  picker = false,
 }: {
   texasRules: string[];
   texasUrl: string;
   suffix?: string;
   className?: string;
+  // The state picker beside the rules (see LimitsNote).
+  picker?: boolean;
 }) {
   const state = useSelectedState();
   const list = useJurisdictions();
@@ -128,7 +142,7 @@ export function BaitRules({
   if (state === null) shown = withRules ?? loading;
   else if (withRules) {
     const mine = withRules.find((j) => j.code === state);
-    if (!mine) return <OtherStateRules subject={t.baitRulesSubject} />;
+    if (!mine) return <OtherStateRules subject={t.baitRulesSubject} picker={picker} />;
     shown = [mine];
   } else if (state === "TX") shown = loading;
   else return null; // a state is chosen but the list hasn't loaded: show nothing rather than Texas's
@@ -160,7 +174,7 @@ export function BaitRules({
           )}
         </section>
       ))}
-      <LimitsNote className="muted" texasUrl={texasUrl} />
+      <LimitsNote className="muted" texasUrl={texasUrl} picker={picker} />
     </>
   );
 }

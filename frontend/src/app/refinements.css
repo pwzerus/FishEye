@@ -368,6 +368,16 @@ button:active:not(:disabled), .btn:active { translate:0 1px; }
 .handbook-card .name-en { display: block; margin-top: 2px; font-size: 12px; font-weight: 500; color: var(--muted); }
 .hb-next { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; padding: 14px 18px; border-radius: 12px; background: hsl(var(--hue) 42% 93%); color: var(--ink); font-weight: 600; text-decoration: none; transition: filter var(--dur-fast); }
 .hb-next:hover { filter: brightness(0.97); }
+/* Where a link opened another state's card (Handbook OtherStateNote). */
+.hb-elsewhere { break-inside: avoid; margin: 0 0 16px; padding: 16px 18px; border: 1px dashed hsl(var(--hue) 42% 58%); border-radius: 14px; background: hsl(var(--hue) 42% 96%); scroll-margin-top: calc(var(--header-h) + 16px); }
+.hb-elsewhere:empty { display: none; }
+.hb-elsewhere p { margin: 0; color: var(--ink); font-size: 15px; line-height: 1.55; }
+.hb-elsewhere-links { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px !important; font-size: 14px !important; }
+.hb-elsewhere-links a { color: var(--brand-strong); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+/* The state picker under a guide's limits note (RegionGate LimitsNote). */
+.limits-note .state-picker-inline,
+.rules-card .state-picker-inline { display: flex; flex-wrap: wrap; margin-top: 10px; }
+.limits-note > p { margin: 0; }
 
 @media (max-width: 880px) {
   .hb-hero { grid-template-columns: minmax(0, 1fr); align-items: start; }

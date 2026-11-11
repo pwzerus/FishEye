@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { PageTransition } from "@/components/motion/Transition";
+import { RulesStatePicker } from "@/components/rules/RulesStatePicker";
 import { localStateName, localTopicTitle } from "@/i18n/names";
 import { getLocale, getT } from "@/i18n/server";
 import { listHandbook, listJurisdictions } from "@/lib/api/client";
@@ -86,6 +87,7 @@ export default async function StateRulesPage({ params }: PageProps<"/rules/[stat
           </p>
           <h1>{t.title(name)}</h1>
           <p className="lede">{t.lede(name)}</p>
+          <RulesStatePicker code={state.code} />
         </header>
 
         <section className="rules-card">
