@@ -943,6 +943,11 @@
 /* ----------------------------------------------------------------- motion */
 
 @media (prefers-reduced-motion: no-preference) {
+  /* Chrome restores a reloaded page's scroll from an element on it. Mid-entrance
+     that element sits lower, so the page came back about 17px down. */
+  .cf {
+    overflow-anchor: none;
+  }
   .cf-hero {
     animation: cf-hero-in 640ms var(--ease) backwards;
   }
