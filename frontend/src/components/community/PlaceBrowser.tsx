@@ -100,9 +100,9 @@ export function PlaceBrowser({
   };
 
   return (
-    <section className="place-browser" aria-label={t.where}>
-      <div className="place-browser-top">
-        <nav aria-label={t.place} className="place-crumbs">
+    <section className="pb" aria-label={t.where}>
+      <div className="pb-top">
+        <nav aria-label={t.place} className="pb-crumbs">
           <ol>
             {crumbs.map((c, i) => {
               const last = i === crumbs.length - 1;
@@ -120,7 +120,7 @@ export function PlaceBrowser({
             })}
           </ol>
         </nav>
-        <button type="button" className="btn btn-ghost btn-sm place-near-me" onClick={onNearMe} disabled={locating}>
+        <button type="button" className="pb-near" onClick={onNearMe} disabled={locating} aria-busy={locating || undefined}>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <circle cx="12" cy="12" r="3.5" />
             <path d="M12 2v3M12 19v3M2 12h3M19 12h3" strokeLinecap="round" />
@@ -129,44 +129,41 @@ export function PlaceBrowser({
         </button>
       </div>
       {locateError && (
-        <p className="place-locate-error muted" role="status">
+        <p className="pb-error" role="status">
           {locateError}
         </p>
       )}
 
-      {places && (places.places.length > 0 || places.level === "state") && (
-        <div className="place-level">
-          <h2 className="place-level-heading">{heading[places.level](names)}</h2>
-          {places.places.length === 0 ? (
-            <p className="muted">{t.noneYet}</p>
-          ) : (
-            <ul className="place-chips">
-              {places.places.map((p) => {
-                const active = places.level === "lake" && scope.lake === p.id;
-                return (
-                  <li key={p.id}>
-                    <button
-                      type="button"
-                      className={active ? "place-chip active" : "place-chip"}
-                      aria-pressed={places.level === "lake" ? active : undefined}
-                      onClick={() => onChange(pick(p.id))}
-                    >
-                      <span>
-                        {places.level === "state"
-                          ? localStateName(p.id, p.name, locale)
-                          : p.id === "0" && places.level === "lake"
-                            ? t.notOnWater
-                            : p.name}
-                      </span>
-                      <span className="place-chip-count" aria-label={all.catch.count(p.count)}>
-                        {p.count}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+      {/* An empty level says nothing here: the feed below has the invitation. */}
+      {places && places.places.length > 0 && (
+        <div className="pb-level">
+          <h2 className="pb-level-heading">{heading[places.level](names)}</h2>
+          <ul className="pb-chips" key={`${places.level}:${scope.state ?? ""}:${scope.county ?? ""}`}>
+            {places.places.map((p, i) => {
+              const active = places.level === "lake" && scope.lake === p.id;
+              return (
+                <li key={p.id} style={{ "--i": Math.min(i, 14) } as React.CSSProperties}>
+                  <button
+                    type="button"
+                    className={active ? "pb-chip active" : "pb-chip"}
+                    aria-pressed={places.level === "lake" ? active : undefined}
+                    onClick={() => onChange(pick(p.id))}
+                  >
+                    <span>
+                      {places.level === "state"
+                        ? localStateName(p.id, p.name, locale)
+                        : p.id === "0" && places.level === "lake"
+                          ? t.notOnWater
+                          : p.name}
+                    </span>
+                    <span className="pb-chip-count" aria-label={all.catch.count(p.count)}>
+                      {p.count}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       )}
     </section>

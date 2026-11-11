@@ -114,10 +114,11 @@ export function PinCard({ pin, index = 0 }: { pin: PinSummary; index?: number })
   const species = localSpecies(pin.species_slug, pin.species_label, locale);
   const art = pin.species_slug;
   const [wa, wb] = waterFor(art ?? "bluegill");
+  const water = pin.water?.name ?? pin.lake?.name;
   return (
     <Link
       href={`/community/${pin.id}`}
-      className="pin-card reveal"
+      className="pin-card"
       style={{ "--i": Math.min(index, 8) } as React.CSSProperties}
       transitionTypes={["nav-forward"]}
     >
@@ -142,24 +143,26 @@ export function PinCard({ pin, index = 0 }: { pin: PinSummary; index?: number })
         <div className="pin-card-badges">
           <PinBadges pin={pin} />
         </div>
+        <div className="pin-card-checks">
+          <SpeciesCheck pin={pin} />
+          <PhotoAtSpot pin={pin} />
+        </div>
       </div>
       <div className="pin-card-body">
         <h3>{pin.title}</h3>
         <p className="pin-card-meta">
           {/* The title is the fish's name when none was typed: don't say it twice. */}
           {species && pin.species_label !== pin.title && <span className="pin-species">{species}</span>}
-          <SpeciesCheck pin={pin} />
-          <PhotoAtSpot pin={pin} />
-          {pin.water ? (
-            <span className="pin-water">{pin.water.name}</span>
-          ) : pin.lake ? (
-            <span className="pin-water">{pin.lake.name}</span>
+          {water ? (
+            <span className="pin-water">{water}</span>
           ) : (
-            pin.county_name && <span>{pin.county_name}, {pin.state_code}</span>
+            pin.county_name && <span className="pin-area">{pin.county_name}, {pin.state_code}</span>
           )}
         </p>
         <p className="pin-card-by muted">
-          {pin.is_mine ? t.catch.you : pin.author.display_name} · {formatDay(pin.caught_on ?? pin.created_at, tag)}
+          <span className="pin-card-who">
+            {pin.is_mine ? t.catch.you : pin.author.display_name} · {formatDay(pin.caught_on ?? pin.created_at, tag)}
+          </span>
           <SocialCounts pin={pin} />
         </p>
       </div>

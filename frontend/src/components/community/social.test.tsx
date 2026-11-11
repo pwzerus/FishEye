@@ -176,7 +176,7 @@ describe("Leaderboard", () => {
     vi.mocked(session.getLeaderboard).mockResolvedValueOnce(board()).mockResolvedValue(board({ metric: "likes", entries: [] }));
     renderApp(<Leaderboard where={null} />);
     await screen.findByRole("link", { name: "Pat" });
-    fireEvent.click(screen.getByRole("tab", { name: "Most liked" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Likes" }));
     expect(await screen.findByText("Nobody yet. Share a catch and you're first.")).toBeInTheDocument();
     expect(vi.mocked(session.getLeaderboard).mock.lastCall?.[0].metric).toBe("likes");
   });

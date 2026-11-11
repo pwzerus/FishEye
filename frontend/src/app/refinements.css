@@ -60,11 +60,8 @@
 .ask-empty .chip-lg { font-size:13px; padding:12px 15px; }
 .ask-thread .msg:last-of-type { scroll-margin-top:calc(var(--header-h) + 16px); }
 .data-note { font-size:12px; margin-top:6px; }
-.data-note summary, .community-rules > summary { cursor:pointer; color:var(--brand); }
+.data-note summary { cursor:pointer; color:var(--brand); }
 .data-note p { padding-top:8px; line-height:1.7; }
-.community-rules > summary { font-size:14px; font-weight:650; }
-.community-rules[open] > summary { margin-bottom:16px; }
-.feed-more { display:flex; margin:25px auto; }
 .reveal { animation:settle-in 180ms ease-out both; animation-delay:0ms; }
 @keyframes settle-in { from { opacity:0; translate:0 4px; } to { opacity:1; translate:0 0; } }
 ::view-transition-old(.nav-forward), ::view-transition-old(.nav-back) { animation:120ms ease-out both vt-fade reverse; }

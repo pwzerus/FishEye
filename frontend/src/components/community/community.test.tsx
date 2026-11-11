@@ -447,7 +447,7 @@ describe("CommunityFeed", () => {
     window.history.replaceState(null, "", "/community?state=TX");
     renderApp(<CommunityFeed />);
     await waitFor(() => expect(session.listPins).toHaveBeenCalled());
-    fireEvent.click(await screen.findByRole("tab", { name: "My catches" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Mine" }));
     await waitFor(() => expect(session.listPins).toHaveBeenLastCalledWith(expect.objectContaining({ mine: true })));
     await screen.findByRole("option", { name: "Bluegill" });
     fireEvent.change(screen.getByLabelText("Fish"), { target: { value: "bluegill" } });
@@ -462,6 +462,6 @@ describe("CommunityFeed", () => {
     await screen.findByText("No catches in Texas yet");
     const links = screen.getAllByText("Share a catch").map((el) => el.closest("a")?.getAttribute("href"));
     expect(links.every((h) => h === "/login?next=%2Fmap%3FaddPin%3D1")).toBe(true);
-    expect(screen.getByRole("tab", { name: "My catches" })).toBeDisabled();
+    expect(screen.getByRole("tab", { name: "Mine" })).toBeDisabled();
   });
 });

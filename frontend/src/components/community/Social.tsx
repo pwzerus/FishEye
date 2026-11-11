@@ -213,7 +213,7 @@ export function CommentsSection({ pin }: { pin: PinDetail }) {
       {user ? (
         <form className="comment-form" onSubmit={post}>
           <label className="sr-only" htmlFor="new-comment">
-            {t.commentPlaceholder}
+            {t.commentLabel}
           </label>
           <textarea
             id="new-comment"
