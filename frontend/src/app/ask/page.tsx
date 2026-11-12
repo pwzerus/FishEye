@@ -7,7 +7,7 @@ import { PageTransition } from "@/components/motion/Transition";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: `${t.pages.ask} · FishEye`, description: t.pages.askDescription };
+  return { title: `${t.pages.ask} · FishEye`, description: t.pages.askDescription, alternates: { canonical: "/ask" } };
 }
 
 export default async function AskPage(props: PageProps<"/ask">) {

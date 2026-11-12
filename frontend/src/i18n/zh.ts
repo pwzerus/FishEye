@@ -37,6 +37,12 @@ const zh: Messages = {
     ask: "问答",
     unavailable: (label: string) => `${label}（暂不可用）`,
   },
+  installTip: {
+    title: "把 FishEye 放到手机桌面",
+    iphone: "iPhone：用 Safari 打开，点“分享”，再点“添加到主屏幕”。",
+    android: "安卓：用 Chrome 打开，点右上角的“⋮”，再点“添加到主屏幕”或“安装应用”。",
+    ok: "知道了",
+  },
   language: {
     label: "语言",
     menu: "选择语言",
@@ -67,9 +73,6 @@ const zh: Messages = {
     lede: "去哪钓、用什么、为什么管用、有什么规则，讲给新手听。",
     findWater: "找附近的钓点",
     firstTime: "第一次钓鱼？从这里开始 →",
-    assurance: "免费浏览 · 无需注册",
-    nextDay: "下次出钓",
-    illustration: "示意图 · 打开地图看真实位置",
     exploreLake: "看看这个湖",
     placeToStart: "先找个地方开钓",
     lakeMeta: (state: string, entrances: number, species: number) =>
@@ -212,6 +215,7 @@ const zh: Messages = {
     catches: "渔获",
     catchesUnavailable: "渔获（暂不可用）",
     shopsToggle: "渔具店",
+    satellite: "卫星图",
     shopsToggleLabel: "饵料和渔具店",
     shareCatch: "分享渔获",
     shareCatchLabel: "分享渔获",

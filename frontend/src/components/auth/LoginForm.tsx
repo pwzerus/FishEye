@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { FishArt } from "@/components/fish/FishArt";
+import { offerInstallTip } from "@/components/InstallTip";
 import { useToast } from "@/components/ui/Toast";
 import { useT } from "@/i18n/client";
 import { ApiError } from "@/lib/api/client";
@@ -77,7 +78,11 @@ export function LoginForm() {
       const u = mode === "signin" ? await login(email, password) : await register(email, password, name);
       setUser(u);
       if (mode === "signin") toast(t.welcomeBack(u.display_name));
-      else toast(u.verification_required ? t.welcomeConfirm(u.display_name) : t.welcome(u.display_name));
+      else {
+        toast(u.verification_required ? t.welcomeConfirm(u.display_name) : t.welcome(u.display_name));
+        // A new account: how to put FishEye on the phone's home screen, once.
+        offerInstallTip();
+      }
       router.replace(next);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t.wrong);

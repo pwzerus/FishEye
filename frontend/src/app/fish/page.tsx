@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: `${t.pages.fish} · FishEye`, description: t.pages.fishDescription };
+  return { title: `${t.pages.fish} · FishEye`, description: t.pages.fishDescription, alternates: { canonical: "/fish" } };
 }
 
 export default async function FishGuidePage() {

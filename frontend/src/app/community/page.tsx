@@ -8,7 +8,7 @@ import { CATCHES_AVAILABLE } from "@/lib/features";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: `${t.pages.community} · FishEye`, description: t.pages.communityDescription };
+  return { title: `${t.pages.community} · FishEye`, description: t.pages.communityDescription, alternates: { canonical: "/community" } };
 }
 
 export default async function CommunityPage() {

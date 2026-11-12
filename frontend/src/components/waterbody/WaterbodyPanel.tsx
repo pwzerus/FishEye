@@ -27,7 +27,7 @@ function ConfidenceBadge({ confidence }: { confidence: string }) {
   return (
     <span
       style={{
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: 600,
         color: "white",
         background: color,

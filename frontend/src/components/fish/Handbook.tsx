@@ -8,6 +8,7 @@ import { useLocale, useT } from "@/i18n/client";
 import { localCategory, localGearName, localStateName, localTopicTitle } from "@/i18n/names";
 import type { GearItem, HandbookTopic, Jurisdiction } from "@/lib/api/types";
 import { useJurisdictions, useSelectedState } from "@/lib/jurisdiction";
+import { sized } from "@/lib/photoSizes";
 import { stateSlug } from "@/lib/stateSlug";
 
 /**
@@ -113,7 +114,7 @@ function GearStrip({ items }: { items: GearItem[] }) {
         <Link key={i.id} href={`/gear#${i.id}`} className="handbook-gear-item">
           {/* Credit is on /gear, one tap away, under the full-size photo. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={i.photo!.url} alt="" width={i.photo!.width} height={i.photo!.height} loading="lazy" />
+          <img {...sized(i.photo!.url, i.photo!.width, "96px")} alt="" width={i.photo!.width} height={i.photo!.height} loading="lazy" />
           <span>{localGearName(i.id, locale) ?? i.name}</span>
         </Link>
       ))}

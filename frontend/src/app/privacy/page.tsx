@@ -7,6 +7,7 @@ import { LEGAL } from "@/lib/legal";
 export const metadata: Metadata = {
   title: "Privacy policy · FishEye",
   description: "What FishEye collects, why, who else sees it, and how to delete it.",
+  alternates: { canonical: "/privacy" },
 };
 
 // What this says must stay true of the code: the account and pin models

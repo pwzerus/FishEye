@@ -6,8 +6,9 @@ import type { StyleSpecification } from "maplibre-gl";
 import { useEffect, useState } from "react";
 import { TileLayer, useMap } from "react-leaflet";
 
+import { useBasemapChoice } from "@/lib/map/basemapChoice";
 import { hideAirportIcons, styleAttribution, withLinkedAttributions } from "@/lib/map/basemapStyle";
-import { MAP_STYLE_URL, TILE_ATTRIBUTION, TILE_URL } from "@/lib/map/tiles";
+import { MAP_STYLE_URL, PLAIN_STYLE_URL, TILE_ATTRIBUTION, TILE_URL } from "@/lib/map/tiles";
 
 function hasWebGL(): boolean {
   try {
@@ -28,8 +29,12 @@ function hasWebGL(): boolean {
  * both. It is drawn by MapLibre inside Leaflet's tile pane, so every marker,
  * cluster and the states layer stay ordinary Leaflet layers above it.
  *
- * Falls back to raster, never to a blank map: when NEXT_PUBLIC_MAP_STYLE_URL
- * is unset, the browser has no WebGL, or the style or the renderer fails.
+ * Two vector styles: the plain map (free, the default) and satellite
+ * (MapTiler, billed per tile), picked with the map's satellite button
+ * (lib/map/basemapChoice.ts). If the picked one fails, the other is tried.
+ *
+ * Falls back to raster, never to a blank map: when the browser has no WebGL,
+ * or both styles or the renderer fail.
  *
  * MapLibre (≈270 KB gzipped) is imported only when it is about to be used, so
  * a raster-only deployment never downloads it. Version 5, not 6: 6 resolves
@@ -38,47 +43,52 @@ function hasWebGL(): boolean {
  */
 export function BaseMap() {
   const map = useMap();
-  const [mode, setMode] = useState<"vector" | "raster">(() =>
-    MAP_STYLE_URL && hasWebGL() ? "vector" : "raster",
+  const choice = useBasemapChoice();
+  const [mode, setMode] = useState<"vector" | "raster">(() => (hasWebGL() ? "vector" : "raster"));
+  const styles = (choice === "satellite" ? [MAP_STYLE_URL, PLAIN_STYLE_URL] : [PLAIN_STYLE_URL, MAP_STYLE_URL]).filter(
+    (url): url is string => Boolean(url),
   );
+  const stylesKey = styles.join(" ");
 
   useEffect(() => {
-    if (mode !== "vector" || !MAP_STYLE_URL) return;
+    if (mode !== "vector") return;
     let layer: L.Layer | null = null;
     let cancelled = false;
 
     (async () => {
-      try {
-        const [style, bridge] = await Promise.all([
-          fetch(MAP_STYLE_URL)
+      const bridge = await import("@maplibre/maplibre-gl-leaflet").catch(() => null);
+      for (const url of stylesKey.split(" ")) {
+        if (cancelled || !bridge) break;
+        try {
+          const style = await fetch(url)
             .then((r) => {
               if (!r.ok) throw new Error(`basemap style: ${r.status}`);
               return r.json() as Promise<StyleSpecification>;
             })
-            .then((s) => withLinkedAttributions(s)),
-          import("@maplibre/maplibre-gl-leaflet"),
-        ]);
-        if (cancelled) return;
-        layer = bridge.maplibreGL({
-          style: hideAirportIcons(style),
-          // One credit, computed from the style (see styleAttribution);
-          // left to itself the bridge shows MapTiler's twice.
-          attributionControl: { customAttribution: styleAttribution(style, TILE_ATTRIBUTION) },
-        });
-        layer.addTo(map);
-      } catch (e) {
-        console.error("vector basemap unavailable, using raster tiles:", e);
-        if (layer) map.removeLayer(layer);
-        layer = null;
-        if (!cancelled) setMode("raster");
+            .then((s) => withLinkedAttributions(s));
+          if (cancelled) return;
+          layer = bridge.maplibreGL({
+            style: hideAirportIcons(style),
+            // One credit, computed from the style (see styleAttribution);
+            // left to itself the bridge shows MapTiler's twice.
+            attributionControl: { customAttribution: styleAttribution(style, TILE_ATTRIBUTION) },
+          });
+          layer.addTo(map);
+          return;
+        } catch (e) {
+          console.error("vector basemap unavailable:", url.split("?")[0], e);
+          if (layer) map.removeLayer(layer);
+          layer = null;
+        }
       }
+      if (!cancelled) setMode("raster");
     })();
 
     return () => {
       cancelled = true;
       if (layer) map.removeLayer(layer);
     };
-  }, [map, mode]);
+  }, [map, mode, stylesKey]);
 
   // No MapTiler logo: the site is on MapTiler's paid Flex plan (since
   // 2026-11-05), which requires the logo only on 3D maps. The text credit

@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import get_settings
 from app.db.types import utcnow
+from app.knowledge.zh_hant import ZHT, traditional
 from app.models.community import PIN_PUBLISHED, USER_ACTIVE, VISIBILITY_PUBLIC, CatchPin, SpeciesAlert, User
 from app.models.water import River
 from app.models.waterbody import Waterbody
@@ -38,7 +39,7 @@ COOLDOWN = timedelta(hours=12)
 # One catch can't start an unbounded run of sends.
 MAX_NOTICES = 200
 KM_PER_MILE = 1.609344
-LANGS = ("en", "zh", "es", "ko", "ja")
+LANGS = ("en", "zh", "es", "ko", "ja", ZHT)  # zht: the zh mail, in Traditional
 
 logger = logging.getLogger(__name__)
 
@@ -203,15 +204,14 @@ def notices_for(db: Session, pin: CatchPin) -> list[Notice]:
         miles = km / KM_PER_MILE
         if miles > alert.radius_miles:
             continue
-        subject, body = _WORDS[alert.lang if alert.lang in _WORDS else "en"]
-        fish = _fish_name(pin.species_slug, alert.lang)
-        found.append(
-            Notice(
-                user.email,
-                subject(fish, where),
-                body(fish, where, max(1, round(miles)), f"{site}/community/{pin.id}", f"{site}/unsubscribe?token={alert.token}"),
-            )
-        )
+        lang = "zh" if alert.lang == ZHT else alert.lang
+        subject, body = _WORDS[lang if lang in _WORDS else "en"]
+        fish = _fish_name(pin.species_slug, lang)
+        title = subject(fish, where)
+        text = body(fish, where, max(1, round(miles)), f"{site}/community/{pin.id}", f"{site}/unsubscribe?token={alert.token}")
+        if alert.lang == ZHT:
+            title, text = traditional(title), traditional(text)
+        found.append(Notice(user.email, title, text))
         alert.last_sent_at = now
     return found
 

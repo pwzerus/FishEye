@@ -41,7 +41,7 @@ em:is(:lang(zh), :lang(ja), :lang(ko)),
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -85,7 +85,7 @@ em:is(:lang(zh), :lang(ja), :lang(ko)),
   background: var(--surface);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-lg);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--ink);
   animation: pop-in 220ms var(--ease) both;

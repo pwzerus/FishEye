@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = (await getT()).questionsPage;
-  return { title: `${t.title} · FishEye`, description: t.lede };
+  return { title: `${t.title} · FishEye`, description: t.lede, alternates: { canonical: "/questions" } };
 }
 
 /** The question library (backend app/knowledge/angling_qa.py, docs/adr/0051).

@@ -1,4 +1,5 @@
 import type { GearPhoto as Photo } from "@/lib/api/types";
+import { sized } from "@/lib/photoSizes";
 
 /**
  * A gear photo, whole (object-fit: contain), with the credit its licence asks
@@ -10,7 +11,7 @@ export function GearPhoto({ photo, alt, small = false }: { photo: Photo; alt: st
     <figure className={`gear-photo${small ? " gear-photo-small" : ""}`}>
       <div className="gear-photo-frame">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photo.url} alt={alt} width={photo.width} height={photo.height} loading="lazy" />
+        <img {...sized(photo.url, photo.width, small ? "(max-width: 760px) 45vw, 200px" : "(max-width: 760px) 92vw, 360px")} alt={alt} width={photo.width} height={photo.height} loading="lazy" />
       </div>
       <figcaption>
         {photo.title ? `“${photo.title}” · ` : null}

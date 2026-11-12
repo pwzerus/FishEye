@@ -38,6 +38,12 @@ const es: Messages = {
     ask: "Preguntar",
     unavailable: (label: string) => `${label} (no disponible)`,
   },
+  installTip: {
+    title: "Ten FishEye en tu pantalla de inicio",
+    iphone: "iPhone: ábrelo en Safari, toca Compartir y luego Agregar a pantalla de inicio.",
+    android: "Android: ábrelo en Chrome, toca ⋮ y luego Agregar a la pantalla principal o Instalar app.",
+    ok: "Entendido",
+  },
   language: {
     label: "Idioma",
     menu: "Elige un idioma",
@@ -68,9 +74,6 @@ const es: Messages = {
     lede: "Adónde ir, qué usar y por qué funciona, y las reglas, explicado para principiantes.",
     findWater: "Buscar dónde pescar cerca",
     firstTime: "¿Primera vez? Empieza aquí →",
-    assurance: "Gratis · Sin crear cuenta",
-    nextDay: "Tu próximo día de pesca",
-    illustration: "Ilustración · abre el mapa para ver lugares reales",
     exploreLake: "EXPLORA UN LAGO",
     placeToStart: "Encuentra dónde empezar",
     lakeMeta: (state: string, entrances: number, species: number) =>
@@ -216,6 +219,7 @@ const es: Messages = {
     catches: "Capturas",
     catchesUnavailable: "Capturas (no disponible)",
     shopsToggle: "Carnada y equipo",
+    satellite: "Satélite",
     shopsToggleLabel: "Tiendas de carnada y equipo",
     shareCatch: "Compartir",
     shareCatchLabel: "Compartir una captura",

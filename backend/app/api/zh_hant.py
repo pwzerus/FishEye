@@ -4,7 +4,8 @@ The routes that speak Chinese take lang=zh. A request with lang=zht, in the
 query or in a JSON body (Ask, the trip plan), goes on as zh, and its JSON
 answer comes back Traditional (knowledge/zh_hant.py). A question typed in
 Traditional is turned Simplified first: Ask's Chinese matching is written in
-Simplified. Every other request passes through untouched.
+Simplified. A route that stores the language (an alert) asks
+asked_in_traditional(). Every other request passes through untouched.
 
 Installed innermost (main.py), so a body read here has already passed the
 size limit, and a refusal's message (already in the visitor's language)
@@ -43,7 +44,15 @@ class TraditionalChinese:
         if not wanted:
             await self.app(scope, receive, send)
             return
+        # A route that keeps the language for later (an alert's emails) can
+        # still tell 繁體 from 简体: request.state.zht (asked_in_traditional).
+        scope = {**scope, "state": {**scope.get("state", {}), "zht": True}}
         await self.app(scope, receive, _traditional_json(send))
+
+
+def asked_in_traditional(request: Any) -> bool:
+    """The request came in "zht" and reaches the route as "zh"."""
+    return getattr(request.state, "zht", False) is True
 
 
 def _content_type(headers: list[tuple[bytes, bytes]]) -> bytes:

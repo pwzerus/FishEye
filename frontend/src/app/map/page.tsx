@@ -22,12 +22,12 @@ export async function generateMetadata({ searchParams }: PageProps<"/map">): Pro
   if (Number.isInteger(lakeId) && lakeId > 0) {
     try {
       const lake = await getWaterbody(lakeId);
-      return { title: `${lake.name} · FishEye`, description: t.pages.mapDescription };
+      return { title: `${lake.name} · FishEye`, description: t.pages.mapDescription, alternates: { canonical: `/map?lake=${lakeId}` } };
     } catch {
       // No such lake: the map's own title.
     }
   }
-  return { title: `${t.pages.map} · FishEye`, description: t.pages.mapDescription };
+  return { title: `${t.pages.map} · FishEye`, description: t.pages.mapDescription, alternates: { canonical: "/map" } };
 }
 
 export default async function MapPage() {

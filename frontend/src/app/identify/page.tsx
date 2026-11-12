@@ -7,7 +7,7 @@ import { PageTransition } from "@/components/motion/Transition";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: `${t.pages.identify} · FishEye`, description: t.pages.identifyDescription };
+  return { title: `${t.pages.identify} · FishEye`, description: t.pages.identifyDescription, alternates: { canonical: "/identify" } };
 }
 
 export default async function IdentifyPage() {

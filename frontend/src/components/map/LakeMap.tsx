@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import L from "leaflet";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
 import {
   Circle,
   MapContainer,
@@ -27,6 +27,7 @@ import { DraftMarker, PinMarkers, PlaceOnClick, WaterGroupMarkers } from "./PinL
 import { ShopMarkers } from "./ShopLayer";
 import { MAP_POPUP_PAD } from "./popupPad";
 import { StatesLayer } from "./StatesLayer";
+import { coveredBottom } from "./cover";
 import { displayLongitude, type StateRegion } from "./usStates";
 import { SEARCH_ZOOM, US_CENTER, US_ZOOM, type MapMode, locationZoom, zoomLimitsFor } from "./zoomPolicy";
 
@@ -184,8 +185,8 @@ const WORLD_RING: [number, number][] = [
 /**
  * Applies the limits of the current mode (zoomPolicy.ts) and, inside a state,
  * locks the map to that state: it can't zoom out past the level that shows the
- * whole state, nor pan away from it. On the way back to national mode it
- * re-centres on the country.
+ * whole state, nor pan away from it. At country scale it frames the lower 48
+ * and holds them there (fitLower48).
  *
  * Rendered before FlyToFocus so that, when a search switches the mode and asks
  * for a new view in the same update, the limits are lifted before the map
@@ -199,16 +200,19 @@ const WORLD_RING: [number, number][] = [
  * coming back from a lake) is locked without moving the map; so is the state
  * on a map remounted to restore a view (`skipFitOnMount`).
  */
-function ViewLimits({
+export function ViewLimits({
   mode,
   region,
   fit,
   skipFitOnMount,
+  cover,
 }: {
   mode: MapMode;
   region: StateRegion | null;
   fit: boolean;
   skipFitOnMount: boolean;
+  // What lies over the map's bottom (a phone's sheet), framed around.
+  cover?: RefObject<HTMLElement | null>;
 }) {
   const map = useMap();
   const previous = useRef<{ mode: MapMode; code: string | null } | null>(null);
@@ -219,16 +223,13 @@ function ViewLimits({
     previous.current = { mode, code };
 
     if (mode === "national") {
-      const { min, max } = zoomLimitsFor("national");
       map.setMaxBounds(undefined);
-      // Leaflet rejects a minimum above the current maximum, so the limit
-      // that moves outward is set first.
-      map.setMinZoom(min);
-      if (prev?.mode === "exploring") map.setView(US_CENTER, US_ZOOM, { animate: false });
-      map.setMaxZoom(max);
+      fitLower48(map, cover?.current ?? null);
       return;
     }
 
+    // Whole zoom levels again: the lake layers and their limits count in them.
+    snapZoom(map, 1);
     const { min, max } = zoomLimitsFor("exploring");
     map.setMaxZoom(max);
     if (!region) {
@@ -258,8 +259,76 @@ function ViewLimits({
     }
     map.setMinZoom(floor);
     map.setMaxBounds(bounds.pad(0.1));
+    // `cover` is a ref, read when the limits apply; it never changes them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, mode, region, fit, skipFitOnMount]);
+
+  // At country scale, frame the lower 48 again when the map changes size (a
+  // window resized, a phone turned) and once the sheet over it has settled.
+  useEffect(() => {
+    if (mode !== "national") return;
+    let live = true;
+    const refit = () => {
+      if (live) fitLower48(map, cover?.current ?? null);
+    };
+    map.on("resize", refit);
+    const moving = cover?.current?.getAnimations?.() ?? [];
+    if (moving.length > 0) Promise.all(moving.map((a) => a.finished)).then(refit, () => undefined);
+    return () => {
+      live = false;
+      map.off("resize", refit);
+    };
+  }, [map, mode, cover]);
   return null;
+}
+
+/** Leaflet's zoom step: 0 lets the country view take whatever zoom fills the
+ * screen, 1 is whole levels. Set here rather than inline, where the map from
+ * useMap would be written to inside a hook. */
+function snapZoom(map: L.Map, step: number) {
+  map.options.zoomSnap = step;
+}
+
+/** The lower 48: what the country-scale map shows, centred, with Canada,
+ * Mexico and both oceans round it (the product owner, 2026-11-11). Alaska
+ * and Hawaii have buttons of their own (MapView). */
+const LOWER_48 = L.latLngBounds([24.51, -124.73], [49.38, -66.98]);
+/** How much of the map's width the lower 48 take. The old fixed zoom 4 gave
+ * about 0.57 on a laptop; filling the width (0.95) looked too big. */
+export const NATIONAL_SHARE = 0.65;
+// Never taller than this share of the map's height, on a narrow screen.
+const NATIONAL_HEIGHT_SHARE = 0.9;
+
+/**
+ * Centres the lower 48 in the part of the map not under the sheet, sized to
+ * NATIONAL_SHARE of the map's width, and holds the view there: that zoom is
+ * both the floor and the ceiling, and Freeze stops the dragging. One fixed
+ * view also means one fixed set of basemap tiles.
+ */
+function fitLower48(map: L.Map, cover: HTMLElement | null) {
+  const container = map.getContainer();
+  const hidden = coveredBottom(container.getBoundingClientRect(), cover?.getBoundingClientRect() ?? null);
+  const { x: width, y: fullHeight } = map.getSize();
+  const height = Math.max(1, fullHeight - hidden);
+  // The box's size in pixels at zoom 0, where the world is 256 px across.
+  const sw = map.project(LOWER_48.getSouthWest(), 0);
+  const ne = map.project(LOWER_48.getNorthEast(), 0);
+  const zoom = Math.max(
+    zoomLimitsFor("national").min,
+    Math.min(
+      Math.log2((NATIONAL_SHARE * width) / (ne.x - sw.x)),
+      Math.log2((NATIONAL_HEIGHT_SHARE * height) / (sw.y - ne.y)),
+    ),
+  );
+  // The box's middle on screen, moved down half the hidden strip so it sits
+  // in the middle of what shows.
+  const middle = map.project(LOWER_48.getSouthWest(), zoom).add(map.project(LOWER_48.getNorthEast(), zoom)).divideBy(2);
+  snapZoom(map, 0);
+  map.setMaxZoom(MAP_MAX_ZOOM);
+  map.setMinZoom(0);
+  map.setView(map.unproject(middle.add([0, hidden / 2]), zoom), zoom, { animate: false });
+  map.setMinZoom(zoom);
+  map.setMaxZoom(zoom);
 }
 
 /** Dims everything outside the state being explored and outlines it, so it
@@ -427,7 +496,7 @@ function LakeMarker({ lake, onSelect, region }: { lake: WaterbodyListItem; onSel
       <Popup {...MAP_POPUP_PAD}>
         <strong>{lake.name}</strong>
         {isOsm ? (
-          <div style={{ fontSize: 12, color: "#6b7280" }}>
+          <div style={{ fontSize: 14.5, color: "#6b7280" }}>
             {lake.public_access_status === "likely_private" ? t.probablyPrivate : ""}
             {lake.water_type === "pond" ? t.pond : ""}{t.unverifiedData}
             {reported > 0 && (
@@ -438,7 +507,7 @@ function LakeMarker({ lake, onSelect, region }: { lake: WaterbodyListItem; onSel
           </div>
         ) : (
           lake.field_tested && (
-            <div style={{ fontSize: 12, color: "#2563eb" }}>{t.fieldTested}</div>
+            <div style={{ fontSize: 14.5, color: "#2563eb" }}>{t.fieldTested}</div>
           )
         )}
       </Popup>
@@ -469,6 +538,7 @@ export default function LakeMap({
   frozen = false,
   onAllStates,
   onZoomOutBlocked,
+  cover,
 }: {
   waterbodies: WaterbodyListItem[];
   onSelect: (id: number) => void;
@@ -506,6 +576,8 @@ export default function LakeMap({
   onAllStates?: () => void;
   // Called when the person tries to zoom out past exploring mode's floor.
   onZoomOutBlocked?: () => void;
+  // What lies over the map's bottom on a phone (MapView's sheet).
+  cover?: RefObject<HTMLElement | null>;
 }) {
   const verified = waterbodies.filter((w) => w.data_tier !== "osm");
   const osm = waterbodies.filter((w) => w.data_tier === "osm");
@@ -531,14 +603,17 @@ export default function LakeMap({
       style={{ height: "100%", width: "100%" }}
     >
       <BaseMap />
-      <ZoomControl position="bottomright" />
+      {/* No zoom buttons at country scale, where the map holds still. */}
+      {mode === "exploring" && <ZoomControl position="bottomright" />}
       {mode === "exploring" && !placing && onAllStates && <AllStatesControl onClick={onAllStates} />}
       {mode === "exploring" && !placing && onZoomOutBlocked && <ZoomOutLimit onBlocked={onZoomOutBlocked} />}
       {/* Only at country scale, and never while placing a pin: a tap then
           means "here", not "go to this state". */}
       {mode === "national" && !placing && <StatesLayer covered={coveredStates} onEnter={onEnterState} />}
-      <ViewLimits mode={mode} region={region} fit={fitRegion} skipFitOnMount={initialView !== null} />
-      <Freeze frozen={frozen} />
+      <ViewLimits mode={mode} region={region} fit={fitRegion} skipFitOnMount={initialView !== null} cover={cover} />
+      {/* The country is one fixed view: no dragging or zooming. A state is
+          entered by clicking it, Alaska and Hawaii by their buttons. */}
+      <Freeze frozen={frozen || mode === "national"} />
       {mode === "exploring" && region && <RegionMask region={region} />}
       <ViewportWatcher onChange={onViewportChange} loadOnMount={initialView !== null} />
       <FlyToFocus focusPoint={focusPoint} skipOnMount={initialView !== null} />

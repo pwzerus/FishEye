@@ -37,7 +37,7 @@
   display: grid;
   place-items: center;
   font-weight: 800;
-  font-size: 13px;
+  font-size: 15px;
   letter-spacing: 0.02em;
   color: #fff;
   background: linear-gradient(135deg, #14b8a6, #0b5d7a);
@@ -85,7 +85,7 @@
   justify-items: start;
 }
 .menu-who span {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--muted);
 }
 .menu-item {
@@ -96,7 +96,7 @@
   border-radius: 10px;
   border: 0;
   background: none;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--ink-2);
   cursor: pointer;
@@ -151,7 +151,7 @@
   color: #fff;
   background: #10262f;
   box-shadow: var(--shadow-lg);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   animation: toast-in 320ms var(--spring) both;
 }
@@ -228,7 +228,7 @@
   padding: 18px 20px 8px;
 }
 .modal-head h2 {
-  font-size: 19px;
+  font-size: 19.5px;
 }
 .modal-danger .modal-head h2 {
   color: var(--danger);
@@ -274,7 +274,7 @@
 }
 .field > span,
 .field-label {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--ink-2);
 }
@@ -291,7 +291,7 @@
   border: 1px solid var(--line-strong);
   background: var(--surface);
   color: var(--ink);
-  font-size: 15px;
+  font-size: 16.5px;
   outline: none;
   transition:
     border-color var(--dur-fast),
@@ -318,7 +318,7 @@
   gap: 10px;
 }
 .hint {
-  font-size: 12.5px;
+  font-size: 15px;
   color: var(--muted);
 }
 .hint-warn {
@@ -330,7 +330,7 @@
   border-radius: 12px;
   background: rgba(220, 38, 38, 0.08);
   color: var(--danger);
-  font-size: 14px;
+  font-size: 16px;
   animation: shake 360ms var(--ease) both;
 }
 .form-actions {
@@ -348,12 +348,12 @@
   cursor: pointer;
 }
 .small {
-  font-size: 12.5px;
+  font-size: 15px;
 }
 .btn-xs {
   height: 30px;
   padding: 0 11px;
-  font-size: 12.5px;
+  font-size: 15px;
 }
 .btn-danger {
   color: #fff;
@@ -406,7 +406,7 @@
   margin: 12px 0 0;
   padding: 11px 16px;
   border-radius: 14px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   animation: rise 420ms var(--ease) both;
 }
@@ -468,7 +468,7 @@
   align-items: center;
   gap: 10px;
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 15px;
 }
 .or-rule::before,
 .or-rule::after {
@@ -493,7 +493,7 @@
   border: 0;
   background: var(--surface-2);
   color: var(--ink-2);
-  font-size: 12.5px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -503,7 +503,7 @@
 }
 .auth-foot {
   text-align: center;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 /* --------------------------------------------------------- pin cards */
@@ -571,7 +571,7 @@
   bottom: 10px;
   padding: 2px 9px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 14.5px;
   font-weight: 800;
   color: #fff;
   background: rgba(7, 20, 27, 0.6);
@@ -590,14 +590,14 @@
   padding: 12px 14px 14px;
 }
 .pin-card-body h3 {
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.25;
 }
 .pin-card-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 10px;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--ink-2);
 }
 .pin-species {
@@ -605,7 +605,7 @@
   color: var(--brand-strong);
 }
 .pin-card-by {
-  font-size: 12.5px;
+  font-size: 15px;
 }
 .tag-private {
   background: rgba(15, 37, 48, 0.72);
@@ -634,12 +634,12 @@
   font-size: 21px;
 }
 .pin-form-head p {
-  font-size: 12.5px;
+  font-size: 15px;
 }
 .side-panel .pin-form .field input,
 .side-panel .pin-form .field select {
   height: 40px;
-  font-size: 14px;
+  font-size: 16px;
 }
 .vis-toggle {
   display: grid;
@@ -661,11 +661,11 @@
     transform var(--dur) var(--spring);
 }
 .vis-option strong {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink);
 }
 .vis-option span {
-  font-size: 12px;
+  font-size: 14.5px;
   color: var(--muted);
 }
 .vis-option.active {
@@ -688,7 +688,7 @@
   gap: 2px;
 }
 .share-spot small {
-  font-size: 12px;
+  font-size: 14.5px;
 }
 
 .photo-picker {
@@ -724,7 +724,7 @@
   border: 0;
   background: rgba(7, 20, 27, 0.7);
   color: #fff;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1;
   cursor: pointer;
 }
@@ -738,7 +738,7 @@
   place-content: center;
   justify-items: center;
   gap: 2px;
-  font-size: 12px;
+  font-size: 14.5px;
   font-weight: 700;
   cursor: pointer;
   transition:
@@ -765,7 +765,7 @@
   right: 0;
   bottom: 0;
   padding: 3px 6px;
-  font-size: 10.5px;
+  font-size: 13.5px;
   font-weight: 700;
   color: #fff;
   background: linear-gradient(transparent, rgba(7, 20, 27, 0.75));
@@ -780,7 +780,7 @@
   margin: 8px 0 0;
   padding: 9px 12px;
   border-radius: 10px;
-  font-size: 13.5px;
+  font-size: 15.5px;
   background: var(--surface-2);
   color: var(--ink-2);
 }
@@ -809,7 +809,7 @@
   font-weight: 600;
 }
 .fish-check-skip {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
 }
 .fish-check.is-error {
@@ -962,7 +962,7 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
   color: #fff;
   background: linear-gradient(135deg, #f08c2b, #c2410c);
@@ -986,14 +986,14 @@
   background: var(--surface-2);
 }
 .pin-facts dt {
-  font-size: 11px;
+  font-size: 13.5px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
 }
 .pin-facts dd {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
 }
 .pin-map {
@@ -1012,7 +1012,7 @@
   border-radius: 999px;
   background: var(--surface);
   box-shadow: var(--shadow);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--brand-strong);
 }
@@ -1123,7 +1123,7 @@
   font-size: 20px;
 }
 .acct-stats span {
-  font-size: 12px;
+  font-size: 14.5px;
   color: var(--muted);
 }
 .acct-grid {
@@ -1147,7 +1147,7 @@
   scroll-margin-top: calc(var(--header-h) + 20px);
 }
 .acct-section h2 {
-  font-size: 18px;
+  font-size: 18.5px;
 }
 /* Where you've pinned catches (MyCatchesMap.tsx). */
 .acct-map {
@@ -1159,7 +1159,7 @@
 }
 .pin-check-note {
   margin: 0;
-  font-size: 13px;
+  font-size: 15px;
 }
 .acct-danger {
   border-color: color-mix(in srgb, var(--danger) 30%, var(--line));
@@ -1190,7 +1190,7 @@
   display: grid;
 }
 .method-list span {
-  font-size: 12.5px;
+  font-size: 15px;
 }
 @media (max-width: 860px) {
   .acct-grid {
@@ -1288,7 +1288,7 @@
   border-radius: 8px;
 }
 .catch-pop span {
-  font-size: 12px;
+  font-size: 14.5px;
   color: #5b6f78;
 }
 .catch-pop a {
@@ -1320,7 +1320,7 @@
   border: 1px solid #d9e5e7;
   background: #fff;
   color: #33505c;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
@@ -1387,15 +1387,15 @@
   min-width: 180px;
   max-width: 240px;
   font-family: var(--font);
-  font-size: 12.5px;
+  font-size: 15px;
   color: #33505c;
 }
 .shop-pop strong {
-  font-size: 14px;
+  font-size: 16px;
   color: #0f2530;
 }
 .shop-pop-kind {
-  font-size: 11px;
+  font-size: 13.5px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1415,7 +1415,7 @@
 }
 .shop-pop a.shop-pop-source {
   margin-top: 4px;
-  font-size: 11px;
+  font-size: 13.5px;
   color: #7a8c93;
 }
 /* The nearest shops on a lake's Entrances tab (NearbyShops.tsx). */
@@ -1440,14 +1440,14 @@
 }
 .nearby-shop-body {
   display: grid;
-  font-size: 13px;
+  font-size: 15px;
 }
 .nearby-shop-body strong {
-  font-size: 14px;
+  font-size: 16px;
 }
 .nearby-shops-credit {
   margin: 6px 0 0;
-  font-size: 11px;
+  font-size: 13.5px;
 }
 /* LakeMap's AllStatesControl: a Leaflet control, so it takes Leaflet's
    corner spacing; this only undoes the pill's resting transparency. */
@@ -1502,7 +1502,7 @@
   padding: 8px 16px;
   border-radius: 999px;
   font-weight: 650;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink-2);
   cursor: pointer;
   transition:
@@ -1547,7 +1547,7 @@ button.stat-card:hover {
   box-shadow: var(--shadow);
 }
 .stat-label {
-  font-size: 12px;
+  font-size: 14.5px;
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -1559,7 +1559,7 @@ button.stat-card:hover {
   letter-spacing: -0.02em;
 }
 .stat-sub {
-  font-size: 12.5px;
+  font-size: 15px;
   color: var(--muted);
 }
 .stat-warn {
@@ -1583,7 +1583,7 @@ button.stat-card:hover {
   justify-content: space-between;
 }
 .panel-head h2 {
-  font-size: 18px;
+  font-size: 18.5px;
 }
 .filter-bar {
   display: flex;
@@ -1605,11 +1605,11 @@ button.stat-card:hover {
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 16px;
 }
 .data-table th {
   text-align: left;
-  font-size: 11.5px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -1727,7 +1727,7 @@ button.stat-card:hover {
   list-style: none;
   display: grid;
   gap: 4px;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink-2);
   padding-left: 76px;
 }
@@ -1740,11 +1740,11 @@ button.stat-card:hover {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 16px;
 }
 .token-details summary {
   cursor: pointer;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--muted);
 }
 .token-details .field {
@@ -1756,7 +1756,7 @@ button.stat-card:hover {
   gap: 8px;
 }
 .tpwd-status h3 {
-  font-size: 16px;
+  font-size: 17px;
 }
 @media (max-width: 640px) {
   .report-reasons {
@@ -1832,17 +1832,17 @@ button.stat-card:hover {
   background: linear-gradient(135deg, #f59e0b, #ea580c);
   border: 2px solid #fff;
   box-shadow: 0 6px 14px -4px rgba(154, 52, 18, 0.55);
-  font: 800 13px/1 var(--font);
+  font: 800 15px/1 var(--font);
   white-space: nowrap;
   transition: transform var(--dur) var(--spring);
 }
 .water-group.is-m {
   height: 32px;
-  font-size: 14px;
+  font-size: 16px;
 }
 .water-group.is-l {
   height: 36px;
-  font-size: 15px;
+  font-size: 16.5px;
 }
 .water-group-wrap:hover .water-group {
   transform: scale(1.08);
@@ -1855,7 +1855,7 @@ button.stat-card:hover {
   font-family: var(--font);
 }
 .group-pop > span {
-  font-size: 12px;
+  font-size: 14.5px;
   color: #5b6f78;
 }
 .group-pop-species {
@@ -1887,10 +1887,10 @@ button.stat-card:hover {
 }
 .group-pop-list b {
   display: block;
-  font-size: 13px;
+  font-size: 15px;
 }
 .group-pop-list small {
-  font-size: 11px;
+  font-size: 13.5px;
   color: #5b6f78;
 }
 .group-pop > a {
@@ -1900,7 +1900,7 @@ button.stat-card:hover {
 
 /* The draft pin's label: the water it's on, or that it's on none. */
 .leaflet-tooltip.draft-water {
-  font: 700 12px/1.2 var(--font);
+  font: 700 14.5px/1.2 var(--font);
   color: #0b5d7a;
   border-radius: 999px;
   padding: 4px 10px;
@@ -1920,7 +1920,7 @@ button.stat-card:hover {
 /* The form's line saying where the pin is. */
 .pin-water-line {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: 16px;
 }
 .pin-water-line.is-off {
   display: grid;
@@ -1956,7 +1956,7 @@ button.stat-card:hover {
   gap: 8px;
   margin: 10px 0 2px;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 16px;
   color: #c2410c;
   text-decoration: none;
 }
@@ -1968,7 +1968,7 @@ button.stat-card:hover {
 .pin-card-social { display: inline-flex; gap: 10px; margin-left: 10px; color: var(--muted); }
 .pin-card-social > span { display: inline-flex; align-items: center; gap: 3px; }
 .pin-card-social svg { width: 13px; height: 13px; }
-.like-button { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border: 1px solid var(--line-strong, var(--line)); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
+.like-button { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border: 1px solid var(--line-strong, var(--line)); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; text-decoration: none; cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
 .like-button:hover:not(:disabled):not(.is-own) { border-color: #d4546a; color: #b8324b; }
 .like-button.is-liked { border-color: #e7a3b0; background: #fdecef; color: #b8324b; }
 .like-button.is-own { cursor: default; color: var(--muted); }
@@ -1980,7 +1980,7 @@ button.stat-card:hover {
 .comment-author { font-weight: 700; color: var(--ink); text-decoration: none; }
 .comment-author:hover { text-decoration: underline; }
 .comment-body { margin: 3px 0 2px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
-.comment-actions { display: flex; gap: 12px; margin: 0; font-size: 12.5px; }
+.comment-actions { display: flex; gap: 12px; margin: 0; font-size: 15px; }
 /* Small words, finger-sized targets: the padding is tappable, the layout doesn't move. */
 .comment-actions .text-link { padding: 9px 4px; margin: -9px -4px; }
 .text-link-danger { color: var(--danger, #b42318); }
@@ -1993,16 +1993,16 @@ button.stat-card:hover {
 .angler-hero .acct-stats { margin-left: auto; }
 
 .alert-list { display: grid; gap: 6px; margin: 10px 0; padding: 0; list-style: none; }
-.alert-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); font-size: 14px; }
+.alert-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); font-size: 16px; }
 .alert-form { display: grid; gap: 8px; margin-top: 10px; }
 .alert-form .field { margin: 0; }
-.alert-here { justify-self: start; font-size: 13px; }
+.alert-here { justify-self: start; font-size: 15px; }
 
 @media (max-width: 640px) {
   .comment-form { grid-template-columns: minmax(0, 1fr); }
   .comment-form .btn { justify-self: end; }
   .angler-hero .acct-stats { margin-left: 0; }
 }
-.admin-subhead { margin: 26px 0 12px; font-size: 17px; }
+.admin-subhead { margin: 26px 0 12px; font-size: 18px; }
 .check-row small { display: block; margin-top: 2px; }
 button.text-link { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; white-space: nowrap; }

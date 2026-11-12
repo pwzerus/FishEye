@@ -40,6 +40,12 @@ const ko: Messages = {
     ask: "질문하기",
     unavailable: (label: string) => `${label}(사용할 수 없음)`,
   },
+  installTip: {
+    title: "FishEye를 홈 화면에",
+    iphone: "iPhone: Safari에서 열고 '공유' → '홈 화면에 추가'를 누르세요.",
+    android: "Android: Chrome에서 열고 '⋮' → '홈 화면에 추가' 또는 '앱 설치'를 누르세요.",
+    ok: "알겠어요",
+  },
   language: {
     label: "언어",
     menu: "언어 선택",
@@ -70,9 +76,6 @@ const ko: Messages = {
     lede: "어디로 갈지, 무엇을 쓰고 왜 통하는지, 어떤 규정이 있는지 초보자 눈높이로.",
     findWater: "가까운 낚시터 찾기",
     firstTime: "처음이세요? 여기서 시작하세요 →",
-    assurance: "무료 · 계정 없이 둘러보기",
-    nextDay: "다음 출조",
-    illustration: "예시 그림 · 실제 위치는 지도에서 확인하세요",
     exploreLake: "호수 둘러보기",
     placeToStart: "시작할 곳 찾기",
     lakeMeta: (state: string, entrances: number, species: number) =>
@@ -217,6 +220,7 @@ const ko: Messages = {
     catches: "조과",
     catchesUnavailable: "조과(사용할 수 없음)",
     shopsToggle: "낚시점",
+    satellite: "위성",
     shopsToggleLabel: "미끼·낚시용품점",
     shareCatch: "조과 공유",
     shareCatchLabel: "조과 공유하기",
@@ -881,7 +885,8 @@ const ko: Messages = {
     liveBaitWarningTail: (state: string) =>
       `을 확인하세요. ${state}에서는 대부분의 내수면에서 물고기를 미끼로 쓸 수 없어요.`,
     bait: "미끼 규정",
-    switchedTo: (state: string) => `${state}로 바꿨어요`,
+    // Not "${state}로": 미시간, 뉴욕, 워싱턴 take 으로 (the rule at the top).
+    switchedTo: (state: string) => `${state} 기준으로 바꿨어요`,
     switchedAll: "모든 주를 보여 드려요",
     otherStateCard: (card: string, chosen: string) => `이 카드는 ${card} 내용이에요. ${chosen} 내용은 아직 없어요.`,
     firstSteps: "첫 낚시 준비하기",

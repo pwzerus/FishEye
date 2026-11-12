@@ -74,6 +74,8 @@ describe("LoginForm", () => {
     fireEvent.click(create);
     await waitFor(() => expect(session.register).toHaveBeenCalledWith("amy@example.com", "tight-lines-42", "Angler Amy"));
     await waitFor(() => expect(router.replace).toHaveBeenCalledWith("/map?addPin=1"));
+    // A new account: the home-screen tip comes next, once (components/InstallTip).
+    expect(window.localStorage.getItem("fisheye.installTip")).toBe("show");
   });
 
   it("shows the server's message when sign-in fails", async () => {

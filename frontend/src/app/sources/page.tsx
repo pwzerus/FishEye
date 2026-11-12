@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: `${t.sourcesPage.title} · FishEye`, description: t.sourcesPage.lede };
+  return { title: `${t.sourcesPage.title} · FishEye`, description: t.sourcesPage.lede, alternates: { canonical: "/sources" } };
 }
 
 function Links({ sources, guideSite }: { sources: GuideSource[]; guideSite: string }) {

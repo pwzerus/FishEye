@@ -16,7 +16,7 @@ export async function generateMetadata(props: PageProps<"/community/[id]">): Pro
     try {
       const pin = await getPublicPin(pinId);
       const water = pin.water?.name ?? pin.lake?.name;
-      return { title: [pin.title, water, "FishEye"].filter(Boolean).join(" · ") };
+      return { title: [pin.title, water, "FishEye"].filter(Boolean).join(" · "), alternates: { canonical: `/community/${pinId}` } };
     } catch {
       // Not public, or not there: the plain title.
     }

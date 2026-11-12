@@ -8,7 +8,10 @@
  * (StatesLayer.tsx). Locking the zoom is deliberate. A scroll-wheel nudge
  * used to cross into state scale and pour every verified lake in Texas onto
  * the map as a dense clump, and it also kept requesting higher-zoom basemap
- * tiles nobody had asked for.
+ * tiles nobody had asked for. Since 2026-11-11 the zoom is not a fixed level
+ * but whatever frames the lower 48 on this screen, and the view holds still:
+ * no dragging, no zooming (LakeMap's fitLower48). Alaska and Hawaii are
+ * opened by their buttons. The 3 above is only the floor of that framing.
  *
  * EXPLORING — one state. Entered only by an explicit act: clicking a state
  * that has lakes, searching, or allowing location (the state is then the one

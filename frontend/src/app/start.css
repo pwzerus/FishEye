@@ -13,9 +13,9 @@
 }
 .trip-step-n {
   width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--brand); color: #fff; font-weight: 700; font-size: 14px;
+  background: var(--brand); color: #fff; font-weight: 700; font-size: 16px;
 }
-.trip-step-body h2 { font-size: 18px; margin: 3px 0 6px; }
+.trip-step-body h2 { font-size: 18.5px; margin: 3px 0 6px; }
 .trip-step-body p { margin: 4px 0; color: var(--ink-2); line-height: 1.55; }
 .trip-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-top: 8px !important; }
 .trip-links a, .trip-step-body li a { color: var(--brand); font-weight: 600; }
@@ -28,14 +28,14 @@
    to the handbook), so on a phone it has to be easy to hit. */
 .trip-kit input { width: 22px; height: 22px; margin: 0; accent-color: var(--brand); cursor: pointer; }
 .trip-kit input:checked ~ span a { color: var(--muted); text-decoration: line-through; }
-.zh-hint { display: block; font-size: 12px; font-weight: 400; color: var(--muted); }
+.zh-hint { display: block; font-size: 14.5px; font-weight: 400; color: var(--muted); }
 /* A fish page's Chinese name, after its scientific one. */
 .zh-name { margin-left: 10px; font-style: normal; color: var(--ink-2); }
 
 .shop-list { list-style: none; margin: 0; padding: 0; }
 .shop-list li { font-size: 22px; font-weight: 650; padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--ink); }
 .shop-list li:last-child { border-bottom: none; }
-.shop-list li span { display: block; font-size: 15px; font-weight: 400; color: var(--muted); }
+.shop-list li span { display: block; font-size: 16.5px; font-weight: 400; color: var(--muted); }
 
 .trip-spots { list-style: none; padding: 0; margin: 8px 0 0; }
 .trip-spots li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
@@ -47,10 +47,10 @@
 .trip-ask { text-align: center; margin: 22px 0 0; }
 
 /* A lake's rules in a line (waterbody/LakeRulesRow.tsx). */
-.lake-rules { margin: 10px 0 4px; font-size: 13px; }
+.lake-rules { margin: 10px 0 4px; font-size: 15px; }
 .lake-rules p { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0; }
 .lake-rules strong { color: var(--ink); }
-.lake-rules a, .lake-rules .link-btn { color: var(--brand); font-weight: 600; font-size: 13px; }
+.lake-rules a, .lake-rules .link-btn { color: var(--brand); font-weight: 600; font-size: 15px; }
 .lake-rules ul { margin: 6px 0 0; padding-left: 18px; color: var(--ink-2); line-height: 1.5; }
 .lake-rules li { margin: 3px 0; }
 
@@ -62,12 +62,12 @@
 
 /* The lake panel's last line: share a catch here · something wrong here? */
 .lake-report-line { display: flex; flex-wrap: wrap; gap: 6px 18px; }
-.map-missing { margin-top: 10px !important; font-size: 13px; }
+.map-missing { margin-top: 10px !important; font-size: 15px; }
 
 /* Lakes sharing the searched name (LocationSearchBar): pick one. */
 .location-search-choices {
   flex-basis: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
-  padding: 6px; box-shadow: var(--shadow); font-size: 14px;
+  padding: 6px; box-shadow: var(--shadow); font-size: 16px;
 }
 .location-search-choices ul { list-style: none; margin: 0; padding: 0; }
 .location-search-choices li button {
@@ -77,7 +77,7 @@
 .location-search-choices li button:hover, .location-search-choices li button:focus-visible, .location-search-choices li button.is-active { background: var(--surface-2); }
 .location-search-hints ul { max-height: min(46vh, 340px); overflow-y: auto; }
 .location-search-choices li span { font-weight: 400; color: var(--muted); margin-left: 6px; }
-.location-search-choices > .link-btn { margin: 4px 10px 4px; font-size: 13px; }
+.location-search-choices > .link-btn { margin: 4px 10px 4px; font-size: 15px; }
 
 @media (max-width: 760px) {
   .trip-step { grid-template-columns: 1fr; gap: 8px; padding: 16px; }

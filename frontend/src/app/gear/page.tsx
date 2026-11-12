@@ -9,13 +9,14 @@ import { getLocale, getT } from "@/i18n/server";
 import type { Locale } from "@/i18n/config";
 import { listGear } from "@/lib/api/client";
 import type { Gear, GearItem } from "@/lib/api/types";
+import { sized } from "@/lib/photoSizes";
 
 // From the API at request time, like /fish: a build has no API to ask.
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = (await getT()).gearPage;
-  return { title: `${t.title} · FishEye`, description: t.lede };
+  return { title: `${t.title} · FishEye`, description: t.lede, alternates: { canonical: "/gear" } };
 }
 
 function Card({ item, locale, t }: {
@@ -80,7 +81,7 @@ export default async function GearPage() {
                     <a href={`#${i.id}`}>
                       {i.photo && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={i.photo.url} alt="" width={i.photo.width} height={i.photo.height} loading="lazy" />
+                        <img {...sized(i.photo.url, i.photo.width, "(max-width: 760px) 45vw, 180px")} alt="" width={i.photo.width} height={i.photo.height} loading="lazy" />
                       )}
                       <span>{localGearName(i.id, locale) ?? i.name}</span>
                     </a>

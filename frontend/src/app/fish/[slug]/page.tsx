@@ -22,6 +22,7 @@ import { groupSetups } from "@/components/species/setups";
 import type { Messages } from "@/i18n/messages";
 import { ApiError, getSpeciesGuide, listGear, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
 import { waterFor } from "@/lib/fishArt";
+import { sized } from "@/lib/photoSizes";
 import type { SpeciesGuide, TackleSetup } from "@/lib/api/types";
 
 // Render on each request, like the other pages: the root layout reads the
@@ -43,6 +44,7 @@ export async function generateMetadata(props: PageProps<"/fish/[slug]">): Promis
     return {
       title: `${name} · FishEye`,
       description: MESSAGES[locale].pages.fishGuideDescription(name, g.scientific_name),
+      alternates: { canonical: `/fish/${g.slug}` },
     };
   } catch {
     return { title: `${(await getT()).pages.fish} · FishEye` };
@@ -236,7 +238,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
                     <Link key={i.id} href={`/gear#${i.id}`} className="handbook-gear-item">
                       {/* Credit is on /gear, under the full-size photo. */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={i.photo!.url} alt="" width={i.photo!.width} height={i.photo!.height} loading="lazy" />
+                      <img {...sized(i.photo!.url, i.photo!.width, "96px")} alt="" width={i.photo!.width} height={i.photo!.height} loading="lazy" />
                       <span>{localGearName(i.id, locale) ?? i.name}</span>
                     </Link>
                   ))}

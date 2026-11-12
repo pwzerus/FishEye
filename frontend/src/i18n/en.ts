@@ -40,6 +40,13 @@ const en = {
     ask: "Ask",
     unavailable: (label: string) => `${label} (unavailable)`,
   },
+  // Once, after signing up (components/InstallTip.tsx).
+  installTip: {
+    title: "Put FishEye on your home screen",
+    iphone: "iPhone: open it in Safari, tap Share, then Add to Home Screen.",
+    android: "Android: open it in Chrome, tap ⋮, then Add to Home screen or Install app.",
+    ok: "Got it",
+  },
   language: {
     label: "Language",
     menu: "Choose a language",
@@ -70,9 +77,6 @@ const en = {
     lede: "Where to go, what to use and why it works, and the rules, explained for beginners.",
     findWater: "Find nearby water",
     firstTime: "First time? Start here →",
-    assurance: "Free to explore · No account needed",
-    nextDay: "Your next fishing day",
-    illustration: "Illustration · open the map for real locations",
     exploreLake: "EXPLORE A LAKE",
     placeToStart: "Find a place to start",
     lakeMeta: (state: string, entrances: number, species: number) =>
@@ -217,6 +221,7 @@ const en = {
     catches: "Catches",
     catchesUnavailable: "Catches (unavailable)",
     shopsToggle: "Bait & tackle",
+    satellite: "Satellite",
     shopsToggleLabel: "Bait and tackle shops",
     shareCatch: "Share catch",
     shareCatchLabel: "Share a catch",

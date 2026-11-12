@@ -37,6 +37,13 @@ FIXES: dict[str, str] = {
     "浮漂": "浮標",  # what anglers in Taiwan call a bobber
     "漁輪": "捲線器",  # and a reel
     "得克薩斯": "德克薩斯",  # Texas, as Taiwan writes it; the other states come out right
+    # The home-screen tip: the menus' own words on a phone set to Taiwan.
+    "新增到主螢幕": "加入主畫面",
+    "安裝應用”": "安裝應用程式”",
+    "安卓": "Android",
+    # Taiwan's quotation marks (after the fixes above, which match “”).
+    "“": "「",
+    "”": "」",
 }
 
 _HAN = re.compile(r"[㐀-鿿]")

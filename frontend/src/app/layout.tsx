@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
+import { InstallTip } from "@/components/InstallTip";
 import { LanguageSuggestion } from "@/components/LanguageMenu";
 import { SiteHeader } from "@/components/SiteHeader";
 import { VisitCounter } from "@/components/VisitCounter";
@@ -25,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(await siteOrigin()),
     title: "FishEye",
     description: t.meta.description,
-    openGraph: { siteName: "FishEye", type: "website", description: t.meta.description },
+    openGraph: { siteName: "FishEye", type: "website" },
     twitter: { card: "summary_large_image" },
     // Added to an iPhone's home screen, FishEye opens in its own window
     // under its own name (app/manifest.ts does this for Android).
@@ -54,6 +55,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <SiteHeader />
               {children}
               <LanguageSuggestion />
+              <InstallTip />
               <VisitCounter />
             </ToastProvider>
           </AuthProvider>

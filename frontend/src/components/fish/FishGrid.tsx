@@ -9,6 +9,7 @@ import type { Locale } from "@/i18n/config";
 import { localFishName } from "@/i18n/names";
 import { useSelectedState } from "@/lib/jurisdiction";
 import { waterFor } from "@/lib/fishArt";
+import { sized } from "@/lib/photoSizes";
 import type { SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
 import { FishArt } from "./FishArt";
 import { FishName } from "./FishName";
@@ -106,7 +107,7 @@ export function FishGrid({ guides, photos }: { guides: SpeciesGuide[]; photos: S
                         {/* Wikimedia thumbnail, hot-linked as served and credited in full on the
                             fish's page (ADR 0015); next/image would re-host a resized copy. */}
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={photo.url} alt="" loading="lazy" />
+                        <img {...sized(photo.url, photo.width, "76px")} alt="" loading="lazy" />
                       </span>
                     )}
                   </div>

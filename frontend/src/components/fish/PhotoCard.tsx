@@ -2,6 +2,7 @@
 
 import { useT } from "@/i18n/client";
 import type { SpeciesPhoto } from "@/lib/api/types";
+import { sized } from "@/lib/photoSizes";
 
 /**
  * The real photo, pinned to the illustration like a snapshot: comic and
@@ -22,7 +23,7 @@ export function HeroPhoto({ photo, name }: { photo: SpeciesPhoto | null; name: s
       <div className="hero-photo-frame">
         {/* Hot-linked from Wikimedia as served, next to its credit (ADR 0015). */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photo.url} alt={t.photoOf(name)} width={photo.width} height={photo.height} loading="lazy" />
+        <img {...sized(photo.url, photo.width, "(max-width: 760px) 50vw, 340px")} alt={t.photoOf(name)} width={photo.width} height={photo.height} loading="lazy" />
       </div>
       <figcaption>
         {photo.author} ·{" "}

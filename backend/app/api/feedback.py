@@ -8,8 +8,10 @@ from app.api import rate_limits
 from app.api.auth_deps import optional_user, same_origin
 from app.api.deps import get_db
 from app.api.rate_limits import client_ip
+from app.api.zh_hant import asked_in_traditional
 from app.core.config import get_settings
 from app.core.security import RateLimiter
+from app.knowledge.zh_hant import ZHT
 from app.models.community import User
 from app.schemas.feedback import FeedbackIn, FeedbackSentOut
 from app.services import feedback as feedback_service
@@ -49,7 +51,9 @@ def send_feedback(
         if limiter.blocked_for(key) > 0:
             raise HTTPException(status_code=429, detail=message)
     try:
-        row = feedback_service.create(db, user, payload.message, payload.page, payload.lang, payload.contact)
+        # 繁體中文 arrives as zh (api/zh_hant.py); the admin page should say zht.
+        lang = ZHT if asked_in_traditional(request) else payload.lang
+        row = feedback_service.create(db, user, payload.message, payload.page, lang, payload.contact)
     except feedback_service.FeedbackError as exc:
         raise HTTPException(status_code=422, detail=exc.message) from exc
     for limiter, key, _message in limits:

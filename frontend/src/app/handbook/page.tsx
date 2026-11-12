@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = (await getT()).fish;
-  return { title: `${t.handbook} · FishEye`, description: t.handbookLede };
+  return { title: `${t.handbook} · FishEye`, description: t.handbookLede, alternates: { canonical: "/handbook" } };
 }
 
 /** The handbook on its own page: Ask's citations and every "read more" link

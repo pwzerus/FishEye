@@ -9,7 +9,7 @@ import type { GearPhoto } from "@/lib/api/types";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: `${t.pages.start} · FishEye`, description: t.pages.startDescription };
+  return { title: `${t.pages.start} · FishEye`, description: t.pages.startDescription, alternates: { canonical: "/start" } };
 }
 
 export default async function StartPage() {

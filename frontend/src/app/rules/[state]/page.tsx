@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps<"/rules/[state]">):
   const { state } = await find((await params).state, locale);
   if (!state) return { title: `${t.indexTitle} · FishEye` };
   const name = localStateName(state.code, state.name, locale);
-  return { title: `${t.title(name)} · FishEye`, description: t.lede(name) };
+  return { title: `${t.title(name)} · FishEye`, description: t.lede(name), alternates: { canonical: `/rules/${stateSlug(state.name)}` } };
 }
 
 function Sources({ sources }: { sources: GuideSource[] }) {

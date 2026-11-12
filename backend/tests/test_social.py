@@ -315,6 +315,22 @@ def test_written_in_the_language_of_the_alert(make_client, seeded_lake, angler_c
     assert "附近有人钓到了" in notices[0].subject and "英里" in notices[0].text
 
 
+def test_an_alert_set_in_traditional_chinese_writes_in_traditional(make_client, seeded_lake, angler_client, db_session):
+    """The site sends 繁體 requests on as zh (api/zh_hant.py); the alert
+    still remembers zht, and its emails come in Traditional."""
+    c = make_client()
+    signup(c, email="zht@example.com")
+    db_session.scalar(select(User).where(User.email == "zht@example.com")).email_verified_at = utcnow()
+    db_session.commit()
+    made = alert(c, lang="zht")
+    assert made.status_code == 201, made.text
+    assert db_session.scalar(select(SpeciesAlert).where(SpeciesAlert.id == made.json()["id"])).lang == "zht"
+    notices = alerts.notices_for(db_session, caught(angler_client, db_session))
+    mine = next(n for n in notices if n.to == "zht@example.com")
+    assert "附近有人釣到了" in mine.subject and "英里" in mine.text, mine
+    assert "钓" not in mine.subject + mine.text
+
+
 def test_outside_the_radius_nothing_is_sent(make_client, seeded_lake, angler_client, db_session):
     c = make_client()
     signup(c, email="far@example.com")

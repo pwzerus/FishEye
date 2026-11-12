@@ -7,6 +7,7 @@ import { LEGAL } from "@/lib/legal";
 export const metadata: Metadata = {
   title: "Copyright & content · FishEye",
   description: "How to report a catch that breaks the rules, or content that infringes your copyright.",
+  alternates: { canonical: "/copyright" },
 };
 
 // The notice and counter-notice follow the US Digital Millennium Copyright

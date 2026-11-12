@@ -85,6 +85,37 @@ def test_taiwans_words_for_gear_are_fishing_questions(client):
     assert body["trace"]["outcome"] != "off_topic", body
 
 
+def test_the_size_limit_comes_first_for_a_request_in_traditional(client):
+    """The middleware reads a JSON body to rewrite it, so it must only ever
+    see bodies the size check has let through (it runs inside that check)."""
+    from app.main import MAX_OTHER_BODY
+
+    big = client.post(
+        "/api/ask",
+        content=b'{"question": "x", "lang": "zht"}',
+        headers={"content-type": "application/json", "content-length": str(MAX_OTHER_BODY + 1)},
+    )
+    assert big.status_code == 413
+
+
+def test_a_body_it_cannot_read_goes_on_as_it_came(client):
+    broken = client.post("/api/ask", content=b'{"lang": "zht", "question": ', headers={"content-type": "application/json"})
+    assert broken.status_code == 422  # the route's own refusal, not a crash here
+
+
+def test_an_error_answer_comes_back_traditional_too(client):
+    missing = client.get("/api/species/guides/no-such-fish?lang=zht")
+    assert missing.status_code == 404
+    assert missing.headers["content-type"].startswith("application/json")
+    assert int(missing.headers["content-length"]) == len(missing.content)
+
+
+def test_the_answers_length_matches_its_body(client):
+    answer = client.get("/api/species/handbook?lang=zht")
+    assert answer.status_code == 200
+    assert int(answer.headers["content-length"]) == len(answer.content)
+
+
 def test_a_refusal_is_said_in_traditional():
     assert error_text.tr("Email or password is incorrect.", "zht") == "電子郵件或密碼不正確。"
     assert error_text.tr("Email or password is incorrect.", "zh") == "邮箱或密码不正确。"

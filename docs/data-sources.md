@@ -90,6 +90,23 @@ Terms read on 2026-10-26. Not legal advice; re-read before each bulk import.
   Re-run 2026-10-27: 525 lakes added earlier are now on OpenStreetMap and
   were merged into those rows; 378 lakes verified.
 
+### OpenFreeMap — the plain basemap — OPEN (OpenStreetMap data, ODbL 1.0)
+
+- Service: https://openfreemap.org/ — hosted vector map tiles and styles;
+  the maps draw its Liberty style
+  (`https://tiles.openfreemap.org/styles/liberty`) by default, MapTiler's
+  billed satellite style only when someone presses the map's satellite
+  button (`lib/map/basemapChoice.ts`).
+- Terms read 2026-11-12 (home page and https://openfreemap.org/tos/): its
+  FAQ answers "Is commercial usage allowed?" with "Yes."; no registration,
+  API keys or cookies, no limit on views or requests; attribution required,
+  added automatically by MapLibre from the style ("OpenFreeMap ©
+  OpenMapTiles Data from OpenStreetMap"). No SLA: it is run on donations
+  and "may discontinue it at any time without notice".
+- Stored: nothing; tiles are fetched by each visitor's browser.
+- Credit: the style's own attribution, shown in the map's corner.
+- If it fails, BaseMap falls back to the MapTiler style, then to raster.
+
 ## Public access
 
 ### PAD-US Public Access (USGS GAP) — PD

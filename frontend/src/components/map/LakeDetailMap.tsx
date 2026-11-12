@@ -10,6 +10,7 @@ import { ApiError, getWaterbody } from "@/lib/api/client";
 import type { WaterbodyDetail } from "@/lib/api/types";
 import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from "@/lib/map/tiles";
 import { BaseMap } from "./BaseMap";
+import { coveredBottom } from "./cover";
 import { waterIcon } from "./waterIcon";
 import { type MapViewState, lakeDetailExitZoom } from "./zoomPolicy";
 
@@ -30,12 +31,7 @@ export function fallbackLakeZoom(fromZoom: number | undefined): number {
   return Math.min(MAX_FIT_ZOOM, Math.max(13, Math.round(fromZoom ?? 14)));
 }
 
-/** How many pixels at the bottom of the map `cover` hides: a phone's sheet
- * lies over the map; beside it (desktop) or below it, it hides nothing. */
-export function coveredBottom(map: DOMRect, cover: DOMRect | null): number {
-  if (!cover || cover.left >= map.right || cover.right <= map.left) return 0;
-  return Math.max(0, Math.min(map.bottom, cover.bottom) - Math.max(map.top, cover.top));
-}
+export { coveredBottom };
 
 /** Frames the lake, and reports the zoom it actually settles at so the
  * zoom-out exit below can be measured from there. Measured after the fit
@@ -234,9 +230,9 @@ export default function LakeDetailMap({
       <Marker position={[detail.latitude, detail.longitude]} icon={waterIcon()} title={`${detail.name}, ${t.lakeCenter}`}>
         <Popup>
           <strong>{detail.name}</strong>
-          <div style={{ fontSize: 12, color: "#6b7280" }}>{t.lakeCenterApprox}</div>
+          <div style={{ fontSize: 14.5, color: "#6b7280" }}>{t.lakeCenterApprox}</div>
           {isClosed && (
-            <div style={{ fontSize: 12, color: "#991b1b", fontWeight: 600 }}>
+            <div style={{ fontSize: 14.5, color: "#991b1b", fontWeight: 600 }}>
               {t.closedToPublic}
             </div>
           )}
@@ -255,12 +251,12 @@ export default function LakeDetailMap({
           >
             <Popup>
               <strong>{ap.name}</strong>
-              <div style={{ fontSize: 12, color: "#6b7280" }}>
+              <div style={{ fontSize: 14.5, color: "#6b7280" }}>
                 {t.accessTypes[ap.access_type] ?? ap.access_type.replace("_", " ")}
                 {ap.parking ? t.parking : ""}
               </div>
               {ap.public_status === "osm_reported" && (
-                <div style={{ fontSize: 12, color: "#92400e" }}>
+                <div style={{ fontSize: 14.5, color: "#92400e" }}>
                   {t.osmEntrance}
                 </div>
               )}
@@ -272,12 +268,12 @@ export default function LakeDetailMap({
           <CircleMarker key={`att-${a.id}`} center={[a.latitude, a.longitude]} radius={5} pathOptions={ATTRACTOR_STYLE}>
             <Popup>
               <strong>{t.attractor}</strong>
-              <div style={{ fontSize: 12, color: "#6b7280" }}>
+              <div style={{ fontSize: 14.5, color: "#6b7280" }}>
                 {a.attractor_type}
                 {a.placed_year ? t.attractorPlaced(a.placed_year) : ""}
                 {a.depth_ft ? t.attractorDepth(Math.round(a.depth_ft)) : ""}
               </div>
-              <div style={{ fontSize: 12, color: "#6b7280" }}>{t.attractorNote}</div>
+              <div style={{ fontSize: 14.5, color: "#6b7280" }}>{t.attractorNote}</div>
             </Popup>
           </CircleMarker>
         ))}

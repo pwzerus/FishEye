@@ -7,6 +7,7 @@ import { LEGAL } from "@/lib/legal";
 export const metadata: Metadata = {
   title: "Terms of use · FishEye",
   description: "The rules for using FishEye and sharing catches on it.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {

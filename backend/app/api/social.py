@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import NoReturn
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -11,7 +11,9 @@ from app.api.auth_deps import optional_user, require_user, same_origin
 from app.api.deps import get_db
 from app.api.params import DbId
 from app.api.pins import CountyParam, StateParam, _throttle, _verified
+from app.api.zh_hant import asked_in_traditional
 from app.core.security import RateLimiter
+from app.knowledge.zh_hant import ZHT
 from app.models.community import PIN_PUBLISHED, CatchPin, PinComment, SpeciesAlert, User
 from app.schemas.social import (
     AlertIn,
@@ -205,10 +207,14 @@ def my_alerts(user: User = Depends(require_user), db: Session = Depends(get_db))
 
 
 @router.post("/alerts", response_model=AlertOut, status_code=201)
-def create_alert(payload: AlertIn, user: User = Depends(require_user), db: Session = Depends(get_db)) -> AlertOut:
+def create_alert(
+    payload: AlertIn, request: Request, user: User = Depends(require_user), db: Session = Depends(get_db)
+) -> AlertOut:
+    # Set in 繁體中文, its emails are too (it arrives here as zh).
+    lang = ZHT if asked_in_traditional(request) else payload.lang
     try:
         alert = alert_service.create(
-            db, user, payload.species_slug, payload.latitude, payload.longitude, payload.place, payload.radius_miles, payload.lang
+            db, user, payload.species_slug, payload.latitude, payload.longitude, payload.place, payload.radius_miles, lang
         )
     except PinError as exc:
         db.rollback()

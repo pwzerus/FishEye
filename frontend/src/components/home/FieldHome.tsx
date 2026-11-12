@@ -76,11 +76,9 @@ export default async function FieldHome() {
         <h1>{t.title1}<br/><em>{t.title2}</em></h1>
         <p className="field-lede">{t.lede}</p>
         <div className="hero-actions"><Link href="/map" className="btn btn-primary"><ActionIcon name="pin"/> {t.findWater} <ActionIcon name="arrow"/></Link><Link href="/start" className="field-secondary">{t.firstTime}</Link></div>
-        <p className="field-assurance">{t.assurance}</p>
       </div>
       <div className="field-product">
-        <div className="field-product-top"><ActionIcon name="map"/> {t.nextDay}</div>
-        <div className="field-map-wrap"><WaterIllustration /><span className="field-map-note">{t.illustration}</span>
+        <div className="field-map-wrap"><WaterIllustration />
           <Link href={lake ? `/map?lake=${lake.id}` : "/map"} className="field-lake-card"><span className="field-lake-icon"><ActionIcon name="fish"/></span><span><span className="field-small-label">{t.exploreLake}</span><strong>{lake?.name ?? t.placeToStart}</strong><span className="field-lake-meta">{lake && featured ? t.lakeMeta(localStateName(featured.stateCode, featured.stateName, locale), lake.access_points.filter((a) => a.public_status === "confirmed_public").length, lake.species.length) : t.lakeMetaNone}</span></span><span className="field-card-arrow"><ActionIcon name="arrow"/></span></Link>
         </div>
       </div>

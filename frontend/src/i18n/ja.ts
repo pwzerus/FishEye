@@ -39,6 +39,12 @@ const ja: Messages = {
     ask: "質問",
     unavailable: (label: string) => `${label}（利用できません）`,
   },
+  installTip: {
+    title: "FishEye をホーム画面に",
+    iphone: "iPhone：Safari で開いて「共有」→「ホーム画面に追加」。",
+    android: "Android：Chrome で開いて「⋮」→「ホーム画面に追加」か「アプリをインストール」。",
+    ok: "OK",
+  },
   language: {
     label: "言語",
     menu: "言語を選択",
@@ -69,9 +75,6 @@ const ja: Messages = {
     lede: "どこへ行くか、何を使いなぜ釣れるのか、どんな規則があるのかを初心者向けに。",
     findWater: "近くの釣り場を探す",
     firstTime: "はじめての方はこちら →",
-    assurance: "無料で使えます・アカウント不要",
-    nextDay: "次の釣行",
-    illustration: "イメージ図・実際の場所は地図で確認できます",
     exploreLake: "湖をのぞいてみる",
     placeToStart: "最初の釣り場を見つけよう",
     lakeMeta: (state: string, entrances: number, species: number) =>
@@ -217,6 +220,7 @@ const ja: Messages = {
     catches: "釣果",
     catchesUnavailable: "釣果（利用できません）",
     shopsToggle: "釣具店",
+    satellite: "衛星写真",
     shopsToggleLabel: "エサ・釣具店",
     shareCatch: "釣果を投稿",
     shareCatchLabel: "釣果を投稿する",

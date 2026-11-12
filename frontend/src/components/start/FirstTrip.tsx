@@ -9,6 +9,7 @@ import { milesNumber } from "@/components/waterbody/NearbyShops";
 import { listWaterbodies } from "@/lib/api/client";
 import type { GearPhoto, Jurisdiction, WaterbodyListItem } from "@/lib/api/types";
 import { kmApart } from "@/lib/geo";
+import { sized } from "@/lib/photoSizes";
 import type { Locale } from "@/i18n/config";
 import { useLocale, useLocaleTag, useT } from "@/i18n/client";
 import { localStateName } from "@/i18n/names";
@@ -169,7 +170,7 @@ function Kit({ photos }: { photos: Record<string, GearPhoto> }) {
             {photos[item.gear] ? (
               <Link href={`/gear#${item.gear}`} className="trip-kit-photo" tabIndex={-1} aria-hidden="true">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photos[item.gear].url} alt="" loading="lazy" />
+                <img {...sized(photos[item.gear].url, photos[item.gear].width, "56px")} alt="" loading="lazy" />
               </Link>
             ) : (
               <span className="trip-kit-photo" aria-hidden="true" />

@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = (await getT()).rulesPage;
-  return { title: `${t.indexTitle} · FishEye`, description: t.indexLede };
+  return { title: `${t.indexTitle} · FishEye`, description: t.indexLede, alternates: { canonical: "/rules" } };
 }
 
 /** Every state, each linking to its own rules page (app/rules/[state]). */

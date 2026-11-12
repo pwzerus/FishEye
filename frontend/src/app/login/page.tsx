@@ -8,7 +8,7 @@ import { PageTransition } from "@/components/motion/Transition";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: `${t.pages.login} · FishEye`, description: t.pages.loginDescription };
+  return { title: `${t.pages.login} · FishEye`, description: t.pages.loginDescription, alternates: { canonical: "/login" } };
 }
 
 export default function LoginPage() {

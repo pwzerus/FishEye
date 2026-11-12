@@ -36,6 +36,14 @@ def test_signed_out_it_is_saved_without_an_account(client, db_session):
     assert row.message == "Nice map" and row.page == "/map"
 
 
+def test_feedback_written_in_traditional_chinese_says_so(client, db_session):
+    """繁體 requests go on as zh (api/zh_hant.py); the message keeps zht."""
+    r = client.post(URL, json={"message": "地圖很好用", "page": "/map", "lang": "zht"})
+    assert r.status_code == 201
+    row = db_session.scalar(select(Feedback))
+    assert row.lang == "zht" and row.message == "地圖很好用"
+
+
 def test_signed_out_the_address_is_optional_but_checked(client, db_session):
     assert client.post(URL, json={"message": "No reply needed"}).status_code == 201
     assert db_session.scalar(select(Feedback)).contact is None

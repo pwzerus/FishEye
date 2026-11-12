@@ -8,6 +8,7 @@ import { useLocale, useT } from "@/i18n/client";
 import { localGearName } from "@/i18n/names";
 import { ApiError } from "@/lib/api/client";
 import { identifyGear } from "@/lib/api/session";
+import { sized } from "@/lib/photoSizes";
 import type { GearCandidate, GearIdResult, GearItem } from "@/lib/api/types";
 
 type State =
@@ -159,7 +160,7 @@ export function GearIdAnswer({ result, items }: { result: GearIdResult; items: G
       <li key={c.id} className="gear-id-row">
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo.url} alt="" width={photo.width} height={photo.height} loading="lazy" />
+          <img {...sized(photo.url, photo.width, "64px")} alt="" width={photo.width} height={photo.height} loading="lazy" />
         ) : (
           <span className="gear-id-nophoto" aria-hidden="true" />
         )}

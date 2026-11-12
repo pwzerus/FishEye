@@ -53,6 +53,16 @@ export const TILE_URL =
  */
 export const MAP_STYLE_URL = process.env.NEXT_PUBLIC_MAP_STYLE_URL || null;
 
+/**
+ * The plain basemap, drawn by default: OpenFreeMap's Liberty style, free to
+ * show (no key, no per-request bill; commercial use allowed, credit required
+ * and added from the style; docs/data-sources.md). MAP_STYLE_URL above, the
+ * billed satellite style, is drawn only when someone asks for it with the
+ * map's satellite button (lib/map/basemapChoice.ts).
+ */
+export const PLAIN_STYLE_URL =
+  process.env.NEXT_PUBLIC_PLAIN_STYLE_URL || "https://tiles.openfreemap.org/styles/liberty";
+
 export const TILE_ATTRIBUTION =
   process.env.NEXT_PUBLIC_TILE_ATTRIBUTION ||
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
