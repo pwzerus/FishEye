@@ -205,7 +205,7 @@ const ko: Messages = {
     pickState: "주를 고르거나 장소를 검색하세요.",
     offshore: "이 화면 밖의 주",
     shownLimit: (n: number) => `호수 ${n}곳 표시 중 · 확대하면 더 보여요.`,
-    officialOnly: (shops: boolean) => `공식 호수만 표시 중 · 확대하면 다른 수역${shops ? "과 낚시점" : ""}도 보여요.`,
+    officialOnly: (shops: boolean) => `확대하면 호수${shops ? "와 낚시점" : ""}가 보여요.`,
     noLakesInView: "이 화면에는 호수가 없어요 · 축소하면 주변 호수가 보여요.",
     noLakesNear: (place: string) => `${place} 근처에는 아직 등록된 호수가 없어요.`,
     coversOnly: (states: string) => ` FishEye는 지금 ${states}만 지원해요.`,

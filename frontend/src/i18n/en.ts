@@ -206,7 +206,7 @@ const en = {
     pickState: "Pick a state or search a place.",
     offshore: "States outside this view",
     shownLimit: (n: number) => `${n} lakes shown · zoom in for more.`,
-    officialOnly: (shops: boolean) => `Official lakes shown · zoom in for more water${shops ? " and bait shops" : ""}.`,
+    officialOnly: (shops: boolean) => `Zoom in to see lakes${shops ? " and bait shops" : ""}.`,
     noLakesInView: "No lakes in this view · zoom out to see lakes nearby.",
     noLakesNear: (place: string) => `No lakes on file near ${place} yet.`,
     coversOnly: (states: string) => ` FishEye covers ${states} for now.`,

@@ -50,9 +50,10 @@ describe("lakeQueryFor", () => {
     expect(lakeQueryFor("national", 12)).toBeNull();
   });
 
-  it("asks for verified lakes only at state scale", () => {
-    expect(lakeQueryFor("exploring", MIN_ZOOM_FOR_LAKES)).toEqual({ tier: "verified" });
-    expect(lakeQueryFor("exploring", MIN_ZOOM_FOR_ALL_LAKES - 1)).toEqual({ tier: "verified" });
+  // 2026-11-12: a statewide view of Texas was a carpet of verified-lake pins.
+  it("shows no lakes at state scale", () => {
+    expect(lakeQueryFor("exploring", MIN_ZOOM_FOR_LAKES)).toBeNull();
+    expect(lakeQueryFor("exploring", MIN_ZOOM_FOR_ALL_LAKES - 1)).toBeNull();
   });
 
   it("asks for every lake once zoomed in", () => {

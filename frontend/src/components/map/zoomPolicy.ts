@@ -21,9 +21,9 @@
  * Left by that offer or the "All states" button. The zoom range below is the
  * outer bound; the state's own floor is usually a level or two tighter.
  *
- *   5 – 7   verified lakes only — a statewide view holds thousands of
- *           OpenStreetMap lakes, and a capped subset of them would look like
- *           the full picture when it isn't.
+ *   5 – 7   no lakes at all. Verified lakes showed here until 2026-11-12,
+ *           but a statewide view of Texas was a solid carpet of pins (the
+ *           product owner: "放大才显示").
  *   ≥ 8     every lake in view; the backend keeps the largest when a view
  *           holds more than the limit (docs/adr/0019).
  */
@@ -73,8 +73,7 @@ export type LakeQuery = { tier?: "verified" } | null;
 
 /** null means "don't ask the API for lakes at all". */
 export function lakeQueryFor(mode: MapMode, zoom: number): LakeQuery {
-  if (mode === "national" || zoom < MIN_ZOOM_FOR_LAKES) return null;
-  if (zoom < MIN_ZOOM_FOR_ALL_LAKES) return { tier: "verified" };
+  if (mode === "national" || zoom < MIN_ZOOM_FOR_ALL_LAKES) return null;
   return {};
 }
 

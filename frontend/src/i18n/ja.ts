@@ -205,7 +205,7 @@ const ja: Messages = {
     offshore: "この範囲外の州",
     shownLimit: (n: number) => `${n}か所の湖を表示中・拡大するとさらに表示されます。`,
     officialOnly: (shops: boolean) =>
-      `公式の湖を表示中・拡大すると${shops ? "ほかの水域と釣具店" : "ほかの水域"}も表示されます。`,
+      `拡大すると湖${shops ? "と釣具店" : ""}が表示されます。`,
     noLakesInView: "この範囲に湖はありません・縮小すると近くの湖が見えます。",
     noLakesNear: (place: string) => `${place}の近くの湖はまだ登録されていません。`,
     coversOnly: (states: string) => `FishEyeが現在対応しているのは${states}です。`,

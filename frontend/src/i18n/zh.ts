@@ -200,7 +200,7 @@ const zh: Messages = {
     pickState: "选一个州，或搜索一个地方。",
     offshore: "不在当前视图里的州",
     shownLimit: (n: number) => `已显示 ${n} 个湖 · 放大看更多。`,
-    officialOnly: (shops: boolean) => `只显示官方湖泊 · 放大看更多水域${shops ? "和渔具店" : ""}。`,
+    officialOnly: (shops: boolean) => `放大就能看到湖泊${shops ? "和渔具店" : ""}。`,
     noLakesInView: "当前视图没有湖 · 缩小看看附近的湖。",
     noLakesNear: (place: string) => `${place}附近还没有湖的资料。`,
     coversOnly: (states: string) => `FishEye 目前覆盖${states}。`,

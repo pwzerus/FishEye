@@ -204,7 +204,7 @@ const es: Messages = {
     offshore: "Estados fuera de esta vista",
     shownLimit: (n: number) => `Se muestran ${n} lagos · acerca el mapa para ver más.`,
     officialOnly: (shops: boolean) =>
-      `Solo lagos oficiales · acerca el mapa para ver más cuerpos de agua${shops ? " y tiendas de carnada" : ""}.`,
+      `Acerca el mapa para ver lagos${shops ? " y tiendas de carnada" : ""}.`,
     noLakesInView: "No hay lagos en esta vista · aleja el mapa para ver lagos cerca.",
     noLakesNear: (place: string) => `Todavía no tenemos lagos cerca de ${place}.`,
     coversOnly: (states: string) => ` Por ahora FishEye cubre ${states}.`,
