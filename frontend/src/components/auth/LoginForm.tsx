@@ -133,6 +133,8 @@ export function LoginForm() {
           <a className="btn btn-ghost btn-google" href={googleStartUrl(next)}>
             <GoogleIcon /> {t.google}
           </a>
+          {/* Continuing with Google can create an account, in either tab. */}
+          <Consent button={t.google} age={LEGAL.minimumAge} />
           <div className="or-rule">
             <span>{t.orEmail}</span>
           </div>
@@ -230,6 +232,10 @@ export function LoginForm() {
           </p>
         )}
 
+        <Consent
+          button={mode === "signin" ? t.signIn : t.createAccount}
+          age={mode === "signup" ? LEGAL.minimumAge : null}
+        />
         <button
           type="submit"
           className="btn btn-primary auth-submit"
@@ -240,13 +246,6 @@ export function LoginForm() {
         </button>
       </form>
 
-      <p className="auth-legal muted">
-        {t.legal1(LEGAL.minimumAge)}
-        <Link href="/terms">{t.terms}</Link>
-        {t.and}
-        <Link href="/privacy">{t.privacy}</Link>
-        {t.legalEnd}
-      </p>
 
       <p className="auth-foot muted">
         {mode === "signin" ? t.newHere : t.haveAccount}
@@ -259,5 +258,24 @@ export function LoginForm() {
         </Link>
       </p>
     </div>
+  );
+}
+
+/** "By tapping “Create account”, you … agree to FishEye's terms and privacy
+ * policy.", right next to the button it names. Courts enforce sign-up terms
+ * when the notice is plain to see, close to the button, and says that this
+ * button is the agreement (Berman v. Freedom Financial, 9th Cir. 2022;
+ * Chabolla v. ClassPass, 9th Cir. 2025). `age`: also confirm the minimum age
+ * (creating an account), or null (signing in). */
+function Consent({ button, age }: { button: string; age: number | null }) {
+  const t = useT().auth;
+  return (
+    <p className="auth-legal">
+      {t.legalTap(button, age)}
+      <Link href="/terms">{t.terms}</Link>
+      {t.and}
+      <Link href="/privacy">{t.privacy}</Link>
+      {t.legalEnd}
+    </p>
   );
 }

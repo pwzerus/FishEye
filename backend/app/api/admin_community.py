@@ -435,6 +435,7 @@ def _user_out(db: Session, u: User) -> AdminUserOut:
         email_verified=u.email_verified_at is not None or u.google_sub is not None,
         pins=pins,
         reports_against=against,
+        plus_until=u.plus_until if u.is_plus else None,
     )
 
 
@@ -696,7 +697,7 @@ def update_user(
     target = db.get(User, user_id)
     if target is None:
         raise HTTPException(status_code=404, detail="No such user.")
-    if payload.role is None and payload.status is None and payload.display_name is None:
+    if payload.role is None and payload.status is None and payload.display_name is None and payload.plus_days is None:
         raise HTTPException(status_code=422, detail="Nothing to change.")
     if payload.role not in (None, ROLE_USER, ROLE_ADMIN):
         raise HTTPException(status_code=422, detail="role is user or admin")
@@ -728,6 +729,12 @@ def update_user(
         if payload.status == USER_SUSPENDED:
             # Suspension takes effect now, not when their cookie expires.
             changes["sessions_revoked"] = str(auth_service.revoke_all_sessions(db, target))
+    if payload.plus_days is not None:
+        until = utcnow() + timedelta(days=payload.plus_days) if payload.plus_days > 0 else None
+        before = target.plus_until if target.is_plus else None
+        if until != before:
+            changes["plus_until"] = f"{before.date() if before else 'none'} -> {until.date() if until else 'none'}"
+            target.plus_until = until
     db.flush()
     # Re-checked after the change, inside the same transaction: two admins
     # demoting each other at the same moment must not both succeed.

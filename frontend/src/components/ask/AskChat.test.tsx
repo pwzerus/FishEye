@@ -138,7 +138,7 @@ describe("AskChat", () => {
 
     const signIn = await screen.findByRole("link", { name: "Sign in" });
     expect(signIn).toHaveAttribute("href", "/login?next=%2Fask");
-    expect(screen.queryByRole("button", { name: /Summarize with AI/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Ask the AI/ })).not.toBeInTheDocument();
   });
 
   it("writes an AI summary on request for a signed-in person and updates what's left", async () => {
@@ -146,13 +146,13 @@ describe("AskChat", () => {
     mockedSummary.mockResolvedValue(response({ ai: { signed_in: true, limit: 3, remaining: 2, enabled: true } }));
     render(<AskChat suggestions={SUGGESTIONS} speciesSlug="white-crappie" />);
     await askVia("what bait for crappie");
-    await screen.findByRole("button", { name: "Summarize with AI (3 left today)" });
+    await screen.findByRole("button", { name: "Ask the AI (3 left today)" });
     await askVia("what bait for crappie");
-    await waitFor(() => expect(screen.getAllByRole("button", { name: "Summarize with AI (3 left today)" })).toHaveLength(2));
+    await waitFor(() => expect(screen.getAllByRole("button", { name: "Ask the AI (3 left today)" })).toHaveLength(2));
 
-    fireEvent.click(screen.getAllByRole("button", { name: /Summarize with AI/ })[1]);
+    fireEvent.click(screen.getAllByRole("button", { name: /Ask the AI/ })[1]);
     expect(await screen.findByText("Use small live minnows.")).toBeInTheDocument();
-    expect(screen.getByText("AI answer · checked")).toBeInTheDocument();
+    expect(screen.getByText("AI answer")).toBeInTheDocument();
     expect(mockedSummary).toHaveBeenCalledWith({ lang: "en",
       question: "what bait for crappie",
       species_slug: "white-crappie",
@@ -160,35 +160,76 @@ describe("AskChat", () => {
     });
 
     // The earlier answer's button now shows what the server says is left.
-    expect(screen.getByRole("button", { name: "Summarize with AI (2 left today)" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ask the AI (2 left today)" })).toBeInTheDocument();
   });
 
   it("says when today's summaries are used up instead of offering the button", async () => {
     mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: 3, remaining: 0, enabled: true } }));
     render(<AskChat suggestions={SUGGESTIONS} />);
     await askVia("what bait for crappie");
-    expect(await screen.findByText(/used today's AI summaries/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Summarize with AI/ })).not.toBeInTheDocument();
+    expect(await screen.findByText(/free AI answer\. It's back tomorrow/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Ask the AI/ })).not.toBeInTheDocument();
   });
 
   it("shows the server's reason when a summary is refused", async () => {
     mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: 3, remaining: 1, enabled: true } }));
-    mockedSummary.mockRejectedValue(new ApiError("You've used today's 3 AI summaries.", 429));
+    mockedSummary.mockRejectedValue(new ApiError("You've used today's free AI answer.", 429));
     render(<AskChat suggestions={SUGGESTIONS} />);
     await askVia("what bait for crappie");
-    fireEvent.click(await screen.findByRole("button", { name: /Summarize with AI/ }));
-    expect(await screen.findByText("You've used today's 3 AI summaries.")).toBeInTheDocument();
-    expect(screen.getByText(/Searching the guides stays free/)).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: /Ask the AI/ }));
+    expect(await screen.findByText("You've used today's free AI answer.")).toBeInTheDocument();
+    expect(screen.getByText(/searching the guides stays free/)).toBeInTheDocument();
   });
 
-  it("offers no AI summary for a question the guides don't cover", async () => {
+  // The product owner, 2026-11-12: where the guides stop, the AI answers from
+  // its own fishing knowledge; a question that isn't about fishing gets none.
+  it("offers the AI for a fishing question the guides don't cover", async () => {
     mockedAsk.mockResolvedValue(
-      searchResult({ answer_source: "no_match", citations: [], ai: { signed_in: true, limit: 3, remaining: 3, enabled: true } }),
+      searchResult({
+        answer_source: "no_match", citations: [], ai_can_answer: true,
+        ai: { signed_in: true, limit: 1, remaining: 1, enabled: true },
+      }),
     );
     render(<AskChat suggestions={SUGGESTIONS} />);
-    await askVia("how to tie a tie");
+    await askVia("how do I smoke a carp");
     expect(await screen.findByText("Not in the guides")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Summarize with AI/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ask the AI (1 left today)" })).toBeInTheDocument();
+  });
+
+  it("offers no AI for a question that isn't about fishing", async () => {
+    const base = searchResult({
+      answer_source: "no_match", citations: [], ai_can_answer: false,
+      ai: { signed_in: true, limit: 1, remaining: 1, enabled: true },
+    });
+    mockedAsk.mockResolvedValue({ ...base, trace: { ...base.trace, outcome: "off_topic" } });
+    render(<AskChat suggestions={SUGGESTIONS} />);
+    await askVia("how to tie a tie");
+    expect(await screen.findByText("Not a fishing question")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Ask the AI/ })).not.toBeInTheDocument();
+  });
+
+  it("says under an AI answer that it can be wrong, with a link to the terms", async () => {
+    mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: 1, remaining: 1, enabled: true } }));
+    mockedSummary.mockResolvedValue(response({ citations: [], ai: { signed_in: true, limit: 1, remaining: 0, enabled: true } }));
+    render(<AskChat suggestions={SUGGESTIONS} />);
+    await askVia("what bait for crappie");
+    fireEvent.click(await screen.findByRole("button", { name: /Ask the AI/ }));
+    expect(await screen.findByText("Use small live minnows.")).toBeInTheDocument();
+    expect(screen.getAllByText(/AI answers can be wrong/)).toHaveLength(2); // the answer, and the question box
+    for (const link of screen.getAllByRole("link", { name: "Terms" })) {
+      expect(link).toHaveAttribute("href", "/terms#ai-answers");
+    }
+  });
+
+  it("keeps a link to the terms under the question box, with the AI's caveat once AI is on", async () => {
+    mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: 1, remaining: 1, enabled: true } }));
+    render(<AskChat suggestions={SUGGESTIONS} />);
+    const terms = screen.getByRole("link", { name: "Terms" });
+    expect(terms).toHaveAttribute("href", "/terms#ai-answers");
+    expect(terms.closest("p")?.textContent).toBe("Terms");
+
+    await askVia("what bait for crappie");
+    await waitFor(() => expect(terms.closest("p")?.textContent).toBe("AI answers can be wrong. Terms"));
   });
 
   it("offers no AI summary at all when no paid model is set up", async () => {
@@ -196,19 +237,27 @@ describe("AskChat", () => {
     render(<AskChat suggestions={SUGGESTIONS} />);
     await askVia("what bait for crappie");
     expect(await screen.findByText("Here's what the FishEye guides say:")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Summarize with AI/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Ask the AI/ })).not.toBeInTheDocument();
 
     mockedAsk.mockResolvedValue(searchResult({ ai: { ...SIGNED_OUT, enabled: false } }));
     await askVia("what bait for bass");
     await waitFor(() => expect(screen.getAllByText("Here's what the FishEye guides say:")).toHaveLength(2));
-    expect(screen.queryByText(/for an AI summary/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/to ask the AI/)).not.toBeInTheDocument();
   });
 
   it("shows unlimited summaries without a count (admins)", async () => {
     mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: null, remaining: null, enabled: true } }));
     render(<AskChat suggestions={SUGGESTIONS} />);
     await askVia("what bait for crappie");
-    expect(await screen.findByRole("button", { name: "Summarize with AI" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Ask the AI" })).toBeInTheDocument();
+  });
+
+  // The product owner, 2026-11-12: Plus asks the AI as often as it likes.
+  it("tells a Plus account it has no limit", async () => {
+    mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: null, remaining: null, enabled: true, plus: true } }));
+    render(<AskChat suggestions={SUGGESTIONS} />);
+    await askVia("what bait for crappie");
+    expect(await screen.findByRole("button", { name: "Ask the AI (Plus: no limit)" })).toBeInTheDocument();
   });
 
   it("shows the question, then a checked answer with citations that link into the guide", async () => {
@@ -219,7 +268,7 @@ describe("AskChat", () => {
 
     expect(screen.getByText("what bait for crappie")).toBeInTheDocument();
     expect(await screen.findByText("Use small live minnows.")).toBeInTheDocument();
-    expect(screen.getByText("AI answer · checked")).toBeInTheDocument();
+    expect(screen.getByText("AI answer")).toBeInTheDocument();
     expect(mockedAsk).toHaveBeenCalledWith({ lang: "en", question: "what bait for crappie", species_slug: null, state: null });
 
     const fishLink = screen.getByText(/White Crappie · Live and natural bait/).closest("a");
@@ -268,7 +317,7 @@ describe("AskChat", () => {
     render(<AskChat suggestions={SUGGESTIONS} />);
     await askVia("crappie bait");
     expect(await screen.findByText("Demo model")).toBeInTheDocument();
-    expect(screen.queryByText("AI answer · checked")).not.toBeInTheDocument();
+    expect(screen.queryByText("AI answer")).not.toBeInTheDocument();
   });
 
   it("explains a rejected model answer in plain words, without the check's code name", async () => {
@@ -277,7 +326,7 @@ describe("AskChat", () => {
     render(<AskChat suggestions={SUGGESTIONS} />);
     await askVia("hook size?");
     const badge = await screen.findByText("Straight from the guides");
-    expect(badge).toHaveAttribute("title", "The AI summary couldn't be used, so this is the guide's own text");
+    expect(badge).toHaveAttribute("title", "The AI answer couldn't be used, so this is the guide's own text");
     expect(screen.queryByText(/ungrounded|attempts/)).not.toBeInTheDocument();
   });
 

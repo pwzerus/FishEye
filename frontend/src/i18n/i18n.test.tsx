@@ -53,14 +53,17 @@ describe("the dictionaries", () => {
   });
 
   it("joins a sentence split around a link in each language's own order", () => {
-    const legal = (l: (typeof OTHERS)[number] | "en") => {
+    const legal = (l: (typeof OTHERS)[number] | "en", age: number | null = 13) => {
       const a = MESSAGES[l].auth;
-      return a.legal1(13) + a.terms + a.and + a.privacy + a.legalEnd;
+      return a.legalTap(a.createAccount, age) + a.terms + a.and + a.privacy + a.legalEnd;
     };
-    expect(legal("en")).toBe("By continuing you confirm you're 13 or older and agree to FishEye's terms and privacy policy.");
-    expect(legal("zh")).toBe("继续即表示你确认已年满 13 岁，并同意 FishEye 的使用条款和隐私政策。");
-    expect(legal("ko")).toBe("계속하면 만 13세 이상임을 확인하고 FishEye의 이용약관 및 개인정보 처리방침에 동의하게 돼요.");
-    expect(legal("ja")).toBe("続行すると、13歳以上であることを確認し、FishEyeの利用規約とプライバシーポリシーに同意したものとみなされます。");
+    expect(legal("en")).toBe("By tapping “Create account”, you confirm you're 13 or older and agree to FishEye's terms and privacy policy.");
+    expect(legal("en", null)).toBe("By tapping “Create account”, you agree to FishEye's terms and privacy policy.");
+    expect(legal("zh")).toBe("点「创建账户」即表示你确认已年满 13 岁，并同意 FishEye 的使用条款和隐私政策。");
+    expect(legal("zh", null)).toBe("点「创建账户」即表示你同意 FishEye 的使用条款和隐私政策。");
+    expect(legal("ko")).toBe("“계정 만들기” 버튼을 누르면 만 13세 이상임을 확인하고 FishEye의 이용약관 및 개인정보 처리방침에 동의하게 돼요.");
+    expect(legal("ja")).toBe("「アカウント作成」をタップすると、13歳以上であることを確認し、FishEyeの利用規約とプライバシーポリシーに同意したものとみなされます。");
+    expect(legal("es")).toBe("Al tocar «Crear cuenta», confirmas que tienes 13 años o más y aceptas los términos de uso y la política de privacidad de FishEye.");
     const knot = (l: (typeof OTHERS)[number]) => MESSAGES[l].start.tieWith + MESSAGES[l].start.knot + MESSAGES[l].start.tieEnd;
     expect(knot("zh")).toBe("用改良克林奇结把钩绑在线上。");
     expect(knot("ko")).toBe("바늘은 개량 클린치 노트로 묶어요.");
@@ -156,8 +159,8 @@ describe("where the catch being placed is (backend ADR 0040)", () => {
         <WaterLine water={{ state: "off", required: true }} onMissingWater={missing} />
       </I18nProvider>,
     );
-    expect(screen.getByRole("alert")).toHaveTextContent("把标记拖到水上");
-    fireEvent.click(screen.getByRole("button", { name: "地图上没有这片水？告诉我们" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("请将标记拖到地图上已命名的湖泊");
+    fireEvent.click(screen.getByRole("button", { name: "地图上缺少这片水域？告诉我们" }));
     expect(missing).toHaveBeenCalled();
   });
 });

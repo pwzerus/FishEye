@@ -65,6 +65,10 @@ class User(Base):
     email_verified_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     # Leaves the leaderboards (services/social.py): their catches stay public.
     hide_from_rankings: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    # FishEye Plus runs until this moment; None or past means a free account.
+    # Unlimited AI answers on Ask (services/ai_quota.py). Set by an admin
+    # until payments are built (the product owner, 2026-11-12).
+    plus_until: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
 
     sessions: Mapped[list[UserSession]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
@@ -82,6 +86,10 @@ class User(Base):
     @property
     def is_admin(self) -> bool:
         return self.role == ROLE_ADMIN
+
+    @property
+    def is_plus(self) -> bool:
+        return self.plus_until is not None and self.plus_until > utcnow()
 
     @property
     def is_active(self) -> bool:

@@ -97,6 +97,32 @@ em:is(:lang(zh), :lang(ja), :lang(ko)),
   }
 }
 
+/* "Our terms of use changed" (components/legal/TermsNotice), under the
+   header, so it doesn't sit on the language offer or the install tip. */
+.terms-notice {
+  position: fixed;
+  left: 50%;
+  top: calc(var(--header-h) + 10px);
+  transform: translateX(-50%);
+  z-index: 2400;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 10px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 10px 12px 10px 16px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  animation: pop-in 220ms var(--ease) both;
+}
+
 /* A fish's (or a word's) English name after its name in the chosen
    language: what signs, regulations and tackle shops use. */
 .name-en {

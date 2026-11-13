@@ -315,7 +315,7 @@ export function adminUsers(params: { q?: string; role?: string; status?: string;
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") qs.set(k, String(v));
   return sfetch<Paged<AdminUser> & { counts?: AdminUserCounts | null }>(`/api/admin/users?${qs}`);
 }
-export const adminUpdateUser = (id: number, patch: { role?: string; status?: string; display_name?: string }) =>
+export const adminUpdateUser = (id: number, patch: { role?: string; status?: string; display_name?: string; plus_days?: number }) =>
   sfetch<AdminUser>(`/api/admin/users/${id}`, json("PATCH", patch));
 export const adminUser = (id: number) => sfetch<AdminUserDetail>(`/api/admin/users/${id}`);
 export const adminConfirmEmail = (id: number) => sfetch<AdminUserDetail>(`/api/admin/users/${id}/confirm-email`, { method: "POST" });

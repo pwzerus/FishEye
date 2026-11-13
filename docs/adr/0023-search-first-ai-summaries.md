@@ -32,8 +32,10 @@ sharks eat". The original 3-question off-topic set had passed at 100%.
    first.
 2. `POST /api/ask/summary` has the model write an answer from those same
    passages, through the existing validator. It needs an account and is
-   limited to `AI_SUMMARIES_PER_DAY` (3) per account per UTC day. Admins are
-   not limited.
+   limited to `AI_SUMMARIES_PER_DAY` per account per UTC day: 3 at first, 1
+   since 2026-11-12, when FishEye Plus accounts (`users.plus_until`, given by
+   an admin until payments exist) stopped being limited. Admins are not
+   limited either. The model is the cheapest Claude, `claude-haiku-5-5`.
 
 **Per account, not per browser or address.** An address is shared by
 everyone behind one office network (one interviewer would use up a whole
@@ -83,6 +85,27 @@ fishing question turned away is "how do I cast farther" (only one
 ambiguous word). Both are reported by the eval rather than reworded away;
 an embedding retriever (the seam ADR 0014 left) is the next thing to measure
 against them.
+
+## Amendment, 2026-11-12: past the guides
+
+The product owner found a model that only restates the passages too little
+for an answer people pay for (FishEye Plus). Since 2026-11-12:
+
+- The model answers from the passages where they cover the question, and
+  from its own fishing knowledge where they don't. A fishing question the
+  guides don't cover (no passages, the search saying "not covered", "no
+  guide for that fish" or "another state's rules") now offers an AI answer
+  too: `/api/ask` says so in `ai_can_answer`.
+- A question the search reads as not about fishing is still refused (422)
+  before anything is reserved, and the model may also answer
+  `{"off_topic": true}`, which is given back like a failure.
+- The validator no longer rejects a fish or a number the passages don't
+  give, except on a question about the rules (limits, licenses, what's
+  legal: `asks_about_rules`), where a number from the model's memory is
+  what gets someone fined. There it still falls back to the passages, or
+  to the search's own answer when there are none.
+- Under every AI answer the page says it can be wrong, with a link to the
+  terms of use (`/terms#ai-answers`), which say the same at length.
 
 ## Consequences
 

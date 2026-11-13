@@ -6,8 +6,19 @@ import { PageTransition } from "@/components/motion/Transition";
 import { useT } from "@/i18n/client";
 import { LEGAL } from "@/lib/legal";
 
-/** The privacy policy, the terms and the copyright page: one readable column. */
-export function LegalPage({ title, lede, children }: { title: string; lede: string; children: React.ReactNode }) {
+/** The privacy policy, the terms and the copyright page: one readable column.
+ * `updated`: this page's own date, where it differs from LEGAL.updated. */
+export function LegalPage({
+  title,
+  lede,
+  updated = LEGAL.updated,
+  children,
+}: {
+  title: string;
+  lede: string;
+  updated?: string;
+  children: React.ReactNode;
+}) {
   const t = useT().legal;
   return (
     <PageTransition>
@@ -17,7 +28,7 @@ export function LegalPage({ title, lede, children }: { title: string; lede: stri
             <p className="eyebrow">FishEye</p>
             <h1 lang="en">{title}</h1>
             <p className="lede" lang="en">{lede}</p>
-            <p className="legal-updated muted">{t.updated(LEGAL.updated)}</p>
+            <p className="legal-updated muted">{t.updated(updated)}</p>
             {t.englishOnly && <p className="hint">{t.englishOnly}</p>}
           </header>
           <div lang="en">{children}</div>

@@ -34,7 +34,7 @@ def _install(monkeypatch, responses):
 OK = (
     200,
     {
-        "model": "claude-haiku-4-5",
+        "model": "claude-haiku-5-5",
         "content": [{"type": "text", "text": '{"answer": "hi", "citations": ["a#b"]}'}],
         "usage": {"input_tokens": 1000, "output_tokens": 200},
     },
@@ -46,8 +46,13 @@ def test_a_reply_becomes_text_tokens_and_an_estimated_cost(monkeypatch):
     resp = anth.AnthropicProvider("k").complete("sys", "user")
     assert resp.text.startswith('{"answer"')
     assert (resp.prompt_tokens, resp.completion_tokens) == (1000, 200)
-    assert resp.estimated_cost_usd == pytest.approx((1000 * 1.0 + 200 * 5.0) / 1_000_000)
+    assert resp.estimated_cost_usd == pytest.approx((1000 * 0.10 + 200 * 0.50) / 1_000_000)
     sent = calls[0]
+    # The cheapest model (the product owner, 2026-11-12). It refuses any
+    # temperature but the default, so none is sent.
+    assert sent["json"]["model"] == "claude-haiku-5-5"
+    assert "temperature" not in sent["json"]
+    assert sent["json"]["output_config"] == {"effort": "low"}
     assert sent["headers"]["x-api-key"] == "k"
     assert sent["json"]["system"] == "sys"
     assert sent["json"]["messages"] == [{"role": "user", "content": "user"}]

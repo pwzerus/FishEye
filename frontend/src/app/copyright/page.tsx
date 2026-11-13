@@ -18,6 +18,7 @@ export default function CopyrightPage() {
     <LegalPage
       title="Copyright & content"
       lede="How to tell us about a catch that breaks the rules, or a photo or text posted without the owner's permission."
+      updated="November 6, 2026"
     >
       <section>
         <h2>A catch that breaks the rules</h2>

@@ -68,6 +68,8 @@ _NULLABLE_COLUMNS = (
     # Confirmed email addresses (services/email_verification.py). TIMESTAMP:
     # what DateTime is on PostgreSQL; SQLite takes any type name.
     ("users", "email_verified_at", "TIMESTAMP"),
+    # FishEye Plus (User.plus_until).
+    ("users", "plus_until", "TIMESTAMP"),
     # Catches are on named water (ADR 0040); startup checks pins saved
     # before against the shapes (services/pins.fill_water). The river link
     # has no foreign key here: ALTER TABLE ADD COLUMN can't add one on

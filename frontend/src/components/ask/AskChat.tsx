@@ -26,9 +26,12 @@ import type { AiAllowance, AskCitation, AskResponse, FishIdResult } from "@/lib/
  *
  * 1. Every question searches the guides and shows the passages that answer
  *    it, with their sources. No model, no account, no cost.
- * 2. Under that, a signed-in person can ask for an AI summary of those
- *    passages, a few times a day. Signed out, the same spot says how to get
- *    them. A question the guides don't cover never offers one.
+ * 2. Under that, a signed-in person can ask the AI: once a day on a free
+ *    account, without limit on Plus. It answers from those passages, and
+ *    from its own fishing knowledge where the guides stop (2026-11-12), so
+ *    a fishing question the guides don't cover offers it too; one that isn't
+ *    about fishing never does. Signed out, the same spot says how to get it.
+ *    Every AI answer says it can be wrong, with a link to the terms.
  *
  * The UI's job is to make the answer's provenance obvious at a glance:
  * - a badge says whether this is a model's answer, a quote of the guides
@@ -248,6 +251,7 @@ function AiSummary({
             </p>
           ))}
         </div>
+        {r.answer_source === "llm" && <AiNote />}
       </div>
     );
   }
@@ -281,9 +285,20 @@ function AiSummary({
     <div className="ai-summary ai-summary-cta">
       {error}
       <button type="button" className="btn btn-ghost btn-sm" onClick={onRequest} disabled={disabled}>
-        {t.summarize(ai?.remaining ?? null)}
+        {ai?.plus ? t.summarizePlus : t.summarize(ai?.remaining ?? null)}
       </button>
     </div>
+  );
+}
+
+/** "AI answers can be wrong", with the terms that say so in full. */
+function AiNote() {
+  const t = useT().ask;
+  return (
+    <p className="ai-note">
+      {t.aiMayErr}{" "}
+      <Link href="/terms#ai-answers">{t.aiTerms}</Link>
+    </p>
   );
 }
 
@@ -576,7 +591,7 @@ export function AskChat({
                   fish={speciesSlug ?? r.citations.find((c) => c.species_slug !== "all-fish")?.species_slug ?? null}
                   label={all.baitTip.mentioned}
                 />
-                {r.answer_source === "passages" && ai?.enabled && (
+                {(r.ai_can_answer ?? r.answer_source === "passages") && ai?.enabled && (
                   <AiSummary
                     summary={turn.summary}
                     ai={ai}
@@ -655,6 +670,12 @@ export function AskChat({
           </svg>
         </button>
       </form>
+      {/* Under the question box, as on Claude and ChatGPT: the AI can be wrong,
+          and the terms are one tap away (the product owner, 2026-11-12). */}
+      <p className="ask-fineprint">
+        {ai?.enabled && <>{t.aiMayErr} </>}
+        <Link href="/terms#ai-answers">{t.aiTerms}</Link>
+      </p>
       </div>
       {input.length > MAX_LEN - 60 && (
         <p className="char-count muted">

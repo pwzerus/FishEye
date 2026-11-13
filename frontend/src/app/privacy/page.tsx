@@ -54,7 +54,8 @@ export default function PrivacyPage() {
             <strong>Reports and moderation:</strong> reports you file about a catch or a comment, and a log of what moderators do.
           </li>
           <li>
-            <strong>AI summaries:</strong> how many you use each day, so the daily allowance works.
+            <strong>AI answers and Plus:</strong> how many AI answers you use each day, so the daily allowance works,
+            and whether your account has FishEye Plus and until when.
           </li>
           <li>
             <strong>Likes and comments:</strong> which catches you liked, and the comments you wrote. Comments and how many
@@ -127,9 +128,9 @@ export default function PrivacyPage() {
             <strong>Amazon Web Services</strong> hosts FishEye&apos;s servers and database, in the United States.
           </li>
           <li>
-            <strong>Anthropic</strong>, when you ask for an AI summary in Ask: your question and the guide passages it
-            answers from are sent to Anthropic&apos;s AI model to write the summary. Your account details are not. Please
-            don&apos;t put personal information in a question.
+            <strong>Anthropic</strong>, when you ask the AI in Ask: your question, and the guide passages that match it,
+            are sent to Anthropic&apos;s AI model to write the answer. Your account details are not. Please don&apos;t put
+            personal information in a question.
           </li>
           <li>
             <strong>Google</strong>, only if you use &ldquo;Sign in with Google&rdquo;.
@@ -196,8 +197,10 @@ export default function PrivacyPage() {
       <section>
         <h2>Children</h2>
         <p>
-          FishEye accounts are for people aged {LEGAL.minimumAge} and older. Anyone can browse the map and guides
-          without an account. If we learn that a child under {LEGAL.minimumAge} created an account, we delete it; a
+          FishEye accounts are for people aged {LEGAL.minimumAge} and older, and anyone under 18 needs a parent&apos;s
+          permission. Anyone can browse the map and guides without an account. In line with the Children&apos;s Online
+          Privacy Protection Act (COPPA), we don&apos;t knowingly collect personal information from children under{" "}
+          {LEGAL.minimumAge}. If we learn that a child under {LEGAL.minimumAge} created an account, we delete it; a
           parent can ask us to at <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a>.
         </p>
       </section>

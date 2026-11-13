@@ -363,6 +363,26 @@ function UserDetail({
                 >
                   Sign out everywhere
                 </button>
+                {/* FishEye Plus by hand until payments are built: no daily
+                    limit on AI summaries (backend services/ai_quota.py). */}
+                {user.plus_until ? (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-xs"
+                    title={`Plus until ${new Date(user.plus_until).toLocaleDateString()}`}
+                    onClick={() => act(() => adminUpdateUser(id, { plus_days: 0 }), "Plus ended")}
+                  >
+                    End Plus
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-xs"
+                    onClick={() => act(() => adminUpdateUser(id, { plus_days: 30 }), "Plus for 30 days")}
+                  >
+                    Give Plus · 30 days
+                  </button>
+                )}
                 {isAdmin ? (
                   <button
                     type="button"

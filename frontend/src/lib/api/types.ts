@@ -547,9 +547,10 @@ export type AskAnswerSource = "passages" | "llm" | "fallback" | "no_match" | "la
 /** Today's AI summaries for whoever is asking (backend services/ai_quota.py). */
 export interface AiAllowance {
   signed_in: boolean;
-  limit: number | null; // null: signed out, or unlimited (admins)
+  limit: number | null; // null: signed out, or unlimited (Plus, admins)
   remaining: number | null;
   enabled: boolean; // false: no paid model is set up, so summaries aren't offered
+  plus?: boolean; // a FishEye Plus account: no daily limit
 }
 
 export interface AskTrace {
@@ -580,6 +581,9 @@ export interface AskResponse {
   state?: string | null;
   // A lake named, or where to go: from the lake data, not the guides.
   lakes?: AskLakes | null;
+  // An AI answer can follow: the guides' passages, or a fishing question
+  // they don't cover (backend api/ask.py).
+  ai_can_answer?: boolean;
 }
 
 /** A lake in an answer (backend services/rag/lake_facts.py). */
@@ -986,6 +990,7 @@ export interface AdminUser {
   email_verified?: boolean;
   pins: number;
   reports_against: number;
+  plus_until?: string | null; // FishEye Plus, while it lasts
 }
 
 export interface AdminUserCounts {

@@ -3,10 +3,11 @@
 POST /api/ask           Search the reviewed fish guides and return the
                         passages that answer the question. No model call:
                         free, instant, open to everyone.
-POST /api/ask/summary   Have the model write an answer from those passages.
-                        Needs an account; a few per account per day
-                        (services/ai_quota.py). Only a question the search
-                        recognises as a fishing question gets this far.
+POST /api/ask/summary   Have the model write an answer: from those passages,
+                        and from its own knowledge where the guides stop.
+                        Needs an account; one a day on a free account, no
+                        limit on Plus (services/ai_quota.py). Only a fishing
+                        question gets this far.
 GET  /api/ask/allowance Today's AI summaries left, for showing on the page.
 
 The search is the product; the written answer is an extra on top of it.
@@ -39,9 +40,16 @@ from app.services.rag import lake_facts, replies, site_help
 router = APIRouter(prefix="/ask", tags=["ask"])
 
 NOT_A_FISHING_QUESTION = (
-    "AI summaries are for fishing questions the FishEye guides cover, and the guides "
-    "don't cover this one. Nothing was used from today's allowance."
+    "AI answers are for fishing questions, and this doesn't look like one. "
+    "Nothing was used from today's allowance."
 )
+
+# What the search found that an AI answer can add to: the guides' passages,
+# or nothing for a fishing question they don't cover (since 2026-11-12 the
+# model answers those from its own knowledge, services/rag/ask.py). Not a
+# question that isn't about fishing, nor one the lake data or a page of the
+# site answers: the model knows nothing of FishEye's lakes.
+_AI_CAN_ADD_TO = {rag_ask.OUTCOME_NO_MATCH, rag_ask.OUTCOME_UNGUIDED_FISH, rag_ask.OUTCOME_OTHER_STATE}
 
 
 def _slug(payload: AskRequest) -> str | None:
@@ -67,7 +75,7 @@ def _allowance_out(db: Session, user: User | None) -> AiAllowanceOut:
     if user is None:
         return AiAllowanceOut(signed_in=False, limit=None, remaining=None, enabled=enabled)
     a = ai_quota.allowance(db, user)
-    return AiAllowanceOut(signed_in=True, limit=a.limit, remaining=a.remaining, enabled=enabled)
+    return AiAllowanceOut(signed_in=True, limit=a.limit, remaining=a.remaining, enabled=enabled, plus=a.plus)
 
 
 def _response(
@@ -127,27 +135,34 @@ def search_guides(
 ) -> AskResponse:
     state, slug = _state(payload), _slug(payload)
     result = rag_ask.search_guides(payload.question, species_slug=slug, state=state, lang=payload.lang)
+    ai_can_answer = result.answer_source == rag_ask.ANSWER_PASSAGES or result.trace.outcome in _AI_CAN_ADD_TO
     routed = tuple(result.trace.routed_species or ())
     lakes = lake_facts.answer(db, payload.question, state, routed)
     if lakes is not None and lakes.lakes and (lakes.answers_it or not result.citations):
         # The lake data answers it; a miss for the guides isn't one for Ask.
         result = replace(result, answer="", answer_source=rag_ask.ANSWER_LAKES, citations=[])
         result.trace.outcome = rag_ask.OUTCOME_LAKE
+        ai_can_answer = False
     elif lakes is None and (name := lake_facts.missing_lake(payload.question, routed)):
         reply = replies.no_lake(name, replies.reply_lang(payload.question, payload.lang))
         result = replace(result, answer=reply, answer_source=rag_ask.ANSWER_NO_MATCH, citations=[])
         result.trace.outcome = rag_ask.OUTCOME_NO_MATCH
+        ai_can_answer = False
     elif lakes is None and lake_facts.asks_where_nearby(payload.question):
         reply = replies.use_the_map(replies.reply_lang(payload.question, payload.lang))
         result = replace(result, answer=reply, answer_source=rag_ask.ANSWER_NO_MATCH, citations=[])
         result.trace.outcome = rag_ask.OUTCOME_NO_MATCH
+        ai_can_answer = False
     elif lakes is None and (topic := site_help.topic(payload.question)):
         reply = replies.site_help(topic, replies.reply_lang(payload.question, payload.lang))
         result = replace(result, answer=reply, answer_source=rag_ask.ANSWER_NO_MATCH, citations=[])
         result.trace.outcome = rag_ask.OUTCOME_OK
+        ai_can_answer = False
     # What Ask can't answer, without who asked (services/ask_misses.py).
     ask_misses.record(db, payload.question, result.trace.outcome, payload.lang or "en", state, slug)
-    return _response(result, _allowance_out(db, user), state, lakes, payload.lang)
+    out = _response(result, _allowance_out(db, user), state, lakes, payload.lang)
+    out.ai_can_answer = ai_can_answer
+    return out
 
 
 @router.get("/allowance", response_model=AiAllowanceOut)
@@ -168,17 +183,18 @@ def summarize(
     user: User = Depends(require_user),
 ) -> AskResponse:
     """In order, so that nothing is spent on a request that can't succeed:
-    the question must be one the guides cover (a search, no model call),
-    then a summary is reserved from today's allowance, then the model is
-    called. A summary that doesn't come back model-written (the model was
-    unreachable, or its answer failed validation and the guides were quoted
-    instead) is given back, and so is one answered from the cache, which
-    cost nothing.
+    the question must be about fishing (a search, no model call), then an
+    answer is reserved from today's allowance, then the model is called. An
+    answer that doesn't come back model-written (the model was unreachable,
+    its answer failed validation and the guides were quoted instead, or it
+    read the question as not about fishing) is given back, and so is one
+    answered from the cache, which cost nothing.
 
     Like /advisor/explain, a model failure is not an error: the response is
-    still 200, with `answer_source` "fallback" saying so."""
+    still 200, with `answer_source` "fallback" (or "no_match") saying so."""
     slug, state = _slug(payload), _state(payload)
-    if not rag_ask.search_guides(payload.question, species_slug=slug, state=state, lang=payload.lang).citations:
+    found = rag_ask.search_guides(payload.question, species_slug=slug, state=state, lang=payload.lang)
+    if not found.citations and found.trace.outcome == rag_ask.OUTCOME_OFF_TOPIC:
         raise HTTPException(status_code=422, detail=NOT_A_FISHING_QUESTION)
 
     if ai_budget.exhausted(db):
@@ -186,12 +202,11 @@ def summarize(
 
     day = ai_quota.today()
     if not ai_quota.reserve(db, user, day):
-        limit = ai_quota.allowance(db, user, day).limit
         raise HTTPException(
             status_code=429,
             detail=(
-                f"You've used today's {limit} AI summaries. Searching the guides is still free; "
-                "summaries come back tomorrow (UTC)."
+                "You've used today's free AI answer. Searching the guides is still free; "
+                "the AI answer comes back tomorrow (UTC)."
             ),
         )
 

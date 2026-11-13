@@ -62,7 +62,7 @@ def test_a_spanish_off_topic_question_is_declined_in_spanish(client):
 
 @pytest.mark.parametrize(
     ("question", "starts"),
-    [("我家附近哪里能钓鱼？", "附近哪里能钓"), ("附近有没有能钓鱼的湖", "附近哪里能钓"), ("where can I fish near me", "For water near you")],
+    [("我家附近哪里能钓鱼？", "附近的钓点请在地图上查看"), ("附近有没有能钓鱼的湖", "附近的钓点请在地图上查看"), ("where can I fish near me", "For water near you")],
 )
 def test_where_can_i_fish_nearby_goes_to_the_map(client, question, starts):
     body = client.post("/api/ask", json={"question": question}).json()
@@ -70,7 +70,7 @@ def test_where_can_i_fish_nearby_goes_to_the_map(client, question, starts):
 
 
 def test_a_question_about_a_place_nearby_is_not_sent_to_the_map(client):
-    assert not client.post("/api/ask", json={"question": "水库附近可以夜钓吗"}).json()["answer"].startswith("附近哪里能钓")
+    assert not client.post("/api/ask", json={"question": "水库附近可以夜钓吗"}).json()["answer"].startswith("附近的钓点请在地图上查看")
 
 
 def test_an_english_question_on_the_chinese_site_is_introduced_in_chinese(client):

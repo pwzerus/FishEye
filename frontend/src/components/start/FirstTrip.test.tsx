@@ -113,7 +113,7 @@ describe("FirstTrip", () => {
     expect(await screen.findByText("小浮漂")).toBeInTheDocument();
     expect(screen.getByText("Small bobbers")).toBeInTheDocument();
     // The shop card: English for the clerk, the reader's language under it.
-    fireEvent.click(screen.getByRole("button", { name: "在店里给店员看" }));
+    fireEvent.click(screen.getByRole("button", { name: "到店出示给店员" }));
     expect(screen.getByRole("heading", { name: "购物清单" })).toBeInTheDocument();
   });
 });

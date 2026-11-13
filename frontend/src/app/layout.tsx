@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 
 import { InstallTip } from "@/components/InstallTip";
 import { LanguageSuggestion } from "@/components/LanguageMenu";
+import { TermsNotice } from "@/components/legal/TermsNotice";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { VisitCounter } from "@/components/VisitCounter";
 import { AuthProvider } from "@/components/auth/AuthProvider";
@@ -54,7 +56,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <ToastProvider>
               <SiteHeader />
               {children}
+              <SiteFooter />
               <LanguageSuggestion />
+              <TermsNotice />
               <InstallTip />
               <VisitCounter />
             </ToastProvider>

@@ -28,7 +28,6 @@ from dataclasses import asdict, dataclass
 
 from app.services.llm.mock import (
     FAILURE_HALLUCINATED_SOURCE,
-    FAILURE_HALLUCINATED_SPECIES,
     FAILURE_INVALID_JSON,
     FAILURE_INVENTED_NUMBER,
     MockProvider,
@@ -58,11 +57,15 @@ from .rag_cases import (
     StressCase,
 )
 
+# Each mock failure mode, on a question it must be caught on. An invented
+# number is caught only under a rules question, and naming a fish the
+# passages don't is no longer a failure: since 2026-11-12 the model may
+# answer from its own knowledge (services/rag/ask.py).
+RULES_QUESTION = "how many crappie can I keep"
 ADVERSARIAL_MODES = (
-    FAILURE_HALLUCINATED_SOURCE,
-    FAILURE_HALLUCINATED_SPECIES,
-    FAILURE_INVENTED_NUMBER,
-    FAILURE_INVALID_JSON,
+    (FAILURE_HALLUCINATED_SOURCE, None),
+    (FAILURE_INVENTED_NUMBER, RULES_QUESTION),
+    (FAILURE_INVALID_JSON, None),
 )
 
 
@@ -183,9 +186,9 @@ def run(retriever: Retriever | None = None, k: int = rag.DEFAULT_K) -> RagReport
 
     caught = 0
     rag.reset_cache()
-    for mode in ADVERSARIAL_MODES:
-        result = rag.ask(CASES[0].question, provider=MockProvider(failure_mode=mode), retriever=retr)
-        caught += result.answer_source == rag.ANSWER_FALLBACK
+    for mode, question in ADVERSARIAL_MODES:
+        result = rag.ask(question or CASES[0].question, provider=MockProvider(failure_mode=mode), retriever=retr)
+        caught += result.answer_source != rag.ANSWER_LLM
     rag.reset_cache()
 
     return RagReport(

@@ -6,6 +6,7 @@ Retrieval *quality* across many questions is measured by the eval
 """
 from __future__ import annotations
 
+import dataclasses
 import json
 
 import pytest
@@ -14,7 +15,6 @@ from app.knowledge.species_guides import GUIDES, get_guide
 from app.services.llm import LLMProvider, LLMResponse, LLMUnavailable
 from app.services.llm.mock import (
     FAILURE_HALLUCINATED_SOURCE,
-    FAILURE_HALLUCINATED_SPECIES,
     FAILURE_INVALID_JSON,
     FAILURE_INVENTED_NUMBER,
     FAILURE_UNAVAILABLE,
@@ -241,17 +241,71 @@ def test_a_grounded_answer_passes_and_citations_are_deduplicated():
     [
         ("not json at all", rag.OUTCOME_INVALID_JSON),
         (json.dumps({"answer": "", "citations": ["x"]}), rag.OUTCOME_INVALID_JSON),
-        (json.dumps({"answer": "Minnows.", "citations": []}), rag.OUTCOME_INVALID_JSON),
+        (json.dumps({"answer": "Minnows.", "citations": "white-crappie#live_baits"}), rag.OUTCOME_INVALID_JSON),
         (_reply("Minnows.", ["bluegill#diet"]), rag.OUTCOME_UNGROUNDED_CITATION),
         (_reply("See https://example.com", ["white-crappie#live_baits"]), rag.OUTCOME_URL_IN_ANSWER),
-        (_reply("Blue Catfish like minnows too.", ["white-crappie#live_baits"]), rag.OUTCOME_UNGROUNDED_SPECIES),
-        (_reply("Use a size 37 hook.", ["white-crappie#live_baits"]), rag.OUTCOME_UNGROUNDED_NUMBER),
     ],
 )
 def test_ungrounded_or_malformed_replies_are_rejected(raw, outcome):
     with pytest.raises(rag.GroundingError) as exc:
         rag.parse_and_validate(raw, "crappie bait?", _passages("white-crappie#live_baits"))
     assert exc.value.outcome == outcome
+
+
+# The product owner, 2026-11-12: where the guides stop, the model answers
+# from its own knowledge. A fish or a hook size the passages don't give is
+# that knowledge, not a fabrication, and an answer may cite nothing.
+def test_an_answer_may_add_the_models_own_knowledge_and_cite_nothing():
+    ps = _passages("white-crappie#live_baits")
+    for raw in (
+        _reply("Blue Catfish like minnows too.", ["white-crappie#live_baits"]),
+        _reply("Use a size 6 hook.", ["white-crappie#live_baits"]),
+        _reply("Use a size 6 hook.", []),
+        json.dumps({"answer": "Use a size 6 hook."}),
+    ):
+        answer, _ = rag.parse_and_validate(raw, "crappie bait?", ps)
+        assert answer
+
+
+def test_on_a_rules_question_no_number_may_come_from_the_model():
+    """A limit from memory is out of date or another state's, and the person
+    who keeps that many fish is the one fined."""
+    ps = _passages("white-crappie#live_baits")
+    with pytest.raises(rag.GroundingError) as exc:
+        rag.parse_and_validate(_reply("You can keep 25 a day.", []), "how many crappie can I keep", ps, True)
+    assert exc.value.outcome == rag.OUTCOME_UNGROUNDED_NUMBER
+    answer, _ = rag.parse_and_validate(
+        _reply("It depends on your state; its wildlife agency lists the limits.", []),
+        "how many crappie can I keep",
+        ps,
+        True,
+    )
+    assert "wildlife agency" in answer
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "how many crappie can I keep",
+        "what's the bag limit for bass",
+        "do I need a fishing license",
+        "is it legal to fish at night",
+        "钓鱼要办证吗",
+        "can I fish with two rods",
+    ],
+)
+def test_questions_about_the_rules_are_recognised(question):
+    assert rag.asks_about_rules(question)
+
+
+@pytest.mark.parametrize("question", ["what bait for crappie", "when do bass spawn", "how do I tie a palomar knot"])
+def test_other_fishing_questions_are_not_rules_questions(question):
+    assert not rag.asks_about_rules(question)
+
+
+def test_the_model_can_say_a_question_is_not_about_fishing():
+    with pytest.raises(rag.OffTopicReply):
+        rag.parse_and_validate(json.dumps({"off_topic": True}), "q", [])
 
 
 def test_unicode_fractions_in_the_guides_match_ascii_in_the_answer():
@@ -262,15 +316,18 @@ def test_unicode_fractions_in_the_guides_match_ascii_in_the_answer():
     assert "1 1/2" in answer
 
 
-def test_numbers_the_user_wrote_are_allowed_back_in_the_answer():
+def test_numbers_the_user_wrote_are_allowed_back_in_a_rules_answer():
     ps = _passages("white-crappie#live_baits")
-    rag.parse_and_validate(_reply("At 15 ft, use minnows.", ["white-crappie#live_baits"]), "fishing at 15 ft?", ps)
-
-
-def test_a_fish_named_in_an_uncited_but_given_passage_is_not_a_fabrication():
-    ps = _passages("white-crappie#live_baits", "black-crappie#live_baits")
     rag.parse_and_validate(
-        _reply("Black Crappie take the same minnows.", ["white-crappie#live_baits"]), "q", ps
+        _reply("Whether 15 is allowed depends on your state.", []), "can I keep 15 crappie?", ps, True
+    )
+
+
+def test_a_number_in_an_uncited_but_given_passage_is_not_invented():
+    crappie = _passages("white-crappie#live_baits")[0]
+    rule = dataclasses.replace(crappie, id="all-fish#rule-limits-zz", text="Limits: 25 crappie a day.")
+    rag.parse_and_validate(
+        _reply("Keep up to 25.", [crappie.id]), "how many crappie can I keep", [crappie, rule], True
     )
 
 
@@ -342,10 +399,45 @@ def test_a_chinese_question_that_is_not_about_fishing_is_told_so():
 def test_a_named_fish_question_its_guide_cannot_answer_is_not_covered():
     # "How do I fillet a striper" used to be the example; the handbook now
     # has filleting steps (docs/adr/0024), and that question is in the eval.
-    result = rag.ask("how do I smoke a carp", provider=_NeverCalled())
+    result = rag.search_guides("how do I smoke a carp")
     assert result.answer_source == rag.ANSWER_NO_MATCH
     assert result.trace.routed_species == ["common-carp"]
     assert result.citations == []
+
+
+def test_a_fishing_question_the_guides_dont_cover_is_answered_by_the_model():
+    """The product owner, 2026-11-12: the AI answer goes on where the guides
+    stop. With nothing to cite, it cites nothing."""
+    result = rag.ask("how do I smoke a carp", provider=MockProvider())
+    assert result.answer_source == rag.ANSWER_LLM
+    assert result.trace.outcome == rag.OUTCOME_OK
+    assert result.citations == []
+
+
+def test_a_question_that_isnt_about_fishing_never_reaches_the_model():
+    result = rag.ask("what is the capital of france", provider=_NeverCalled())
+    assert result.answer_source == rag.ANSWER_NO_MATCH
+    assert result.trace.outcome == rag.OUTCOME_OFF_TOPIC
+
+
+def test_the_model_saying_its_not_about_fishing_is_the_off_topic_answer():
+    result = rag.ask("how do I smoke a carp", provider=_Scripted([json.dumps({"off_topic": True})]))
+    assert result.answer_source == rag.ANSWER_NO_MATCH
+    assert result.trace.outcome == rag.OUTCOME_OFF_TOPIC
+    assert result.answer == rag.OFF_TOPIC_ANSWER
+
+
+def test_with_nothing_to_quote_a_failed_model_answer_is_the_searchs_own():
+    result = rag.ask("how do I smoke a carp", provider=MockProvider(failure_mode=FAILURE_UNAVAILABLE))
+    assert result.answer_source == rag.ANSWER_NO_MATCH
+    assert result.answer == rag.search_guides("how do I smoke a carp").answer
+    assert result.trace.outcome == rag.OUTCOME_PROVIDER_UNAVAILABLE
+
+
+def test_a_made_up_limit_is_refused_even_with_no_passages():
+    result = rag.ask("how many carp can I keep", provider=MockProvider(failure_mode=FAILURE_INVENTED_NUMBER))
+    assert result.answer_source != rag.ANSWER_LLM
+    assert "37" not in result.answer
 
 
 def test_look_alike_question_is_answered_from_both_identification_sections():
@@ -377,8 +469,6 @@ def test_look_like_means_recognise_but_bare_look_still_means_where():
     "mode, outcome, attempts",
     [
         (FAILURE_HALLUCINATED_SOURCE, rag.OUTCOME_UNGROUNDED_CITATION, 2),
-        (FAILURE_HALLUCINATED_SPECIES, rag.OUTCOME_UNGROUNDED_SPECIES, 2),
-        (FAILURE_INVENTED_NUMBER, rag.OUTCOME_UNGROUNDED_NUMBER, 2),
         (FAILURE_INVALID_JSON, rag.OUTCOME_INVALID_JSON, 2),
         (FAILURE_UNAVAILABLE, rag.OUTCOME_PROVIDER_UNAVAILABLE, 0),
     ],
@@ -433,7 +523,7 @@ def test_ask_endpoint_returns_the_passages_without_calling_a_model(client):
     assert first["species_name"] in {"White Crappie", "Black Crappie"}
     assert not first["excerpt"].startswith(first["species_name"])  # header stripped
     assert first["sources"] and first["sources"][0]["url"].startswith("https://")
-    assert body["ai"] == {"signed_in": False, "limit": None, "remaining": None, "enabled": False}
+    assert body["ai"] == {"signed_in": False, "limit": None, "remaining": None, "enabled": False, "plus": False}
 
 
 def test_ask_endpoint_uses_the_page_species_as_context(client):

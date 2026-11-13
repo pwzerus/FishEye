@@ -3,7 +3,8 @@
 Searching the guides is free and open to everyone (api/ask.py). Turning the
 passages found into a written answer costs a model call, so that step needs
 an account and is limited to `ai_summaries_per_day` per account per UTC day.
-Admins are not limited: they are the ones testing it.
+FishEye Plus accounts are not limited, nor are admins: they are the ones
+testing it.
 
 A summary is reserved before the model is called and given back if no
 model-written answer comes of it (the model was unreachable, or its answer
@@ -27,8 +28,9 @@ from app.models.community import AiUsage, User
 
 @dataclass(frozen=True)
 class Allowance:
-    limit: int | None  # None: unlimited (admins)
+    limit: int | None  # None: unlimited (Plus, admins)
     used: int
+    plus: bool = False
 
     @property
     def remaining(self) -> int | None:
@@ -40,7 +42,7 @@ def today() -> date:
 
 
 def _limit_for(user: User) -> int | None:
-    return None if user.is_admin else get_settings().ai_summaries_per_day
+    return None if user.is_admin or user.is_plus else get_settings().ai_summaries_per_day
 
 
 def _used(db: Session, user: User, day: date) -> int:
@@ -50,7 +52,7 @@ def _used(db: Session, user: User, day: date) -> int:
 
 def allowance(db: Session, user: User, day: date | None = None) -> Allowance:
     day = day or today()
-    return Allowance(_limit_for(user), _used(db, user, day))
+    return Allowance(_limit_for(user), _used(db, user, day), plus=user.is_plus)
 
 
 def _ensure_row(db: Session, user: User, day: date) -> None:

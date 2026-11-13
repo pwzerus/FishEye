@@ -1,25 +1,31 @@
-"""Answer a beginner's question from the reviewed fish guides, with citations.
+"""Answer a beginner's question: the reviewed fish guides first, then the
+model's own fishing knowledge where they stop (the product owner, 2026-11-12).
 
-Same leash as ai_advisor.py, applied to open-ended questions
-------------------------------------------------------------
-1. Retrieve up to K passages (retriever.py). If nothing matches, say the
-   guides don't cover it — the model is never called with nothing to go on,
-   because "answer from these passages" with zero passages is an invitation
-   to answer from memory.
-2. Ask the model to answer only from those passages and to cite them by id.
+Until 2026-11-12 the model only restated the passages, and a question the
+guides didn't cover never reached it. The owner found that too little for
+an answer people pay for, so now:
+
+1. Retrieve up to K passages (retriever.py). A question the search reads
+   as not about fishing at all stops here, with no model call.
+2. Give the model the passages, if any. Where they answer, it follows them
+   and cites them by id; where they don't, it answers from its own
+   knowledge. It may still say the question isn't about fishing, which
+   ends like step 1.
 3. Validate before anything reaches the user:
      - the reply is JSON of the expected shape;
      - every citation is a passage it was actually given;
      - no URL in the prose (sources are attached by the server, from the
        citations — the model never writes a link);
-     - every fish the answer names appears in the passages it was given;
-     - every number in the answer appears in those passages (or in the
-       question). The guides' own rule is "no invented numbers" — hook
-       sizes and line weights are exactly what a model fills in from
-       memory, and exactly what a beginner copies to the tackle shop.
+     - on a question about the rules (limits, licenses), every number in
+       the answer appears in the passages or the question. A limit from a
+       model's memory is out of date or another state's, and the person
+       acting on it is the one fined. Elsewhere a hook size from the
+       model's own knowledge is the point of the change.
 4. Any failure: retry once, then fall back to quoting the top passages
-   verbatim. The fallback can't be wrong about the guides, only plainer,
-   and it says so.
+   verbatim, or with none, to the search's own "not covered" answer.
+
+The page says under every AI answer that it can be wrong, and the terms of
+use say the same (frontend AskChat.tsx, app/terms).
 """
 from __future__ import annotations
 
@@ -80,7 +86,7 @@ ANSWER_LAKES = "lakes"
 OUTCOME_LAKE = "lake"
 PASSAGES_INTRO = "Here's what the FishEye guides say:"
 # The passages are in English; a question in Chinese is told so in Chinese.
-PASSAGES_INTRO_ZH = "以下是 FishEye 指南里的相关内容（原文为英文）："
+PASSAGES_INTRO_ZH = "以下是 FishEye 指南中的相关内容（原文为英文）："
 
 # Three different admissions, because they are three different situations
 # and one "not covered" for all of them was misleading (docs/adr/0026). In
@@ -113,6 +119,10 @@ class GroundingError(Exception):
         self.outcome = outcome
 
 
+class OffTopicReply(Exception):
+    """The model read the question as not about fishing."""
+
+
 @dataclass
 class AskTrace:
     trace_id: str
@@ -143,23 +153,37 @@ class AskResult:
 # Prompt
 # --------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """You answer questions from beginner anglers using ONLY the \
-passages you are given, which come from FishEye's reviewed fish guides.
+SYSTEM_PROMPT = """You are FishEye's fishing helper. You answer questions from \
+beginner anglers in the United States.
+
+You may be given passages from FishEye's reviewed fish guides. Where they \
+answer the question, base your answer on them and cite them by id. Where they \
+don't, or none are given, answer from your own fishing knowledge. When a \
+passage and your own knowledge disagree, follow the passage.
 
 Rules:
-- Use only facts stated in the passages. If they don't answer the question, \
-say so plainly in one sentence; do not fill the gap from your own knowledge.
-- Never write a number (hook size, weight, depth, temperature, length) that \
-is not in the passages.
-- Never name a fish species that is not in the passages.
+- Fishing only: fish, bait, lures, tackle, knots, ways to fish, where and when \
+to fish, boats and kayaks for fishing, safety on and near the water, and \
+cleaning and cooking a catch. If the question is about anything else, reply \
+with {"off_topic": true} and nothing more.
+- Fishing rules and laws: never state a size limit, bag or possession limit, \
+license price, season date, or any other regulation unless a passage states \
+it. Say that the rules differ by state and by water, and that the state's \
+fish and wildlife agency has the current ones.
 - Never write a URL. Cite passages by id instead; the app attaches the links.
-- Never state size or bag limits or other regulations beyond what a passage \
-says.
-- Write for a first-time angler: short, concrete, friendly, 2-5 sentences.
+- Write for a first-time angler: short and concrete, 2-6 sentences, in the \
+language of the question. Keep it suitable for all ages: FishEye accounts \
+start at 13.
+- Voice: plain and professional, the way a knowledgeable guide writes. Start \
+with the answer. No greetings, praise or sign-offs, no "according to the \
+guides", no em dashes. Write each language as a native speaker writes it, not \
+as a translation: complete sentences with natural breaks. In Chinese, use \
+standard written Chinese, neither chatty (no 管用, 就行, 吧) nor translated \
+(no 进行 + verb, no strings of 的).
 
 Reply with ONLY a JSON object, no prose around it:
 {"answer": str, "citations": [passage id, ...]}
-Cite every passage your answer uses, and at least one."""
+Cite every passage your answer uses; the list is empty if you used none."""
 
 
 def build_user_prompt(question: str, passages: list[Passage]) -> str:
@@ -206,9 +230,11 @@ def species_named(text: str) -> set[str]:
 
 
 def parse_and_validate(
-    raw_text: str, question: str, passages: list[Passage]
+    raw_text: str, question: str, passages: list[Passage], rules_question: bool = False
 ) -> tuple[str, list[Passage]]:
-    """(answer, cited passages) or GroundingError. Never repairs output."""
+    """(answer, cited passages), OffTopicReply, or GroundingError. Never
+    repairs output. `rules_question`: the question is about limits or
+    licenses (asks_about_rules), so no number may come from the model."""
     match = _JSON_OBJECT_RE.search(raw_text or "")
     if match is None:
         raise GroundingError(OUTCOME_INVALID_JSON, "no JSON object in model output")
@@ -217,16 +243,17 @@ def parse_and_validate(
     except json.JSONDecodeError as exc:
         raise GroundingError(OUTCOME_INVALID_JSON, f"unparseable JSON: {exc}") from exc
 
+    if isinstance(payload, dict) and payload.get("off_topic") is True:
+        raise OffTopicReply()
     answer = payload.get("answer") if isinstance(payload, dict) else None
-    citations = payload.get("citations") if isinstance(payload, dict) else None
+    citations = payload.get("citations", []) if isinstance(payload, dict) else None
     if not isinstance(answer, str) or not answer.strip():
         raise GroundingError(OUTCOME_INVALID_JSON, "answer missing or empty")
     if len(answer) > MAX_ANSWER_CHARS:
         raise GroundingError(OUTCOME_INVALID_JSON, "answer too long")
-    if not isinstance(citations, list) or not citations or not all(
-        isinstance(c, str) for c in citations
-    ):
-        raise GroundingError(OUTCOME_INVALID_JSON, "citations must be a non-empty list of ids")
+    # Empty is allowed: an answer from the model's own knowledge cites nothing.
+    if not isinstance(citations, list) or not all(isinstance(c, str) for c in citations):
+        raise GroundingError(OUTCOME_INVALID_JSON, "citations must be a list of ids")
 
     by_id = {p.id: p for p in passages}
     cited: list[Passage] = []
@@ -239,22 +266,16 @@ def parse_and_validate(
     if _URL_RE.search(answer):
         raise GroundingError(OUTCOME_URL_IN_ANSWER, "answer contains a URL")
 
-    # Checked against every passage the model was given, not only the cited
-    # ones: a model that uses a passage and forgets to cite it has made a
-    # citation slip, not a fabrication. Citations are still required above.
-    given_text = " ".join(p.text for p in passages).lower()
-    for name in species_named(answer):
-        if not re.search(rf"\b{re.escape(name)}\b", given_text):
+    if rules_question:
+        # Every passage the model was given counts, not only the cited ones:
+        # one used and not cited is a citation slip, not an invented limit.
+        given_text = " ".join(p.text for p in passages).lower()
+        invented = numbers_in(answer) - numbers_in(given_text) - numbers_in(question)
+        if invented:
             raise GroundingError(
-                OUTCOME_UNGROUNDED_SPECIES, f"answer names {name!r}, which no passage mentions"
+                OUTCOME_UNGROUNDED_NUMBER,
+                f"a rules answer uses numbers no passage gives: {sorted(invented)}",
             )
-
-    allowed_numbers = numbers_in(given_text) | numbers_in(question)
-    invented = numbers_in(answer) - allowed_numbers
-    if invented:
-        raise GroundingError(
-            OUTCOME_UNGROUNDED_NUMBER, f"answer uses numbers no passage gives: {sorted(invented)}"
-        )
 
     return answer.strip(), cited
 
@@ -419,6 +440,23 @@ _RODS_QUESTION_RE = re.compile(
 )
 
 
+# Licenses, permits, seasons, what's legal: with the limits questions above,
+# the questions whose AI answer may not hold a number of the model's own
+# (parse_and_validate). Japanese, Korean and Spanish arrive in English.
+_RULES_QUESTION_RE = re.compile(
+    r"\b(licen[cs]es?|permits?|stamps?|regulations?|legal|legally|illegal|laws?|fines?|fined"
+    r"|open\s+season|closed\s+season|season\s+(opens?|closes?|dates?))\b"
+    r"|许可证|法规|规定|合法|违法|罚款|禁渔|執照",
+    re.I,
+)
+
+
+def asks_about_rules(question: str) -> bool:
+    return any(
+        r.search(question) for r in (_LIMITS_QUESTION_RE, _RULES_QUESTION_RE, _LICENSE_QUESTION_ZH_RE, _RODS_QUESTION_RE)
+    )
+
+
 def _required_rule(question: str, state: str | None) -> tuple[str, str | None] | None:
     """The card a limits or second-rod question must show in `state`, and a
     word that card must contain to answer it (None: any card of that id)."""
@@ -570,12 +608,17 @@ def ask(
         retrieved=[{"id": h.passage.id, "score": round(h.score, 3)} for h in hits],
     )
     passages = [h.passage for h in hits]
+    reply = replies.reply_lang(question, lang)
 
+    # The search's own answer, for a question the guides don't cover: what is
+    # shown when the model can't answer it either. Not about fishing at all,
+    # it is the answer, and the model isn't asked.
+    empty = None
     if not passages:
-        return _empty(
-            question, context, retr, trace, state if dropped else None,
-            query=query, lang=replies.reply_lang(question, lang),
-        )
+        empty = _empty(question, context, retr, trace, state if dropped else None, query=query, lang=reply)
+        if empty.trace.outcome == OUTCOME_OFF_TOPIC:
+            return empty
+        trace.outcome = OUTCOME_OK
 
     key = _cache_key(question, passages)
     with _cache_lock:
@@ -587,6 +630,7 @@ def ask(
 
     llm = provider or get_provider()
     user_prompt = build_user_prompt(question, passages)
+    rules_question = asks_about_rules(question) or asks_about_rules(query)
     last_outcome = OUTCOME_OK
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
@@ -597,7 +641,7 @@ def ask(
             trace.provider = getattr(llm, "name", "unknown")
             trace.outcome = OUTCOME_PROVIDER_UNAVAILABLE
             trace.validation_attempts = attempt - 1
-            return _fallback(question, passages, trace)
+            return _fallback(question, passages, trace, empty)
 
         trace.provider = response.provider
         trace.model = response.model
@@ -607,7 +651,10 @@ def ask(
         trace.estimated_cost_usd += response.estimated_cost_usd
 
         try:
-            answer, cited = parse_and_validate(response.text, question, passages)
+            answer, cited = parse_and_validate(response.text, question, passages, rules_question)
+        except OffTopicReply:
+            trace.outcome = OUTCOME_OFF_TOPIC
+            return AskResult(question, replies.off_topic(reply), ANSWER_NO_MATCH, [], trace)
         except GroundingError as exc:
             last_outcome = exc.outcome
             continue
@@ -619,11 +666,17 @@ def ask(
         return result
 
     trace.outcome = last_outcome
-    return _fallback(question, passages, trace)
+    return _fallback(question, passages, trace, empty)
 
 
-def _fallback(question: str, passages: list[Passage], trace: AskTrace) -> AskResult:
+def _fallback(
+    question: str, passages: list[Passage], trace: AskTrace, empty: AskResult | None = None
+) -> AskResult:
     """Not cached, for the same reason as ai_advisor's fallback: one bad
-    moment shouldn't pin a degraded answer for the next hour."""
+    moment shouldn't pin a degraded answer for the next hour. With no
+    passages to quote, the search's own "not covered" answer, with the
+    model's outcome in the trace."""
+    if not passages and empty is not None:
+        return AskResult(question, empty.answer, ANSWER_NO_MATCH, [], trace)
     answer, used = fallback_answer(passages)
     return AskResult(question, answer, ANSWER_FALLBACK, used, trace)

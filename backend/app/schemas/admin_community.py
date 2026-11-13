@@ -98,12 +98,16 @@ class AdminUserOut(BaseModel):
     email_verified: bool = False
     pins: int
     reports_against: int
+    plus_until: datetime | None = None  # FishEye Plus, if it hasn't run out
 
 
 class UserUpdateIn(BaseModel):
     role: str | None = None  # "user" | "admin"
     status: str | None = None  # "active" | "suspended"
     display_name: str | None = Field(default=None, max_length=80)
+    # FishEye Plus for this many days from now; 0 ends it. Until payments
+    # are built, an admin gives it by hand.
+    plus_days: int | None = Field(default=None, ge=0, le=3660)
 
 
 class UserCountsOut(BaseModel):

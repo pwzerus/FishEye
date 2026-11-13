@@ -149,7 +149,7 @@ TEXT: dict[str, dict[str, str]] = {
         "ja": "この再設定リンクは期限切れか、すでに使用されています。新しいリンクを依頼してください。",
     },
     "You've sent a lot today. Thanks! Try again tomorrow.": {
-        "zh": "你今天已经发了很多条，谢谢！明天再试吧。",
+        "zh": "感谢你今天发送的反馈！今日发送次数已达上限，请明天再试。",
         "es": "Hoy ya enviaste muchos. ¡Gracias! Inténtalo mañana.",
         "ko": "오늘 많이 보내 주셨어요. 감사합니다! 내일 다시 시도해 주세요.",
         "ja": "今日はたくさん送っていただきました。ありがとうございます！また明日お試しください。",
@@ -381,11 +381,17 @@ TEXT: dict[str, dict[str, str]] = {
         "ko": "오늘은 모든 사용자의 AI 기능이 한도에 도달했어요. 어종 가이드와 지도는 계속 쓸 수 있으니, 내일 다시 시도하세요.",
         "ja": "本日のAI機能は全体の上限に達しました。魚ガイドと地図は引き続き使えます。明日またお試しください。",
     },
-    "AI summaries are for fishing questions the FishEye guides cover, and the guides don't cover this one. Nothing was used from today's allowance.": {
-        "zh": "AI 摘要只用于 FishEye 指南覆盖的钓鱼问题，这个问题不在其中。今天的次数没有被扣。",
-        "es": "Los resúmenes con IA son para preguntas de pesca que cubren las guías de FishEye, y esta no. No se usó nada de lo de hoy.",
-        "ko": "AI 요약은 FishEye 가이드에 나오는 낚시 질문에만 쓸 수 있는데, 이 질문은 해당하지 않아요. 오늘 사용량은 차감되지 않았어요.",
-        "ja": "AI要約はFishEyeのガイドにある釣りの質問だけが対象で、この質問は含まれません。今日の回数は使われていません。",
+    "AI answers are for fishing questions, and this doesn't look like one. Nothing was used from today's allowance.": {
+        "zh": "AI 只回答钓鱼的问题，这个看起来不是。今天的次数没有扣。",
+        "es": "La IA solo responde preguntas de pesca, y esta no parece serlo. No se usó nada de lo de hoy.",
+        "ko": "AI는 낚시 질문에만 답해요. 이 질문은 낚시 질문이 아닌 것 같아요. 오늘 사용량은 차감되지 않았어요.",
+        "ja": "AIが答えるのは釣りの質問だけです。この質問は釣りの質問ではないようです。今日の回数は使われていません。",
+    },
+    "You've used today's free AI answer. Searching the guides is still free; the AI answer comes back tomorrow (UTC).": {
+        "zh": "今天的免费 AI 回答用过了，明天（UTC）再来。搜指南一直免费。",
+        "es": "Ya usaste la respuesta con IA gratis de hoy. Buscar en las guías sigue siendo gratis; la respuesta con IA vuelve mañana (UTC).",
+        "ko": "오늘 무료 AI 답변을 썼어요. 가이드 검색은 계속 무료이고, AI 답변은 내일(UTC) 다시 쓸 수 있어요.",
+        "ja": "今日の無料AI回答は使いました。ガイドの検索はずっと無料で、AI回答は明日（UTC）また使えます。",
     },
 }
 
@@ -465,11 +471,6 @@ PATTERNS: list[Pattern] = [
                    "es": f"Las cuentas nuevas pueden compartir {m[1]} capturas al día durante sus primeros {m[2]} días. Intenta mañana.",
                    "ko": f"새 계정은 처음 {m[2]}일 동안 하루에 조과를 {m[1]}건까지 공유할 수 있어요. 내일 다시 시도하세요.",
                    "ja": f"新しいアカウントは、最初の{m[2]}日間は1日{m[1]}件まで釣果を投稿できます。明日またお試しください。"}[lang]),
-    (re.compile(r"^You've used today's (\d+) AI summaries\. Searching the guides is still free; summaries come back tomorrow \(UTC\)\.$"),
-     lambda m, lang: {"zh": f"今天的 {m[1]} 次 AI 摘要已经用完了。搜索指南仍然免费；摘要明天（UTC）恢复。",
-                   "es": f"Ya usaste los {m[1]} resúmenes con IA de hoy. Buscar en las guías sigue siendo gratis; los resúmenes vuelven mañana (UTC).",
-                   "ko": f"오늘 쓸 수 있는 AI 요약 {m[1]}회를 다 썼어요. 가이드 검색은 계속 무료이고, 요약은 내일(UTC) 다시 쓸 수 있어요.",
-                   "ja": f"今日のAI要約（{m[1]}回）はすべて使いました。ガイドの検索は引き続き無料で、要約は明日（UTC）また使えます。"}[lang]),
     (re.compile(r"^Photo (\d+): (.+)$"),
      lambda m, lang: {"zh": f"第 {m[1]} 张照片：{tr(m[2], lang)}", "es": f"Foto {m[1]}: {tr(m[2], lang)}",
                    "ko": f"사진 {m[1]}: {tr(m[2], lang)}", "ja": f"写真{m[1]}：{tr(m[2], lang)}"}[lang]),

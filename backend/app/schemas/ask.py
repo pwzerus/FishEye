@@ -77,9 +77,10 @@ class AiAllowanceOut(BaseModel):
     """Today's AI summaries for whoever is asking (services/ai_quota.py)."""
 
     signed_in: bool
-    limit: int | None  # None when signed out, or unlimited (admins)
+    limit: int | None  # None when signed out, or unlimited (Plus, admins)
     remaining: int | None
     enabled: bool  # False: no paid model is set up, so summaries aren't offered
+    plus: bool = False  # a FishEye Plus account
 
 
 class AskLakeFishOut(BaseModel):
@@ -139,3 +140,6 @@ class AskResponse(BaseModel):
     state: str | None = None
     # A lake named or "where to go": from the lake data, not the guides.
     lakes: AskLakesOut | None = None
+    # The search's answer can be followed by an AI answer: the guides'
+    # passages, or a fishing question they don't cover (api/ask.py).
+    ai_can_answer: bool = False

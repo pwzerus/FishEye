@@ -178,7 +178,11 @@ class MockProvider(LLMProvider):
             where = f"the {species} guide" if section else "the guides"
             label = section.lower() if section else header.lower()
             sentences.append(f"From {where} ({label}): {body}")
-        answer = " ".join(sentences)
+        # No passages: a question the guides don't cover, which a real model
+        # answers from its own knowledge. The mock has none, and says so.
+        answer = " ".join(sentences) or (
+            "The demo model has no fishing knowledge of its own; a real model would answer this one."
+        )
         citations = [p["id"] for p in used]
 
         if self.failure_mode == FAILURE_HALLUCINATED_SOURCE:

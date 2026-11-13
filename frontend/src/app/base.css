@@ -1749,6 +1749,39 @@ h3 {
 .ai-summary-error {
   color: var(--danger);
 }
+/* "AI answers can be wrong · Terms": small, but never under 13px. */
+/* Under Ask's question box: "AI answers can be wrong. Terms". */
+.ask-fineprint {
+  margin: 6px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+.ask-fineprint a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+/* The small print at the bottom of content pages (components/SiteFooter). */
+.site-footer {
+  width: 100%;
+  max-width: calc(var(--content) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 18px var(--gutter) 28px;
+  border-top: 1px solid var(--line);
+}
+.site-footer .legal-links {
+  font-size: 14px;
+}
+.ai-summary .ai-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.ai-note a {
+  color: inherit;
+  text-decoration: underline;
+}
 
 .ask-form {
   position: sticky;

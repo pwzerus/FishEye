@@ -1274,6 +1274,52 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+/* The terms' "short version" at the top. */
+.legal-page .legal-summary {
+  padding: 16px 18px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+.legal-page .legal-note {
+  font-size: 15px;
+}
+/* The terms' contents: numbered links, two columns where there's room. */
+.legal-page .legal-toc ol {
+  columns: 2 240px;
+  column-gap: 24px;
+  display: block;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.legal-page .legal-toc li {
+  break-inside: avoid;
+  margin-bottom: 6px;
+}
+.legal-page .legal-toc a {
+  color: var(--brand-strong);
+}
+/* Disclaimers, limits and the release: set apart and in bold, as the law
+   asks of terms that take away rights (app/terms). */
+.legal-page .legal-conspicuous {
+  padding: 12px 14px;
+  border-left: 4px solid var(--ink);
+  border-radius: 4px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: 650;
+}
+.legal-page .legal-conspicuous p,
+.legal-page .legal-conspicuous li {
+  color: var(--ink);
+}
+.legal-page div.legal-conspicuous {
+  display: grid;
+  gap: 8px;
+}
+.legal-page section[id] {
+  scroll-margin-top: 16px;
+}
 .legal-links {
   display: flex;
   flex-wrap: wrap;
@@ -1293,12 +1339,15 @@
   border-top: 1px solid var(--line);
 }
 .auth-legal {
+  margin: 0;
   font-size: 15px;
   line-height: 1.5;
   text-align: center;
+  color: var(--ink-2);
 }
 .auth-legal a {
-  color: inherit;
+  color: var(--brand-strong);
+  font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
 }

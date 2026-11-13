@@ -243,7 +243,7 @@ describe("WaterbodyPanel", () => {
     render(<WaterbodyPanel waterbodyId={3} />);
 
     await waitFor(() =>
-      expect(screen.getByText(/never assumed from a statewide list/i)).toBeInTheDocument(),
+      expect(screen.getByText(/We don't guess from the statewide list/i)).toBeInTheDocument(),
     );
   });
 

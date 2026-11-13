@@ -20,16 +20,24 @@ from app.services.llm.base import LLMProvider, LLMResponse, LLMUnavailable
 
 API_URL = "https://api.anthropic.com/v1/messages"
 API_VERSION = "2023-06-01"
-DEFAULT_MODEL = "claude-haiku-4-5"
+# The cheapest Claude model (the product owner, 2026-11-12): the answer is
+# the passages' content in plain words, which needs no bigger model.
+DEFAULT_MODEL = "claude-haiku-5-5"
 REQUEST_TIMEOUT_SECONDS = 20.0
 RETRY_DELAY_SECONDS = 1.0
-MAX_OUTPUT_TOKENS = 800
+# Room for the model's thinking as well as the answer: both count here.
+MAX_OUTPUT_TOKENS = 2000
 CIRCUIT_FAILURE_THRESHOLD = 3
 CIRCUIT_COOLDOWN_SECONDS = 60
 
 # USD per million tokens, (input, output). An *estimate* for the trace, per
 # base.LLMResponse — list prices at the time of writing, not a bill.
-_PRICES = {"claude-haiku-4-5": (1.0, 5.0), "claude-sonnet-4-5": (3.0, 15.0)}
+# Haiku 5.5's price is for prompts up to 100K tokens; these are far shorter.
+_PRICES = {
+    "claude-haiku-5-5": (0.10, 0.50),
+    "claude-haiku-4-5": (1.0, 5.0),
+    "claude-sonnet-5-5": (2.0, 10.0),
+}
 _FALLBACK_PRICE = (3.0, 15.0)
 
 _RETRYABLE_STATUS = {408, 409, 429, 500, 502, 503, 504, 529}
@@ -76,9 +84,10 @@ class AnthropicProvider(LLMProvider):
         body = {
             "model": self.model,
             "max_tokens": MAX_OUTPUT_TOKENS,
-            # Low but not zero: the answer should be the passages' content,
-            # phrased plainly, not a creative rewrite.
-            "temperature": 0.2,
+            # No temperature: Haiku 5.5 refuses any but the default. The
+            # prompt keeps the answer to the passages' content instead. Low
+            # effort: little thinking, which is billed as output.
+            "output_config": {"effort": "low"},
             "system": system_prompt,
             "messages": [{"role": "user", "content": user_prompt}],
         }

@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     rag_semantic: str = "on"
     llm_provider: str = "mock"  # "mock" | "anthropic" ("openai" not implemented)
     llm_api_key: str | None = None
-    # Empty means the provider's own default (anthropic: claude-haiku-4-5).
+    # Empty means the provider's own default (anthropic: claude-haiku-5-5).
     llm_model: str | None = None
 
     # Admin-only endpoints (e.g. manual data-refresh triggers). None means
@@ -120,10 +120,11 @@ class Settings(BaseSettings):
     # (app/api/rate_limits.py). Only for turning them off in a pinch.
     rate_limits_enabled: bool = True
 
-    # AI summaries of a guide answer, per signed-in account per UTC day
-    # (services/ai_quota.py, docs/adr/0023). Searching the guides is free and
-    # needs no account; only the model call is metered. Admins are exempt.
-    ai_summaries_per_day: int = 3
+    # AI answers on Ask, per free account per UTC day (services/ai_quota.py,
+    # docs/adr/0023): one, since 2026-11-12 (the product owner). Searching the
+    # guides is free and needs no account; only the model call is metered.
+    # Plus accounts and admins have no limit.
+    ai_summaries_per_day: int = 1
     # What the paid model may cost in a calendar month, in US dollars, for
     # everyone together (services/ai_budget.py). 0 turns the model off.
     ai_monthly_budget_usd: float = 10.0
