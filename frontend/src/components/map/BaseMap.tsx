@@ -31,7 +31,9 @@ function hasWebGL(): boolean {
  *
  * Two vector styles: the plain map (free, the default) and satellite
  * (MapTiler, billed per tile), picked with the map's satellite button
- * (lib/map/basemapChoice.ts). If the picked one fails, the other is tried.
+ * (lib/map/basemapChoice.ts). Only maps given `satellite` (a state's, a
+ * lake's) follow that choice; the rest are always plain. If the picked one
+ * fails, the other is tried.
  *
  * Falls back to raster, never to a blank map: when the browser has no WebGL,
  * or both styles or the renderer fail.
@@ -41,9 +43,10 @@ function hasWebGL(): boolean {
  * its web worker's URL relative to its own file at runtime, which a bundler
  * that moves the file breaks; 5 inlines the worker.
  */
-export function BaseMap() {
+export function BaseMap({ satellite = false }: { satellite?: boolean }) {
   const map = useMap();
-  const choice = useBasemapChoice();
+  const picked = useBasemapChoice();
+  const choice = satellite ? picked : "plain";
   const [mode, setMode] = useState<"vector" | "raster">(() => (hasWebGL() ? "vector" : "raster"));
   const styles = (choice === "satellite" ? [MAP_STYLE_URL, PLAIN_STYLE_URL] : [PLAIN_STYLE_URL, MAP_STYLE_URL]).filter(
     (url): url is string => Boolean(url),

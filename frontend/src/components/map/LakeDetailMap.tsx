@@ -218,7 +218,7 @@ export default function LakeDetailMap({
       zoomControl={false}
       style={{ height: "100%", width: "100%" }}
     >
-      <BaseMap />
+      <BaseMap satellite />
       <ZoomControl position="bottomright" />
       <FitToLakeExtent
         detail={detail}

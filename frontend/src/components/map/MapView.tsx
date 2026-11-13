@@ -32,9 +32,8 @@ import type L from "leaflet";
 import type { Viewport } from "./LakeMap";
 import { LocationSearchBar, type LocatedPoint } from "./LocationSearchBar";
 import { MapLegend } from "./MapLegend";
+import { SatelliteToggle } from "./SatelliteToggle";
 import { type StateRegion, loadStates, regionOf, stateCodeAt } from "./usStates";
-import { setBasemapChoice, useBasemapChoice } from "@/lib/map/basemapChoice";
-import { MAP_STYLE_URL } from "@/lib/map/tiles";
 import {
   MIN_ZOOM_FOR_ALL_LAKES,
   MIN_PLACE_ZOOM,
@@ -96,7 +95,6 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   const all = useT();
   const t = all.map;
   const tc = all.catch;
-  const basemap = useBasemapChoice();
   const locale = useLocale();
   // The state chosen here or elsewhere: a search for a lake name prefers its lakes.
   const rememberedState = useSelectedState();
@@ -844,22 +842,8 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
               >
                 <span className="legend-shop" aria-hidden="true" /> <span className="fab-label">{t.shopsToggle}</span>
               </button>
-              {/* Plain map by default, free to show; satellite, billed per tile,
-                  only when asked for (lib/map/basemapChoice.ts). */}
-              {MAP_STYLE_URL && (
-                <button
-                  type="button"
-                  className={basemap === "satellite" ? "map-toggle active" : "map-toggle"}
-                  aria-pressed={basemap === "satellite"}
-                  aria-label={t.satellite}
-                  onClick={() => setBasemapChoice(basemap === "satellite" ? "plain" : "satellite")}
-                >
-                  <svg className="map-toggle-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <path d="M4 10l6-6 4 4-6 6zM14 20l6-6-4-4-6 6zM11 13l2-2M5 19a4 4 0 0 1 0-5M2 21a8 8 0 0 1 0-10" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>{" "}
-                  <span className="fab-label">{t.satellite}</span>
-                </button>
-              )}
+              {/* Satellite on a state's map, never the country's (SatelliteToggle). */}
+              {!national && <SatelliteToggle />}
               {!placing && (
                 <button
                   type="button"
@@ -900,6 +884,9 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
             >
               {t.allLakes}
             </button>
+            <div className="map-fabs">
+              <SatelliteToggle />
+            </div>
             <LakeDetailMap
               key={selectedId}
               waterbodyId={selectedId}

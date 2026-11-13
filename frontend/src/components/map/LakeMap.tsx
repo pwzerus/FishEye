@@ -19,7 +19,8 @@ import {
 import MarkerClusterGroup from "react-leaflet-cluster";
 
 import type { PinSummary, Shop, WaterGroup, WaterbodyListItem } from "@/lib/api/types";
-import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from "@/lib/map/tiles";
+import { useBasemapChoice } from "@/lib/map/basemapChoice";
+import { MAP_MAX_ZOOM, MAP_MIN_ZOOM, MAP_STYLE_URL } from "@/lib/map/tiles";
 import { BaseMap } from "./BaseMap";
 import { waterIcon } from "./waterIcon";
 import { useT } from "@/i18n/client";
@@ -332,19 +333,29 @@ function fitLower48(map: L.Map, cover: HTMLElement | null) {
 }
 
 /** Dims everything outside the state being explored and outlines it, so it
- * reads as "this state", not a crop of the whole map. */
+ * reads as "this state", not a crop of the whole map. On satellite imagery,
+ * dark already, the green line disappears: a white one and a darker dim. */
 function RegionMask({ region }: { region: StateRegion }) {
+  const satellite = useBasemapChoice() === "satellite" && Boolean(MAP_STYLE_URL);
   return (
     <>
       <Polygon
         positions={[WORLD_RING, ...region.rings]}
         interactive={false}
-        pathOptions={{ stroke: false, fillColor: "#1d3a30", fillOpacity: 0.22 }}
+        pathOptions={
+          satellite
+            ? { stroke: false, fillColor: "#000000", fillOpacity: 0.45 }
+            : { stroke: false, fillColor: "#1d3a30", fillOpacity: 0.22 }
+        }
       />
       <Polygon
         positions={region.rings}
         interactive={false}
-        pathOptions={{ color: "#1f6b52", weight: 2, opacity: 0.7, fill: false }}
+        pathOptions={
+          satellite
+            ? { color: "#ffffff", weight: 3, opacity: 0.95, fill: false }
+            : { color: "#1f6b52", weight: 2, opacity: 0.7, fill: false }
+        }
       />
     </>
   );
@@ -602,7 +613,8 @@ export default function LakeMap({
       zoomControl={false}
       style={{ height: "100%", width: "100%" }}
     >
-      <BaseMap />
+      {/* The country map is always plain (SatelliteToggle). */}
+      <BaseMap satellite={mode === "exploring"} />
       {/* No zoom buttons at country scale, where the map holds still. */}
       {mode === "exploring" && <ZoomControl position="bottomright" />}
       {mode === "exploring" && !placing && onAllStates && <AllStatesControl onClick={onAllStates} />}
