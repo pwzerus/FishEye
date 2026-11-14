@@ -977,7 +977,7 @@ const en = {
     signInBefore: "",
     signInLink: "Sign in",
     signInFor: " to ask the AI.",
-    usedToday: "You've used today's free AI answer. It's back tomorrow; searching the guides stays free.",
+    usedToday: "You've used today's free AI answers. They're back tomorrow; searching the guides stays free.",
     summarizePlus: "Ask the AI (Plus: no limit)",
     summarize: (left: number | null) => `Ask the AI${left === null ? "" : ` (${left} left today)`}`,
     aiMayErr: "AI answers can be wrong.",

@@ -966,7 +966,7 @@ const ja: Messages = {
     signInBefore: "AIに質問するには",
     signInLink: "ログイン",
     signInFor: "してください。",
-    usedToday: "今日の無料AI回答は使いました。明日また使えます。ガイドの検索はずっと無料です。",
+    usedToday: "今日の無料AI回答はすべて使いました。明日また使えます。ガイドの検索は引き続き無料です。",
     summarizePlus: "AIに聞く（Plus・回数無制限）",
     summarize: (left: number | null) => `AIに聞く${left === null ? "" : `（今日はあと${left}回）`}`,
     aiMayErr: "AIの回答は間違うことがあります。",

@@ -5,7 +5,7 @@ POST /api/ask           Search the reviewed fish guides and return the
                         free, instant, open to everyone.
 POST /api/ask/summary   Have the model write an answer: from those passages,
                         and from its own knowledge where the guides stop.
-                        Needs an account; one a day on a free account, no
+                        Needs an account; three a day on a free account, no
                         limit on Plus (services/ai_quota.py). Only a fishing
                         question gets this far.
 GET  /api/ask/allowance Today's AI summaries left, for showing on the page.
@@ -205,8 +205,8 @@ def summarize(
         raise HTTPException(
             status_code=429,
             detail=(
-                "You've used today's free AI answer. Searching the guides is still free; "
-                "the AI answer comes back tomorrow (UTC)."
+                "You've used today's free AI answers. Searching the guides is still free; "
+                "AI answers come back tomorrow (UTC)."
             ),
         )
 

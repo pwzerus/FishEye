@@ -55,7 +55,7 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>AI answers and Plus:</strong> how many AI answers you use each day, so the daily allowance works,
-            and whether your account has FishEye Plus and until when.
+            and whether your account has FishEye Plus and until when. The daily count is kept under a one-way code made from your email address, not the address itself.
           </li>
           <li>
             <strong>Likes and comments:</strong> which catches you liked, and the comments you wrote. Comments and how many
@@ -168,7 +168,7 @@ export default function PrivacyPage() {
           <li>
             Delete your account from your <Link href="/account">account page</Link>. That deletes your account, your
             sessions and your catches with their photos. Reports you filed stay, without your name, so a moderator can
-            finish reviewing them.
+            finish reviewing them. The count of AI answers you used stays for up to 30 days under its one-way code, so deleting an account and making it again doesn&apos;t reset the free answers.
           </li>
           <li>
             Ask us for a copy of your data, or to correct or delete it, at{" "}
@@ -180,7 +180,7 @@ export default function PrivacyPage() {
       <section>
         <h2>How long we keep it</h2>
         <p>
-          Until you delete it or your account. Backups of the database may keep a copy for a short time before they
+          Until you delete it or your account. Daily counts of AI answers are deleted after 30 days. Backups of the database may keep a copy for a short time before they
           are replaced.
         </p>
       </section>

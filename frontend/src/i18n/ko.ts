@@ -967,7 +967,7 @@ const ko: Messages = {
     signInBefore: "AI에게 물어보려면 ",
     signInLink: "로그인",
     signInFor: "하세요.",
-    usedToday: "오늘 무료 AI 답변을 썼어요. 내일 다시 쓸 수 있고, 가이드 검색은 계속 무료예요.",
+    usedToday: "오늘 무료 AI 답변을 모두 썼어요. 내일 다시 쓸 수 있고, 가이드 검색은 계속 무료예요.",
     summarizePlus: "AI에게 묻기(Plus·무제한)",
     summarize: (left: number | null) => `AI에게 묻기${left === null ? "" : `(오늘 ${left}회 남음)`}`,
     aiMayErr: "AI 답변은 틀릴 수 있어요.",

@@ -387,11 +387,11 @@ TEXT: dict[str, dict[str, str]] = {
         "ko": "AI는 낚시 질문에만 답해요. 이 질문은 낚시 질문이 아닌 것 같아요. 오늘 사용량은 차감되지 않았어요.",
         "ja": "AIが答えるのは釣りの質問だけです。この質問は釣りの質問ではないようです。今日の回数は使われていません。",
     },
-    "You've used today's free AI answer. Searching the guides is still free; the AI answer comes back tomorrow (UTC).": {
-        "zh": "今天的免费 AI 回答用过了，明天（UTC）再来。搜指南一直免费。",
-        "es": "Ya usaste la respuesta con IA gratis de hoy. Buscar en las guías sigue siendo gratis; la respuesta con IA vuelve mañana (UTC).",
-        "ko": "오늘 무료 AI 답변을 썼어요. 가이드 검색은 계속 무료이고, AI 답변은 내일(UTC) 다시 쓸 수 있어요.",
-        "ja": "今日の無料AI回答は使いました。ガイドの検索はずっと無料で、AI回答は明日（UTC）また使えます。",
+    "You've used today's free AI answers. Searching the guides is still free; AI answers come back tomorrow (UTC).": {
+        "zh": "今天的免费 AI 回答次数已用完，明天（UTC）恢复。搜索指南始终免费。",
+        "es": "Ya usaste las respuestas con IA gratis de hoy. Buscar en las guías sigue siendo gratis; las respuestas con IA vuelven mañana (UTC).",
+        "ko": "오늘 무료 AI 답변을 모두 썼어요. 가이드 검색은 계속 무료이고, AI 답변은 내일(UTC) 다시 쓸 수 있어요.",
+        "ja": "今日の無料AI回答はすべて使いました。ガイドの検索は引き続き無料で、AI回答は明日（UTC）また使えます。",
     },
 }
 

@@ -78,7 +78,6 @@ class User(Base):
     pins: Mapped[list[CatchPin]] = relationship(
         back_populates="user", cascade="all, delete-orphan", foreign_keys="CatchPin.user_id"
     )
-    ai_usage: Mapped[list[AiUsage]] = relationship(cascade="all, delete-orphan")
     likes: Mapped[list[PinLike]] = relationship(cascade="all, delete-orphan")
     comments: Mapped[list[PinComment]] = relationship(back_populates="user", cascade="all, delete-orphan")
     alerts: Mapped[list[SpeciesAlert]] = relationship(back_populates="user", cascade="all, delete-orphan")
@@ -450,16 +449,23 @@ class AiSpend(Base):
 
 
 class AiUsage(Base):
-    """AI summaries an account has used on one day (UTC), for the daily
-    allowance in services/ai_quota.py (docs/adr/0023). One row per account
-    per day that used any; a missing row means none used."""
+    """AI answers used on one day (UTC), for the daily allowance in
+    services/ai_quota.py (docs/adr/0023). One row per email address per day
+    that used any; a missing row means none used.
 
-    __tablename__ = "ai_usage"
-    __table_args__ = (UniqueConstraint("user_id", "day", name="uq_ai_usage_user_day"),)
+    Counted per email address, not per account, and kept for 30 days whether
+    or not the account still exists, so deleting an account and making it
+    again with the same address doesn't give the day's free answers back
+    (the product owner, 2026-11-13). The address is stored only as a one-way
+    key (ai_quota.email_key). Until then the count was per account, in the
+    table `ai_usage`, which is no longer used."""
+
+    __tablename__ = "ai_usage_by_email"
+    __table_args__ = (UniqueConstraint("email_key", "day", name="uq_ai_usage_email_day"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
-    day: Mapped[date] = mapped_column(Date)
+    email_key: Mapped[str] = mapped_column(String(64), index=True)
+    day: Mapped[date] = mapped_column(Date, index=True)
     used: Mapped[int] = mapped_column(Integer, default=0)
 
 

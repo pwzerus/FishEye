@@ -121,10 +121,11 @@ class Settings(BaseSettings):
     rate_limits_enabled: bool = True
 
     # AI answers on Ask, per free account per UTC day (services/ai_quota.py,
-    # docs/adr/0023): one, since 2026-11-12 (the product owner). Searching the
-    # guides is free and needs no account; only the model call is metered.
-    # Plus accounts and admins have no limit.
-    ai_summaries_per_day: int = 1
+    # docs/adr/0023): three. One from 2026-11-12, three again from 2026-11-13
+    # ("一次太少了", the product owner). Searching the guides is free and needs
+    # no account; only the model call is metered. Plus accounts and admins
+    # have no limit.
+    ai_summaries_per_day: int = 3
     # What the paid model may cost in a calendar month, in US dollars, for
     # everyone together (services/ai_budget.py). 0 turns the model off.
     ai_monthly_budget_usd: float = 10.0

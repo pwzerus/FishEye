@@ -144,7 +144,7 @@ def test_a_summary_at_the_ceiling_says_so_and_uses_no_allowance(make_client, db_
     db_session.commit()
     r = c.post("/api/ask/summary", json={"question": "what bait for largemouth bass"})
     assert r.status_code == 503 and "paused" in r.json()["detail"]
-    assert c.get("/api/ask/allowance").json()["remaining"] == 1
+    assert c.get("/api/ask/allowance").json()["remaining"] == 3  # the day's three, untouched
     # Searching the guides costs nothing and carries on.
     assert c.post("/api/ask", json={"question": "what bait for largemouth bass"}).json()["citations"]
 

@@ -959,7 +959,7 @@ const es: Messages = {
     signInBefore: "",
     signInLink: "Inicia sesión",
     signInFor: " para preguntarle a la IA.",
-    usedToday: "Ya usaste la respuesta con IA gratis de hoy. Vuelve mañana; buscar en las guías sigue siendo gratis.",
+    usedToday: "Ya usaste las respuestas con IA gratis de hoy. Vuelven mañana; buscar en las guías sigue siendo gratis.",
     summarizePlus: "Preguntar a la IA (Plus: sin límite)",
     summarize: (left: number | null) => `Preguntar a la IA${left === null ? "" : ` (quedan ${left} hoy)`}`,
     aiMayErr: "La IA puede equivocarse.",

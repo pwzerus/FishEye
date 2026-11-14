@@ -945,7 +945,7 @@ const zh: Messages = {
     signInBefore: "",
     signInLink: "登录",
     signInFor: "后即可向 AI 提问。",
-    usedToday: "今天的免费 AI 回答已用完，明天恢复。搜索指南始终免费。",
+    usedToday: "今天的免费 AI 回答次数已用完，明天恢复。搜索指南始终免费。",
     summarizePlus: "问 AI（Plus 不限次）",
     summarize: (left: number | null) => `问 AI${left === null ? "" : `（今天还剩 ${left} 次）`}`,
     aiMayErr: "AI 回答可能出错。",

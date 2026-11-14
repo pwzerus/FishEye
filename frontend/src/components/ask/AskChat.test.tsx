@@ -167,17 +167,17 @@ describe("AskChat", () => {
     mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: 3, remaining: 0, enabled: true } }));
     render(<AskChat suggestions={SUGGESTIONS} />);
     await askVia("what bait for crappie");
-    expect(await screen.findByText(/free AI answer\. It's back tomorrow/)).toBeInTheDocument();
+    expect(await screen.findByText(/free AI answers\. They're back tomorrow/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Ask the AI/ })).not.toBeInTheDocument();
   });
 
   it("shows the server's reason when a summary is refused", async () => {
     mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: 3, remaining: 1, enabled: true } }));
-    mockedSummary.mockRejectedValue(new ApiError("You've used today's free AI answer.", 429));
+    mockedSummary.mockRejectedValue(new ApiError("You've used today's free AI answers.", 429));
     render(<AskChat suggestions={SUGGESTIONS} />);
     await askVia("what bait for crappie");
     fireEvent.click(await screen.findByRole("button", { name: /Ask the AI/ }));
-    expect(await screen.findByText("You've used today's free AI answer.")).toBeInTheDocument();
+    expect(await screen.findByText("You've used today's free AI answers.")).toBeInTheDocument();
     expect(screen.getByText(/searching the guides stays free/)).toBeInTheDocument();
   });
 

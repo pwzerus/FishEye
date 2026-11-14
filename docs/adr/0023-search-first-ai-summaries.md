@@ -33,8 +33,9 @@ sharks eat". The original 3-question off-topic set had passed at 100%.
 2. `POST /api/ask/summary` has the model write an answer from those same
    passages, through the existing validator. It needs an account and is
    limited to `AI_SUMMARIES_PER_DAY` per account per UTC day: 3 at first, 1
-   since 2026-11-12, when FishEye Plus accounts (`users.plus_until`, given by
-   an admin until payments exist) stopped being limited. Admins are not
+   from 2026-11-12, and 3 again from 2026-11-13 (one was too few). Since
+   2026-11-12 FishEye Plus accounts (`users.plus_until`, given by
+   an admin until payments exist) are not limited. Admins are not
    limited either. The model is the cheapest Claude, `claude-haiku-5-5`.
 
 **Per account, not per browser or address.** An address is shared by
@@ -106,6 +107,16 @@ for an answer people pay for (FishEye Plus). Since 2026-11-12:
   to the search's own answer when there are none.
 - Under every AI answer the page says it can be wrong, with a link to the
   terms of use (`/terms#ai-answers`), which say the same at length.
+
+## Amendment, 2026-11-13: three a day, counted per email address
+
+Free accounts get three AI answers a day again. The count moved from the
+account (`ai_usage`, deleted with it) to the email address (`ai_usage_by_email`,
+keyed by a one-way SHA-256 of the lowercased address, kept 30 days): someone
+who used the day's three, deleted the account and signed up again with the
+same address had them back. Re-registering is still allowed; it just finds
+the day's count where it was. A different address is a different person, as
+before. The privacy policy says the count is kept 30 days.
 
 ## Consequences
 

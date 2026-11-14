@@ -148,7 +148,7 @@ answers, put these in the backend's `.env` (never the frontend's):
 LLM_PROVIDER=anthropic
 LLM_API_KEY=sk-ant-...
 # LLM_MODEL=            # blank = claude-haiku-5-5, the cheapest
-# AI_SUMMARIES_PER_DAY=1
+# AI_SUMMARIES_PER_DAY=3
 ```
 
 Try a failure path on demand: `LLM_MOCK_FAILURE_MODE=invented_number`
