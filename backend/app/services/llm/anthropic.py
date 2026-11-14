@@ -11,12 +11,14 @@ is never sent to, or needed by, the frontend.
 """
 from __future__ import annotations
 
+import base64
 import threading
 import time
+from collections.abc import Sequence
 
 import httpx
 
-from app.services.llm.base import LLMProvider, LLMResponse, LLMUnavailable
+from app.services.llm.base import Image, LLMProvider, LLMResponse, LLMUnavailable
 
 API_URL = "https://api.anthropic.com/v1/messages"
 API_VERSION = "2023-06-01"
@@ -68,6 +70,19 @@ class _CircuitBreaker:
                 self._opened_at = time.monotonic()
 
 
+def _content(user_prompt: str, images: Sequence[Image]) -> str | list[dict]:
+    """The message: the prompt alone, or the photos first and then the
+    prompt, as Anthropic's vision guide recommends."""
+    if not images:
+        return user_prompt
+    blocks: list[dict] = [
+        {"type": "image", "source": {"type": "base64", "media_type": i.media_type,
+                                     "data": base64.b64encode(i.data).decode("ascii")}}
+        for i in images
+    ]
+    return [*blocks, {"type": "text", "text": user_prompt}]
+
+
 class AnthropicProvider(LLMProvider):
     name = "anthropic"
 
@@ -76,7 +91,7 @@ class AnthropicProvider(LLMProvider):
         self.model = model or DEFAULT_MODEL
         self._circuit = _CircuitBreaker()
 
-    def complete(self, system_prompt: str, user_prompt: str) -> LLMResponse:
+    def complete(self, system_prompt: str, user_prompt: str, images: Sequence[Image] = ()) -> LLMResponse:
         if self._circuit.is_open():
             raise LLMUnavailable("anthropic: circuit open after repeated failures")
 
@@ -89,7 +104,7 @@ class AnthropicProvider(LLMProvider):
             # effort: little thinking, which is billed as output.
             "output_config": {"effort": "low"},
             "system": system_prompt,
-            "messages": [{"role": "user", "content": user_prompt}],
+            "messages": [{"role": "user", "content": _content(user_prompt, images)}],
         }
         headers = {
             "x-api-key": self._api_key,

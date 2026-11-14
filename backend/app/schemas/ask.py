@@ -73,6 +73,16 @@ class AskTraceOut(BaseModel):
     cache_hit: bool
 
 
+class AskPhotoOut(BaseModel):
+    """POST /api/ask/photo: the AI's answer about a photo (services/rag/photo.py)."""
+
+    answer: str | None
+    # "llm", or "off_topic" / "fallback" with no answer (given back)
+    answer_source: str
+    provider: str = "none"
+    ai: "AiAllowanceOut"
+
+
 class AiAllowanceOut(BaseModel):
     """Today's AI summaries for whoever is asking (services/ai_quota.py)."""
 

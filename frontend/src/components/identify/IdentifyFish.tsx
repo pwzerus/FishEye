@@ -12,7 +12,7 @@ import type { FishCandidate, FishIdResult } from "@/lib/api/types";
 
 // The photo check's own thresholds (backend services/fish_id.Policy): below
 // MIN_FISH the photo isn't of a fish; a species this sure is named outright.
-const MIN_FISH = 0.5;
+export const MIN_FISH = 0.5;
 const SURE = 0.8;
 // Smaller shares than this aren't worth showing as a possibility.
 const SHOWN = 0.1;

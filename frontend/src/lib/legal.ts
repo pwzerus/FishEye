@@ -11,8 +11,14 @@
  * registered DMCA agent all need a postal address (a P.O. box will do).
  */
 export const LEGAL = {
-  operator: "[Operator's legal name]",
-  mailingAddress: "[Mailing address]",
+  // Left out at the owner's wish (2026-11-13): no personal name on the
+  // site. The pages then say "the operator of FishEye". An LLC's name
+  // goes here once there is one.
+  operator: "" as string,
+  // Left out at the owner's wish (2026-11-13): no home address on the site.
+  // A P.O. box or an LLC's registered agent can go here later; the App
+  // Store's own license terms and a DMCA agent will need one.
+  mailingAddress: "" as string,
   contactEmail: "feedback.fisheyefishing@gmail.com",
   site: "fisheyefishing.com",
   // Whose law governs the terms, and where disputes go.
@@ -25,10 +31,24 @@ export const LEGAL = {
   optOutDays: 30,
   // The floor of FishEye's liability cap, in US dollars.
   liabilityFloorUsd: 50,
-  updated: "November 13, 2026",
   updatedIso: "2026-11-13",
-  // Accounts made before `updated` come under these terms 14 days later
+  // Accounts made before `updatedIso` come under these terms 14 days later
   // (`noticeDays`), after a notice on the site (components/legal/TermsNotice).
-  existingUsersFrom: "November 27, 2026",
   existingUsersFromIso: "2026-11-27",
 } as const;
+
+/** A legal page in one language (src/app/<page>/text/): the English one
+ * applies, and the others translate it. */
+export interface LegalText {
+  title: string;
+  lede: string;
+  description: string;
+  Body: () => React.ReactNode;
+}
+
+/** A day ("2026-11-13") as the reader's language writes it: "November 13,
+ * 2026", "2026年11月13日", "13 de noviembre de 2026". The day is a UTC date,
+ * so it's the same day in every time zone. */
+export function legalDate(iso: string, tag: string): string {
+  return new Intl.DateTimeFormat(tag, { dateStyle: "long", timeZone: "UTC" }).format(Date.parse(`${iso}T00:00:00Z`));
+}

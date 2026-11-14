@@ -16,7 +16,7 @@ Anthropic console too.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 
 from sqlalchemy import select, update
@@ -27,7 +27,7 @@ from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.models.community import AiSpend
 from app.services.llm import get_provider
-from app.services.llm.base import LLMProvider, LLMResponse, LLMUnavailable
+from app.services.llm.base import Image, LLMProvider, LLMResponse, LLMUnavailable
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class BudgetedProvider(LLMProvider):
         self.name = inner.name
         self.model = getattr(inner, "model", None)
 
-    def complete(self, system_prompt: str, user_prompt: str) -> LLMResponse:
+    def complete(self, system_prompt: str, user_prompt: str, images: Sequence[Image] = ()) -> LLMResponse:
         try:
             with self._sessions() as db:
                 over = exhausted(db)
@@ -92,7 +92,10 @@ class BudgetedProvider(LLMProvider):
         if over:
             logger.warning("AI budget of $%.2f reached for %s; the model isn't being called.", budget(), this_month())
             raise LLMUnavailable("monthly AI budget reached")
-        response = self._inner.complete(system_prompt, user_prompt)
+        # Photos only when there are some, so a provider written before
+        # photos (two arguments) still works for text.
+        response = (self._inner.complete(system_prompt, user_prompt, images) if images
+                    else self._inner.complete(system_prompt, user_prompt))
         try:
             with self._sessions() as db:
                 record(db, response.estimated_cost_usd)

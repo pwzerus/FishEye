@@ -35,7 +35,7 @@ describe("the dictionaries", () => {
     const en = new Map(leaves(MESSAGES.en));
     const other = leaves(MESSAGES[lang]);
     expect(other.map(([p]) => p).sort()).toEqual([...en.keys()].sort());
-    // English's empty string means "nothing to say" (legal.englishOnly).
+    // English's empty string means "nothing to say" (legal.translation).
     const empty = other.filter(([p, v]) => !v.trim() && en.get(p)?.trim());
     expect(empty).toEqual([]);
   });
@@ -78,6 +78,14 @@ describe("the dictionaries", () => {
         ((lang === "zh" || lang === "ja") && /[぀-ヿ一-鿿]\.$/.test(v)), // an English full stop
     );
     expect(found).toEqual([]);
+  });
+
+  it("asks how to use a piece of gear in each language's grammar", () => {
+    expect(MESSAGES.en.ask.howToUse("Spinning reel")).toBe("How do I use this spinning reel?");
+    expect(MESSAGES.en.ask.howToUse("Crankbaits")).toBe("How do I use these crankbaits?");
+    expect(MESSAGES.es.ask.howToUse("Carrete de spinning")).toBe("Carrete de spinning: ¿cómo se usa?");
+    expect(MESSAGES.es.ask.howToUse("Cucharillas giratorias")).toBe("Cucharillas giratorias: ¿cómo se usan?");
+    expect(MESSAGES.zh.ask.howToUse("尼龙线")).toBe("尼龙线怎么用？");
   });
 
   it("puts the photo check's look-alike group in the reader's words", () => {

@@ -86,6 +86,32 @@ Cost: 118 MB on disk; the backend process uses about 450 MB with the model
 (870 MB with the uncompressed one); about 3 ms per question on one CPU core.
 Passage vectors are computed once and cached by content.
 
+## Amendment, 2026-11-13: a fishing word that means something else
+
+The keyword gate let in any question with "fishing" or 钓鱼 in it, so "how to
+find a girl who loves fishing" brought back the trolling guide. A question
+that passed on that word alone, naming no fish and no tackle, is now
+compared by meaning, the closer side winning as with the "bass" decoys (a
+tie counts as fishing):
+
+- English (`EnglishGate`): every guide passage and the question library's
+  questions, against `knowledge/not_fishing_en.json` (dating, phishing,
+  video games, aquariums, idioms).
+- Chinese (`WaysOfAsking.means_fishing`): the ways of asking and the
+  library's Chinese questions, against `translations/zh_not_fishing.json`.
+  Fixed phrases where 钓鱼 means something else (钓鱼执法, 钓鱼网站, 钓鱼岛,
+  摸鱼, 愿者上钩) are in `zh.NOT_FISHING`, so the keyword gate turns them away.
+
+Measured with the semantic model on questions the lists don't contain:
+English lookalikes turned away 10/40 → 28/40, Chinese 0/30 → 27/30; fishing
+questions kept as before (English eval 381/385, Chinese eval 149/149, the
+library's Chinese questions 435/494, mixed fishing questions 24/25 and
+25/25). Any margin in favour of "not fishing" cost real questions, so there
+is none. An example added to either list can pull real questions away
+(neckties and pet fish needing light did); rerun the measurement first.
+Still let in: a game's fishing ("animal crossing" in Chinese), a streamer's
+pay, and anything naming tackle (挂钩 for "linked to" has 钩, a hook).
+
 ## Alternatives considered
 
 - **Model as the gate.** Rejected on the cosine overlap above.

@@ -109,3 +109,14 @@ def test_anthropic_without_a_key_falls_back_to_the_mock(monkeypatch):
         assert llm.get_provider().name == "mock"
     finally:
         llm.reset_provider_cache()
+
+
+def test_a_photo_goes_before_the_prompt_as_a_base64_image(monkeypatch):
+    from app.services.llm.base import Image
+
+    calls = _install(monkeypatch, [OK])
+    anth.AnthropicProvider(api_key="k").complete("sys", "what is this?", [Image("image/jpeg", bytes([0xFF, 0xD8, 0xFF]) + b"data")])
+    content = calls[0]["json"]["messages"][0]["content"]
+    assert content[0]["type"] == "image"
+    assert content[0]["source"] == {"type": "base64", "media_type": "image/jpeg", "data": "/9j/ZGF0YQ=="}
+    assert content[1] == {"type": "text", "text": "what is this?"}

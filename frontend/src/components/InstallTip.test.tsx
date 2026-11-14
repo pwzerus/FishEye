@@ -3,18 +3,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { InstallTip, offerInstallTip } from "./InstallTip";
 
-describe("the home-screen tip after signing up", () => {
+describe("the home-screen tip after signing in", () => {
   afterEach(() => {
     window.localStorage.clear();
     vi.unstubAllGlobals();
   });
 
-  it("isn't there for anyone who hasn't just made an account", () => {
+  it("isn't there for anyone who hasn't just signed in", () => {
     const { container } = render(<InstallTip />);
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("says how, the same way for Safari and for Chrome, and goes for good", () => {
+  it("says how, the same way for Safari and for Chrome, and comes back at the next sign-in", () => {
     render(<InstallTip />);
     act(() => offerInstallTip());
     const tip = screen.getByRole("complementary", { name: "Put FishEye on your home screen" });
@@ -25,9 +25,27 @@ describe("the home-screen tip after signing up", () => {
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
     expect(window.localStorage.getItem("fisheye.installTip")).toBe("done");
 
-    // A second account made on the same phone: it has been said already.
+    act(() => offerInstallTip());
+    expect(screen.getByRole("complementary")).toBeInTheDocument();
+  });
+
+  // The product owner, 2026-11-13: a way to stop it for good.
+  it("stays away once asked not to show again", () => {
+    render(<InstallTip />);
+    act(() => offerInstallTip());
+    fireEvent.click(screen.getByRole("button", { name: "Don't show again" }));
+    expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+    expect(window.localStorage.getItem("fisheye.installTip")).toBe("never");
+
     act(() => offerInstallTip());
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+  });
+
+  it("isn't shown on a computer", () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({ matches: query === "(pointer: fine)" }));
+    window.localStorage.setItem("fisheye.installTip", "show");
+    const { container } = render(<InstallTip />);
+    expect(container).toBeEmptyDOMElement();
   });
 
   it("isn't shown in FishEye opened from the home screen", () => {

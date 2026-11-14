@@ -11,7 +11,8 @@ or a zh name in the /start kit list:
     ../backend/.venv/Scripts/python scripts/zh_hant.py --review  # list the word swaps
 
 It writes src/i18n/zht.ts and, next to every `zh:` entry in names.ts,
-weather.ts and FirstTrip.tsx, a `zht:` entry (replacing the last run's).
+weather.ts and FirstTrip.tsx, a `zht:` entry (replacing the last run's);
+and the legal pages' zht.tsx from their zh.tsx (src/app/<page>/text/).
 The backend turns its own Chinese the same way (app/knowledge/zh_hant.py).
 """
 
@@ -48,6 +49,13 @@ FIXES: dict[str, str] = {
     "新增到主螢幕": "加入主畫面",
     "安裝應用”": "安裝應用程式”",
     "安卓": "Android",
+    # An arbitration hearing by video call (the terms): 影片 is a video clip.
+    "以影片或電話": "以視訊或電話",
+    # The legal pages: 电子邮箱 came out 電子電子郵件, a one-way code
+    # (单向代码, a hash) 程式碼, and a statement (声明) 宣告.
+    "電子電子郵件": "電子郵件",
+    "單向程式碼": "單向代碼",
+    "宣告": "聲明",
     # Taiwan's quotation marks (after the fixes above, which match “”).
     "“": "「",
     "”": "」",
@@ -127,6 +135,23 @@ def messages(text: str) -> str:
     return header + body
 
 
+# The legal pages translated whole (src/app/<page>/text/zh.tsx).
+LEGAL_PAGES = ("terms", "privacy", "copyright")
+
+
+def legal_text(text: str) -> str:
+    body = zht(text).replace("export const zh:", "export const zht:", 1)
+    header = (
+        "// 由 zh.tsx 自動產生（frontend/scripts/zh_hant.py，OpenCC s2twp）。\n"
+        "// Generated from zh.tsx by scripts/zh_hant.py: edit zh.tsx and run it again, not this file.\n"
+    )
+    return header + body
+
+
+def legal_sources() -> list[Path]:
+    return [p for p in (SRC / "app" / page / "text" / "zh.tsx" for page in LEGAL_PAGES) if p.exists()]
+
+
 def review(paths: list[Path]) -> None:
     """Each word the Taiwan rule swaps, beyond turning characters
     Traditional, once, with where it first shows up."""
@@ -149,7 +174,7 @@ def review(paths: list[Path]) -> None:
 def main() -> None:
     i18n = SRC / "i18n"
     kit = SRC / "components" / "start" / "FirstTrip.tsx"
-    sources = [i18n / "zh.ts", i18n / "names.ts", i18n / "weather.ts", kit]
+    sources = [i18n / "zh.ts", i18n / "names.ts", i18n / "weather.ts", kit, *legal_sources()]
     if "--review" in sys.argv:
         review(sources)
         return
@@ -158,7 +183,11 @@ def main() -> None:
         path = i18n / name
         path.write_text(with_zht_tables(path.read_text(encoding="utf-8")), encoding="utf-8", newline="\n")
     kit.write_text(with_zht_kit(kit.read_text(encoding="utf-8")), encoding="utf-8", newline="\n")
-    print("wrote zht.ts, names.ts, weather.ts and FirstTrip.tsx")
+    for source in legal_sources():
+        (source.parent / "zht.tsx").write_text(
+            legal_text(source.read_text(encoding="utf-8")), encoding="utf-8", newline="\n"
+        )
+    print("wrote zht.ts, names.ts, weather.ts, FirstTrip.tsx and the legal pages' zht.tsx")
 
 
 if __name__ == "__main__":

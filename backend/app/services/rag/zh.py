@@ -326,6 +326,10 @@ NOT_FISHING = (
     "旗竿", "竹竿", "晾衣竿", "热带鱼", "孔雀鱼", "水煮鱼", "酸菜鱼", "清蒸鱼", "红烧鱼", "糖醋鱼",
     # Lines that aren't fishing line (线 alone is an AMBIGUOUS_TERM).
     "电线", "数据线", "网线", "充电线", "耳机线", "路线", "在线", "线上", "线下", "天线", "毛线", "针线", "前线", "航线",
+    # Where 钓鱼 means a scam, a trap or a place, and idioms (the product owner,
+    # 2026-11-13: questions that only share the word found the guides).
+    "钓鱼执法", "钓鱼网站", "钓鱼邮件", "钓鱼链接", "钓鱼短信", "钓鱼攻击", "钓鱼帖", "钓鱼贴",
+    "钓鱼岛", "钓鱼台", "钓凯子", "钓金龟婿", "姜太公钓鱼", "愿者上钩", "放长线钓大鱼", "摸鱼",
 )
 AMBIGUOUS_TERMS = (
     "鱼", "保鲜", "冷冻", "冷藏", "解冻", "清洗", "处理", "新鲜", "好吃", "能吃", "可以吃",

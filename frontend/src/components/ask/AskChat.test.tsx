@@ -6,15 +6,15 @@ import { AskChat } from "./AskChat";
 
 vi.mock("@/lib/api/client", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api/client")>("@/lib/api/client");
-  return { ...actual, postAsk: vi.fn(), listJurisdictions: vi.fn() };
+  return { ...actual, postAsk: vi.fn(), listJurisdictions: vi.fn(), listGear: vi.fn() };
 });
 vi.mock("@/lib/api/session", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api/session")>("@/lib/api/session");
-  return { ...actual, postAskSummary: vi.fn(), identifyFish: vi.fn() };
+  return { ...actual, postAskSummary: vi.fn(), identifyFish: vi.fn(), identifyGear: vi.fn(), askAboutPhoto: vi.fn() };
 });
 vi.mock("next/navigation", () => ({ usePathname: () => "/ask" }));
-const { ApiError, listJurisdictions, postAsk } = await import("@/lib/api/client");
-const { identifyFish, postAskSummary } = await import("@/lib/api/session");
+const { ApiError, listGear, listJurisdictions, postAsk } = await import("@/lib/api/client");
+const { askAboutPhoto, identifyFish, identifyGear, postAskSummary } = await import("@/lib/api/session");
 const mockedAsk = vi.mocked(postAsk);
 const mockedSummary = vi.mocked(postAskSummary);
 
@@ -436,7 +436,7 @@ describe("AskChat", () => {
 
   describe("a photo", () => {
     const photo = new File(["jpeg"], "catch.jpg", { type: "image/jpeg" });
-    const pick = () => fireEvent.change(screen.getByLabelText("Identify a fish from a photo", { selector: "input" }), { target: { files: [photo] } });
+    const pick = () => fireEvent.change(screen.getByLabelText("Identify a fish or gear from a photo", { selector: "input" }), { target: { files: [photo] } });
 
     beforeEach(() => {
       vi.mocked(identifyFish).mockReset();
@@ -456,6 +456,58 @@ describe("AskChat", () => {
       expect(await screen.findByText("Bluegill", { selector: "strong" })).toBeInTheDocument();
       fireEvent.click(screen.getByRole("button", { name: "What bait for bluegill?" }));
       await waitFor(() => expect(mockedAsk).toHaveBeenCalledWith(expect.objectContaining({ question: "What bait for bluegill?" })));
+    });
+
+    // The product owner, 2026-11-13: a reel full of line was answered "not
+    // a fish". Not a fish, the gear camera has a look.
+    const notAFish = { available: true, model: "m", fish_probability: 0.04, verdict: null, candidates: [] };
+
+    it("names gear when the photo isn't a fish, with a question to ask next", async () => {
+      vi.mocked(identifyFish).mockResolvedValue(notAFish);
+      vi.mocked(identifyGear).mockResolvedValue({
+        available: true, model: "g", gear_probability: 0.93, sure: true, not_gear: null, message: null,
+        candidates: [{ id: "spinning-reel", name: "Spinning reel", category: "reels", probability: 0.88 }],
+      });
+      vi.mocked(listGear).mockResolvedValue({ categories: [], items: [] });
+      mockedAsk.mockResolvedValue(searchResult());
+      render(<AskChat suggestions={SUGGESTIONS} />);
+      pick();
+      expect(await screen.findByText("Spinning reel", { selector: "strong" })).toBeInTheDocument();
+      expect(screen.getAllByRole("link", { name: "Spinning reel" })[0]).toHaveAttribute("href", "/gear#spinning-reel");
+      fireEvent.click(screen.getByRole("button", { name: "How do I use this spinning reel?" }));
+      await waitFor(() => expect(mockedAsk).toHaveBeenCalledWith(expect.objectContaining({ question: "How do I use this spinning reel?" })));
+    });
+
+    it("asks about gear without the aside in its name, in the plural when the name is", async () => {
+      vi.mocked(identifyFish).mockResolvedValue(notAFish);
+      vi.mocked(identifyGear).mockResolvedValue({
+        available: true, model: "g", gear_probability: 0.9, sure: true, not_gear: null, message: null,
+        candidates: [{ id: "bobber", name: "Bobbers (round floats)", category: "terminal", probability: 0.9 }],
+      });
+      vi.mocked(listGear).mockResolvedValue({ categories: [], items: [] });
+      render(<AskChat suggestions={SUGGESTIONS} />);
+      pick();
+      expect(await screen.findByRole("button", { name: "How do I use these bobbers?" })).toBeInTheDocument();
+    });
+
+    it("offers the AI when neither check can name the photo, and shows its answer", async () => {
+      mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: 3, remaining: 3, enabled: true } }));
+      vi.mocked(identifyFish).mockResolvedValue(notAFish);
+      vi.mocked(identifyGear).mockResolvedValue({
+        available: true, model: "g", gear_probability: 0.1, sure: false, not_gear: "room", message: null, candidates: [],
+      });
+      vi.mocked(askAboutPhoto).mockResolvedValue({
+        answer: "A spinning reel filled with braid nearly to the lip.", answer_source: "llm",
+        ai: { signed_in: true, limit: 3, remaining: 2, enabled: true },
+      });
+      render(<AskChat suggestions={SUGGESTIONS} />);
+      await askVia("what bait for crappie");
+      await screen.findByText("Here's what the FishEye guides say:");
+      pick();
+      expect(await screen.findByText("This doesn't look like a fish or any gear we know.")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Ask the AI about this photo" }));
+      expect(await screen.findByText("A spinning reel filled with braid nearly to the lip.")).toBeInTheDocument();
+      expect(askAboutPhoto).toHaveBeenCalledWith(photo, "en");
     });
 
     it("asks a signed-out visitor to sign in once the day's free checks are used", async () => {

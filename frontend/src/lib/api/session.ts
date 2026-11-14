@@ -17,6 +17,7 @@ import type {
   AiAllowance,
   VisitSummary,
   AskRequest,
+  AskPhotoResult,
   AskResponse,
   AdminLakeReport,
   AdminPin,
@@ -200,6 +201,16 @@ export function identifyFish(photo: File, claim: { species_slug?: string; specie
   if (claim.species_slug) form.set("species_slug", claim.species_slug);
   if (claim.species_other) form.set("species_other", claim.species_other);
   return sfetch<FishIdResult>("/api/fish-id", { method: "POST", body: form });
+}
+
+/** Ask the AI about a photo FishEye's own checks couldn't name (backend
+ * /api/ask/photo): one of the day's AI answers, given back when none comes. */
+export function askAboutPhoto(photo: File, lang: string, question = "") {
+  const form = new FormData();
+  form.append("photo", photo, photo.name);
+  form.append("question", question);
+  form.append("lang", lang);
+  return sfetch<AskPhotoResult>("/api/ask/photo", { method: "POST", body: form });
 }
 
 /** What gear a photo shows (the camera on /gear). Read on FishEye's server

@@ -118,6 +118,22 @@ same address had them back. Re-registering is still allowed; it just finds
 the day's count where it was. A different address is a different person, as
 before. The privacy policy says the count is kept 30 days.
 
+## Amendment, 2026-11-13: a photo FishEye can't name
+
+Ask's camera tries FishEye's own models first: the fish check, then, when the
+photo isn't a fish, the gear check (a reel full of line had come back "not a
+fish"). Only when neither can name it does the page offer "Ask the AI about
+this photo" (`POST /api/ask/photo`, services/rag/photo.py), on a signed-in
+account, as one of the day's three AI answers. The owner's rule: our own
+models are free for everyone and come first; the AI is the fallback.
+
+- The photo goes through `clean_photo` first (re-saved as a JPEG without its
+  location and camera details) and isn't kept. The privacy policy names
+  Anthropic for it.
+- The model answers about fishing only, never describes a person and never
+  states a regulation; a photo it finds has nothing to do with fishing, or a
+  failed or unusable reply, gives the answer back.
+
 ## Consequences
 
 - The Ask page works fully signed out; the summary is an extra. A model

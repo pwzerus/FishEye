@@ -125,6 +125,69 @@ def test_the_real_model_answers_a_chinese_question():
     assert r.search("红烧肉怎么做") == []
 
 
+class _Gate:
+    """A stand-in for EnglishGate that gives one answer for every question."""
+
+    def __init__(self, fishing: bool):
+        self.fishing = fishing
+
+    def is_fishing(self, qvec) -> bool:
+        return self.fishing
+
+
+# The product owner, 2026-11-13: "how to find a girl who loves fishing" found
+# the trolling guide. An English question that only shares a word with
+# fishing finds nothing, and is said not to be about fishing.
+def test_a_question_that_only_shares_a_word_with_fishing_finds_nothing():
+    from app.services.rag.retriever import EMPTY_OFF_TOPIC
+
+    r = _hybrid({})
+    r.en_gate = _Gate(False)
+    assert r.search("how to find a girl who loves fishing") == []
+    assert r.why_empty("how to find a girl who loves fishing") == EMPTY_OFF_TOPIC
+    r.en_gate = _Gate(True)
+    assert r.search("where do fish go in winter")
+
+
+def test_naming_tackle_or_a_fish_keeps_a_question_whatever_the_meaning_check_says():
+    r = _hybrid({})
+    r.en_gate = _Gate(False)
+    assert r.search("what fishing rod should a beginner buy")  # tackle
+    assert r.search("what bait for crappie")  # a fish FishEye has a guide for
+    assert r.search("钓鱼用什么饵")  # bait, in Chinese
+
+
+# The same in Chinese: 钓鱼 alone is what a date who loves fishing, a dream
+# and a game share; a question naming a hook or bait is kept.
+def test_a_chinese_question_that_only_shares_a_word_with_fishing_finds_nothing(monkeypatch):
+    from app.services.rag.retriever import EMPTY_OFF_TOPIC
+
+    r = _hybrid({})
+    monkeypatch.setattr(r.ways, "means_fishing", lambda qvec: False)
+    assert r.search("怎么找一个喜欢钓鱼的女朋友") == []
+    assert r.why_empty("怎么找一个喜欢钓鱼的女朋友") == EMPTY_OFF_TOPIC
+    assert r.search("蟋蟀怎么挂钩")
+    monkeypatch.setattr(r.ways, "means_fishing", lambda qvec: True)
+    assert r.search("冬天还能钓鱼吗")
+
+
+@pytest.mark.skipif(not (MODEL_DIR / "tokenizer.json").exists(), reason="embedding model not installed")
+def test_the_real_model_tells_fishing_from_its_lookalikes():
+    embedder = load_embedder()
+    assert embedder is not None
+    r = HybridRetriever(bm25_retriever(), embedder)
+    for q in ("how to find a girl who loves fishing", "how to spot a phishing email", "best fishing games for xbox",
+              "what does it mean when someone is fishing for compliments"):
+        assert r.search(q) == [], q
+    for q in ("how do I take my girlfriend fishing for the first time", "how do I clean a fish I caught",
+              "how do I tie a palomar knot", "Best Fish Finder"):
+        assert r.search(q), q
+    for q in ("怎么找一个喜欢钓鱼的女朋友", "梦见钓鱼是什么意思", "我的世界钓鱼能钓到什么"):
+        assert r.search(q) == [], q
+    for q in ("带女朋友第一次去钓鱼要准备什么", "钓鱼可以带狗吗", "冬天还能钓鱼吗", "蟋蟀怎么挂钩？"):
+        assert r.search(q), q
+
+
 def test_a_states_view_of_the_hybrid_index_reuses_the_vectors():
     from app.services.rag import regional
 

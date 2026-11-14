@@ -14,13 +14,14 @@ The search is the product; the written answer is an extra on top of it.
 """
 from dataclasses import replace
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.api import rate_limits
 from app.api.auth_deps import optional_user, require_user, same_origin
 from app.api.deps import get_db
 from app.api.species import source_out
+from app.core.config import get_settings
 from app.knowledge import jurisdictions
 from app.knowledge.species_guides import get_guide, sources_for
 from app.models.community import User
@@ -28,6 +29,7 @@ from app.schemas.ask import (
     AiAllowanceOut,
     AskCitationOut,
     AskLakesOut,
+    AskPhotoOut,
     AskRequest,
     AskResponse,
     AskRetrievedOut,
@@ -35,13 +37,20 @@ from app.schemas.ask import (
 )
 from app.services import ai_budget, ai_quota, ask_misses
 from app.services.rag import ask as rag_ask
+from app.services.media import PhotoRejected, clean_photo
 from app.services.rag import lake_facts, replies, site_help
+from app.services.rag import photo as rag_photo
 
 router = APIRouter(prefix="/ask", tags=["ask"])
 
 NOT_A_FISHING_QUESTION = (
     "AI answers are for fishing questions, and this doesn't look like one. "
     "Nothing was used from today's allowance."
+)
+
+USED_TODAY = (
+    "You've used today's free AI answers. Searching the guides is still free; "
+    "AI answers come back tomorrow (UTC)."
 )
 
 # What the search found that an AI answer can add to: the guides' passages,
@@ -202,15 +211,49 @@ def summarize(
 
     day = ai_quota.today()
     if not ai_quota.reserve(db, user, day):
-        raise HTTPException(
-            status_code=429,
-            detail=(
-                "You've used today's free AI answers. Searching the guides is still free; "
-                "AI answers come back tomorrow (UTC)."
-            ),
-        )
+        raise HTTPException(status_code=429, detail=USED_TODAY)
 
     result = rag_ask.ask(payload.question, species_slug=slug, state=state, lang=payload.lang)
     if result.answer_source != rag_ask.ANSWER_LLM or result.trace.cache_hit:
         ai_quota.give_back(db, user, day)
     return _response(result, _allowance_out(db, user), state, lang=payload.lang)
+
+
+@router.post(
+    "/photo",
+    response_model=AskPhotoOut,
+    dependencies=[Depends(same_origin), Depends(require_user), Depends(rate_limits.LLM)],
+)
+def ask_about_photo(
+    photo: UploadFile = File(...),
+    question: str = Form(""),
+    lang: str | None = Form(None),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_user),
+) -> AskPhotoOut:
+    """Ask the AI about a photo FishEye's own checks couldn't name
+    (services/rag/photo.py). One of the day's AI answers, reserved first and
+    given back when no answer comes of it, like /summary. The photo is
+    cleaned and not kept."""
+    cap = get_settings().max_photo_bytes
+    data = photo.file.read(cap + 1)
+    if len(data) > cap:
+        raise HTTPException(status_code=413, detail=f"Photos can be up to {cap // (1024 * 1024)} MB.")
+    try:
+        cleaned = clean_photo(data)
+    except PhotoRejected as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if ai_budget.exhausted(db):
+        raise HTTPException(status_code=503, detail=ai_budget.PAUSED)
+    day = ai_quota.today()
+    if not ai_quota.reserve(db, user, day):
+        raise HTTPException(status_code=429, detail=USED_TODAY)
+    result = rag_photo.ask_about_photo(cleaned.full, question, payload_lang(lang))
+    if result.source != rag_photo.ANSWER_LLM:
+        ai_quota.give_back(db, user, day)
+    return AskPhotoOut(answer=result.answer, answer_source=result.source, provider=result.provider,
+                       ai=_allowance_out(db, user))
+
+
+def payload_lang(lang: str | None) -> str | None:
+    return lang if lang in rag_photo.LANGUAGE_NAMES else None

@@ -21,6 +21,9 @@ That is what lets "怎么杀鱼" through, which has no English word to match.
 """
 from __future__ import annotations
 
+import json
+import re
+from pathlib import Path
 from typing import cast
 
 import numpy as np
@@ -32,6 +35,7 @@ from app.services.rag.embeddings import MODEL_DIR, Embedder, passage_vectors
 from app.services.rag.zh_search import ZhTopics, asks
 from app.services.rag.retriever import (
     AMBIGUOUS_ALIASES,
+    EMPTY_OFF_TOPIC,
     AmbiguousName,
     BM25Retriever,
     ScoredPassage,
@@ -101,10 +105,13 @@ class WaysOfAsking:
     def __init__(self, embedder: Embedder, cache: bool = True) -> None:
         ways = cast("dict[str, list[str]]", table("topic_asks", "zh"))
         others = cast("list[str]", table("not_fishing", "zh"))
+        library = json.loads((KNOWLEDGE / "qa_library.json").read_text(encoding="utf-8"))
         self._topics = [topic for topic, phrases in ways.items() for _ in phrases]
         cache_dir = MODEL_DIR if cache else None
         self._ways = passage_vectors(embedder, [p for phrases in ways.values() for p in phrases], cache_dir, "query")
         self._others = passage_vectors(embedder, others, cache_dir, "query")
+        asked = [item["question_zh"] for item in library["items"] if item.get("question_zh")]
+        self._library = passage_vectors(embedder, asked, cache_dir, "query")
 
     def nearest(self, qvec: np.ndarray, top: int = 3) -> list[tuple[str, float]]:
         sims = self._ways @ qvec
@@ -121,6 +128,56 @@ class WaysOfAsking:
             return False
         return float((self._ways @ qvec).max()) > float((self._others @ qvec).max())
 
+    def means_fishing(self, qvec: np.ndarray) -> bool:
+        """A question that has 钓鱼 in it: about fishing, or about dating, a
+        dream, a game or baiting someone? The fishing side is the ways of
+        asking and the question library's Chinese questions; the closer
+        side wins, and a tie counts as fishing."""
+        fishing = max(float((self._ways @ qvec).max()), float((self._library @ qvec).max()))
+        return fishing >= float((self._others @ qvec).max())
+
+
+KNOWLEDGE = Path(__file__).resolve().parents[2] / "knowledge"
+# Tackle and bait that only anglers talk about: a question naming one is about
+# fishing whatever else it says (HybridRetriever._not_about_fishing).
+_GEAR_WORD = re.compile(
+    r"\b(rods?|reels?|lures?|baits?|tackle|gear|equipment|bobbers?|hooks?|jigs?|sinkers?|swivels?|"
+    r"leaders?|braid|fluoro(carbon)?|mono(filament)?|spinnerbaits?|crankbaits?|jerkbaits?|soft ?plastics?|"
+    r"rigs?|fish ?finders?|fishing line|nightcrawlers?|minnows?|waders?|spools?|drag|licen[cs]e)\b",
+    re.I,
+)
+# The same in Chinese: every fishing word the keyword gate knows except 钓
+# itself, which 钓鱼执法, 钓凯子 and a date who loves fishing share.
+_ZH_TACKLE = tuple(term for term in zh.FISHING_TERMS if term != "钓")
+
+
+class EnglishGate:
+    """Is an English question that uses a fishing word about fishing?
+
+    The keyword gate (retriever.is_on_topic) lets in any question with
+    "fish" or "fishing" in it, so "how to find a girl who loves fishing"
+    brought back the trolling guide (the product owner, 2026-11-13). Here
+    the question is compared by meaning with what FishEye covers (every
+    guide passage, and the question library's questions) and with
+    questions about something else that use the same words: dating, scams
+    ("phishing"), video games, aquariums, idioms
+    (knowledge/not_fishing_en.json). The closer side wins, as with the
+    "bass" decoys: this model's cosines can't say by themselves whether a
+    question is about fishing (ADR 0025), but which of two things it is
+    closer to they can. Everything is encoded as a passage, so both sides
+    are measured the same way. A tie counts as fishing."""
+
+    def __init__(self, embedder: Embedder, passages: np.ndarray, cache: bool = True) -> None:
+        library = json.loads((KNOWLEDGE / "qa_library.json").read_text(encoding="utf-8"))
+        others = json.loads((KNOWLEDGE / "not_fishing_en.json").read_text(encoding="utf-8"))
+        cache_dir = MODEL_DIR if cache else None
+        questions = passage_vectors(embedder, [item["question"] for item in library["items"]], cache_dir, "passage")
+        self._ways = np.vstack([passages, questions])
+        self._others = passage_vectors(embedder, others, cache_dir, "passage")
+
+    def is_fishing(self, qvec: np.ndarray) -> bool:
+        return float((self._ways @ qvec).max()) >= float((self._others @ qvec).max())
+
 
 class HybridRetriever:
     name = "hybrid"
@@ -131,6 +188,7 @@ class HybridRetriever:
         embedder: Embedder,
         vectors: np.ndarray | None = None,
         ways: WaysOfAsking | None = None,
+        en_gate: EnglishGate | None = None,
     ) -> None:
         self.bm25 = bm25
         self.passages = bm25.passages
@@ -145,6 +203,7 @@ class HybridRetriever:
             if p.section.startswith("rule-license"):
                 self._topic.setdefault("rule-license", i)
         self.ways = ways if ways is not None else WaysOfAsking(embedder, cache=vectors is None)
+        self.en_gate = en_gate if en_gate is not None else EnglishGate(embedder, self._vecs, cache=vectors is None)
         # One vector per decoy sentence, for the ambiguous names
         # (retriever.AmbiguousName). About 30 short sentences, encoded once.
         decoys = [(alias, d) for alias, n in AMBIGUOUS_ALIASES.items() for d in n.decoys]
@@ -173,7 +232,35 @@ class HybridRetriever:
         return resolve_species(question, lambda q, alias, name: self._about_the_fish_sims(sims, qvec, alias, name))
 
     def why_empty(self, question: str, species: tuple[str, ...] | None = None) -> str:
-        return explain_empty(question, self.resolve(question)[0], species)
+        qvec = self._qvec(question)
+        named = self._resolve(question, qvec)[0]
+        if self._not_about_fishing(question, qvec, named or species):
+            return EMPTY_OFF_TOPIC
+        return explain_empty(question, named, species)
+
+    def _not_about_fishing(
+        self, question: str, qvec: np.ndarray, routed: tuple[str, ...] | None, zh_vec: np.ndarray | None = None
+    ) -> bool:
+        """A question that names no fish and passed the keyword gate on a
+        fishing word, but means something else: EnglishGate in English, and
+        in Chinese the ways of asking against questions about other things
+        (WaysOfAsking.means_fishing). One that names a piece of tackle is
+        taken as fishing: "Best Fish Finder" and "Rocket Fishing rod?" were
+        turned away on 2026-11-13's check against real beginners' questions,
+        while "fish" and "fishing" (钓鱼) alone are the words dating,
+        aquarium and video game questions share."""
+        if routed:
+            return False
+        if zh.has_chinese(question):
+            text = zh.without_other_meanings(question)
+            if any(term in text for term in _ZH_TACKLE):
+                return False
+            if zh_vec is None:
+                zh_vec = self.embedder.encode([question.lower()], kind="query")[0]
+            return not self.ways.means_fishing(zh_vec)
+        if _GEAR_WORD.search(question):
+            return False
+        return not self.en_gate.is_fishing(qvec)
 
     def _qvec(self, question: str) -> np.ndarray:
         # A Chinese question with the glossary's English added, as the
@@ -210,6 +297,8 @@ class HybridRetriever:
         elif names_unguided_fish(question):
             return []
         elif not is_on_topic(question) and not (zh_vec is not None and self.ways.is_fishing(question.lower(), zh_vec)):
+            return []
+        elif self._not_about_fishing(question, qvec, routed, zh_vec):
             return []
 
         query = query_terms(question, residual, named)

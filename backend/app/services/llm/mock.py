@@ -25,9 +25,10 @@ from __future__ import annotations
 import json
 import re
 import time
+from collections.abc import Sequence
 from typing import Any
 
-from app.services.llm.base import LLMProvider, LLMResponse, LLMUnavailable
+from app.services.llm.base import Image, LLMProvider, LLMResponse, LLMUnavailable
 
 # The advisor wraps its structured facts in this fence so the mock can read
 # back the same payload a real model would be reasoning over. Keeping the
@@ -58,7 +59,7 @@ class MockProvider(LLMProvider):
     def __init__(self, failure_mode: str = FAILURE_NONE) -> None:
         self.failure_mode = failure_mode
 
-    def complete(self, system_prompt: str, user_prompt: str) -> LLMResponse:
+    def complete(self, system_prompt: str, user_prompt: str, images: Sequence[Image] = ()) -> LLMResponse:
         started = time.perf_counter()
 
         if self.failure_mode == FAILURE_UNAVAILABLE:
@@ -67,6 +68,9 @@ class MockProvider(LLMProvider):
         passages_match = PASSAGES_BLOCK_RE.search(user_prompt)
         if self.failure_mode == FAILURE_INVALID_JSON:
             text = '{"summary": "truncated response with no closing brace'
+        elif images:
+            # Ask's photo question: the mock can't see, and says so.
+            text = json.dumps({"answer": "The demo model can't look at photos; a real model would describe this one."})
         elif passages_match is not None:
             passages = json.loads(passages_match.group(1))
             text = json.dumps(self._compose_answer(passages), ensure_ascii=False)

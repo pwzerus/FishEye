@@ -8,17 +8,18 @@ import { BaitChips, BaitText } from "@/components/baits/BaitTip";
 import { LakeAnswer } from "@/components/ask/LakeAnswer";
 import { useSignedIn } from "@/components/auth/AuthProvider";
 import { FishArt } from "@/components/fish/FishArt";
-import { FishIdAnswer, likelyFish } from "@/components/identify/IdentifyFish";
+import { GearIdAnswer } from "@/components/gear/IdentifyGear";
+import { FishIdAnswer, likelyFish, MIN_FISH } from "@/components/identify/IdentifyFish";
 import { useLocale, useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages";
-import { localFishName, localStateName, localTopicTitle } from "@/i18n/names";
-import { ApiError, postAsk } from "@/lib/api/client";
-import { identifyFish, postAskSummary } from "@/lib/api/session";
+import { localFishName, localGearName, localStateName, localTopicTitle } from "@/i18n/names";
+import { ApiError, listGear, postAsk } from "@/lib/api/client";
+import { askAboutPhoto, identifyFish, identifyGear, postAskSummary } from "@/lib/api/session";
 import { waterFor } from "@/lib/fishArt";
 import { useJurisdictions, useSelectedState } from "@/lib/jurisdiction";
 import { StatePicker } from "@/components/ui/StatePicker";
-import type { AiAllowance, AskCitation, AskResponse, FishIdResult } from "@/lib/api/types";
+import type { AiAllowance, AskCitation, AskResponse, FishIdResult, GearIdResult, GearItem } from "@/lib/api/types";
 
 /**
  * Q&A over the fish guides (backend services/rag/ask.py), in two steps
@@ -55,16 +56,28 @@ type Summary =
   | { status: "done"; response: AskResponse }
   | { status: "error"; message: string };
 
+// A photo in Ask: FishEye's fish check first, then its gear check when the
+// photo isn't a fish (the product owner, 2026-11-13: a reel full of line
+// was answered "not a fish"), and when neither can name it, the AI.
 type PhotoCheck =
   | { status: "checking" }
   | { status: "done"; result: FishIdResult }
+  | { status: "gear"; result: GearIdResult; items: GearItem[] }
+  | { status: "neither" }
   | { status: "signin" }
+  | { status: "error"; message: string };
+
+type AiPhoto =
+  | { status: "loading" }
+  | { status: "done"; answer: string }
+  | { status: "off_topic" }
+  | { status: "failed" }
   | { status: "error"; message: string };
 
 type Turn =
   | { id: number; role: "user"; text: string }
   | { id: number; role: "photo"; src: string }
-  | { id: number; role: "fish-id"; check: PhotoCheck }
+  | { id: number; role: "fish-id"; check: PhotoCheck; file?: File; aiPhoto?: AiPhoto }
   | { id: number; role: "assistant"; response: AskResponse; summary?: Summary }
   | { id: number; role: "error"; question: string; message?: string };
 
@@ -393,11 +406,25 @@ export function AskChat({
       setTurns((ts) => [
         ...ts,
         { id: photoId, role: "photo", src },
-        { id: answerId, role: "fish-id", check: { status: "checking" } },
+        { id: answerId, role: "fish-id", check: { status: "checking" }, file },
       ]);
       setCheckingPhoto(true);
       try {
-        setCheck({ status: "done", result: await identifyFish(file) });
+        const fish = await identifyFish(file);
+        if (fish.available && (fish.fish_probability ?? 0) < MIN_FISH) {
+          // Not a fish: it may be gear (the gear camera on /gear).
+          const gear = await identifyGear(file).catch(() => null);
+          if (gear?.available && gear.candidates.length > 0) {
+            const items = (await listGear(locale).catch(() => null))?.items ?? [];
+            setCheck({ status: "gear", result: gear, items });
+            return;
+          }
+          if (gear?.available) {
+            setCheck({ status: "neither" });
+            return;
+          }
+        }
+        setCheck({ status: "done", result: fish });
       } catch (e) {
         // Signed out, 429 is the day's free checks used up (api/pins._trial).
         if (e instanceof ApiError && (e.status === 401 || (e.status === 429 && !signedIn))) setCheck({ status: "signin" });
@@ -406,7 +433,25 @@ export function AskChat({
         setCheckingPhoto(false);
       }
     },
-    [all.identify.checkFailed, signedIn],
+    [all.identify.checkFailed, signedIn, locale],
+  );
+
+  const askPhotoAi = useCallback(
+    async (turnId: number, file: File) => {
+      const set = (aiPhoto: AiPhoto) =>
+        setTurns((ts) => ts.map((x) => (x.id === turnId && x.role === "fish-id" ? { ...x, aiPhoto } : x)));
+      set({ status: "loading" });
+      try {
+        const r = await askAboutPhoto(file, locale);
+        setAi(r.ai);
+        if (r.answer_source === "llm" && r.answer) set({ status: "done", answer: r.answer });
+        else set({ status: r.answer_source === "off_topic" ? "off_topic" : "failed" });
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 429) setAi((a) => (a ? { ...a, remaining: 0 } : a));
+        set({ status: "error", message: e instanceof ApiError ? e.message : t.serverDown });
+      }
+    },
+    [locale, t.serverDown],
   );
 
   // The photos in the thread are this page's own copies; let them go.
@@ -510,6 +555,17 @@ export function AskChat({
             const check = turn.check;
             const fish = check.status === "done" ? likelyFish(check.result) : null;
             const name = fish ? (localFishName(fish.slug, locale) ?? fish.label) : "";
+            const gearTop = check.status === "gear" && check.result.sure ? check.result.candidates[0] : null;
+            const gearName = gearTop ? (localGearName(gearTop.id, locale) ?? gearTop.name) : "";
+            // The question chip leaves out a name's aside: "Bobbers (round floats)".
+            const gearAsked = gearName.replace(/\s*[(（][^)）]*[)）]/g, "");
+            // FishEye's own checks couldn't name it: the AI may.
+            const offerAi =
+              ai?.enabled === true &&
+              (check.status === "neither" ||
+                (check.status === "done" && check.result.available && !fish) ||
+                (check.status === "gear" && !check.result.sure));
+            const aiPhoto = turn.aiPhoto;
             return (
               <div key={turn.id} className="msg msg-assistant">
                 <span className="avatar" aria-hidden="true">
@@ -519,7 +575,7 @@ export function AskChat({
                 <div className="bubble-card">
                   {check.status === "checking" && (
                     <p className="fish-check is-checking" role="status">
-                      <span className="fish-check-spinner" aria-hidden="true" /> {all.identify.checking}
+                      <span className="fish-check-spinner" aria-hidden="true" /> {t.photoChecking}
                     </p>
                   )}
                   {check.status === "signin" && (
@@ -536,6 +592,63 @@ export function AskChat({
                     </p>
                   )}
                   {check.status === "done" && <FishIdAnswer result={check.result} />}
+                  {check.status === "gear" && <GearIdAnswer result={check.result} items={check.items} base="/gear" />}
+                  {gearTop && (
+                    <div className="chip-row">
+                      <button type="button" className="chip" disabled={busy} onClick={() => ask(t.howToUse(gearAsked))}>
+                        {t.howToUse(gearAsked)}
+                      </button>
+                    </div>
+                  )}
+                  {check.status === "neither" && (
+                    <p className="identify-verdict" role="status">
+                      {t.photoNeither}
+                    </p>
+                  )}
+                  {offerAi && (
+                    <div className="ai-summary ai-summary-cta">
+                      {aiPhoto?.status === "done" ? (
+                        <>
+                          <div className="bubble-meta">
+                            <span className="badge badge-ok">{t.aiChecked}</span>
+                          </div>
+                          <div className="answer-text">
+                            {aiPhoto.answer.split("\n\n").map((para, i) => (
+                              <p key={i}>{para}</p>
+                            ))}
+                          </div>
+                          <AiNote />
+                        </>
+                      ) : aiPhoto?.status === "loading" ? (
+                        <span className="muted">{t.photoLooking}</span>
+                      ) : (
+                        <>
+                          {aiPhoto?.status === "off_topic" && <p className="muted">{t.photoOffTopic}</p>}
+                          {aiPhoto?.status === "failed" && <p className="muted">{t.photoAiFailed}</p>}
+                          {aiPhoto?.status === "error" && <p className="ai-summary-error">{aiPhoto.message}</p>}
+                          {!ai.signed_in ? (
+                            <p className="muted">
+                              {t.signInBefore}
+                              <Link href={loginHref}>{t.signInLink}</Link>
+                              {t.signInFor}
+                            </p>
+                          ) : ai.remaining === 0 ? (
+                            <p className="muted">{t.usedToday}</p>
+                          ) : (
+                            aiPhoto?.status !== "off_topic" && (
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => turn.file && void askPhotoAi(turn.id, turn.file)}
+                              >
+                                {t.photoAskAi}
+                              </button>
+                            )
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
                   {fish?.in_guides && (
                     <div className="chip-row">
                       {t.photoQuestions(name).map((q) => (

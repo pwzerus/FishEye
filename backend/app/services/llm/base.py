@@ -19,7 +19,18 @@ untestable and hide exactly the failure mode the fallback path exists for.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Image:
+    """A photo sent along with the prompt (Ask's "ask the AI about this
+    photo"). Already cleaned: re-encoded, metadata and location gone
+    (services/media.clean_photo)."""
+
+    media_type: str  # "image/jpeg"
+    data: bytes
 
 
 @dataclass(frozen=True)
@@ -56,8 +67,9 @@ class LLMProvider(ABC):
     name: str = "abstract"
 
     @abstractmethod
-    def complete(self, system_prompt: str, user_prompt: str) -> LLMResponse:
+    def complete(self, system_prompt: str, user_prompt: str, images: Sequence[Image] = ()) -> LLMResponse:
         """Return the model's raw text. Raise LLMUnavailable if the provider
         itself failed; never return a placeholder string, because a caller
-        can't tell that apart from a real (bad) answer."""
+        can't tell that apart from a real (bad) answer. `images` go before
+        the prompt in the same message."""
         raise NotImplementedError

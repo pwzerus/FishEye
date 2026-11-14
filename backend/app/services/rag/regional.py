@@ -60,5 +60,5 @@ def _build(retr: Retriever, state: str | None) -> Retriever | None:
 
     if isinstance(retr, HybridRetriever):
         # The passage vectors are reused, not re-encoded.
-        return HybridRetriever(BM25Retriever(subset), retr.embedder, retr._vecs[keep], retr.ways)
+        return HybridRetriever(BM25Retriever(subset), retr.embedder, retr._vecs[keep], retr.ways, retr.en_gate)
     return None

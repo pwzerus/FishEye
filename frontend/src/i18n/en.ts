@@ -46,6 +46,7 @@ const en = {
     iphone: "iPhone: open it in Safari, tap Share, then Add to Home Screen.",
     android: "Android: open it in Chrome, tap ⋮, then Add to Home screen or Install app.",
     ok: "Got it",
+    never: "Don't show again",
   },
   language: {
     label: "Language",
@@ -113,7 +114,7 @@ const en = {
     changed: (date: string) => `Our terms of use changed. The new ones apply to you from ${date}.`,
     readThem: "Read them",
     gotIt: "Got it",
-    englishOnly: "",
+    translation: "",
   },
   // Send feedback (components/feedback/FeedbackDialog.tsx).
   feedback: {
@@ -982,6 +983,14 @@ const en = {
     summarize: (left: number | null) => `Ask the AI${left === null ? "" : ` (${left} left today)`}`,
     aiMayErr: "AI answers can be wrong.",
     aiTerms: "Terms",
+    howToUse: (name: string) =>
+      `How do I use ${name.endsWith("s") ? "these" : "this"} ${name.charAt(0).toLowerCase()}${name.slice(1)}?`,
+    photoNeither: "This doesn't look like a fish or any gear we know.",
+    photoAskAi: "Ask the AI about this photo",
+    photoLooking: "The AI is looking at the photo…",
+    photoChecking: "Checking what this is… (a few seconds)",
+    photoOffTopic: "The AI didn't find anything about fishing in this photo. This one didn't count toward today's AI answers.",
+    photoAiFailed: "The AI couldn't read this photo. Please try again. This one didn't count toward today's AI answers.",
     lookingThrough: "Looking through the guides…",
     searching: "Searching the guides",
     serverDown: "Couldn't reach FishEye's server.",
@@ -994,10 +1003,10 @@ const en = {
     placeholder: "Ask about bait, rigs, where to look…",
     yourQuestion: "Your question",
     // Photo ID in Ask (components/ask/AskChat.tsx).
-    photo: "Identify a fish from a photo",
+    photo: "Identify a fish or gear from a photo",
     yourPhoto: "Your photo",
     photoNeedsAccount: "You've used today's free photo checks. A free FishEye account lets you check more.",
-    photoHint: "Or tap the camera to find out which fish is in a photo.",
+    photoHint: "Or tap the camera to find out what fish or gear is in a photo.",
     photoQuestions: (fish: string) => [`How do I catch ${fish.toLowerCase()}?`, `What bait for ${fish.toLowerCase()}?`],
     send: "Send",
   },

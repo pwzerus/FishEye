@@ -126,7 +126,7 @@ export function IdentifyGear({ items }: { items: GearItem[] }) {
 
 /** What the camera found: one item named, or a few to compare, each with
  * this page's photo of it. */
-export function GearIdAnswer({ result, items }: { result: GearIdResult; items: GearItem[] }) {
+export function GearIdAnswer({ result, items, base = "" }: { result: GearIdResult; items: GearItem[]; base?: string }) {
   const t = useT().gearPage.camera;
   const locale = useLocale();
   if (!result.available) {
@@ -165,7 +165,7 @@ export function GearIdAnswer({ result, items }: { result: GearIdResult; items: G
           <span className="gear-id-nophoto" aria-hidden="true" />
         )}
         <span className="identify-name">
-          <a href={`#${c.id}`}>{name(c)}</a>
+          <a href={`${base}#${c.id}`}>{name(c)}</a>
         </span>
         <span className="identify-bar" aria-hidden="true">
           <span style={{ width: percent(c.probability) }} />
@@ -184,7 +184,7 @@ export function GearIdAnswer({ result, items }: { result: GearIdResult; items: G
           </p>
           <ul className="identify-list gear-id-list">{row(top)}</ul>
           <p>
-            <a href={`#${top.id}`} className="text-link">
+            <a href={`${base}#${top.id}`} className="text-link">
               {t.seeIt}
             </a>
           </p>

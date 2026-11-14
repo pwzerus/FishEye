@@ -415,7 +415,7 @@ button:active:not(:disabled), .btn:active { translate:0 1px; }
 .install-tip-icon { width: 44px; height: 44px; border-radius: 11px; }
 .install-tip-body strong { display: block; margin-bottom: 4px; font-size: 17px; color: var(--ink); }
 .install-tip-body p { margin: 0 0 4px; font-size: 15.5px; line-height: 1.5; color: var(--ink-2); }
-.install-tip-ok { grid-column: 2; justify-self: start; }
+.install-tip-actions { grid-column: 2; display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 760px) {
   .install-tip { top: calc(var(--header-h) + 10px); bottom: auto; left: 16px; right: 16px; width: auto; }
 }

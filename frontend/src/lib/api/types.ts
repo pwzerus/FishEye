@@ -856,6 +856,14 @@ export interface BaitCard {
   sources: GuideSource[];
 }
 
+/** POST /api/ask/photo: the AI's answer about a photo (backend services/rag/photo.py). */
+export interface AskPhotoResult {
+  answer: string | null;
+  answer_source: "llm" | "off_topic" | "fallback";
+  provider?: string;
+  ai: AiAllowance;
+}
+
 /** POST /api/fish-id: what a catch photo shows (backend app/api/pins.py). */
 export interface FishCandidate {
   slug: string;

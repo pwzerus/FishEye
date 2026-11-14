@@ -624,6 +624,14 @@ def test_rules_words_alone_stay_off_topic_in_chinese(question):
     assert not is_on_topic(question)
 
 
+# Where 钓鱼 means a trap, a scam or a place, or is part of an idiom (2026-11-13).
+@pytest.mark.parametrize(
+    "question", ["钓鱼执法是什么意思", "怎么识别钓鱼网站", "钓鱼岛是哪个国家的", "上班摸鱼被发现了怎么办", "姜太公钓鱼愿者上钩是什么意思"]
+)
+def test_other_meanings_of_fishing_stay_off_topic_in_chinese(question):
+    assert not is_on_topic(question)
+
+
 def test_a_chinese_question_about_keeping_fish_finds_georgias_limit_card(client):
     body = client.post("/api/ask", json={"question": "在佐治亚一次能带走几条鱼？", "state": "GA"}).json()
     assert body["trace"]["outcome"] == "ok"
