@@ -49,14 +49,14 @@ describe("Terms of use", () => {
   it("comes in the reader's language, saying the English version is the one that applies", async () => {
     await page("zh");
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("使用条款");
-    expect(screen.getByText("最后更新：2026年11月13日")).toBeInTheDocument();
+    expect(screen.getByText("最后更新：2026年11月16日")).toBeInTheDocument();
     expect(screen.getByText(/如与英文版本不一致，以英文版本为准/)).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "目录" })).toBeInTheDocument();
   });
 
   it("says nothing about translations in English", async () => {
     await page("en");
-    expect(screen.getByText("Last updated November 13, 2026")).toBeInTheDocument();
+    expect(screen.getByText("Last updated November 16, 2026")).toBeInTheDocument();
     expect(screen.queryByText(/translation/i, { selector: ".hint" })).toBeNull();
   });
 });

@@ -33,10 +33,10 @@ export const LEGAL = {
   optOutDays: 30,
   // The floor of FishEye's liability cap, in US dollars.
   liabilityFloorUsd: 50,
-  updatedIso: "2026-11-13",
+  updatedIso: "2026-11-16",
   // Accounts made before `updatedIso` come under these terms 14 days later
   // (`noticeDays`), after a notice on the site (components/legal/TermsNotice).
-  existingUsersFromIso: "2026-11-27",
+  existingUsersFromIso: "2026-11-30",
   // Off while FishEye is in testing with no real users (the owner,
   // 2026-11-15): no "terms changed" banner. Turn it on once the owner says
   // FishEye has launched; changes after that get the notice.

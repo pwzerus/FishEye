@@ -7,7 +7,7 @@ import { PRIVACY } from "./text";
 
 // This page's own date: gear on catches and the gear counts (backend ADR
 // 0056). Nothing collected before applies: catches had no gear until then.
-const UPDATED = "2026-11-14";
+const UPDATED = "2026-11-16";
 
 // The policy in the reader's language (text/): English is the one that
 // applies, and each translation says so at the top.

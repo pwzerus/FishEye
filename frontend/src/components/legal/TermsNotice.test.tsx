@@ -21,7 +21,7 @@ describe("TermsNotice", () => {
 
   it("tells an account from before the change when the new terms apply to it", () => {
     render(<TermsNotice />);
-    expect(screen.getByText("Our terms of use changed. The new ones apply to you from November 27, 2026.")).toBeInTheDocument();
+    expect(screen.getByText("Our terms of use changed. The new ones apply to you from November 30, 2026.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Read them" })).toHaveAttribute("href", "/terms");
   });
 
@@ -35,10 +35,10 @@ describe("TermsNotice", () => {
   });
 
   it.each([
-    ["an account made after the change, which agreed to the new terms", () => (user = { created_at: "2026-11-14T09:00:00Z" })],
+    ["an account made after the change, which agreed to the new terms", () => (user = { created_at: "2026-11-17T09:00:00Z" })],
     ["a visitor who isn't signed in", () => (user = null)],
     ["the terms page itself", () => (path = "/terms")],
-    ["a month after the change applies", () => vi.setSystemTime(new Date("2026-12-28T12:00:00Z"))],
+    ["a month after the change applies", () => vi.setSystemTime(new Date("2026-12-31T12:00:00Z"))],
   ])("shows nothing to %s", (_case, set) => {
     set();
     render(<TermsNotice />);
