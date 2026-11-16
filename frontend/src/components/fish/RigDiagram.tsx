@@ -2,9 +2,12 @@
 
 import type { ReactNode } from "react";
 
+import { LinkedText } from "@/components/terms/TermText";
 import { useT } from "@/i18n/client";
 
-import { RIG_DIAGRAMS, type RigKey } from "./rigTopics";
+import { Hook, Mark, Swivel, Wraps } from "./rigParts";
+import { rigKeys, type RigKey } from "./rigTopics";
+import { STEP_DRAWINGS, type StepKey } from "./StepDrawings";
 
 /**
  * Drawings for the rig, knot and hook topics of the handbook (added
@@ -22,74 +25,6 @@ import { RIG_DIAGRAMS, type RigKey } from "./rigTopics";
  */
 
 type Key = RigKey;
-
-/** A numbered mark, with a thin line to what it names. */
-function Mark({ n, x, y, to }: { n: number; x: number; y: number; to?: [number, number] }) {
-  return (
-    <g className="rig-mark">
-      {to && <line className="rig-tick" x1={x} y1={y} x2={to[0]} y2={to[1]} />}
-      <circle cx={x} cy={y} r={11} />
-      <text x={x} y={y}>
-        {n}
-      </text>
-    </g>
-  );
-}
-
-/**
- * A hook in its own units: the eye at (0, 0), the shank down the y axis, the
- * bend opening upward. A J hook's point stands parallel to the shank; a
- * circle hook's turns back toward it. The caller places and turns it; the
- * stroke stays the same width however it is scaled.
- */
-function Hook({ kind, L, R, P }: { kind: "j" | "circle"; L: number; R: number; P: number }) {
-  let d: string;
-  let barb: string;
-  if (kind === "j") {
-    d = `M0 3.5 L0 ${L} A${R} ${R} 0 0 0 ${2 * R} ${L} L${2 * R} ${L - P}`;
-    barb = `M${2 * R} ${L - P + 2} l${-3.5} ${5}`;
-  } else {
-    const ex = 1.5 * R;
-    const ey = L - 0.866 * R;
-    const tx = ex - 0.866 * P;
-    const ty = ey - 0.5 * P;
-    d = `M0 3.5 L0 ${L} A${R} ${R} 0 1 0 ${ex} ${ey} L${tx} ${ty}`;
-    barb = `M${tx + 1.7} ${ty + 1} l${-2} ${4.5}`;
-  }
-  return (
-    <g className="rig-metal">
-      <circle cx={0} cy={0} r={3.5} vectorEffect="non-scaling-stroke" />
-      <path d={d} vectorEffect="non-scaling-stroke" />
-      <path d={barb} vectorEffect="non-scaling-stroke" />
-    </g>
-  );
-}
-
-/** A barrel swivel lying along the line, starting at x: 44 units long, or 92 when big. */
-function Swivel({ x, y, big = false }: { x: number; y: number; big?: boolean }) {
-  const r = big ? 8 : 5;
-  const len = big ? 60 : 24;
-  const h = big ? 20 : 12;
-  const left = x + r;
-  const body = left + r;
-  const right = body + len + r;
-  return (
-    <g>
-      <circle className="rig-metal" cx={left} cy={y} r={r} />
-      <rect className="rig-swivel-body" x={body} y={y - h / 2} width={len} height={h} rx={h / 2} />
-      <path className="rig-metal-thin" d={`M${body + len / 3} ${y - h / 2} v${h} M${body + (2 * len) / 3} ${y - h / 2} v${h}`} />
-      <circle className="rig-metal" cx={right} cy={y} r={r} />
-    </g>
-  );
-}
-
-/** A knot's wraps beside an eye, from x0 to x1 along y. */
-function Wraps({ x0, x1, y, lean = 1 }: { x0: number; x1: number; y: number; lean?: 1 | -1 }) {
-  const n = 5;
-  const step = (x1 - x0) / (n - 1);
-  const d = Array.from({ length: n }, (_, i) => `M${x0 + i * step - 2 * lean} ${y - 7} l${4 * lean} 14`).join(" ");
-  return <path className="rig-wraps" d={d} />;
-}
 
 function SlidingSinkerRig() {
   return (
@@ -129,50 +64,6 @@ function SwivelAndLeader() {
       <Mark n={3} x={180} y={20} to={[180, 45]} />
       <Mark n={4} x={245} y={22} to={[245, 47]} />
       <Mark n={5} x={308} y={24} to={[308, 55]} />
-    </>
-  );
-}
-
-/** One panel of the clinch knot, its eye at (ox + 16, 64). */
-function Eye({ ox }: { ox: number }) {
-  return (
-    <>
-      <path className="rig-metal" d={`M${ox + 2} 64 H${ox + 8}`} />
-      <circle className="rig-metal" cx={ox + 16} cy={64} r={8} />
-    </>
-  );
-}
-
-function ClinchKnot() {
-  const through = (ox: number) => `M${ox + 86} 60 H${ox + 18} Q${ox + 10} 64 ${ox + 18} 68`;
-  const wraps = (ox: number) =>
-    `L${ox + 27} 68 L${ox + 31} 54 L${ox + 36} 68 L${ox + 40} 54 L${ox + 45} 68 L${ox + 49} 54 L${ox + 54} 68 L${ox + 58} 54 L${ox + 63} 68 L${ox + 67} 54`;
-  return (
-    <>
-      {[90, 180, 270].map((x) => (
-        <line key={x} className="rig-divider" x1={x} y1={28} x2={x} y2={112} />
-      ))}
-      {/* 1: through the eye, the tag end back beside the line */}
-      <Eye ox={0} />
-      <path className="rig-line" d={`${through(0)} H70`} />
-      {/* 2: the tag end wrapped round the line */}
-      <Eye ox={90} />
-      <path className="rig-line" d={`${through(90)} ${wraps(90)} L${90 + 76} 46`} />
-      {/* 3: back through the small loop by the eye, then the big loop */}
-      <Eye ox={180} />
-      <path className="rig-line" d={`${through(180)} ${wraps(180)} C${180 + 80} 34 ${180 + 34} 36 ${180 + 24} 62`} />
-      <path className="rig-arrow" d={`M${180 + 24} 62 l-1 -7 M${180 + 24} 62 l6 -4`} />
-      <path className="rig-arrow rig-dashed" d={`M${180 + 26} 70 C${180 + 40} 92 ${180 + 70} 92 ${180 + 80} 78`} />
-      <path className="rig-arrow" d={`M${180 + 80} 78 l-7 1 M${180 + 80} 78 l-1 7`} />
-      {/* 4: pulled snug, the tag end trimmed */}
-      <Eye ox={270} />
-      <path className="rig-line" d={`M${270 + 86} 62 H${270 + 18}`} />
-      <Wraps x0={270 + 28} x1={270 + 44} y={62} />
-      <path className="rig-line" d={`M${270 + 46} 57 l5 -5`} />
-      <Mark n={1} x={45} y={18} />
-      <Mark n={2} x={135} y={18} />
-      <Mark n={3} x={225} y={18} />
-      <Mark n={4} x={315} y={18} />
     </>
   );
 }
@@ -353,52 +244,9 @@ function BobberRig() {
   );
 }
 
-/** A reel's spool seen face on, centred at (ox + 26, 64). */
-function Spool({ ox }: { ox: number }) {
-  return (
-    <>
-      <circle className="rig-spool" cx={ox + 26} cy={64} r={22} />
-      <circle className="rig-spool-hub" cx={ox + 26} cy={64} r={9} />
-    </>
-  );
-}
-
-function ArborKnot() {
-  // In along the top of the hub, round it, and the tag end out along the bottom.
-  const wrap = (ox: number) => `M${ox + 86} 52 H${ox + 26} A12 12 0 1 0 ${ox + 26} 76`;
-  const overhand = (ox: number) => `H${ox + 52} C ${ox + 62} 76, ${ox + 66} 44, ${ox + 58} 44 C ${ox + 50} 44, ${ox + 54} 62, ${ox + 70} 62`;
-  return (
-    <>
-      {[90, 180, 270].map((x) => (
-        <line key={x} className="rig-divider" x1={x} y1={28} x2={x} y2={112} />
-      ))}
-      {/* 1: round the spool, the tag end beside the main line */}
-      <Spool ox={0} />
-      <path className="rig-line" d={`${wrap(0)} H70`} />
-      {/* 2: the tag end knotted round the main line */}
-      <Spool ox={90} />
-      <path className="rig-line" d={`${wrap(90)} ${overhand(90)}`} />
-      {/* 3: a stopper knot at the tip */}
-      <Spool ox={180} />
-      <path className="rig-line" d={`${wrap(180)} ${overhand(180)}`} />
-      <circle className="rig-knot" cx={180 + 71} cy={62} r={3} />
-      {/* 4: the main line pulled, the knot snug on the spool */}
-      <Spool ox={270} />
-      <path className="rig-line" d={`${wrap(270)} H${270 + 33}`} />
-      <circle className="rig-knot" cx={270 + 38} cy={55} r={3.2} />
-      <path className="rig-arrow" d={`M${270 + 58} 40 H${270 + 82} M${270 + 82} 40 l-6 -4 M${270 + 82} 40 l-6 4`} />
-      <Mark n={1} x={45} y={18} />
-      <Mark n={2} x={135} y={18} />
-      <Mark n={3} x={225} y={18} />
-      <Mark n={4} x={315} y={18} />
-    </>
-  );
-}
-
-const DRAWINGS: Record<Key, { viewBox: string; draw: () => ReactNode }> = {
+const DRAWINGS: Record<Exclude<Key, StepKey>, { viewBox: string; draw: () => ReactNode }> = {
   bottom: { viewBox: "0 0 360 130", draw: SlidingSinkerRig },
   swivel: { viewBox: "0 2 360 72", draw: SwivelAndLeader },
-  clinch: { viewBox: "0 0 360 120", draw: ClinchKnot },
   sizes: { viewBox: "0 36 400 200", draw: HookSizes },
   circle: { viewBox: "0 10 360 120", draw: CircleAndJ },
   wacky: { viewBox: "0 0 360 130", draw: WackyRig },
@@ -407,7 +255,6 @@ const DRAWINGS: Record<Key, { viewBox: string; draw: () => ReactNode }> = {
   dropShot: { viewBox: "0 0 360 180", draw: DropShot },
   slipBobber: { viewBox: "0 0 360 200", draw: SlipBobber },
   bobber: { viewBox: "0 0 360 184", draw: BobberRig },
-  arbor: { viewBox: "0 4 360 112", draw: ArborKnot },
 };
 
 // The drawings that answer a beginner's next question about this one ("what
@@ -421,43 +268,112 @@ export const RELATED: Partial<Record<Key, string[]>> = {
   dropShot: ["tackle-hooks"],
   sizes: ["tackle-circle-hooks"],
   circle: ["tackle-hooks"],
-  bobber: ["rig-slip-bobber"],
+  bobber: ["rig-slip-bobber", "tackle-split-shot"],
   slipBobber: ["tackle-bobbers"],
+  palomar: ["knot-improved-clinch"],
+  clinch: ["knot-palomar"],
+  surgeonsLoop: ["knot-joining"],
+  blood: ["tackle-leaders"],
+  spincastSpool: ["knot-arbor", "trouble-line-twist"],
+  spinningFill: ["knot-arbor", "tackle-new-line"],
+  arbor: ["tackle-new-line"],
+  castSpinning: ["technique-bite"],
+  setHook: ["tackle-circle-hooks", "technique-landing"],
+  landing: ["technique-drag", "care-release"],
+  drag: ["technique-landing"],
+  release: ["care-deep-hook"],
+  deepHook: ["care-release"],
+  catfishHold: ["clean-catfish"],
+  worm: ["tackle-hooks"],
+  splitShot: ["tackle-bobbers"],
+  fillet: ["clean-catfish", "clean-scaling"],
+  catfishSkin: ["safe-handling", "clean-fillet"],
 };
+
+function isStep(key: Key): key is StepKey {
+  return key in STEP_DRAWINGS;
+}
+
+/** A drawing of numbered parts with the list of what each number is. */
+function PartsDrawing({ k, topic }: { k: Exclude<Key, StepKey>; topic: string }) {
+  const words = useT().rigs[k];
+  const { viewBox, draw: Draw } = DRAWINGS[k];
+  const titleId = `rig-${topic}-${k}-title`;
+  return (
+    <figure className="rig" aria-labelledby={titleId}>
+      <svg viewBox={viewBox} role="img" aria-labelledby={titleId}>
+        <title id={titleId}>{words.title}</title>
+        <Draw />
+      </svg>
+      <ol>
+        {words.parts.map((part, i) => (
+          <li key={part}>
+            <b aria-hidden="true">{i + 1}</b>
+            <span>
+              <LinkedText text={part} skipTopic={topic} earlier={words.parts.slice(0, i)} />
+            </span>
+          </li>
+        ))}
+      </ol>
+      {words.note && (
+        <figcaption>
+          <LinkedText text={words.note} skipTopic={topic} earlier={words.parts} />
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
+/** A drawing a step at a time: each step its own picture, its words under it. */
+function StepsDrawing({ k, topic }: { k: StepKey; topic: string }) {
+  const words = useT().rigs[k];
+  const steps = STEP_DRAWINGS[k];
+  const titleId = `rig-${topic}-${k}-title`;
+  return (
+    <figure className="rig rig-steps" aria-labelledby={titleId}>
+      <p id={titleId} className="rig-steps-title">
+        {words.title}
+      </p>
+      <ol>
+        {steps.map((Draw, i) => (
+          <li key={i} style={{ "--i": i } as React.CSSProperties}>
+            <svg viewBox="0 0 160 120" aria-hidden="true">
+              <Draw />
+            </svg>
+            <p>
+              <b aria-hidden="true">{i + 1}</b>
+              <span>
+                <LinkedText text={words.parts[i]} skipTopic={topic} earlier={words.parts.slice(0, i)} />
+              </span>
+            </p>
+          </li>
+        ))}
+      </ol>
+      {words.note && (
+        <figcaption>
+          <LinkedText text={words.note} skipTopic={topic} earlier={words.parts} />
+        </figcaption>
+      )}
+    </figure>
+  );
+}
 
 export function RigDiagram({ topic }: { topic: string }) {
   const all = useT();
   const rigs = all.rigs;
-  const key = RIG_DIAGRAMS[topic];
-  if (!key) return null;
-  const words = rigs[key];
-  const { viewBox, draw: Draw } = DRAWINGS[key];
-  const titleId = `rig-${topic}-title`;
-  const related = RELATED[key];
+  const keys = rigKeys(topic);
+  if (keys.length === 0) return null;
+  const related = keys.flatMap((k) => RELATED[k] ?? []);
   return (
     <>
-      <figure className="rig" aria-labelledby={titleId}>
-        <svg viewBox={viewBox} role="img" aria-labelledby={titleId}>
-          <title id={titleId}>{words.title}</title>
-          <Draw />
-        </svg>
-        <ol>
-          {words.parts.map((part, i) => (
-            <li key={part}>
-              <b aria-hidden="true">{i + 1}</b>
-              <span>{part}</span>
-            </li>
-          ))}
-        </ol>
-        {words.note && <figcaption>{words.note}</figcaption>}
-      </figure>
-      {related && (
+      {keys.map((k) => (isStep(k) ? <StepsDrawing key={k} k={k} topic={topic} /> : <PartsDrawing key={k} k={k} topic={topic} />))}
+      {related.length > 0 && (
         <p className="rig-related">
           <span>{all.fish.rigRelated}</span>
           {related.map((id) => (
             // A plain link: the handbook hears the hash change and opens that chapter.
             <a key={id} href={`#${id}`}>
-              {rigs[RIG_DIAGRAMS[id]].title}
+              {rigs[rigKeys(id)[0]].title}
             </a>
           ))}
         </p>

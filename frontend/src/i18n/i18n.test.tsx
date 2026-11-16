@@ -18,6 +18,8 @@ import { localWindSpeed } from "./weather";
 function leaves(node: unknown, path = ""): [string, string][] {
   if (typeof node === "string") return [[path, node]];
   if (typeof node === "function") return [[path, String((node as (...a: unknown[]) => unknown)("1", "1", "1"))]];
+  // A term's `match` is how that language writes it: as many forms as it has.
+  if (Array.isArray(node) && path.endsWith(".match")) return [[path, node.join(", ")]];
   if (Array.isArray(node)) return node.flatMap((v, i) => leaves(v, `${path}[${i}]`));
   return Object.entries(node as Record<string, unknown>).flatMap(([k, v]) => leaves(v, path ? `${path}.${k}` : k));
 }

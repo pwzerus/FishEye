@@ -4,6 +4,7 @@ import Link from "next/link";
 import { GearPhoto } from "@/components/gear/GearPhoto";
 import { IdentifyGear } from "@/components/gear/IdentifyGear";
 import { PageTransition } from "@/components/motion/Transition";
+import { LinkedText } from "@/components/terms/TermText";
 import { localGearCategory, localGearName } from "@/i18n/names";
 import { getLocale, getT } from "@/i18n/server";
 import type { Locale } from "@/i18n/config";
@@ -33,8 +34,9 @@ function Card({ item, locale, t }: {
           {local ?? item.name}
           {local && <span className="name-en" lang="en">{item.name}</span>}
         </h3>
-        <p lang={item.text_lang ?? "en"}>{item.what}</p>
-        <p className="gear-tip" lang={item.text_lang ?? "en"}><strong>{t.tip}</strong> {item.tip}</p>
+        {/* Terms underlined (components/terms/TermText.tsx), not the card's own topic: it has its link below. */}
+        <p lang={item.text_lang ?? "en"}><LinkedText text={item.what} skipTopic={item.topic ?? null} /></p>
+        <p className="gear-tip" lang={item.text_lang ?? "en"}><strong>{t.tip}</strong> <LinkedText text={item.tip} skipTopic={item.topic ?? null} earlier={[item.what]} /></p>
         {item.topic && <Link className="gear-more" href={`/handbook#${item.topic}`}>{t.learnMore}</Link>}
       </div>
     </article>

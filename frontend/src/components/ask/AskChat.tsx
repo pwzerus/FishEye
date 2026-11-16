@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { BaitChips, BaitText } from "@/components/baits/BaitTip";
+import { BaitChips } from "@/components/baits/BaitTip";
+import { LinkedText } from "@/components/terms/TermText";
 import { LakeAnswer } from "@/components/ask/LakeAnswer";
 import { useSignedIn } from "@/components/auth/AuthProvider";
 import { FishArt } from "@/components/fish/FishArt";
@@ -254,15 +255,16 @@ function AiSummary({
   const t = useT().ask;
   if (summary?.status === "done") {
     const r = summary.response;
+    const paras = r.answer.split("\n\n");
     return (
       <div className="ai-summary">
         <div className="bubble-meta">
           <SourceBadge r={r} />
         </div>
         <div className="answer-text">
-          {r.answer.split("\n\n").map((para, i) => (
+          {paras.map((para, i) => (
             <p key={i}>
-              <BaitText text={para} fish={r.citations[0]?.species_slug ?? null} />
+              <LinkedText text={para} baits fish={r.citations[0]?.species_slug ?? null} earlier={paras.slice(0, i)} />
             </p>
           ))}
         </div>

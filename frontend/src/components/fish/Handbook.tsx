@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { RigDiagram } from "@/components/fish/RigDiagram";
 import { RegionGate } from "@/components/rules/RegionGate";
+import { LinkedText } from "@/components/terms/TermText";
 import { useLocale, useT } from "@/i18n/client";
 import { localCategory, localGearName, localStateName, localTopicTitle } from "@/i18n/names";
 import type { GearItem, HandbookTopic, Jurisdiction } from "@/lib/api/types";
@@ -332,9 +333,10 @@ export function Handbook({
                             </span>
                           )}
                         </h3>
-                        {t.body.map((sentence) => (
+                        {/* Each term underlined once per card, and never the card's own. */}
+                        {t.body.map((sentence, i) => (
                           <p key={sentence} lang={t.body_lang ?? "en"}>
-                            {sentence}
+                            <LinkedText text={sentence} skipTopic={t.id} earlier={t.body.slice(0, i)} baits />
                           </p>
                         ))}
                         <RigDiagram topic={t.id} />

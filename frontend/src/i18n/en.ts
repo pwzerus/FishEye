@@ -1317,6 +1317,80 @@ const en = {
   },
   // The rig, knot and hook diagrams (components/fish/RigDiagram.tsx): each
   // part list follows the numbers on its drawing, in order.
+  // Fishing terms, underlined in the handbook and the guides; a tap shows the
+  // card (components/terms/TermText.tsx, lib/terms.ts). `match` is how this
+  // language's text writes the term.
+  terms: {
+    more: (topic: string) => `${topic}: read more →`,
+    moreDrawing: (topic: string) => `${topic}: see the drawing →`,
+    items: {
+      leader: { name: "Leader", match: ["leader", "leaders"], def: "A short length of line between the main line and the hook. One a little weaker than the main line breaks first on a snag, so you lose only the hook." },
+      swivel: { name: "Swivel", match: ["barrel swivel", "barrel swivels", "swivel", "swivels"], def: "A small metal joint with an eye at each end. A barrel swivel joins the main line to a leader and stops a sliding sinker." },
+      splitShot: { name: "Split shot", match: ["split shot"], def: "A small round weight with a slit. Slide the line into the slit and pinch it shut; it's easy to add, move or take off." },
+      eggSinker: { name: "Egg sinker", match: ["egg sinker", "egg sinkers", "sliding sinker", "sliding sinkers"], def: "A sinker with a hole through it. The line runs through, so the sinker slides on it; it is the weight of the bottom rig." },
+      sinker: { name: "Sinker", match: ["sinker", "sinkers"], def: "A weight that takes the bait down. Egg, bullet, cone and pyramid sinkers each suit a different rig." },
+      bobber: { name: "Bobber", match: ["bobber", "bobbers"], def: "A float on the line. It holds the bait at a set depth and shows a bite by twitching or going under." },
+      slipBobber: { name: "Slip bobber", match: ["slip bobber", "slip bobbers"], def: "A bobber that slides on the line until it reaches a bobber stop, so you can fish deep and still cast easily." },
+      bobberStop: { name: "Bobber stop", match: ["bobber stop", "bobber stops"], def: "A small knot or bead fixed on the line above a slip bobber. Where you put it sets how deep the bait hangs." },
+      circleHook: { name: "Circle hook", match: ["circle hook", "circle hooks"], def: "A hook whose point turns back toward the shank. Don't jerk. Reel steadily and it hooks the fish in the corner of the jaw." },
+      jHook: { name: "J hook", match: ["J hook", "J hooks"], def: "The ordinary hook, shaped like a J, with the point parallel to the shank. Set it with a quick, firm sweep of the rod." },
+      hookSize: { name: "Hook size", match: ["1/0", "2/0", "3/0", "4/0", "5/0", "6/0", "7/0", "8/0"], def: "Hooks numbered #10, #6, #2… get bigger as the number gets smaller. After #1 come 1/0, 2/0 and up, which get bigger as the number grows." },
+      treble: { name: "Treble hook", match: ["treble hook", "treble hooks", "trebles"], def: "Three hooks on one shank, as on most crankbaits." },
+      barb: { name: "Barb", match: ["barb", "barbs", "barbless"], def: "The little backward spike behind the point that keeps a hook in. Pinch it flat with pliers and the hook comes out more easily." },
+      jig: { name: "Jig", match: ["jighead", "jigheads", "jig head", "jig heads", "jig", "jigs"], def: "A hook with a weighted head, dressed with hair, feathers or a soft plastic body." },
+      texasRig: { name: "Texas rig", match: ["Texas rig", "Texas-rigged"], def: "A soft plastic with the hook point buried in it and a bullet sinker in front, so it slides through weeds and wood." },
+      wackyRig: { name: "Wacky rig", match: ["wacky rig", "wacky-rigged"], def: "A stick worm hooked once through the middle, so both ends wiggle as it sinks." },
+      nedRig: { name: "Ned rig", match: ["Ned rig", "Ned rigs"], def: "A short soft plastic on a small mushroom-head jig, crawled slowly along the bottom." },
+      dropShot: { name: "Drop shot", match: ["drop shot", "drop-shot"], def: "The hook tied partway up the line with the sinker at the end, so the bait hangs off the bottom." },
+      bottomRig: { name: "Bottom rig", match: ["bottom rig", "sliding sinker rig", "Carolina rig"], def: "A sliding sinker on the main line, a swivel, then a leader and hook: the bait rig for catfish and other fish that feed on the bottom." },
+      clinch: { name: "Improved clinch knot", match: ["improved clinch knot", "improved clinch", "clinch knot"], def: "The usual knot for tying line to a hook, swivel or lure: through the eye, five or six wraps, back through the loops." },
+      palomar: { name: "Palomar knot", match: ["Palomar knot", "Palomar"], def: "An easy, strong knot for hooks and swivels: a doubled loop through the eye, an overhand knot, and the hook passed through the loop." },
+      arbor: { name: "Arbor knot", match: ["arbor knot"], def: "The knot that ties line to the reel's spool before you wind new line on." },
+      surgeonsLoop: { name: "Surgeon's loop", match: ["surgeon's loop", "surgeon’s loop"], def: "A fixed loop at the end of the line, for snelled hooks, swivels and lures with a lot of action." },
+      bloodKnot: { name: "Blood knot", match: ["blood knot"], def: "A knot that joins two lines with wraps from each side that meet in the middle." },
+      surgeonsKnot: { name: "Surgeon's knot", match: ["surgeon's knot", "surgeon’s knot"], def: "A quick way to join two lines, even of different thickness: tie an overhand knot with both, then pass the ends through once more." },
+      overhand: { name: "Overhand knot", match: ["overhand knot", "overhand knots"], def: "The simplest knot: make a loop and pass the end through it. Many fishing knots start with one." },
+      braid: { name: "Braid", match: ["braided line", "braid"], def: "Line woven from many fibers: very strong for its thickness and with almost no stretch. It needs a mono or fluorocarbon leader." },
+      mono: { name: "Monofilament", match: ["monofilament", "mono"], def: "Ordinary single-strand nylon line. It stretches a little and is easy to tie; most freshwater fishing uses 6 to 10 lb." },
+      fluoro: { name: "Fluorocarbon", match: ["fluorocarbon", "fluoro"], def: "Line that is hard to see in water and resists scuffing; often used as a leader." },
+      drag: { name: "Drag", match: ["drag"], def: "The reel's slipping brake. When a fish pulls harder than it is set, the spool turns backward and gives line instead of the line breaking." },
+      bail: { name: "Bail", match: ["bail"], def: "The wire arm on a spinning reel. Open it to cast; close it by hand before you reel." },
+      spool: { name: "Spool", match: ["spool"], def: "The part of a reel that holds the line." },
+      spincast: { name: "Spincast reel", match: ["spincast reel", "spincast reels", "spincast", "push-button reel"], def: "A closed reel with a push button: hold the button, and let go of it as the rod comes forward. The easiest reel to start with." },
+      spinning: { name: "Spinning reel", match: ["spinning reel", "spinning reels"], def: "An open reel that hangs under the rod. You open its bail to cast. The most common reel for all-round fishing." },
+      baitcaster: { name: "Baitcaster", match: ["baitcasting reel", "baitcasting reels", "baitcaster", "baitcasters"], def: "A reel on top of the rod whose spool turns as you cast, so your thumb controls it. For heavy lures and line; hard to learn." },
+      freeSpool: { name: "Free spool", match: ["free spool", "freespool"], def: "On a baitcaster, the setting that lets the spool turn freely so line goes out on the cast." },
+      backlash: { name: "Backlash", match: ["backlash", "backlashes"], def: "A nest of line on a baitcaster, when the spool spins faster than the line goes out." },
+      lineTwist: { name: "Line twist", match: ["line twist"], def: "Line twisted by the reel. It comes off in loops that tangle." },
+      guides: { name: "Rod guides", match: ["rod guides"], def: "The rings along a rod that the line runs through." },
+      rodPower: { name: "Power and action", match: ["medium-light", "medium-heavy", "medium power"], def: "Power is how stiff a rod is, from light to heavy. Action is where it bends: a fast rod bends near the tip." },
+      setHook: { name: "Setting the hook", match: ["set the hook", "setting the hook", "sets the hook", "hookset"], def: "Lifting the rod up and back after a bite, quick and firm, to push the hook in. With a circle hook, reel steadily instead." },
+      landingNet: { name: "Landing net", match: ["landing net", "landing nets"], def: "A net on a handle for lifting a fish out of the water. With one you lose fewer fish at the end." },
+      slime: { name: "Slime", match: ["slime"], def: "The coating on a fish's skin that protects it from infection. Wet your hands so you don't rub it off." },
+      catchRelease: { name: "Catch and release", match: ["catch and release", "catch-and-release"], def: "Letting a fish go back alive: land it quickly, keep it wet, and back the hook out gently." },
+      hemostat: { name: "Hemostats", match: ["hemostats", "hemostat", "forceps"], def: "Locking clamps from a first-aid kit, handy for taking a hook out of a small mouth." },
+      bleed: { name: "Bleeding a fish", match: ["bleed", "bleeding"], def: "Cutting the gills of a fish you'll keep so the blood drains: the meat looks and tastes better and chills faster." },
+      fillet: { name: "Fillet", match: ["fillet", "fillets", "filleting", "filleted"], def: "A side of a fish cut off the bones; filleting is cutting it." },
+      livewell: { name: "Livewell and stringer", match: ["livewell", "livewells", "stringer", "stringers"], def: "A tank of water in a boat, or a cord through the lower lip, to keep fish alive until you leave. A fish on one counts as kept." },
+      thermocline: { name: "Thermocline", match: ["thermocline"], def: "In summer, the layer of a deep lake where the water turns cold quickly. Fish often hold near it." },
+      front: { name: "Weather front", match: ["cold front", "cold fronts", "weather front"], def: "The edge of a moving air mass. Fishing is often good just before a front and slow for a few days after a cold one." },
+      cover: { name: "Cover", match: ["heavy cover"], def: "Anything fish hide in or under: weeds, fallen trees, docks, brush." },
+      dropOff: { name: "Drop-off", match: ["drop-off", "drop-offs", "dropoff", "dropoffs"], def: "Where the bottom gets deeper quickly. Fish travel along it." },
+      trolling: { name: "Trolling", match: ["trolling"], def: "Fishing by pulling lures or bait behind a slowly moving boat." },
+      flyFishing: { name: "Fly fishing", match: ["fly fishing", "fly rod", "fly rods"], def: "Casting a nearly weightless fly with the weight of a thick fly line." },
+      spawn: { name: "Spawning", match: ["spawn", "spawning", "spawns"], def: "When fish lay and fertilize their eggs. Each kind spawns when the water warms to its own temperature, mostly in spring." },
+      lateralLine: { name: "Lateral line", match: ["lateral line"], def: "A line of sense organs along a fish's side that feels movement and vibration in the water." },
+      cleanDrainDry: { name: "Clean, Drain, Dry", match: ["Clean, Drain, Dry", "clean, drain and dry"], def: "Clean plants and mud off your boat and gear, drain all water and let it dry before the next lake, so invasive species don't travel with you." },
+      bulletSinker: { name: "Bullet sinker", match: ["bullet sinker", "bullet sinkers", "worm weight"], def: "A bullet-shaped sinker that slides on the line in front of a soft plastic, as in the Texas rig." },
+      snapSwivel: { name: "Snap swivel", match: ["snap swivel", "snap swivels"], def: "A swivel with a safety-pin snap on one end, for changing lures without retying." },
+      octopusHook: { name: "Octopus hook", match: ["octopus hook", "octopus hooks"], def: "A short-shanked hook, used for live bait and for stick worms on the wacky and drop-shot rigs." },
+      wormHook: { name: "Worm hook", match: ["worm hook", "worm hooks", "flipping hook"], def: "A hook with a bend by the eye that holds a soft plastic worm in place, for the Texas rig." },
+      baitHolder: { name: "Baitholder hook", match: ["baitholder hook", "baitholder hooks", "bait hook", "bait hooks"], def: "A J hook with small barbs on the shank that keep a worm or other bait from sliding down." },
+      finesse: { name: "Finesse", match: ["finesse"], def: "Small, light lures fished slowly on light line, for fish that won't chase." },
+      oRing: { name: "O-ring", match: ["O-ring", "O-rings"], def: "A small rubber ring around a stick worm's middle. The hook goes under it, so the worm lasts longer." },
+      tippet: { name: "Tippet", match: ["tippet"], def: "The thinnest, last section of a fly leader, tied to the fly." },
+    },
+  },
   rigs: {
     bottom: {
       title: "How the sliding sinker rig goes together",
@@ -1437,6 +1511,323 @@ const en = {
         "Pull the main line to slide the knot tight against the spool",
       ],
       note: "",
+    },
+    // A step at a time (components/fish/StepDrawings.tsx): one caption per picture.
+    palomar: {
+      title: "Tying a Palomar knot",
+      parts: [
+        "Double 4–6 in of line into a loop and push the loop through the hook eye",
+        "Tie a loose overhand knot with the doubled line",
+        "Pass the hook through the loop",
+        "Wet it, pull both ends tight and trim",
+      ],
+      note: "Works with braid and mono. Not for crankbaits or lures with lots of hooks.",
+    },
+    surgeonsLoop: {
+      title: "Tying a surgeon's loop",
+      parts: [
+        "Fold the end of the line back into a loop 1–2 in long",
+        "Tie an overhand knot with the loop, without tightening",
+        "Pass the loop through the knot once more",
+        "Pull it tight: a loop that won't slip",
+      ],
+      note: "To attach a hook, thread the loop through the eye and pass it over the hook.",
+    },
+    blood: {
+      title: "Blood knot",
+      parts: [
+        "Overlap the two lines by about 2 in",
+        "Wrap the first one's end around the second five times, and put it between the two lines",
+        "Wrap the second one's end around the first five times, and thread it through the same gap from the other side",
+        "Pull both lines to tighten, and trim the ends",
+      ],
+      note: "",
+    },
+    surgeonsKnot: {
+      title: "Surgeon's knot",
+      parts: [
+        "Lay the two lines side by side, overlapping about 6 in",
+        "Tie an overhand knot with both, and pull the loose ends through it again",
+        "Hold the lines and pull tight",
+      ],
+      note: "Quicker than the blood knot, and it joins lines of different thickness.",
+    },
+    spincastSpool: {
+      title: "Putting new line on a spincast reel",
+      parts: [
+        "Unscrew the reel's cover and take the worn line off",
+        "Push the new line through the hole in the cover",
+        "Tie it to the spool with an arbor knot, then put the cover back",
+        "Turn the handle. Let the line come straight off the new spool, pinched lightly in your fingers",
+      ],
+      note: "Don't overfill. A spincast reel is full at about 100 yards.",
+    },
+    spinningFill: {
+      title: "Filling a spinning reel",
+      parts: [
+        "Open the bail, tie the line to the spool with an arbor knot, close the bail",
+        "Reel it on with a little tension, the line running between your thumb and finger",
+        "Stop when the line is 1/16 to 1/8 in below the spool's rim",
+      ],
+      note: "Most line packages say how to put the line on without twist.",
+    },
+    castSpinning: {
+      title: "Casting a spinning reel",
+      parts: [
+        "Let the lure hang 10–18 in below the rod tip. Hold the rod at waist level, the reel underneath",
+        "Hook the line with your forefinger and open the bail, keeping hold of the line",
+        "Sweep the rod tip back over your shoulder",
+        "Bring it forward quickly toward the target, and let go of the line as the rod passes your shoulder",
+      ],
+      note: "On a spincast reel, press and hold the button instead, and let go of it as the rod comes forward. Close the bail by hand, then reel.",
+    },
+    castBaitcast: {
+      title: "Casting a baitcaster",
+      parts: [
+        "Let the lure hang 8–10 in below the tip. Reel on top, thumb resting on the spool",
+        "Press the button for free spool, keeping your thumb on the spool",
+        "Swing back, then forward toward the target, lifting your thumb as the rod comes forward",
+        "Put your thumb back on the spool as the lure hits the water, then turn the handle",
+      ],
+      note: "The spool keeps spinning after the lure stops, and that is what makes a backlash.",
+    },
+    drag: {
+      title: "Setting the drag",
+      parts: [
+        "Find the knob: on the front of a spinning reel, on top of a spincast reel, the star by a baitcaster's handle",
+        "Turn right to tighten, left to loosen",
+        "Pull line straight up above the reel: too easy, tighten; won't move, loosen",
+        "With a spring scale: a third to a half of the line's strength, about 7–10 lb on 20 lb line",
+      ],
+      note: "Set it before the first cast. Of the two mistakes, too loose is the safer one.",
+    },
+    setHook: {
+      title: "From the bite to setting the hook",
+      parts: [
+        "After the cast, reel in loose line until the bobber just starts to move",
+        "When the bobber goes under, a fish has the bait",
+        "Reel up the slack, then sweep the rod up and back, quick and firm",
+        "With a circle hook, don't jerk. Start reeling or pull back steadily",
+      ],
+      note: "Trout and panfish need only a light lift; big fish and big hooks need more.",
+    },
+    landing: {
+      title: "Playing and landing a fish",
+      parts: [
+        "Keep the line tight and the rod tip up, with a bend in it",
+        "When the fish pulls line off, stop reeling until the run ends",
+        "To gain line, raise the rod, then reel as you lower the tip",
+        "Put the net in the water and lead the fish in head first, then lift",
+      ],
+      note: "",
+    },
+    release: {
+      title: "Letting a fish go",
+      parts: [
+        "With wet hands, hold a small fish by the lower jaw",
+        "Support a big one level, with two hands. Fingers out of the eyes and gills",
+        "Back the hook out with pliers, the fish in the water if you can",
+        "Hold it facing into the current, by its middle and tail, until it swims off",
+      ],
+      note: "Keep it out of the water no longer than you can hold your breath.",
+    },
+    deepHook: {
+      title: "Taking out a hook",
+      parts: [
+        "Hooked deep in the throat or gut: cut the line as close to the mouth as you can",
+        "Hooked in the lip: hold the shank with pliers, turn the hook upside down and back it out",
+        "Pinch the barb flat with pliers, and the next hook comes out quicker",
+      ],
+      note: "",
+    },
+    snag: {
+      title: "Freeing a snag",
+      parts: [
+        "Hold the rod tip high and jiggle it",
+        "Walk a few steps to one side and pull from another angle",
+        "Still stuck: wrap the line round a gloved hand, point the rod at the snag, and pull steadily or walk backwards",
+      ],
+      note: "Don't heave on the rod, which can snap before the line. Turn your face away, since a hook can fly back.",
+    },
+    catfishHold: {
+      title: "Holding a catfish",
+      parts: [
+        "Hold it from behind: your hand over its back, behind the spines in the back and side fins",
+        "Keep your hand away from those spines. They're stiff and barbed, and they lock in place",
+      ],
+      note: "Take the hook out with long-nosed pliers, not your fingers.",
+    },
+    worm: {
+      title: "Hooking a worm",
+      parts: [
+        "Run the hook through the worm",
+        "Slide it up the shank and thread it on three to five more times",
+        "On a big hook, leave the tail free to wiggle",
+      ],
+      note: "On a small hook, use a piece, with the point pushed into the end so it doesn't slide off.",
+    },
+    minnow: {
+      title: "Hooking a minnow",
+      parts: [
+        "For casting or trolling: through both lips, point up",
+        "Under a float: through the back, above the spine, not touching it",
+        "Free, with no weight: through the tail",
+      ],
+      note: "",
+    },
+    cricket: {
+      title: "Hooking a cricket",
+      parts: ["Push the point in just behind the head, not deep", "Or thread it through the rear of the body"],
+      note: "A hook through the front kills an insect quickly.",
+    },
+    crayfish: {
+      title: "Hooking a crayfish",
+      parts: ["About ½ in from the end of the tail", "Or shallowly through the back, away from the vital organs"],
+      note: "",
+    },
+    splitShot: {
+      title: "Putting on a split shot",
+      parts: ["Slide the line into the groove", "Pinch it shut with pliers"],
+      note: "Easy to move or take off later.",
+    },
+    jigWork: {
+      title: "Fishing a jig",
+      parts: ["Cast it and let it sink to the bottom", "Snap the rod to lift it a foot or two", "Let it fall back and repeat, changing the rhythm until the fish show what they want"],
+      note: "",
+    },
+    fillet: {
+      title: "Filleting a fish",
+      parts: [
+        "Cut just behind the gill cover, from the top of the back to the belly, down to the backbone",
+        "Turn the knife flat and run it along the backbone toward the tail",
+        "Skin it: knife flat against the board, slice between skin and meat",
+      ],
+      note: "Then cut the rib bones out, and do the other side.",
+    },
+    catfishSkin: {
+      title: "Skinning a catfish",
+      parts: [
+        "Score the skin around the head and along the back",
+        "Clamp the head, and pull the skin toward the tail with skinning pliers",
+        "Trim the dark lateral line and the fat from the fillet",
+      ],
+      note: "Break the side fins off first, and grip the fish with a glove or rag.",
+    },
+    scaling: {
+      title: "Scaling a panfish",
+      parts: ["Scrape the scales off both sides with a spoon or scaler, tail to head", "Dip it in clean water to rinse off loose scales and slime"],
+      note: "",
+    },
+    measure: {
+      title: "Measuring a fish",
+      parts: ["On its side, jaw closed: from the tip of the snout to the tip of the tail", "Squeeze the tail fin together for the longest measurement"],
+      note: "",
+    },
+    bleed: {
+      title: "Killing and bleeding a fish you'll keep",
+      parts: ["A spike into the skull just above the eyes kills it quickly", "Cut through the gills, and leave it in water 5–10 minutes before putting it on ice"],
+      note: "Bleeding is optional: the meat looks and tastes better and chills faster.",
+    },
+    knotTips: {
+      title: "Tying a knot that holds",
+      parts: [
+        "Wet the knot with water or saliva",
+        "Then pull it tight, slowly and firmly",
+        "Trim the end, but not too close to the knot, and don't nick the line",
+      ],
+      note: "A badly tied knot can take away half the line's strength.",
+    },
+    spincastFix: {
+      title: "When a spincast reel won't cast",
+      parts: [
+        "Look at the rod tip first. The line may be wrapped around it",
+        "If nothing comes out when you press the button, unscrew the cover and lift the line off the pin",
+        "If the handle turns but no line comes in, pull the line tight, then reel",
+      ],
+      note: "Too much line on the reel causes many of these.",
+    },
+    dough: {
+      title: "Putting on dough bait",
+      parts: [
+        "Pinch off a ball of dough",
+        "Mold it around the hook until the hook is completely hidden",
+      ],
+      note: "",
+    },
+    shrimp: {
+      title: "Hooking shrimp",
+      parts: [
+        "Lightly through the body or the meaty tail",
+        "For a tail piece, thread the hook into the meat to hide it",
+      ],
+      note: "Pull off a shell section or two: the scent draws fish.",
+    },
+    panfishFillet: {
+      title: "Filleting crappie and bluegill",
+      parts: [
+        "Knife in at the back of the neck, along the top of the ribs toward the belly, out at the front of the anal fin, then back to the tail",
+        "Cut down just behind the gill cover, slice the fillet off the ribs and separate it from the belly",
+      ],
+      note: "Cutting along the outside of the ribs saves a little more of the belly meat.",
+    },
+    lifejacket: {
+      title: "Checking a life jacket's fit",
+      parts: [
+        "Put it on and do it up",
+        "Raise your arms over your head",
+        "Have someone pull up on the shoulders. If it rides up over your chin or face, it's too big",
+      ],
+      note: "A child's jacket doesn't work for an adult. Don't buy one for a child to grow into.",
+    },
+    shoreCast: {
+      title: "Casting from the bank",
+      parts: [
+        "Not straight out into the middle",
+        "Cast parallel to the shoreline. Fish hold along the bank, often within a foot or two of it",
+      ],
+      note: "",
+    },
+    keepFish: {
+      title: "Keeping fish you'll eat",
+      parts: [
+        "Put it in a cooler of ice and water soon after it's caught. The slush chills it 4–5 times faster than ice alone",
+        "On a stringer, through the lower lip, not the gills",
+      ],
+      note: "A fish on a stringer counts as kept.",
+    },
+    streamDrift: {
+      title: "Drifting bait for stream trout",
+      parts: [
+        "Walk up to the pool quietly, from below",
+        "Cast upstream",
+        "Let the bait drift back toward you on the current, and watch the line for a stop or twitch",
+      ],
+      note: "Half a nightcrawler, hooked once near each end, and just enough split shot to get down.",
+    },
+    iceFish: {
+      title: "Ice fishing",
+      parts: [
+        "Make a hole with an auger or spud bar: 4–6 in is fine for panfish",
+        "Jig a small spoon up and down, often with bait on it",
+        "Or set a tip-up, whose flag goes up when a fish pulls",
+      ],
+      note: "Check the ice first, and never go alone.",
+    },
+    trolling: {
+      title: "Trolling",
+      parts: [
+        "Pull a lure behind a slowly moving boat, deep enough to touch the bottom now and then",
+        "Speeding up, slowing down or a sharp turn can trigger a strike",
+      ],
+      note: "Kokanee are trolled at 0.8–1.5 mph, walleye at about 1 mph.",
+    },
+    hookInjury: {
+      title: "A hook in your skin",
+      parts: [
+        "The point went in but not the barb: back it out gently the way it went in",
+        "The barb is buried, or it's near an eye: don't pull it. Cover it with a paper cup and go to a clinic or hospital",
+      ],
+      note: "Wash the wound and see a doctor about a tetanus shot. In an emergency, call 911.",
     },
   },
 };

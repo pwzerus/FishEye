@@ -6,7 +6,6 @@ import { localFishName, localGearName } from "@/i18n/names";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { BaitText } from "@/components/baits/BaitTip";
 
 import { AskChat } from "@/components/ask/AskChat";
 import { FishArt } from "@/components/fish/FishArt";
@@ -16,6 +15,7 @@ import { GuideSummary } from "@/components/fish/GuideSummary";
 import { HeroPhoto } from "@/components/fish/PhotoCard";
 import { RIG_DIAGRAMS } from "@/components/fish/rigTopics";
 import { SectionTabs, type SectionLink } from "@/components/fish/SectionTabs";
+import { LinkedItems, LinkedText } from "@/components/terms/TermText";
 import { PageTransition, VT } from "@/components/motion/Transition";
 import { BaitRules, LimitsNote, LiveBaitWarning } from "@/components/rules/RegionGate";
 import { DietTypeTag } from "@/components/species/SpeciesGuideBody";
@@ -72,19 +72,19 @@ function SetupCard({ setup, index, anchor, t, lang }: { setup: TackleSetup; inde
       <dl className="setup-specs">
         <div>
           <dt>{t.rod}</dt>
-          <dd lang={lang}>{setup.rod}</dd>
+          <dd lang={lang}><LinkedText text={setup.rod} /></dd>
         </div>
         <div>
           <dt>{t.reel}</dt>
-          <dd lang={lang}>{setup.reel}</dd>
+          <dd lang={lang}><LinkedText text={setup.reel} /></dd>
         </div>
         <div>
           <dt>{t.line}</dt>
-          <dd lang={lang}>{setup.line}</dd>
+          <dd lang={lang}><LinkedText text={setup.line} /></dd>
         </div>
         <div className="wide">
           <dt>{t.hookRig}</dt>
-          <dd lang={lang}>{setup.terminal}</dd>
+          <dd lang={lang}><LinkedText text={setup.terminal} /></dd>
           {drawing && (
             <dd className="setup-drawing">
               <Link href={`/handbook#${setup.rig_topic}`}>{t.rigDrawing}</Link>
@@ -96,16 +96,15 @@ function SetupCard({ setup, index, anchor, t, lang }: { setup: TackleSetup; inde
   );
 }
 
-/** `baitsFor`: the baits named are tappable (components/baits/BaitTip.tsx). */
+/** Terms are tappable (components/terms/TermText.tsx), and with `baitsFor`
+ * the baits named too (components/baits/BaitTip.tsx). */
 function ListBlock({ id, title, items, baitsFor, lang }: { id: string; title: string; items: string[]; baitsFor?: string; lang: string }) {
   if (items.length === 0) return null;
   return (
     <section id={id} className="guide-block">
       <h2>{title}</h2>
       <ul className="nice-list" lang={lang}>
-        {items.map((item) => (
-          <li key={item}>{baitsFor ? <BaitText text={item} fish={baitsFor} /> : item}</li>
-        ))}
+        <LinkedItems items={items} baits={Boolean(baitsFor)} fish={baitsFor ?? null} />
       </ul>
     </section>
   );
@@ -218,7 +217,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
                       <ul className="nice-list" lang={lang}>
                         {guide.live_baits.map((b) => (
                           <li key={b}>
-                            <BaitText text={b} fish={slug} />
+                            <LinkedText text={b} baits fish={slug} />
                           </li>
                         ))}
                       </ul>
@@ -230,7 +229,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
                       <ul className="nice-list" lang={lang}>
                         {guide.lures.map((b) => (
                           <li key={b}>
-                            <BaitText text={b} fish={slug} />
+                            <LinkedText text={b} baits fish={slug} />
                           </li>
                         ))}
                       </ul>
