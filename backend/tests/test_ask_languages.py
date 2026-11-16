@@ -176,6 +176,9 @@ def test_japanese_and_korean_off_topic_questions_are_declined_in_their_language(
         ("The fish aren't biting today, what should I change?", "en"),
         ("Why am I not catching any bass?", "en"),
         ("¿Por qué no saco nada?", "es"),
+        ("¿Por qué no pesco nada?", "es"),
+        ("¿Por qué no atrapo nada?", "es"),
+        ("No he pescado nada en todo el día", "es"),
         ("全然釣れないのはなぜ？", "ja"),
         ("왜 하나도 안 잡혀요?", "ko"),
     ],
@@ -191,6 +194,7 @@ def test_catching_nothing_finds_the_no_bites_topic_first(client, question, lang)
     [
         "I get bites but can't hook them",
         "Me pican pero no saco nada, ¿qué hago mal?",
+        "Me pican pero no pesco nada",
         "アタリはあるのに釣れないのはなぜ？",
         "입질은 오는데 왜 안 잡혀요?",
     ],

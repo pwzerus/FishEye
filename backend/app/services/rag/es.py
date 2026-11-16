@@ -143,6 +143,17 @@ GLOSSARY: dict[str, str] = {
     # What a beginner asks with (round 2 of the six-language check).
     "me pican pero no saco nada": "bites but nothing on the hook", "pican pero no saco nada": "bites but nothing on the hook",
     "no saco nada": "no bites nothing caught what to change", "saco": "catch", "nada": "nothing", "hago mal": "doing wrong",
+    # The other verbs for catching nothing ("¿Por qué no pesco nada?" went to
+    # bait minnows, "no atrapo nada" found nothing; live check 2026-11-16).
+    **{f"pican pero no {verb} nada": "bites but nothing on the hook"
+       for verb in ("pesco", "atrapo", "agarro", "cojo", "engancho")},
+    **{f"no {verb} nada": "no bites nothing caught what to change"
+       for verb in ("pesco", "atrapo", "agarro", "cojo", "pescamos", "sacamos", "atrapamos",
+                    "he pescado", "he sacado", "he atrapado", "hemos pescado", "hemos sacado",
+                    "estoy pescando", "estoy sacando", "estoy atrapando",
+                    "consigo pescar", "consigo sacar", "logro pescar", "puedo pescar", "puedo sacar")},
+    **{f"no {verb} ni uno": "no bites nothing caught what to change"
+       for verb in ("saco", "pesco", "atrapo", "agarro", "he sacado", "he pescado")},
     "primera salida": "first trip", "salida": "trip", "llevo": "bring", "llevar": "bring",
     "mantengo vivas": "keep alive", "mantengo vivos": "keep alive", "vivas": "alive", "vivos": "alive",
     "casa": "home", "libras": "pound lb", "seguro": "safe", "agarro": "hold", "agarrar": "hold",
@@ -376,7 +387,9 @@ GLOSSARY: dict[str, str] = {
 _SPANISH_WORDS = frozenset(
     "que como donde cuando cual cuales para pescar pesca pesco carnada senuelo anzuelo lombriz lombrices "
     "con el la los las del una uno es en mi por uso usar hay necesito puedo mejor bagre lobina mojarra "
-    "trucha licencia lago rio orilla".split()
+    "trucha licencia lago rio orilla "
+    # A question typed without accents ("Me pican pero no pesco nada").
+    "pero nada pican pica peces pez saco atrapo agarro porque hago".split()
 )
 _SPANISH_CHARS = re.compile(r"[ñ¿¡]|[áéíóú]")
 _WORD_RE = re.compile(r"[a-z0-9']+")
