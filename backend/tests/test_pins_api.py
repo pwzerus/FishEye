@@ -9,7 +9,7 @@ from PIL import ExifTags, Image
 from sqlalchemy import select
 
 from app.core.config import get_settings
-from app.models.community import AuditLog, CatchPin, PinPhoto
+from app.models.community import AuditLog, CatchGear, CatchPin, PinPhoto
 from app.services.media import PhotoRejected, clean_photo
 from tests.conftest import make_admin, signup
 
@@ -125,6 +125,27 @@ def test_photos_are_re_encoded_resized_and_stripped_of_gps(make_client):
     thumb = Image.open(io.BytesIO(c.get(_path(photo["thumb_url"])).content))
     assert max(thumb.size) == 640
     assert len(media_files()) == 2
+
+
+def test_stored_photos_keep_no_comment_xmp_or_color_profile(make_client):
+    """EXIF isn't the only place a photo hides data: a JPEG comment, XMP
+    (which can repeat the GPS) and a color profile go too."""
+    from PIL import ImageCms
+
+    xmp = b'<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF><rdf:Description exif:GPSLatitude="32.8064N"/></rdf:RDF></x:xmpmeta>'
+    icc = ImageCms.ImageCmsProfile(ImageCms.createProfile("sRGB")).tobytes()
+    out = io.BytesIO()
+    Image.new("RGB", (800, 600), "green").save(
+        out, format="JPEG", comment=b"Shot at the cove", xmp=xmp, icc_profile=icc
+    )
+    c = make_client()
+    signup(c)
+    photo = create(c, photos=[out.getvalue()]).json()["photos"][0]
+    for url in (photo["url"], photo["thumb_url"]):
+        data = c.get(_path(url)).content
+        stored = Image.open(io.BytesIO(data))
+        assert not {"comment", "xmp", "icc_profile", "exif"} & set(stored.info)
+        assert b"Shot at the cove" not in data and b"32.8064" not in data
 
 
 def _path(url: str) -> str:
@@ -482,6 +503,73 @@ def test_options_endpoint_lists_species_and_reasons(make_client):
     assert {"slug": "bluegill", "label": "Bluegill"} in body["species"]
     assert any(r["id"] == "private_property" for r in body["report_reasons"])
     assert body["max_photos"] == 4
+    # The /gear list without its tools (ADR 0056), category by category.
+    assert {"id": "lure-soft-worm", "label": "Soft plastic worms", "category": "lures"} in body["gear"]
+    assert not any(g["category"] == "tools" for g in body["gear"])
+    cats = [c["id"] for c in body["gear_categories"]]
+    assert cats == ["rods-reels", "line", "terminal", "lures", "bait"]
+    assert [g["category"] for g in body["gear"]] == sorted((g["category"] for g in body["gear"]), key=cats.index)
+    assert body["max_gear"] == 6
+
+
+# ------------------------------------------------------------------- gear
+
+
+def test_a_catch_lists_its_gear_and_others_see_it_with_the_catch(make_client, db_session):
+    c = make_client()
+    signup(c)
+    pin = create(c, gear=["lure-soft-worm", "rod-spinning", "lure-soft-worm"], gear_other="  Ned rig ").json()
+    assert pin["gear"] == [
+        {"id": "lure-soft-worm", "label": "Soft plastic worms"},
+        {"id": "rod-spinning", "label": "Spinning rod"},
+    ]
+    assert pin["gear_other"] == "Ned rig"
+    other = make_client()
+    signup(other, email="o@example.com", name="Other")
+    seen = other.get(f"/api/pins/{pin['id']}").json()
+    assert [g["id"] for g in seen["gear"]] == ["lure-soft-worm", "rod-spinning"] and seen["gear_other"] == "Ned rig"
+    # None given, none kept.
+    bare = create(c).json()
+    assert bare["gear"] == [] and bare["gear_other"] is None
+    # The rows go with the catch.
+    c.delete(f"/api/pins/{pin['id']}")
+    assert db_session.scalar(select(CatchGear)) is None
+
+
+@pytest.mark.parametrize(
+    ("fields", "message"),
+    [
+        ({"gear": ["kraken-lure"]}, "Pick gear from the list, or use 'Other'."),
+        # Pliers catch nothing: the list's tools aren't gear for a catch.
+        ({"gear": ["tool-pliers"]}, "Pick gear from the list, or use 'Other'."),
+        ({"gear": ["hook-j", "hook-circle", "hook-treble", "bobber", "swivel", "jig-head", "line-mono"]},
+         "A catch can list up to 6 pieces of gear."),
+        ({"gear_other": "x" * 61}, "Keep it under 60 characters."),
+    ],
+)
+def test_gear_validation(make_client, fields, message):
+    c = make_client()
+    signup(c)
+    resp = create(c, **fields)
+    assert resp.status_code == 422 and resp.json()["detail"] == message
+
+
+def test_editing_gear_replaces_the_list_and_leaves_it_when_not_sent(make_client):
+    c = make_client()
+    signup(c)
+    pin = create(c, gear=["lure-spinnerbait", "line-braid"], gear_other="Chartreuse").json()
+    url = f"/api/pins/{pin['id']}"
+    # Other changes leave the gear as it was.
+    same = c.patch(url, json={"title": "Windy point"}).json()
+    assert [g["id"] for g in same["gear"]] == ["lure-spinnerbait", "line-braid"] and same["gear_other"] == "Chartreuse"
+    # A new list replaces the old one, in its order.
+    swapped = c.patch(url, json={"gear": ["line-braid", "bait-nightcrawler"]}).json()
+    assert [g["id"] for g in swapped["gear"]] == ["line-braid", "bait-nightcrawler"]
+    assert swapped["gear_other"] == "Chartreuse"
+    # [] and "" clear them.
+    cleared = c.patch(url, json={"gear": [], "gear_other": ""}).json()
+    assert cleared["gear"] == [] and cleared["gear_other"] is None
+    assert c.patch(url, json={"gear": ["tool-net"]}).status_code == 422
 
 
 def test_photo_rows_follow_their_pin(make_client, db_session):

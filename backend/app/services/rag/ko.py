@@ -87,6 +87,22 @@ GLOSSARY: dict[str, str] = {
     "새우": "shrimp", "닭 간": "chicken liver", "닭간": "chicken liver", "치즈": "cheese", "옥수수": "corn",
     "소시지": "hot dog", "핫도그": "hot dog", "토막": "cut bait", "미노우": "minnow minnows",
     "작은 물고기": "minnow minnows", "피라미": "minnow",
+    # Added 2026-11-16, from asking Ask the same 30 questions in six languages:
+    # rigs by name, the parts of a rig, a fish where it is, a line that tangles.
+    "와키 리그": "wacky rig", "와키리그": "wacky rig", "와키": "wacky rig", "텍사스 리그": "texas rig",
+    "텍사스리그": "texas rig", "캐롤라이나 리그": "carolina rig", "리그": "rig", "채비": "rig",
+    "구멍봉돌": "egg sinker sliding sinker", "불릿 봉돌": "bullet sinker", "유동 봉돌": "sliding sinker",
+    "유동찌": "slip bobber", "찌멈춤": "bobber stop", "구슬": "bead", "배럴 도래": "barrel swivel",
+    "물고기": "fish", "어디에 있": "where go", "어디 있": "where go",
+    "엉키": "tangle", "엉켜": "tangle", "엉킨": "tangle", "엉켰": "tangle",
+    # A bare 줄 is a line (to_english, after every longer word: 목줄이 stays a
+    # leader). These aren't: 줄이다 (to cut down), 줄넘기 (a jump rope).
+    "줄이려": "", "줄여": "", "줄넘기": "",
+    # What a beginner asks with (round 2 of the six-language check).
+    "입질은 오는데": "bites but nothing on the hook", "입질이 오는데": "bites but nothing on the hook",
+    "입질": "bite bites", "잡혀": "catch", "안 잡": "no bites nothing caught what to change", "하나도": "",
+    "필레": "fillet", "가시": "spines", "안 찔리게": "without getting stung hold", "안 찔리도록": "without getting stung hold", "찔리": "stung", "찔려": "stung", "살려": "keep alive",
+    "집에서": "home", "먹어도": "eat safe", "안전": "safe",
     # lures and tackle
     "루어": "lure lures", "스피너베이트": "spinnerbait", "스피너": "spinner", "스푼": "spoon",
     "크랭크베이트": "crankbait", "크랭크": "crankbait", "바이브레이션": "lipless crankbait",
@@ -115,7 +131,7 @@ GLOSSARY: dict[str, str] = {
     "캐스팅": "cast", "던지": "cast", "던져": "cast",
     "포 뜨기": "fillet", "포뜨기": "fillet", "포를 뜨": "fillet", "손질": "clean", "껍질": "skin", "비늘": "scale",
     "요리": "cook", "조리": "cook", "튀기": "fry", "튀김": "fry", "냉동": "freeze", "얼리": "freeze",
-    "방생": "release", "놓아주": "release", "가져가": "keep", "가져갈": "keep", "보관": "keep",
+    "방생": "catch and release", "놓아주": "catch and release", "가져가": "keep", "가져갈": "keep", "보관": "keep",
     "피 빼기": "bleed", "피빼기": "bleed", "피를 빼": "bleed", "길이": "measure", "재는": "measure",
     # rules and safety
     "면허": "license", "라이선스": "license", "라이센스": "license", "허가증": "permit",
@@ -149,6 +165,7 @@ for _code, _name in STATE_NAMES.items():
 
 _PHRASES = sorted(GLOSSARY.items(), key=lambda kv: -len(kv[0]))
 _NOT_ENGLISH = re.compile(r"[^a-z0-9 ]+")
+_BARE_LINE = re.compile(r"(?<![가-힣])줄(?=[은는을를이가로에도]|[^가-힣]|$)")
 
 
 def is_korean(text: str) -> bool:
@@ -162,4 +179,7 @@ def to_english(text: str) -> str:
     for ko, english in _PHRASES:
         if ko in out:
             out = out.replace(ko, f" {english} ")
+    # What is left of a 줄 after the longer words (낚싯줄, 목줄, 줄무늬농어) went
+    # is a fishing line: 줄은, 줄을, 줄이, 줄로, 줄에, 줄도, or 줄 on its own.
+    out = _BARE_LINE.sub(" line ", out)
     return " ".join(_NOT_ENGLISH.sub(" ", out).split())

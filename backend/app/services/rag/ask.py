@@ -535,8 +535,8 @@ def search_guides(
     if not hits:
         return _empty(question, context, retr, trace, state if dropped else None, query=query, lang=reply)
     passages = [h.passage for h in hits]
-    all_translated = reply == "zh" and all(p.text_zh for p in passages)
-    intro = replies.PASSAGES_INTRO_ZH_ORIGINAL if all_translated else replies.passages_intro(reply)
+    all_translated = reply != "en" and all(p.text_in(reply) for p in passages)
+    intro = replies.passages_intro_translated(reply) if all_translated else replies.passages_intro(reply)
     return AskResult(question, intro, ANSWER_PASSAGES, passages, trace)
 
 

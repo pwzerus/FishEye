@@ -10,6 +10,7 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { I18nProvider } from "@/i18n/client";
 import { LOCALE_TAGS } from "@/i18n/config";
+import { LEGAL } from "@/lib/legal";
 import { getLocale, getT } from "@/i18n/server";
 import { siteOrigin } from "@/lib/siteOrigin";
 import "./base.css";
@@ -58,7 +59,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               {children}
               <SiteFooter />
               <LanguageSuggestion />
-              <TermsNotice />
+              {LEGAL.changeNotices && <TermsNotice />}
               <InstallTip />
               <VisitCounter />
             </ToastProvider>

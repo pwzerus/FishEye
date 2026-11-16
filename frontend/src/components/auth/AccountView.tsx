@@ -19,6 +19,7 @@ import {
   googleStartUrl,
   isReauthRequired,
   listPins,
+  setGearStats,
   setRankingsHidden,
   updateProfile,
 } from "@/lib/api/session";
@@ -170,6 +171,23 @@ export function AccountView() {
                 {all.social.rankings}
                 <small className="muted">{all.social.rankingsHelp}</small>
               </span>
+            </label>
+            {/* On until turned off: what the privacy policy says for the
+                website (backend ADR 0056). Just the switch: what is counted
+                is in the privacy policy, not here. */}
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={user.gear_stats !== false}
+                onChange={async (e) => {
+                  try {
+                    setUser(await setGearStats(e.target.checked));
+                  } catch (err) {
+                    toast(err instanceof ApiError ? err.message : all.social.failed, "error");
+                  }
+                }}
+              />
+              <span>{t.gearStats}</span>
             </label>
           </Section>
 

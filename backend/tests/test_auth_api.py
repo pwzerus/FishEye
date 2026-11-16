@@ -120,6 +120,26 @@ def test_profile_update(make_client):
     assert c.patch("/api/auth/me", json={"display_name": "x"}).status_code == 422
 
 
+def test_gear_counting_is_on_until_turned_off(make_client, db_session):
+    """ADR 0056: on the website, the privacy policy says the gear and fish
+    of catches are counted unless the person turns it off. Not choosing
+    stays recorded as not choosing (None), so the App Store app can still
+    ask; a no is a no everywhere."""
+    c = make_client()
+    signup(c)
+    assert c.get("/api/auth/me").json()["gear_stats"] is True
+    user = db_session.scalar(select(User).where(User.email == "angler@example.com"))
+    assert user.gear_stats is None and user.counts_gear
+    # Changing something else leaves the choice alone.
+    assert c.patch("/api/auth/me", json={"display_name": "Crappie Queen"}).json()["gear_stats"] is True
+    assert c.patch("/api/auth/me", json={"gear_stats": False}).json()["gear_stats"] is False
+    db_session.refresh(user)
+    assert user.gear_stats is False and not user.counts_gear
+    assert c.patch("/api/auth/me", json={"gear_stats": True}).json()["gear_stats"] is True
+    db_session.refresh(user)
+    assert user.gear_stats is True
+
+
 def test_cross_site_writes_are_refused(make_client):
     c = make_client()
     resp = c.post(

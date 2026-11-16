@@ -268,6 +268,9 @@ export interface NewPin {
   visibility: "public" | "private";
   // Show others the exact spot; by default they see the lake or county.
   share_exact?: boolean;
+  // /gear item ids, and anything else in a few words (backend ADR 0056).
+  gear?: string[];
+  gear_other?: string;
   photos: File[];
 }
 
@@ -282,6 +285,8 @@ export function createPin(pin: NewPin, onProgress?: (fraction: number) => void):
   if (pin.species_other) form.set("species_other", pin.species_other);
   if (pin.caught_on) form.set("caught_on", pin.caught_on);
   if (pin.share_exact) form.set("share_exact", "true");
+  for (const id of pin.gear ?? []) form.append("gear", id);
+  if (pin.gear_other) form.set("gear_other", pin.gear_other);
   for (const f of pin.photos) form.append("photos", f, f.name);
   return upload<PinDetail>("/api/pins", form, onProgress);
 }
@@ -369,6 +374,8 @@ export function getLeaderboard(params: { metric: LeaderboardMetric; period: Lead
 
 export const getAngler = (id: number) => sfetch<Angler>(`/api/anglers/${id}`);
 export const setRankingsHidden = (hide_from_rankings: boolean) => sfetch<User>("/api/auth/me", json("PATCH", { hide_from_rankings }));
+// Whether FishEye counts this account's gear and fish (backend ADR 0056).
+export const setGearStats = (gear_stats: boolean) => sfetch<User>("/api/auth/me", json("PATCH", { gear_stats }));
 
 export const listAlerts = () => sfetch<AlertsInfo>("/api/alerts");
 export const createAlert = (alert: { species_slug: string; latitude: number; longitude: number; place: string; radius_miles: number; lang: string }) =>

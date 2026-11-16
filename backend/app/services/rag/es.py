@@ -129,6 +129,28 @@ GLOSSARY: dict[str, str] = {
     "pescaditos": "minnows",
     "pescadito": "minnow",
     "carnada en trozos": "cut bait",
+    # Added 2026-11-16, from asking Ask the same 30 questions in six languages:
+    # rigs by name, how a question says "set up", the parts of a rig. Keys are
+    # written without accents: they are matched against the folded question.
+    "aparejo wacky": "wacky rig", "aparejo texas": "texas rig", "aparejo carolina": "carolina rig",
+    "aparejo ned": "ned rig", "aparejo de fondo": "bottom rig", "aparejos": "rigs", "aparejo": "rig",
+    "armar": "rig set up", "armo": "rig set up", "arma": "rig set up", "armado": "rig",
+    "plomo corredizo": "sliding sinker egg sinker", "plomo de huevo": "egg sinker", "plomo de bala": "bullet sinker",
+    "boya corrediza": "slip bobber", "tope de boya": "bobber stop", "destorcedor de barril": "barrel swivel",
+    "corredizo": "sliding", "corrediza": "slip", "barril": "barrel",
+    "enrede": "tangle", "enreda": "tangle", "enredos": "tangles", "enredan": "tangle",
+    "pongo": "set", "poner": "set", "dia": "day", "debe": "should", "deberia": "should",
+    # What a beginner asks with (round 2 of the six-language check).
+    "me pican pero no saco nada": "bites but nothing on the hook", "pican pero no saco nada": "bites but nothing on the hook",
+    "no saco nada": "no bites nothing caught what to change", "saco": "catch", "nada": "nothing", "hago mal": "doing wrong",
+    "primera salida": "first trip", "salida": "trip", "llevo": "bring", "llevar": "bring",
+    "mantengo vivas": "keep alive", "mantengo vivos": "keep alive", "vivas": "alive", "vivos": "alive",
+    "casa": "home", "libras": "pound lb", "seguro": "safe", "agarro": "hold", "agarrar": "hold",
+    "espine": "spines sting", "espina": "spines", "espinas": "spines", "fileteo": "fillet",
+    "mi": "", "me": "", "pero": "but", "zona": "",
+    # Spanish's little words only got in the way of the search ("el", "la", "un").
+    "el": "", "la": "", "los": "", "las": "", "un": "", "una": "", "unos": "", "unas": "",
+    "de": "", "del": "", "al": "", "se": "", "es": "", "lo": "", "le": "", "les": "",
     # lures and tackle
     "senuelos": "lures",
     "senuelo": "lure",

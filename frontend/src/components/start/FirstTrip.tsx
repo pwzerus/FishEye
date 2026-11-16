@@ -215,12 +215,16 @@ const NEARBY_KM = 40;
 function NearbySpots() {
   const all = useT();
   const t = all.start;
-  const [state, setState] = useState<"idle" | "finding" | "done" | "failed">("idle");
+  // Why it failed decides what to say: a blocked permission needs the
+  // browser's settings, a device that can't place itself (a desktop with
+  // location turned off, a timeout) can try again, and a failed lake lookup
+  // isn't about location at all.
+  const [state, setState] = useState<"idle" | "finding" | "done" | "blocked" | "unavailable" | "error">("idle");
   const [spots, setSpots] = useState<Nearby[]>([]);
 
   function find() {
     if (!navigator.geolocation) {
-      setState("failed");
+      setState("unavailable");
       return;
     }
     setState("finding");
@@ -244,13 +248,17 @@ function NearbySpots() {
           );
           setState("done");
         } catch {
-          setState("failed");
+          setState("error");
         }
       },
-      () => setState("failed"),
+      // 1 is GeolocationPositionError.PERMISSION_DENIED.
+      (err) => setState(err.code === 1 ? "blocked" : "unavailable"),
       { timeout: 15_000, maximumAge: 300_000 },
     );
   }
+
+  const failure =
+    state === "blocked" ? t.locationBlocked : state === "unavailable" ? t.noLocation : state === "error" ? t.lakesFailed : null;
 
   if (state === "done" && spots.length > 0) {
     return (
@@ -267,11 +275,11 @@ function NearbySpots() {
   return (
     <>
       {state === "done" && <p>{t.noSpots}</p>}
-      {state === "failed" && <p>{t.noLocation}</p>}
+      {failure && <p>{failure}</p>}
       <p className="trip-links">
-        {state !== "done" && state !== "failed" && (
+        {state !== "done" && (
           <button type="button" className="btn btn-primary btn-sm" onClick={find} disabled={state === "finding"}>
-            {state === "finding" ? t.finding : t.findSpots}
+            {state === "finding" ? t.finding : failure ? all.common.tryAgain : t.findSpots}
           </button>
         )}
         <Link href="/map">{t.openMap}</Link>

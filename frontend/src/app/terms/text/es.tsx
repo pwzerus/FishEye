@@ -53,7 +53,8 @@ function Body() {
             lo que sea importante.
           </li>
           <li>
-            <strong>Lo que publicas es tuyo.</strong> Permites que FishEye lo muestre, y eres responsable de ello.
+            <strong>Lo que publicas es tuyo.</strong> FishEye puede usarlo y compartirlo con empresas colaboradoras, pero
+            no revela tus lugares de pesca. Eres responsable de lo que publicas.
           </li>
           <li>
             <strong>FishEye Plus se renueva hasta que lo canceles</strong>, y puedes cancelarlo en cualquier momento.
@@ -282,12 +283,18 @@ function Body() {
       <section id="your-content">
         <Heading id="your-content" titles={TITLES} />
         <p>
-          Conservas la propiedad de las capturas, fotos, notas y comentarios que publicas. Para que FishEye pueda
-          funcionar, le otorgas a FishEye una licencia mundial, no exclusiva y libre de regalías para almacenarlos,
-          copiarlos (por ejemplo, como versiones más pequeñas de una foto o en copias de seguridad) y mostrarlos en
-          FishEye: a todos, si la captura o el comentario es público, y solo a ti (y a los moderadores), si es privado.
-          La licencia termina cuando eliminas el contenido o tu cuenta, salvo por las copias de seguridad, que se
-          reemplazan con el tiempo.
+          Conservas la propiedad de las capturas, fotos, notas y comentarios que publicas. Le otorgas a FishEye y a sus
+          empresas afiliadas una licencia mundial, no exclusiva, perpetua, irrevocable, libre de regalías, transferible y
+          sublicenciable para usarlos, almacenarlos, copiarlos, modificarlos, traducirlos, mostrarlos y publicarlos en
+          cualquier medio, y para crear obras derivadas a partir de ellos, incluso para operar, promocionar y mejorar
+          FishEye y para desarrollar nuevos productos y servicios. En FishEye, una captura o un comentario público lo ve
+          todo el mundo, y uno privado solo tú y los moderadores. FishEye puede entregar lo que compartes públicamente a
+          sus empresas afiliadas y colaboradoras.
+        </p>
+        <p>
+          Al publicar, también permites que FishEye, sus empresas afiliadas y sus empresas colaboradoras usen tu nombre
+          visible y las capturas que compartes públicamente (por ejemplo, el pez que pescaste y el equipo que usaste) en
+          anuncios, ofertas y contenido patrocinado, dentro y fuera de FishEye, sin pagarte por ello.
         </p>
         <ul>
           <li>
@@ -356,7 +363,7 @@ function Body() {
             Eliminar tu cuenta no cancela Plus comprado a través de Apple o Google; cancélalo allí.
           </li>
           <li>
-            Las secciones {sec("your-content")} (la licencia sobre lo que compartiste, hasta que se elimine) y{" "}
+            Las secciones {sec("your-content")} (la licencia sobre lo que compartiste) y{" "}
             {sec("our-content")} a {sec("general")} siguen vigentes después del cierre de tu cuenta.
           </li>
         </ul>

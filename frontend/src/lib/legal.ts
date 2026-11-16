@@ -8,7 +8,9 @@
  *
  * 2026-11-12: the terms were rewritten (src/app/terms). `mailingAddress` is
  * a placeholder too: legal notices, the App Store's terms for apps and a
- * registered DMCA agent all need a postal address (a P.O. box will do).
+ * registered DMCA agent all need a postal address. A DMCA designation shows
+ * the service provider's legal name and street address, and takes a P.O.
+ * box only by waiver (37 CFR 201.38); the owner put it off on 2026-11-15.
  */
 export const LEGAL = {
   // Left out at the owner's wish (2026-11-13): no personal name on the
@@ -16,8 +18,8 @@ export const LEGAL = {
   // goes here once there is one.
   operator: "" as string,
   // Left out at the owner's wish (2026-11-13): no home address on the site.
-  // A P.O. box or an LLC's registered agent can go here later; the App
-  // Store's own license terms and a DMCA agent will need one.
+  // An LLC's registered agent or a commercial mailbox can go here later; the
+  // App Store's own license terms and a DMCA agent will need one.
   mailingAddress: "" as string,
   contactEmail: "feedback.fisheyefishing@gmail.com",
   site: "fisheyefishing.com",
@@ -35,6 +37,10 @@ export const LEGAL = {
   // Accounts made before `updatedIso` come under these terms 14 days later
   // (`noticeDays`), after a notice on the site (components/legal/TermsNotice).
   existingUsersFromIso: "2026-11-27",
+  // Off while FishEye is in testing with no real users (the owner,
+  // 2026-11-15): no "terms changed" banner. Turn it on once the owner says
+  // FishEye has launched; changes after that get the notice.
+  changeNotices: false as boolean,
 } as const;
 
 /** A legal page in one language (src/app/<page>/text/): the English one

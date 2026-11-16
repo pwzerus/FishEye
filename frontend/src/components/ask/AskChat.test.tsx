@@ -2,7 +2,19 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AskResponse } from "@/lib/api/types";
-import { AskChat } from "./AskChat";
+import { AskChat, citationLang } from "./AskChat";
+
+describe("citationLang", () => {
+  it("tags a quote with the language it came back in, Japanese and Korean included", () => {
+    expect(citationLang("zh")).toBe("zh-CN");
+    expect(citationLang("zh-Hant")).toBe("zh-TW");
+    expect(citationLang("es")).toBe("es");
+    expect(citationLang("ja")).toBe("ja");
+    expect(citationLang("ko")).toBe("ko");
+    expect(citationLang("en")).toBe("en");
+    expect(citationLang(null)).toBeUndefined();
+  });
+});
 
 vi.mock("@/lib/api/client", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api/client")>("@/lib/api/client");

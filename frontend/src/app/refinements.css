@@ -170,6 +170,13 @@ button:active:not(:disabled), .btn:active { translate:0 1px; }
 @media (max-width: 760px) {
   .map-container .map-fabs .fab-unavailable { display: none; }
 }
+/* The satellite button's "free in beta" tag (SatelliteToggle.tsx). On a phone
+   the button is an icon, so the tag hangs just under it. */
+.map-toggle-tag { font-size: 13px; font-weight: 700; line-height: 1.5; padding: 0 7px; border-radius: 999px; background: #e5f4e4; color: #1d6b3a; white-space: nowrap; }
+@media (max-width: 760px) {
+  .map-container .map-fabs .map-toggle:has(.map-toggle-tag) { position: relative; }
+  .map-container .map-fabs .map-toggle-tag { position: absolute; top: calc(100% + 4px); right: -4px; pointer-events: none; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+}
 /* Photo ID in Ask: the camera beside the question box, and the photo sent. */
 .ask-form .photo-btn { flex:none; width:42px; height:42px; margin-left:-8px; border-radius:50%; border:1px solid var(--line); background:transparent; color:var(--brand); display:grid; place-items:center; cursor:pointer; transition:border-color var(--dur), background var(--dur); }
 .ask-form .photo-btn:hover:not(:disabled) { border-color:var(--brand); background:var(--brand-soft); }
@@ -308,6 +315,60 @@ button:active:not(:disabled), .btn:active { translate:0 1px; }
 .handbook-gear-item { display: grid; gap: 4px; width: 96px; font-size: 14.5px; line-height: 1.25; color: var(--ink-2); text-decoration: none; }
 .handbook-gear-item img { width: 96px; height: 72px; max-height: 72px; object-fit: contain; border-radius: 8px; background: var(--surface-2, #f4f4f2); border: 1px solid var(--line); }
 .handbook-gear-item:hover span { text-decoration: underline; }
+
+/* Rig, knot and hook drawings (components/fish/RigDiagram.tsx). The drawing
+   has numbers only; the list under it says what each one is. */
+figure.rig { margin: 12px 0 6px; padding: 12px 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2); }
+figure.rig svg { display: block; width: 100%; max-width: 460px; height: auto; margin: 0 auto; overflow: visible; }
+figure.rig ol { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; font-size: 15.5px; line-height: 1.45; color: var(--ink-2); }
+figure.rig ol li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; }
+figure.rig ol li > b { display: grid; place-items: center; width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; background: var(--brand); color: var(--surface); font-size: 13px; font-weight: 700; }
+figure.rig figcaption { margin-top: 8px; font-size: 15px; line-height: 1.45; color: var(--muted); }
+.rig-line { fill: none; stroke: var(--ink-2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rig-leader { fill: none; stroke: var(--info); stroke-width: 2; stroke-linecap: round; }
+.rig-hole, .rig-hidden { fill: none; stroke: var(--ink-2); stroke-width: 1.4; stroke-dasharray: 3 3; }
+.rig-hidden { stroke: var(--surface); opacity: 0.85; }
+.rig-metal { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.rig-metal-thin { fill: none; stroke: var(--ink); stroke-width: 1.2; }
+.rig-swivel-body { fill: var(--surface); stroke: var(--ink); stroke-width: 2; }
+.rig-knot { fill: var(--ink); }
+.rig-wraps { fill: none; stroke: var(--ink-2); stroke-width: 2.2; stroke-linecap: round; }
+.rig-lead { fill: color-mix(in srgb, var(--muted) 70%, var(--surface)); stroke: var(--ink-2); stroke-width: 1.2; }
+.rig-worm { fill: none; stroke: color-mix(in srgb, var(--ok) 62%, var(--ink)); stroke-linecap: round; stroke-linejoin: round; }
+.rig-ring { fill: none; stroke: var(--accent); stroke-width: 3; }
+.rig-bead { fill: var(--accent); }
+.rig-stop { fill: var(--ink); }
+.rig-float-top { fill: var(--danger); }
+.rig-float-bottom { fill: var(--surface); stroke: var(--ink-2); stroke-width: 1.2; }
+.rig-water { fill: var(--info-soft); }
+.rig-surface { fill: none; stroke: var(--info); stroke-width: 1.5; }
+.rig-bed { fill: var(--line); opacity: 0.6; }
+.rig-bedline { stroke: var(--line-strong); stroke-width: 1.5; }
+.rig-arrow { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-linecap: round; }
+.rig-dashed { stroke-dasharray: 4 3; }
+.rig-divider { stroke: var(--line-strong); stroke-width: 1; }
+.rig-tick { stroke: var(--brand); stroke-width: 1.2; }
+.rig-mark circle { fill: var(--brand); }
+.rig-mark text { fill: var(--surface); font: 700 13px/1 var(--font); text-anchor: middle; dominant-baseline: central; }
+.rig-size { fill: var(--ink-2); font: 600 13px var(--font); text-anchor: middle; }
+.rig-bar { fill: var(--brand-soft); stroke: var(--brand); stroke-width: 1; }
+.rig-spool { fill: color-mix(in srgb, var(--muted) 18%, var(--surface)); stroke: var(--ink-2); stroke-width: 1.4; }
+.rig-spool-hub { fill: var(--surface); stroke: var(--ink); stroke-width: 1.6; }
+/* The line draws itself in once, then the numbers appear. */
+.rig-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: rig-draw 900ms var(--ease) 120ms forwards; }
+.rig-mark { animation: rig-fade 360ms var(--ease) 700ms both; }
+@keyframes rig-draw { to { stroke-dashoffset: 0; } }
+@keyframes rig-fade { from { opacity: 0; } to { opacity: 1; } }
+.rig-related { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0 0 8px; font-size: 15px; line-height: 1.45; }
+.rig-related span { color: var(--muted); }
+.rig-related a { color: var(--brand-strong); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: color-mix(in srgb, var(--brand) 40%, transparent); }
+/* A fish page's setup, linked to the handbook's drawing of its rig. */
+.setup-specs dd.setup-drawing { margin-top: 6px; font-size: 16px; }
+.setup-drawing a { color: var(--brand-strong); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: color-mix(in srgb, var(--brand) 40%, transparent); }
+@media (prefers-reduced-motion: reduce) {
+  .rig-draw { animation: none; stroke-dashoffset: 0; }
+  .rig-mark { animation: none; }
+}
 .home-action > svg { flex-shrink: 0; }
 
 /* The search box on /questions. */

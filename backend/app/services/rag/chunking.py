@@ -26,7 +26,7 @@ from dataclasses import dataclass
 
 from app.knowledge.angling_handbook import CATEGORIES, TOPICS, HandbookTopic
 from app.knowledge.species_guides import GUIDES, SpeciesGuide
-from app.knowledge.translations import table
+from app.knowledge.translations import OTHER_LANGUAGES, table
 
 SHARED_SLUG = "all-fish"  # passages that apply to every species
 
@@ -48,6 +48,21 @@ class Passage:
     title_zh: str = ""
     text_zh: str = ""
     basis: str = ""  # "guide", "official", "maker" or "general"; "" for the guides
+    # Spanish, Japanese and Korean, as (lang, text) pairs, built from the same
+    # kind of tables (added 2026-11-16, ADR 0058).
+    title_tr: tuple[tuple[str, str], ...] = ()
+    text_tr: tuple[tuple[str, str], ...] = ()
+
+    def text_in(self, lang: str | None) -> str:
+        """The passage in `lang` without its header, or "" if not translated."""
+        if lang == "zh":
+            return self.text_zh
+        return dict(self.text_tr).get(lang or "", "")
+
+    def title_in(self, lang: str | None) -> str:
+        if lang == "zh":
+            return self.title_zh
+        return dict(self.title_tr).get(lang or "", "")
 
 
 def _bullets(items: tuple[str, ...]) -> str:
@@ -81,10 +96,81 @@ def _zh_setup(guide: SpeciesGuide, index: int) -> tuple[str, str]:
     return parts["name"] or "", body
 
 
+def join_sentences(parts: list[str | None], lang: str) -> str:
+    """Sentences run together in `lang`, or "" if any isn't translated:
+    Chinese and Japanese end each with 。 and need no space, Spanish and
+    Korean end with a full stop and a space."""
+    if not parts or not all(parts):
+        return ""
+    if lang in ("zh", "ja"):
+        return "".join(p if p.endswith(("。", "！", "？")) else f"{p}。" for p in parts)
+    return " ".join(p if p.endswith((".", "!", "?", "…")) else f"{p}." for p in parts)
+
+
+# The labels a setup's body uses in each language, as its card on the page.
+_SETUP_LABELS = {
+    "es": ("Caña: ", "Carrete: ", "Línea: ", "Anzuelo y aparejo: "),
+    "ja": ("竿：", "リール：", "ライン：", "針と仕掛け："),
+    "ko": ("낚싯대: ", "릴: ", "낚싯줄: ", "바늘과 채비: "),
+}
+_SINGLE_FIELDS = {"overview": "summary", "diet": "diet"}
+
+
+def _tr_guide(guide: SpeciesGuide, section: str) -> tuple[tuple[tuple[str, str], ...], tuple[tuple[str, str], ...]]:
+    """A guide section in Spanish, Japanese and Korean: (texts, titles) as
+    (lang, text) pairs. A language missing any sentence of it is left out,
+    so the passage stays English there rather than half translated."""
+    texts: list[tuple[str, str]] = []
+    titles: list[tuple[str, str]] = []
+    for lang in OTHER_LANGUAGES:
+        words = table("guides", lang)
+        if section.startswith("setup-"):
+            key = f"{guide.slug}.setups#{int(section.removeprefix('setup-')) - 1}"
+            parts = {f: words.get(f"{key}.{f}") for f in ("name", "use_when", "rod", "reel", "line", "terminal")}
+            if not all(parts.values()):
+                continue
+            rod, reel, line, rig = _SETUP_LABELS[lang]
+            body = join_sentences([parts["use_when"], f"{rod}{parts['rod']}", f"{reel}{parts['reel']}",
+                                   f"{line}{parts['line']}", f"{rig}{parts['terminal']}"], lang)
+            texts.append((lang, body))
+            titles.append((lang, f"Rod and reel setup — {parts['name']}"))
+        elif section in _SINGLE_FIELDS:
+            text = words.get(f"{guide.slug}.{_SINGLE_FIELDS[section]}")
+            if text:
+                texts.append((lang, text))
+        else:
+            items = getattr(guide, section, ()) or ()
+            text = join_sentences([words.get(f"{guide.slug}.{section}#{i}") for i in range(len(items))], lang)
+            if text:
+                texts.append((lang, text))
+    return tuple(texts), tuple(titles)
+
+
+# A state's bait-rules passage title, as the rules card on the page says it.
+_BAIT_TITLE = {
+    "es": lambda state: f"Reglas de carnada de {state}",
+    "ja": lambda state: f"{state}のエサの規則",
+    "ko": lambda state: f"{state} 미끼 규정",
+}
+
+
+def _tr_sentences(name: str, prefix: str, count: int) -> tuple[tuple[str, str], ...]:
+    """`count` sentences of table `name` under `prefix` ("bait-worms#"), in
+    each other language that has all of them."""
+    out = []
+    for lang in OTHER_LANGUAGES:
+        words = table(name, lang)
+        text = join_sentences([words.get(f"{prefix}{i}") for i in range(count)], lang)
+        if text:
+            out.append((lang, text))
+    return tuple(out)
+
+
 def _passage(
     guide: SpeciesGuide, section: str, title: str, body: str, source_ids: tuple[str, ...],
     text_zh: str = "", title_zh: str = "",
 ) -> Passage:
+    text_tr, title_tr = _tr_guide(guide, section)
     return Passage(
         id=f"{guide.slug}#{section}",
         species_slug=guide.slug,
@@ -95,6 +181,8 @@ def _passage(
         source_ids=source_ids,
         title_zh=title_zh,
         text_zh=text_zh,
+        title_tr=title_tr,
+        text_tr=text_tr,
     )
 
 
@@ -183,6 +271,7 @@ def handbook_passage(topic: HandbookTopic) -> Passage:
         source_ids=topic.source_ids,
         region=topic.region,
         text_zh=_zh_sentences([table("handbook", "zh").get(f"{topic.id}#{i}") for i in range(len(topic.body))]),
+        text_tr=_tr_sentences("handbook", f"{topic.id}#", len(topic.body)),
     )
 
 
@@ -194,6 +283,7 @@ def shared_passages() -> list[Passage]:
     Bait rules are a state's (knowledge/jurisdictions.py, docs/adr/0027):
     one passage per state FishEye has written rules for, tagged with it."""
     from app.knowledge import jurisdictions  # imports species_guides; kept local
+    from app.services.rag.replies import _state_name as state_name
 
     bait = [
         Passage(
@@ -207,6 +297,8 @@ def shared_passages() -> list[Passage]:
             region=j.code,
             title_zh=f"{jurisdictions.ZH_STATE_NAMES.get(j.code, j.name)}的饵料规定",
             text_zh=_zh_sentences([table("bait_rules", "zh").get(f"{j.code}#{i}") for i in range(len(j.bait_rules))]),
+            title_tr=tuple((lang, _BAIT_TITLE[lang](state_name(j.code, lang))) for lang in OTHER_LANGUAGES),
+            text_tr=_tr_sentences("bait_rules", f"{j.code}#", len(j.bait_rules)),
         )
         for j in jurisdictions.covered()
         if j.bait_rules

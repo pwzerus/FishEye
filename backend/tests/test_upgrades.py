@@ -143,7 +143,31 @@ def test_an_old_database_gains_the_photo_check_columns_and_keeps_its_pins(old_en
     assert {"species_check", "species_check_confidence", "species_detected", "species_check_model", "species_check_photo_id"} <= cols
     # And where others see it (ADR 0038): an old pin's spot isn't shared.
     assert {"share_exact", "public_latitude", "public_longitude", "public_place"} <= cols
+    # Gear in the angler's words (ADR 0056); listed gear is a new table.
+    assert "gear_other" in cols
     with old_engine.connect() as conn:
         assert conn.execute(text("SELECT title, species_check FROM catch_pins")).one() == ("Old pin", None)
         assert conn.execute(text("SELECT share_exact, public_place FROM catch_pins")).one() == (0, None)
     assert "ix_catch_pins_public_lat_lng" in {i["name"] for i in inspect(old_engine).get_indexes("catch_pins")}
+
+
+def test_an_old_database_gains_the_account_columns_and_keeps_its_users(old_engine):
+    # users as it was before email confirmation, Plus, leaderboards and
+    # gear counting (ADR 0056).
+    with old_engine.begin() as conn:
+        conn.execute(text(
+            "CREATE TABLE users (id INTEGER PRIMARY KEY, email VARCHAR(254) NOT NULL, display_name VARCHAR(40) NOT NULL,"
+            " password_hash VARCHAR(255), google_sub VARCHAR(64), role VARCHAR(16) NOT NULL, status VARCHAR(16) NOT NULL,"
+            " created_at DATETIME NOT NULL, last_login_at DATETIME)"
+        ))
+        conn.execute(text(
+            "INSERT INTO users (email, display_name, role, status, created_at)"
+            " VALUES ('old@example.com', 'Old', 'user', 'active', '2026-01-01')"
+        ))
+    ensure_waterbody_ranking_schema(old_engine)
+    ensure_waterbody_ranking_schema(old_engine)  # idempotent
+    cols = {c["name"] for c in inspect(old_engine).get_columns("users")}
+    assert {"email_verified_at", "plus_until", "hide_from_rankings", "gear_stats"} <= cols
+    with old_engine.connect() as conn:
+        # Not chosen yet: on the website that counts as yes (User.counts_gear).
+        assert conn.execute(text("SELECT display_name, hide_from_rankings, gear_stats FROM users")).one() == ("Old", 0, None)

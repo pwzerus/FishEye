@@ -74,8 +74,19 @@ class PinSummaryOut(BaseModel):
     liked_by_me: bool = False
 
 
+class PinGearOut(BaseModel):
+    """An item of the /gear list (app/knowledge/gear.py); the frontend names
+    it in the reader's language by its id."""
+
+    id: str
+    label: str
+
+
 class PinDetailOut(PinSummaryOut):
     note: str | None
+    # What the catch was made with (ADR 0056), shown to whoever can see it.
+    gear: list[PinGearOut] = []
+    gear_other: str | None = None
     photos: list[PinPhotoOut]
     can_edit: bool
     can_report: bool
@@ -90,6 +101,10 @@ class PinUpdateIn(BaseModel):
     caught_on: date | None = None
     visibility: str | None = None
     share_exact: bool | None = None
+    # The whole list of /gear items, replacing the old one ([] clears it);
+    # None leaves it. gear_other: "" clears it, None leaves it.
+    gear: list[str] | None = Field(default=None, max_length=20)
+    gear_other: str | None = Field(default=None, max_length=120)
     # A new spot: both or neither. It must be on water, like a new pin's.
     latitude: float | None = None
     longitude: float | None = None
@@ -146,6 +161,11 @@ class PinOptionsOut(BaseModel):
     report_reasons: list[dict[str, str]]  # [{id, label}]
     max_photos: int
     max_photo_mb: int
+    # The /gear items a catch can name (ADR 0056), in the list's order:
+    # [{id, label, category}], and the categories: [{id, label}].
+    gear: list[dict[str, str]] = []
+    gear_categories: list[dict[str, str]] = []
+    max_gear: int = 0
 
 
 class PlaceOut(BaseModel):

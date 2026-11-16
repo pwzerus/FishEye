@@ -35,8 +35,8 @@ function Body() {
             con la última vez que se usó la sesión y el nombre y la versión de tu navegador.
           </li>
           <li>
-            <strong>Las capturas que compartes:</strong> dónde colocaste el marcador, su título, notas, peces, fecha y
-            fotos. Volvemos a guardar cada foto y le quitamos los datos ocultos, incluidos la posición GPS y los datos de
+            <strong>Las capturas que compartes:</strong> dónde colocaste el marcador, su título, notas, peces, fecha, la
+            carnada y el equipo que anotes, y fotos. Volvemos a guardar cada foto y le quitamos los datos ocultos, incluidos la posición GPS y los datos de
             la cámara, antes de almacenarla.
           </li>
           <li>
@@ -101,6 +101,10 @@ function Body() {
         <ul>
           <li>Gestionar tu cuenta y mostrarte tus capturas y, si las hiciste públicas, mostrárselas a otros.</li>
           <li>
+            Usar el equipo que registras para mejorar los algoritmos propios de FishEye. Puedes desactivarlo desde tu{" "}
+            <Link href="/account">página de cuenta</Link>.
+          </li>
+          <li>
             Identificar un pez o un equipo de pesca a partir de una foto, y comprobar que la foto de una captura muestra
             el pez que indicaste. Esto se hace en nuestro propio servidor, y una foto revisada por sí sola no se guarda.
             Una foto solo se envía a otra empresa si le preguntas a la IA sobre ella (consulta Anthropic más abajo).
@@ -112,9 +116,7 @@ function Body() {
           <li>Responderte cuando nos escribes.</li>
         </ul>
         <p>
-          No vendemos ni alquilamos información personal, no la compartimos con fines publicitarios, y FishEye no tiene
-          anuncios, ni cookies de rastreo, ni servicios de análisis externos. El conteo de visitas mencionado arriba es
-          nuestro y no dice nada sobre quién visitó.
+          Nunca vendemos ni revelamos tus lugares de pesca.
         </p>
       </section>
 
@@ -144,7 +146,14 @@ function Body() {
             MapTiler no está disponible) y <strong>las fotos de peces de Wikimedia Commons</strong>. Como cualquier sitio
             web, reciben tu dirección IP y los datos de tu navegador; se aplican sus propias políticas de privacidad.
           </li>
-          <li>Las autoridades, si la ley lo exige, o para proteger la seguridad de alguien.</li>
+          <li>
+            <strong>Empresas colaboradoras</strong>, para anuncios, ofertas y contenido patrocinado: las capturas, fotos y
+            comentarios que compartes públicamente, y tu nombre visible.
+          </li>
+          <li>
+            Los tribunales y las autoridades, cuando la ley lo exige (por ejemplo, una orden judicial o una citación),
+            o para proteger la seguridad de alguien.
+          </li>
         </ul>
         <p>
           Cuando usas “Cerca de mí”, la ubicación de tu dispositivo se usa en tu navegador; para abrir las capturas
@@ -156,8 +165,9 @@ function Body() {
         <h2>Cookies y almacenamiento del navegador</h2>
         <p>
           Una cookie mantiene tu sesión iniciada. Tu navegador también guarda algunas preferencias, como el estado que
-          elegiste para las normas de pesca. El conteo de visitas no usa cookies ni guarda nada en tu navegador. Nada se
-          usa para publicidad ni rastreo.
+          elegiste para las normas de pesca. El conteo de visitas no usa cookies ni guarda nada en tu navegador. Cuando
+          usas FishEye, las empresas que proporcionan el mapa y las fotos de peces pueden recopilar información sobre
+          tu actividad en distintos sitios web; se aplican sus propias políticas de privacidad.
         </p>
       </section>
 
@@ -170,7 +180,8 @@ function Body() {
             sesiones y tus capturas con sus fotos. Las denuncias que presentaste se conservan, sin tu nombre, para que un
             moderador pueda terminar de revisarlas. El conteo de respuestas de IA que usaste se conserva hasta 30 días con
             su código irreversible, de modo que eliminar una cuenta y crearla de nuevo no restablece las respuestas
-            gratuitas.
+            gratuitas. El contenido que ya se entregó a empresas colaboradoras o se
+            usó en anuncios no se recupera.
           </li>
           <li>
             Pedirnos una copia de tus datos, o que los corrijamos o eliminemos, en{" "}
@@ -222,7 +233,7 @@ function Body() {
 
 export const es: LegalText = {
   title: "Política de privacidad",
-  lede: "FishEye recopila lo que necesita para gestionar tu cuenta y mostrar tus capturas. No vendemos tus datos, no mostramos anuncios y nunca revelamos tus lugares de pesca.",
+  lede: "FishEye recopila lo que necesita para gestionar tu cuenta y mostrar tus capturas. Nunca vendemos ni revelamos tus lugares de pesca.",
   description: "Qué recopila FishEye, por qué, quién más la ve y cómo eliminarla.",
   Body,
 };

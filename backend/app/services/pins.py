@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import get_settings
 from app.db.types import utcnow
+from app.knowledge import gear as gear_list
 from app.knowledge.jurisdictions import STATE_NAMES
 from app.knowledge.species_guides import GUIDES
 from app.models.community import (
@@ -33,6 +34,7 @@ from app.models.community import (
     REPORT_OPEN,
     VISIBILITY_PRIVATE,
     VISIBILITY_PUBLIC,
+    CatchGear,
     CatchPin,
     PinPhoto,
     PinReport,
@@ -46,6 +48,17 @@ from app.services.geo import haversine_km
 from app.services.media import MediaStore, PhotoRejected, clean_photo, new_key
 
 SPECIES_LABELS: dict[str, str] = {g.slug: g.common_name for g in GUIDES}
+# What a catch can say it was made with (ADR 0056): the /gear list without
+# its tools, since pliers, a net and a life jacket catch nothing. In the
+# list's order, category by category.
+GEAR_CATEGORIES: dict[str, str] = {k: v for k, v in gear_list.CATEGORIES.items() if k != "tools"}
+GEAR_LABELS: dict[str, str] = {
+    i.id: i.name
+    for c in GEAR_CATEGORIES
+    for i in gear_list.ITEMS
+    if i.category == c
+}
+MAX_GEAR = 6
 REPORT_REASONS = {
     "spam": "Spam or advertising",
     "hateful": "Slurs or hateful content",
@@ -113,6 +126,8 @@ class PinFields:
     caught_on: date | None
     visibility: str
     share_exact: bool = False
+    gear: tuple[str, ...] = ()
+    gear_other: str | None = None
 
 
 # Joiners shape emoji and some scripts; the other invisible characters only
@@ -155,6 +170,37 @@ def claimed_species(species_slug: str | None, species_other: str | None) -> str 
     return slug or next((s for s, label in SPECIES_LABELS.items() if norm in (label.lower(), s.replace("-", " "))), None)
 
 
+def clean_gear(gear: list[str] | tuple[str, ...] | None) -> tuple[str, ...]:
+    """The /gear items a catch names, once each and in the order given."""
+    ids: list[str] = []
+    for raw in gear or ():
+        item = (raw or "").strip()
+        if not item or item in ids:
+            continue
+        if item not in GEAR_LABELS:
+            raise PinError(422, "Pick gear from the list, or use 'Other'.")
+        ids.append(item)
+    if len(ids) > MAX_GEAR:
+        raise PinError(422, f"A catch can list up to {MAX_GEAR} pieces of gear.")
+    return tuple(ids)
+
+
+def clean_gear_other(value: str | None) -> str | None:
+    """Gear that isn't on the list, in the angler's words."""
+    value = _printable(value)
+    if word_filter.blocked_word(value):
+        raise PinError(422, "The gear includes a word FishEye doesn't allow.")
+    return _text(value, 60)
+
+
+def set_gear(pin: CatchPin, ids: tuple[str, ...]) -> None:
+    """Replace the catch's listed gear with `ids`, keeping rows that stay."""
+    kept = {g.item_id: g for g in pin.gear}
+    pin.gear = [kept.get(item) or CatchGear(item_id=item) for item in ids]
+    for n, row in enumerate(pin.gear):
+        row.position = n
+
+
 def validate(
     *,
     latitude: float,
@@ -166,6 +212,8 @@ def validate(
     caught_on: date | None,
     visibility: str,
     share_exact: bool = False,
+    gear: list[str] | tuple[str, ...] | None = None,
+    gear_other: str | None = None,
 ) -> PinFields:
     if not (math.isfinite(latitude) and math.isfinite(longitude)):
         raise PinError(422, "That location isn't valid.")
@@ -200,6 +248,8 @@ def validate(
         caught_on=caught_on,
         visibility=visibility,
         share_exact=bool(share_exact),
+        gear=clean_gear(gear),
+        gear_other=clean_gear_other(gear_other),
     )
 
 
@@ -398,10 +448,12 @@ def create_pin(db: Session, user: User, fields: PinFields, uploads: list[bytes],
         species_slug=fields.species_slug,
         species_other=fields.species_other,
         caught_on=fields.caught_on,
+        gear_other=fields.gear_other,
         visibility=fields.visibility,
         share_exact=fields.share_exact,
         status=PIN_PUBLISHED,
     )
+    set_gear(pin, fields.gear)
     set_water(db, pin, match, checked=required)
     set_place(pin)
     set_public_point(db, pin)

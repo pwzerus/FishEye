@@ -93,6 +93,19 @@ GLOSSARY: dict[str, str] = {
     "鶏レバー": "chicken liver", "レバー": "liver", "チーズ": "cheese", "ソーセージ": "hot dog",
     "コーン": "corn", "トウモロコシ": "corn", "とうもろこし": "corn", "切り身": "cut bait",
     "小魚": "minnow minnows", "ミノー": "minnow",
+    # Added 2026-11-16, from asking Ask the same 30 questions in six languages:
+    # rigs by name, the parts of a rig, a fish where it is, a line that tangles.
+    "ワッキーリグ": "wacky rig", "ワッキー": "wacky rig", "テキサスリグ": "texas rig",
+    "キャロライナリグ": "carolina rig", "ネッドリグ": "ned rig", "リグ": "rig", "仕掛け": "rig",
+    "中通しオモリ": "egg sinker sliding sinker", "バレットシンカー": "bullet sinker", "シンカー": "sinker",
+    "遊動ウキ": "slip bobber", "ウキ止め": "bobber stop", "ウキ下": "bobber depth", "シモリ玉": "bead",
+    "タル型サルカン": "barrel swivel", "魚": "fish", "どこにい": "where go",
+    "絡ま": "tangle", "絡む": "tangle", "絡み": "tangle", "絡ん": "tangle",
+    # What a beginner asks with (round 2 of the six-language check).
+    "アタリはあるのに": "bites but nothing on the hook", "アタリがあるのに": "bites but nothing on the hook",
+    "アタリ": "bite bites", "釣れない": "no bites nothing caught what to change", "全然": "", "生かして": "keep alive",
+    "生かす": "keep alive", "家で": "home", "食べても": "eat safe", "大丈夫": "safe", "安全": "safe",
+    "トゲ": "spines", "刺され": "stung", "持つ": "hold", "持ち方": "how hold",
     # lures and tackle
     "ルアー": "lure lures", "スピナーベイト": "spinnerbait", "スピナー": "spinner", "スプーン": "spoon",
     "クランクベイト": "crankbait", "バイブレーション": "lipless crankbait", "トップウォーター": "topwater",
@@ -117,7 +130,7 @@ GLOSSARY: dict[str, str] = {
     "さばき方": "clean fillet", "さばく": "clean", "捌く": "clean", "三枚におろす": "fillet", "おろし方": "fillet",
     "下処理": "clean", "皮をはぐ": "skin", "皮を剥ぐ": "skin", "ウロコ": "scale", "鱗": "scale",
     "料理": "cook", "調理": "cook", "焼く": "cook", "揚げる": "fry", "冷凍": "freeze",
-    "リリース": "release", "逃がす": "release", "持ち帰り制限": "daily limit", "持ち帰り尾数": "daily limit",
+    "リリース": "catch and release", "逃がす": "catch and release", "持ち帰り制限": "daily limit", "持ち帰り尾数": "daily limit",
     "持ち帰": "keep", "キープ": "keep", "血抜き": "bleed", "締め方": "kill", "締める": "kill",
     "測り方": "measure", "測る": "measure", "計る": "measure",
     # rules and safety

@@ -16,6 +16,8 @@ class TackleSetupOut(BaseModel):
     line: str
     terminal: str
     sources: list[GuideSourceOut]
+    # The handbook topic with a drawing of this rig (TackleSetup.rig_topic).
+    rig_topic: str | None = None
 
 
 class SpeciesGuideOut(BaseModel):
@@ -81,6 +83,9 @@ class QuestionOut(BaseModel):
     body: str
     basis: str  # "guide", "official", "maker" or "general"
     sources: list[GuideSourceOut]
+    # The language the text came back in: the one asked for, or "en" where
+    # this item isn't translated into it yet.
+    lang: str = "en"
 
 
 class SpeciesPhotoOut(BaseModel):

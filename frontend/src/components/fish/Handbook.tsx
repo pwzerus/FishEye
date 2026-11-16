@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
+import { RigDiagram } from "@/components/fish/RigDiagram";
 import { RegionGate } from "@/components/rules/RegionGate";
 import { useLocale, useT } from "@/i18n/client";
 import { localCategory, localGearName, localStateName, localTopicTitle } from "@/i18n/names";
@@ -336,6 +337,7 @@ export function Handbook({
                             {sentence}
                           </p>
                         ))}
+                        <RigDiagram topic={t.id} />
                         <GearStrip items={gear.filter((i) => i.topic === t.id)} />
                         {/* A state's rule keeps its official page beside it, to check
                             it against; the rest are on /sources (docs/adr/0043). */}

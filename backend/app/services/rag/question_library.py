@@ -25,6 +25,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.knowledge.angling_qa import CATEGORIES, ITEMS, QaItem
+from app.knowledge.translations import OTHER_LANGUAGES, table
 from app.services.rag import zh
 from app.services.rag.chunking import SHARED_SLUG, Passage
 from app.services.rag.embeddings import Embedder, passage_vectors
@@ -68,7 +69,21 @@ def qa_passage(item: QaItem) -> Passage:
         title_zh=item.question_zh,
         text_zh=f"{item.short_zh}{item.body_zh}",
         basis=item.basis,
+        title_tr=_tr(item, ("question",)),
+        text_tr=_tr(item, ("short", "body")),
     )
+
+
+def _tr(item: QaItem, fields: tuple[str, ...]) -> tuple[tuple[str, str], ...]:
+    """Fields of a library item in Spanish, Japanese and Korean (tables
+    translations/<lang>_qa.json, 2026-11-16), each language only if whole."""
+    out = []
+    for lang in OTHER_LANGUAGES:
+        words = table("qa", lang)
+        parts = [words.get(f"{item.id}.{f}") for f in fields]
+        if all(parts):
+            out.append((lang, ("" if lang == "ja" else " ").join(parts)))
+    return tuple(out)
 
 
 def _pairs(text: str) -> set[str]:

@@ -95,7 +95,9 @@ def _response(
     lang: str | None = None,
 ) -> AskResponse:
     t = result.trace
-    zh_reply = replies.reply_lang(result.question, lang) == "zh"
+    # A passage is quoted in the question's language where it's translated
+    # (Chinese since ADR 0052; Spanish, Japanese and Korean since 0058).
+    reply = replies.reply_lang(result.question, lang)
     return AskResponse(
         lakes=lakes,
         state=rag_ask.answer_state(result.question, state),
@@ -108,12 +110,12 @@ def _response(
                 species_slug=p.species_slug,
                 species_name=p.species_name,
                 section=p.section,
-                title=(p.title_zh or p.title) if zh_reply and p.text_zh else p.title,
-                excerpt=p.text_zh if zh_reply and p.text_zh else rag_ask.body_of(p),
+                title=(p.title_in(reply) or p.title) if p.text_in(reply) else p.title,
+                excerpt=p.text_in(reply) or rag_ask.body_of(p),
                 region=p.region,
                 sources=[source_out(s) for s in sources_for(p.source_ids)],
                 basis=p.basis,
-                lang="zh" if zh_reply and p.text_zh else "en",
+                lang=reply if p.text_in(reply) else "en",
             )
             for p in result.citations
         ],

@@ -90,6 +90,32 @@ describe("FirstTrip", () => {
     expect(screen.getByRole("link", { name: "Open the map" })).toHaveAttribute("href", "/map");
   });
 
+  it.each([
+    [1, "Location is blocked for this site. Allow it in your browser settings, or find a lake on the map."],
+    [2, "Your device couldn't find your location. Try again, or find a lake on the map."],
+  ])("says why location failed (error code %i) and lets them try again", async (code, message) => {
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: {
+        getCurrentPosition: (_ok: PositionCallback, fail: PositionErrorCallback) =>
+          fail({ code, message: "" } as GeolocationPositionError),
+      },
+    });
+    render(<FirstTrip />);
+    fireEvent.click(screen.getByRole("button", { name: "Find spots near me" }));
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+    expect(screen.getByRole("link", { name: "Open the map" })).toHaveAttribute("href", "/map");
+  });
+
+  it("doesn't blame location when the lakes fail to load", async () => {
+    vi.mocked(listWaterbodies).mockRejectedValue(new Error("down"));
+    render(<FirstTrip />);
+    fireEvent.click(screen.getByRole("button", { name: "Find spots near me" }));
+    expect(await screen.findByText("Couldn't load nearby lakes. Try again.")).toBeInTheDocument();
+    expect(screen.queryByText(/your location/)).not.toBeInTheDocument();
+  });
+
   it("remembers what was ticked off for the next visit", () => {
     const first = render(<FirstTrip />);
     fireEvent.click(screen.getAllByRole("checkbox")[0]);

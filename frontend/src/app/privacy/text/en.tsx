@@ -3,7 +3,9 @@ import Link from "next/link";
 import { LEGAL, type LegalText } from "@/lib/legal";
 
 // What this says must stay true of the code: the account and pin models
-// (backend app/models/community.py), photo cleaning (services/media.py),
+// (backend app/models/community.py), gear used for our algorithms and its
+// switch (ADR 0056), what partners get (the terms' license, ADR 0057),
+// photo cleaning (services/media.py),
 // where others see a catch (docs/adr/0038), the AI summaries (services/rag),
 // signed-out feedback (services/feedback.py), the visit count (services/visits.py),
 // and the hosts the browser talks to (lib/map/tiles.ts, the fish photos).
@@ -26,7 +28,7 @@ function Body() {
       <section>
         <h2>What we collect</h2>
         <p>
-          You can use the map, the fish guides, Ask, photo ID (a few photos a day) and feedback without an account.
+          You can use the map, the fish guides and Ask, identify fish from photos (a few photos a day) and send feedback without an account.
           What we keep:
         </p>
         <ul>
@@ -40,9 +42,9 @@ function Body() {
             the session was last used and your browser&apos;s name and version.
           </li>
           <li>
-            <strong>Catches you share:</strong> where you dropped the pin, its title, notes, fish, date and photos. We
-            re-save every photo and strip its hidden data, including the GPS position and camera details, before
-            storing it.
+            <strong>Catches you share:</strong> where you dropped the pin, its title, notes, fish, date, the bait and gear
+            you list, and photos. We re-save every photo and strip its hidden data, including the GPS position and
+            camera details, before storing it.
           </li>
           <li>
             <strong>Reports and moderation:</strong> reports you file about a catch or a comment, and a log of what
@@ -104,6 +106,10 @@ function Body() {
         <ul>
           <li>Run your account and show your catches to you and, if you made them public, to others.</li>
           <li>
+            Use the gear you record to improve FishEye&apos;s own algorithms. You can turn this off on your{" "}
+            <Link href="/account">account page</Link>.
+          </li>
+          <li>
             Identify a fish or a piece of fishing gear from a photo, and check that a catch photo shows the fish you
             named. This runs on our own server, and a photo checked on its own isn&apos;t kept. A photo goes to another
             company only if you ask the AI about it (see Anthropic below).
@@ -112,9 +118,7 @@ function Body() {
           <li>Answer you when you write to us.</li>
         </ul>
         <p>
-          We don&apos;t sell or rent personal information, we don&apos;t share it for advertising, and FishEye has no
-          ads, no tracking cookies and no outside analytics service. The visit counts above are our own and say nothing
-          about who visited.
+          We never sell or hand out your fishing spots.
         </p>
       </section>
 
@@ -142,7 +146,14 @@ function Body() {
             and <strong>fish photos from Wikimedia Commons</strong> directly. Like any website, they receive your IP
             address and browser details; their own privacy policies apply.
           </li>
-          <li>Authorities, if the law requires it, or to protect someone&apos;s safety.</li>
+          <li>
+            <strong>Partners</strong>, for ads, offers and sponsored content: the catches, photos and comments you share
+            publicly, and your display name.
+          </li>
+          <li>
+            Courts and authorities, when the law requires it (for example a court order or subpoena), or to protect
+            someone&apos;s safety.
+          </li>
         </ul>
         <p>
           When you use &ldquo;near me&rdquo;, your device&apos;s location is used in your browser; to open catches near you
@@ -154,8 +165,9 @@ function Body() {
         <h2>Cookies and browser storage</h2>
         <p>
           One cookie keeps you signed in. Your browser also stores a few preferences, such as the state you picked
-          for fishing rules. Counting visits uses no cookie and stores nothing in your browser. Nothing is used for
-          advertising or tracking.
+          for fishing rules. Counting visits uses no cookie and stores nothing in your browser. When you use FishEye, the
+          companies that provide the map and the fish photos may collect information about your activity across
+          different websites; their own privacy policies apply.
         </p>
       </section>
 
@@ -168,6 +180,7 @@ function Body() {
             sessions and your catches with their photos. Reports you filed stay, without your name, so a moderator can
             finish reviewing them. The count of AI answers you used stays for up to 30 days under its one-way code, so
             deleting an account and making it again doesn&apos;t reset the free answers.
+            Content already given to partners or used in ads isn&apos;t taken back.
           </li>
           <li>
             Ask us for a copy of your data, or to correct or delete it, at{" "}
@@ -217,7 +230,7 @@ function Body() {
 
 export const en: LegalText = {
   title: "Privacy policy",
-  lede: "FishEye collects what it needs to run your account and show your catches. We don't sell your data, we don't show ads, and we never hand out your fishing spots.",
+  lede: "FishEye collects what it needs to run your account and show your catches. We never sell or hand out your fishing spots.",
   description: "What FishEye collects, why, who else sees it, and how to delete it.",
   Body,
 };

@@ -14,6 +14,7 @@ import { Tag } from "@/components/fish/FishGrid";
 import { FishNameParts } from "@/components/fish/FishName";
 import { GuideSummary } from "@/components/fish/GuideSummary";
 import { HeroPhoto } from "@/components/fish/PhotoCard";
+import { RIG_DIAGRAMS } from "@/components/fish/rigTopics";
 import { SectionTabs, type SectionLink } from "@/components/fish/SectionTabs";
 import { PageTransition, VT } from "@/components/motion/Transition";
 import { BaitRules, LimitsNote, LiveBaitWarning } from "@/components/rules/RegionGate";
@@ -55,6 +56,10 @@ export async function generateMetadata(props: PageProps<"/fish/[slug]">): Promis
  * setup's place in the whole guide, which is what Ask's citations link to
  * (`#setup-2` is the guide's second setup, whichever group it is in). */
 function SetupCard({ setup, index, anchor, t, lang }: { setup: TackleSetup; index: number; anchor?: string; t: Messages["fish"]; lang: string }) {
+  // The handbook's drawing of this rig, for "what is an egg sinker and how
+  // does it go on the line" (2026-11-16). The link sits with the rig's text,
+  // which says what it is a drawing of.
+  const drawing = setup.rig_topic ? RIG_DIAGRAMS[setup.rig_topic] : undefined;
   return (
     <article id={anchor} className="setup-card">
       <header>
@@ -80,6 +85,11 @@ function SetupCard({ setup, index, anchor, t, lang }: { setup: TackleSetup; inde
         <div className="wide">
           <dt>{t.hookRig}</dt>
           <dd lang={lang}>{setup.terminal}</dd>
+          {drawing && (
+            <dd className="setup-drawing">
+              <Link href={`/handbook#${setup.rig_topic}`}>{t.rigDrawing}</Link>
+            </dd>
+          )}
         </div>
       </dl>
     </article>
@@ -301,7 +311,7 @@ export default async function FishPage(props: PageProps<"/fish/[slug]">) {
             )}
 
             {isForage && guide.legal_notes.length > 0 && (
-              <BaitRules texasRules={guide.legal_notes} texasUrl={guide.limits_url} className="guide-block rules-card" picker />
+              <BaitRules texasRules={guide.legal_notes} texasLang={guide.text_lang} texasUrl={guide.limits_url} className="guide-block rules-card" picker />
             )}
 
             {!(isForage && guide.legal_notes.length > 0) && (

@@ -938,16 +938,16 @@ TOPICS: tuple[HandbookTopic, ...] = (
     HandbookTopic(
         id="cond-clarity",
         category="conditions",
-        title="Water clarity and lure colour",
+        title="Water clarity and lure color",
         body=(
             "How far you can see into the water decides what the fish can see, and so what to "
             "throw.",
-            "Clear water (two feet of visibility or more): natural, prey-coloured or flashy "
+            "Clear water (two feet of visibility or more): natural, prey-colored or flashy "
             "lures \u2014 spoons, spinners, jerkbaits, lipless crankbaits, willow-blade spinnerbaits, "
             "soft plastics.",
-            "Stained water (a few inches of visibility): bright colours, such as chartreuse soft "
+            "Stained water (a few inches of visibility): bright colors, such as chartreuse soft "
             "plastics, bright lipless crankbaits, and gold or copper blades.",
-            "Muddy water (an inch or two): dark colours and vibration \u2014 bladed swim jigs, "
+            "Muddy water (an inch or two): dark colors and vibration \u2014 bladed swim jigs, "
             "rattling crankbaits, Colorado-blade spinnerbaits, soft plastic stickbaits.",
         ),
         source_ids=("indnr-when",),
@@ -1192,7 +1192,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
         body=(
             "Discarded line tangles birds and other animals and does not break down in a "
             "landfill. It never belongs on the bank or in the water.",
-            "Monofilament and fluorocarbon can be recycled, in colour or clear, at a collection "
+            "Monofilament and fluorocarbon can be recycled, in color or clear, at a collection "
             "bin \u2014 at tackle shops, ramps, piers and access points \u2014 but not in household "
             "recycling. Take the hooks and lures off first, and leave out line with weed or "
             "growth on it. Keep a coffee can in the tackle box until you have enough to drop off.",
@@ -1214,7 +1214,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "side for an inch-thick piece. Broil four to five inches from the heat. Grill with a "
             "baste, turning halfway. Saut\u00e9 over medium heat in a non-stick pan.",
             "It is done when the flesh is opaque and flakes easily with a fork, and the inside "
-            "has reached 145\u00b0F. Colour alone does not tell you.",
+            "has reached 145\u00b0F. Color alone does not tell you.",
             "Catfish is mild and sweet, close to any other white fish, and takes whatever "
             "seasoning you like \u2014 lemon and butter, cajun, paprika and oregano.",
         ),
@@ -1627,7 +1627,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "Superior most are 3–4 lb). Coho run 8–12 lb at sea, about 1.5–3 lb in Lake Superior. "
             "Pink salmon are the smallest, about a pound in Lake Superior; a spawning male grows a "
             "big hump on its back, so anglers call them humpies.",
-            "Colour changes: fresh from the lake or sea they are silver with a dark blue-green back. "
+            "Color changes: fresh from the lake or sea they are silver with a dark blue-green back. "
             "As they move upriver to spawn they turn olive, red or maroon, and the males grow a "
             "hooked jaw. Chinook, coho and pink salmon all die after spawning.",
         ),
@@ -1676,7 +1676,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "that breaks the current; and at the head and tail of a big pool. They dislike bright "
             "light, so on sunny days fish early and late.",
             "What they bite: things they eat in the river, fish eggs above all. Salmon eggs tied in "
-            "a dime-sized mesh sack (a spawn sac) are the favourite natural bait; artificial eggs, "
+            "a dime-sized mesh sack (a spawn sac) are the favorite natural bait; artificial eggs, "
             "small beads, little plastic worms, egg and nymph flies and streamers all work too.",
             "Drift fishing: let the bait roll along just off the bottom, a little slower than the "
             "current, with just enough split shot that you feel it tick the bottom now and then. "
@@ -1697,7 +1697,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
         title="Trolling the Great Lakes for salmon and trout",
         body=(
             "Usual lures: spoons, long thin crankbaits (stickbaits) and a dodger with a fly behind "
-            "it. Keep changing the lure, colour, depth and speed until something works, then stay "
+            "it. Keep changing the lure, color, depth and speed until something works, then stay "
             "with it.",
             "Getting lures out and down: planer boards carry lines out to the side, at least 100 ft "
             "behind the boat; weighted lines run 200 ft or more back; downriggers take a lure down "
@@ -1827,7 +1827,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "Fish also feel the water. The lateral line, the row of pores along each side, picks up "
             "slow vibrations such as something splashing into the water or struggling. A lure that "
             "wobbles, rattles or thumps sends those vibrations.",
-            "Putting it together: in clear water and bright light, natural colours and lifelike "
+            "Putting it together: in clear water and bright light, natural colors and lifelike "
             "movement matter; in murky water or at night, use bait with scent, or a lure that makes "
             "noise and vibration.",
         ),
@@ -1928,7 +1928,7 @@ TOPICS += (
             "Be quiet. Jumping, running or banging gear on a dock, the bank or a boat scares fish or "
             "stops them feeding; talking is fine. Keep your shadow off the water you're fishing.",
             "The bigger the fish, the warier it is. You can get closer when it's overcast or windy, "
-            "and in moving water; for stream trout, wear dull colours and stay low.",
+            "and in moving water; for stream trout, wear dull colors and stay low.",
             "Cast past the spot you think holds fish and bring the bait into it, rather than "
             "landing it on top of them.",
             "Fish where fish hold: around docks, rocks and fallen trees, weed edges and drop-offs "

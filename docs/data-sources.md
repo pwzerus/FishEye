@@ -359,6 +359,8 @@ Unchanged (ADR 0012): CC0 and CC BY records only in a commercial build
 
 ### Bait rules for 43 more states and DC — RESTRICTED (facts + link)
 
+(The last five states followed on 2026-11-16; see the next section.)
+
 - What: each state's rules on what may be used as bait in fresh water (live
   fish, game fish, crayfish, moving bait between waters, releasing it), 2 to
   4 short sentences per state (`knowledge/jurisdictions.py`
@@ -376,12 +378,44 @@ Unchanged (ADR 0012): CC0 and CC BY records only in a commercial build
 - How collected (2026-11-01): one page at a time in a browser, reading only
   the bait passages; nothing stored but the paraphrase and the URL. Search
   results were used only to find pages, never as the source.
-- Not written: Alaska, Delaware, Hawaii (rules found only in PDFs or not at
-  all), Montana (2026 regulations PDF too large to read), South Dakota
-  (handbook link returns 404). They keep the "check the agency" answer.
+- Not written then: Alaska, Delaware, Hawaii (rules found only in PDFs or not
+  at all), Montana (2026 regulations PDF too large to read), South Dakota
+  (handbook link returns 404). All five were added on 2026-11-16 (below).
 - Refresh: bait rules change most years (invasive species, VHS); re-read
   each state's page before each season, and when a state's page says it
   changed.
+
+### Bait rules for the last five states, 2026-11-16 — RESTRICTED (facts + link)
+
+- What: 3 or 4 sentences each for Alaska, Delaware, Hawaii, Montana and South
+  Dakota, so every state and DC now has its bait rules. Same rules as above:
+  facts in FishEye's own words, each with its page.
+- Sources, all official:
+  - Alaska: the Alaska Administrative Code on akleg.gov, 5 AAC 75.026 (fish as
+    bait; no live fish as bait in fresh water) and 75.055 (live fish), plus
+    ADF&G's 2026 Southcentral regional regulations, which restate them "unless
+    area regulations state otherwise" (`bait-ak`, `bait-ak-area`).
+  - Delaware: 7 DE Admin. Code 3300, Non-Tidal Finfish (3303 hook and line
+    only, 3304 restricted trout streams, 3308 stocking and banned species,
+    3309 Lake Como), checked against DNREC's current trout page and, for Lake
+    Como, the code as LII serves it (`bait-de`, `bait-de-trout`). The archive
+    page says it was last updated 2021; the 2023 amendment changed trout-water
+    boundaries, not these rules.
+  - Hawaii: DAR has no statewide bait rule; the three public fishing areas
+    each set theirs (Wahiawā HAR 13-62, Wailua Reservoir 13-65, Kōke‘e 13-64),
+    from DAR's own area pages (`bait-hi`, `bait-hi-wailua`, `bait-hi-kokee`).
+  - Montana: FWP's 2026 fishing regulations booklet, pages 21-22 (Western),
+    47-48 (Central) and 73-74 (Eastern) (`bait-mt`). The eRegulations copy is
+    the 2023 booklet and differs (the Western District now bans live
+    amphibians, reptiles and crayfish as bait), so it isn't cited.
+  - South Dakota: GFP's Non-Commercial Bait Regulations page (`bait-sd`),
+    which now opens.
+- How collected: HTML pages read one at a time in a browser; the two PDFs
+  (Montana's booklet, ADF&G's regional page) read in memory with pypdf, one
+  request each, nothing saved. Every sentence was checked against its page's
+  text before writing. Chinese added to `zh_bait_rules.json`.
+- Alaska and Montana join the states whose bait rules come with every bait
+  question (`_LIVE_FISH_LIMITED`): both forbid live fish as bait in most waters.
 
 ## Guides, handbook and license rules added 2026-11-01
 
@@ -410,8 +444,7 @@ Unchanged (ADR 0012): CC0 and CC BY records only in a commercial build
 - Left out because no page could be read: license ages for Massachusetts,
   Minnesota, Nebraska, New Hampshire and New Jersey (added 2026-11-06, see
   below); bait rules for Alaska,
-  Delaware, Hawaii, Montana and South Dakota. Ask sends those questions to the
-  agency. Also left out for want of an agency source: the Carolina rig, the uni
+  Delaware, Hawaii, Montana and South Dakota (added 2026-11-16, above). Also left out for want of an agency source: the Carolina rig, the uni
   and FG knots, and fish finders.
 
 ### Checked again 2026-11-06: every state's license and bait rules

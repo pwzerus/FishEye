@@ -3,6 +3,7 @@
 How to catch a fish is for everyone; a rule belongs to a state. These tests
 pin the part that matters most: a person in another state must never be
 given Texas's rules as if they were theirs."""
+import dataclasses
 import re
 
 import pytest
@@ -25,11 +26,11 @@ def _ids(result):
 # ---------------------------------------------------------------- registry
 
 
-def test_every_state_is_listed_and_most_have_their_bait_rules():
+def test_every_state_is_listed_and_has_its_bait_rules():
     assert len(j.JURISDICTIONS) == 51  # 50 states and DC
-    # Not found in a page that could be read and checked (2026-11-01).
-    assert {c for c, v in j.JURISDICTIONS.items() if not v.covered} == {"AK", "DE", "HI", "MT", "SD"}
-    assert j.covered_names() == "45 states and Washington, D.C."
+    # Alaska, Delaware, Hawaii, Montana and South Dakota, the last five, 2026-11-16.
+    assert [c for c, v in j.JURISDICTIONS.items() if not v.covered] == []
+    assert j.covered_names() == "50 states and Washington, D.C."
 
 
 def test_every_written_state_cites_its_own_agency_page():
@@ -41,8 +42,12 @@ def test_every_written_state_cites_its_own_agency_page():
         source = SOURCES[state.bait_rules_source_ids[0]]
         assert source.url.startswith("https://") and source.label.startswith(state.agency_short), code
         assert all(rule.endswith((".", ")")) for rule in state.bait_rules), code
+        assert all(sid in SOURCES for sid in state.bait_rules_source_ids), code
     # Where live fish are mostly banned as bait, every bait question shows the rules.
     assert j.get("NV").bait_rules_on_every_bait_question and not j.get("MO").bait_rules_on_every_bait_question
+    # Alaska bans live fish as bait in fresh water, Montana outside listed waters.
+    assert j.get("AK").bait_rules_on_every_bait_question and j.get("MT").bait_rules_on_every_bait_question
+    assert not j.get("SD").bait_rules_on_every_bait_question
 
 
 def test_a_covered_state_names_its_agency_and_pages():
@@ -57,12 +62,11 @@ def test_a_covered_state_names_its_agency_and_pages():
         assert state.bait_rules and state.bait_rules_source_ids
 
 
-def test_a_state_without_written_rules_still_names_its_agency_and_pages():
+def test_every_state_names_its_agency_and_pages():
     """Every state's agency and its regulations and licence pages are on
-    file (opened and checked 2026-10-29); "covered" still means FishEye has
-    written that state's rules."""
+    file (opened and checked 2026-10-29)."""
     mt = j.get("MT")
-    assert not mt.covered
+    assert mt.covered and mt.bait_rules_source_ids == ("bait-mt",)
     assert (mt.agency, mt.agency_short) == ("Montana Fish, Wildlife & Parks", "Montana FWP")
     assert mt.limits_url.startswith("https://fwp.mt.gov/")
     assert mt.agency_label == "Montana FWP"
@@ -272,7 +276,7 @@ def test_each_state_searches_its_own_index():
     ga, co, mt, ak = (regional.for_state(full, s) for s in ("GA", "CO", "MT", "AK"))
     assert {p.region for p in ga.passages} == {"all", "GA"}
     assert {p.region for p in co.passages} == {"all", "CO"}
-    assert {p.region for p in mt.passages} == {"all", "MT"}  # a license topic and nothing else
+    assert {p.region for p in mt.passages} == {"all", "MT"}  # its license topic and bait rules
     assert {p.region for p in ak.passages} == {"all", "AK"}
     # No state picked: the three states written up first, none of the
     # bait-rules-only ones (they'd answer every bait question).
@@ -337,9 +341,12 @@ def test_texas_never_sees_georgias_rules():
 def test_how_to_questions_get_the_same_answer_in_every_state():
     # Each state searches its own index (ADR 0028), whose word statistics
     # differ a little, so the order below the top can shift; what is shown
-    # is the same guidance. California adds its bait rules (ADR 0030).
+    # is the same guidance. California adds its bait rules (ADR 0030), and so
+    # do the other states that ban live fish as bait in most waters, Montana
+    # among them since 2026-11-16, so Missouri stands in for the rest.
     q = "what bait works for crappie"
-    answers = {s: _ids(rag_ask.search_guides(q, state=s)) for s in ("TX", "MT", "GA")}
+    answers = {s: _ids(rag_ask.search_guides(q, state=s)) for s in ("TX", "MO", "GA")}
+    assert "all-fish#bait_rules-mt" in _ids(rag_ask.search_guides(q, state="MT"))
     assert len({tuple(a[:2]) for a in answers.values()}) == 1
     for a in answers.values():
         assert all(i.split("#")[0] in ("white-crappie", "black-crappie") for i in a), a
@@ -368,11 +375,16 @@ def test_a_state_with_bait_rules_gets_them_for_a_bait_question():
     assert "all-fish#bait_rules-mi" in ids, ids
 
 
-def test_the_other_state_answer_names_who_to_ask_and_what_is_covered():
+def test_the_other_state_answer_names_who_to_ask_and_what_is_covered(monkeypatch):
+    # Every state has some rules written now: the answer says so and names the agency.
+    assert "FishEye has written some of South Dakota's fishing rules" in j.other_state_answer("SD")
+    assert "Check SD GFP for the current rules" in j.other_state_answer("SD")
+    # A state without any would get the agency spelled out once, and what is covered.
+    unwritten = dataclasses.replace(j.JURISDICTIONS["SD"], bait_rules=(), bait_rules_source_ids=())
+    monkeypatch.setitem(j.JURISDICTIONS, "SD", unwritten)
     text = j.other_state_answer("SD")
-    # South Dakota's own agency, by name, spelled out once.
     assert "check SD GFP (South Dakota Game, Fish and Parks) for the current ones" in text
-    assert "45 states and Washington, D.C." in text
+    assert "49 states and Washington, D.C." in text
 
 
 # ------------------------------------------------------------------- API
@@ -382,12 +394,12 @@ def test_jurisdictions_endpoint_lists_covered_states_first(client):
     body = client.get("/api/jurisdictions").json()
     assert len(body) == 51
     covered = [s for s in body if s["covered"]]
-    assert body[: len(covered)] == covered and len(covered) == 46
+    assert body[: len(covered)] == covered and len(covered) == 51
     assert all(s["bait_rules"] and s["bait_rules_sources"] for s in covered)
     montana = next(s for s in body if s["code"] == "MT")
-    # No bait rules written, but its license topic is, and its agency's pages are linked.
-    assert montana["covered"] is False and montana["limits_url"].startswith("https://fwp.mt.gov/")
-    assert montana["bait_rules"] == []
+    # Its bait rules (2026-11-16), its license topic, and its agency's pages linked.
+    assert montana["covered"] is True and montana["limits_url"].startswith("https://fwp.mt.gov/")
+    assert montana["bait_rules"][0].startswith("In Montana's Western Fishing District")
     assert montana["license_from_age"] == 12 and montana["license_topic"] == "rule-license-mt"
     ages = {s["code"]: s["license_from_age"] for s in body}
     assert ages["CA"] == 16 and ages["TX"] == 17 and ages["MN"] == 16 and ages["HI"] is None

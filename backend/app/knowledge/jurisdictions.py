@@ -8,11 +8,11 @@ are shown only where they apply.
 
 This registry is what the rest of the app asks "who runs the rules here?".
 Texas, Georgia and California have the most written up (licences, safety, a
-first trip); 43 more states and DC have their bait rules (STATE_BAIT_RULES,
-2026-11-01). The rest are listed so a person in one gets a straight
-answer — "FishEye hasn't written this state's rules yet; they come from
-<name>'s fish and wildlife agency" — instead of Texas's rules presented as
-theirs.
+first trip); every other state and DC has its bait rules (STATE_BAIT_RULES,
+2026-11-01, the last five 2026-11-16). A state without them would still be
+listed, so a person in one gets a straight answer — "FishEye hasn't written
+this state's rules yet; they come from <name>'s fish and wildlife agency" —
+instead of Texas's rules presented as theirs.
 
 Adding a state is a data change here and in the passages it needs
 (Georgia, docs/adr/0028, is the worked example):
@@ -133,10 +133,19 @@ CALIFORNIA_BAIT_RULES = (
 # Every other state's bait rules: from each agency's own regulations (or its
 # eRegulations guide), read 2026-11-01, paraphrased as facts, each state's
 # source in species_guides.SOURCES as "bait-<code>". Conditions kept; counts
-# and sizes only where they are the rule. Not here: Alaska, Delaware, Hawaii,
-# Montana and South Dakota, whose rules weren't in a page that could be read
-# and checked (PDF only, or none found); they keep the "not written yet" answer.
+# and sizes only where they are the rule. Alaska, Delaware, Hawaii, Montana
+# and South Dakota followed on 2026-11-16 (docs/data-sources.md): Alaska from
+# its administrative code and ADF&G's 2026 regional rules, Delaware from its
+# code and DNREC's trout page, Hawaii from DAR's three public fishing areas
+# (it has no statewide bait rule), Montana from FWP's 2026 booklet (PDF, read
+# in memory) and South Dakota from GFP's bait page.
 STATE_BAIT_RULES: dict[str, tuple[str, ...]] = {
+    "AK": (
+        "Live fish may not be used as bait in Alaska's fresh water, and live fish or fish eggs may not be kept, moved or released without a permit.",
+        "Fish caught sport fishing may not be used as bait, except their heads, tails, fins, trimmed skeletons and guts, and whole or cut whitefish, herring and fish that have no season or bag limit.",
+        "Herring and other fish with no season or bag limit may be used as live bait in salt water only, and kept, moved or released only in the salt waters of the area where they were caught.",
+        "Each area's regulations can set other bait rules for its own waters, so check ADF&G's regional regulations for the water you fish.",
+    ),
     "AL": (
         "Live baitfish (any fish or crayfish legal as bait) caught in Alabama's streams, rivers, public lakes or reservoirs may not be taken away from the water where they were caught, and live wild baitfish may not be brought in from outside Alabama.",
         'Bream (all species) may be used as bait if caught legally on hook and line and within the daily bream limit; no other game fish may be used as bait.',
@@ -161,7 +170,7 @@ STATE_BAIT_RULES: dict[str, tuple[str, ...]] = {
     ),
     "CT": (
         'Any legally taken fish may be used as bait except largemouth bass, smallmouth bass, chain pickerel, northern pike, trout, salmon, carp and goldfish.',
-        'Bait species (listed: shiners, fallfish, creek chub, dace, fathead and bluntnose minnows, white sucker, killifish, frogs except northern leopard frog, crayfish except rusty crayfish, some insect larvae...) may be taken for personal use with a licence: bait traps and umbrella nets anywhere, seines (up to 15 ft by 4 ft) in rivers and streams but not in most lakes and ponds; cast nets are banned inland.',
+        'Bait species (listed: shiners, fallfish, creek chub, dace, fathead and bluntnose minnows, white sucker, killifish, frogs except northern leopard frog, crayfish except rusty crayfish, some insect larvae...) may be taken for personal use with a license: bait traps and umbrella nets anywhere, seines (up to 15 ft by 4 ft) in rivers and streams but not in most lakes and ponds; cast nets are banned inland.',
         'Where posted, taking, using or possessing fish as bait is prohibited on lakes and ponds.',
     ),
     "DC": (
@@ -169,16 +178,27 @@ STATE_BAIT_RULES: dict[str, tuple[str, ...]] = {
         'Introducing any fish or other aquatic organism not native to DC waters is unlawful, so leftover bait from elsewhere must not go in the water.',
         'Cast nets and seines are banned; baitfish such as gizzard shad and shiners may be caught only with a dip net up to 24 in across. No nets at all, and no digging for bait, in Rock Creek Park.',
     ),
+    "DE": (
+        "In Delaware's non-tidal waters, fish may be taken only by hook and line that the angler is watching, so minnows can't be netted or trapped there for bait (carp, snakeheads and shad have a few more methods).",
+        "Restricted trout streams (the fly-fishing-only sections of White Clay Creek and Red Clay Creek) allow only flies with one single-point hook, at most two to a line, cast with a fly rod; no natural or synthetic bait, and no spinners, spoons, plugs or other lures.",
+        "On Lake Como, live fish may not be used, or even kept, as bait while fishing.",
+        "No fish may be stocked into Delaware's non-tidal public waters without written permission from the Division of Fish and Wildlife, so leftover bait fish must not go into them; walking catfish, grass carp and live snakeheads may not be kept or moved without permission.",
+    ),
     "FL": (
         'Black bass and peacock bass, or any part of them, may not be used as bait; live goldfish and carp may not be used as bait.',
         'No live nonnative fish (except variable platys and fathead minnows) may be moved to or between waters for use as bait.',
         'Panfish (bluegill, redear and other bream, warmouth) and pickerel, whole or cut, may be used as bait by the angler who caught them, on rod and reel or pole and line only (not trotlines or bush hooks).',
         'Golden shiners, freshwater shrimp and other nongame fish under 8 in may be taken for bait with a cast net (mesh up to 1 in), minnow dip net, small seine or minnow trap; any game fish caught must be released at once.',
     ),
+    "HI": (
+        "At the Wahiawā Public Fishing Area (Lake Wilson, Oahu), attended traps and dip nets no more than 2 ft on any side may take certain baitfish, but tucunare (peacock bass), bass, channel catfish and oscar may not be used as bait.",
+        "At the Wailua Reservoir Public Fishing Area on Kauai, no live animal or plant may be used, or even kept, as bait.",
+        "At the Kōke‘e Public Fishing Area on Kauai, corn of any kind may not be used as bait, and only one hook is allowed, never a treble hook.",
+    ),
     "IA": (
         'Bait includes minnows (chubs, shiners, suckers, dace, stonerollers, bluntnose and fathead minnows...), green and orangespotted sunfish, gizzard shad (never live at any lake), frogs, crayfish and salamanders; game fish legally caught on hook and line may be used as bait.',
         'Dumping bait into Iowa lakes, rivers or streams is illegal: throw it in the trash, and swap bait-bucket water for tap or bottled water before leaving any water.',
-        'Bait for personal use needs a sport fishing licence: tagged minnow traps up to 3 ft, dip net up to 4 ft, cast net up to 10 ft, seine up to 20 ft; Storm Lake crayfish stay in Storm Lake.',
+        'Bait for personal use needs a sport fishing license: tagged minnow traps up to 3 ft, dip net up to 4 ft, cast net up to 10 ft, seine up to 20 ft; Storm Lake crayfish stay in Storm Lake.',
     ),
     "ID": (
         'Live fish, leeches, frogs, salamanders, waterdogs and shrimp may not be used as bait anywhere in Idaho; live crayfish only if caught in the water being fished.',
@@ -209,7 +229,7 @@ STATE_BAIT_RULES: dict[str, tuple[str, ...]] = {
     ),
     "LA": (
         'Minnows, shad, crawfish and shrimp may be taken for bait with cast nets, minnow traps, small dip nets (frame up to 3 ft) and hand-worked bait seines up to 30 ft.',
-        "Bream may be taken for personal bait in a trap up to 24 in long with a throat no larger than 1 by 3 in, marked with the angler's licence number; game fish may be taken for bait only by hook and line (or yo-yos and trigger devices).",
+        "Bream may be taken for personal bait in a trap up to 24 in long with a throat no larger than 1 by 3 in, marked with the angler's license number; game fish may be taken for bait only by hook and line (or yo-yos and trigger devices).",
     ),
     "MA": (
         'For personal bait, live or dead, licensed anglers may take only banded killifish, fallfish, fathead minnow, golden shiner, mummichog, pumpkinseed, rainbow smelt, yellow perch and white sucker; smelt only on hook and line and only in the smelt season.',
@@ -227,7 +247,7 @@ STATE_BAIT_RULES: dict[str, tuple[str, ...]] = {
         'Only the 16 species Maine law lists as baitfish (shiners, dace, fathead minnow, creek chub, fallfish, killifish, mummichog, suckers, American eel and a few others) and rainbow smelt may be used as bait in inland waters, live or dead.',
         'Not every water allows live or dead fish as bait: the general and special fishing laws list where they are banned, and live baitfish may not be kept in those waters.',
         'Bringing live fish or eggs into Maine, baitfish and smelt included, needs a permit; use locally caught legal baitfish.',
-        'Baitfish may be taken for personal use with a licence; traps must be labelled and checked (every 7 days in the open-water months) and other fish released at once.',
+        'Baitfish may be taken for personal use with a license; traps must be labeled and checked (every 7 days in the open-water months) and other fish released at once.',
     ),
     "MI": (
         'Baitfish may be used only in the waters where they were collected.',
@@ -250,9 +270,15 @@ STATE_BAIT_RULES: dict[str, tuple[str, ...]] = {
         'Residents may take shad and minnows for their own bait with dip or cast nets, boat-mounted scoops and wire baskets; minnow seines (up to 25 ft by 4 ft) and minnow traps may take minnows and nongame fish for bait.',
         'Releasing any aquatic species into public waters needs a permit from MDWFP.',
     ),
+    "MT": (
+        "In Montana's Western Fishing District no live fish may be used or kept as bait, nor live amphibians, reptiles or crayfish; trout, salmon, whitefish and sculpins may not be used as bait even dead, though trout and salmon eggs may.",
+        "In the Central and Eastern districts, live fish may be used as bait only on the waters the regulations list, and only ten nongame species: fathead minnow, flathead chub, western silvery minnow, plains minnow, emerald shiner, longnose dace, lake chub, creek chub, longnose sucker and white sucker.",
+        "Worms, maggots, leeches and insects may be used on any water not limited to artificial lures, and in the Central and Eastern districts so may crayfish, amphibians and reptiles; whole game fish may never be used as bait.",
+        "Live baitfish may not be brought into Montana (except by permit for Bighorn Lake and Afterbay Reservoir), leeches may come only from FWP-approved dealers with the receipt in hand, and live bait of any kind may never be released into Montana waters.",
+    ),
     "NC": (
         'Inland game fish may be used as bait if legally taken and within the size and creel limits of the water being fished.',
-        'Nongame fish, crayfish and mollusks may be taken for bait or food with an inland licence, using a dip net up to 6 ft, a seine up to 12 ft (1/4 in mesh; any length on Lake Waccamaw), a cast net or small minnow traps; daily limit 200 combined, and they may not be sold.',
+        'Nongame fish, crayfish and mollusks may be taken for bait or food with an inland license, using a dip net up to 6 ft, a seine up to 12 ft (1/4 in mesh; any length on Lake Waccamaw), a cast net or small minnow traps; daily limit 200 combined, and they may not be sold.',
         'On the Roanoke River above the US 258 bridge, from April 1 to June 30 only a single barbless circle hook may be used with live or natural bait.',
     ),
     "ND": (
@@ -314,12 +340,18 @@ STATE_BAIT_RULES: dict[str, tuple[str, ...]] = {
     "RI": (
         'Goldfish may not be used as bait in fresh or estuarine waters, and nonnative bait fish, including goldfish, green sunfish and fathead minnows, may not be imported, sold or held for bait.',
         'Releasing any live fish or invertebrate bait into fresh water is prohibited.',
-        'Nets and seines may not take fish in fresh water except to land a hooked fish or to catch baitfish; cast nets are banned. Holding more than 100 live freshwater minnows, or selling them, needs a DEM licence. Corn and chumming are banned on designated trout waters.',
+        'Nets and seines may not take fish in fresh water except to land a hooked fish or to catch baitfish; cast nets are banned. Holding more than 100 live freshwater minnows, or selling them, needs a DEM license. Corn and chumming are banned on designated trout waters.',
     ),
     "SC": (
         'No game fish may be used as bait except bream (not redbreast sunfish); trout only on Lakes Hartwell, Russell, Thurmond, Tugaloo, Yonah, Stevens Creek Reservoir and the Savannah River. Game fish used as bait count toward the daily creel limit.',
         'Nonnative fish not already established in the water being fished may not be used as bait, except fathead minnows, golden shiners and goldfish (including black salties).',
         "Releasing any aquatic species, bait included, into South Carolina waters needs a permit (bait lost while fishing excepted); don't dump the bait bucket.",
+    ),
+    "SD": (
+        "Common carp, goldfish, freshwater mussels and clams, protected species and game fish may not be used as bait, except bullheads and sunfish such as bluegill, green sunfish and pumpkinseed on hook and line; the eyes, gills, guts and scales of legally caught game fish may be used too.",
+        "Bait may not be carried in water taken from a lake, pond, stream or river, emptying a bait container into public water is illegal, and live fish may not be brought into South Dakota without a GFP import permit.",
+        "Anglers 18 and older need a fishing license to take, keep or move bait; seines, nets and traps may take listed bait species such as fathead minnows, white suckers, creek chubs, golden, emerald and spottail shiners, gizzard shad, crayfish, leeches, tiger salamanders and leopard frogs, and any game fish or protected species caught in them goes straight back.",
+        "Nets and traps may not be used for bait in the creeks and rivers of 23 listed counties or in the lakes the regulations name, and bait traps must be marked on top with the user's name and address and emptied at least every 48 hours from May 15 to Sept. 14 (96 hours the rest of the year).",
     ),
     "TN": (
         'Live fish, crayfish and salamanders may never be released into Tennessee waters other than the ones they came from.',
@@ -361,7 +393,7 @@ STATE_BAIT_RULES: dict[str, tuple[str, ...]] = {
 }
 # Where the rules forbid what the guides recommend (live minnows) in most
 # waters, every bait question there shows them, as California's do.
-_LIVE_FISH_LIMITED = {"AZ", "CO", "ID", "NM", "NV", "OR", "UT", "WA", "WY"}
+_LIVE_FISH_LIMITED = {"AK", "AZ", "CO", "ID", "MT", "NM", "NV", "OR", "UT", "WA", "WY"}
 
 _COVERED: dict[str, Jurisdiction] = {
     "CA": Jurisdiction(
@@ -569,7 +601,13 @@ _AGENCIES: dict[str, tuple[str, str, str, str]] = {
 
 
 # Where one page doesn't hold all of a state's bait rules (checked 2026-11-06).
-_MORE_BAIT_SOURCES: dict[str, tuple[str, ...]] = {"NC": ("bait-nc-nongame",)}
+_MORE_BAIT_SOURCES: dict[str, tuple[str, ...]] = {
+    "NC": ("bait-nc-nongame",),
+    # Added 2026-11-16: the code page states the rules, these pages the rest.
+    "AK": ("bait-ak-area",),
+    "DE": ("bait-de-trout",),
+    "HI": ("bait-hi-wailua", "bait-hi-kokee"),
+}
 
 
 def _uncovered(code: str, name: str) -> Jurisdiction:

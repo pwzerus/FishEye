@@ -93,8 +93,11 @@ def _flatten(img: Image.Image) -> Image.Image:
 def _jpeg(img: Image.Image, max_edge: int, quality: int) -> tuple[bytes, int, int]:
     copy = img.copy()
     copy.thumbnail((max_edge, max_edge), Image.Resampling.LANCZOS)
+    # Pillow writes some of the source's metadata into the new file unless
+    # told otherwise: a JPEG's comment survived until 2026-11-16. With the
+    # source's info emptied and no exif= argument, the new file carries none.
+    copy.info = {}
     out = io.BytesIO()
-    # No exif= argument: the new file carries no metadata at all.
     copy.save(out, format="JPEG", quality=quality, optimize=True, progressive=True)
     return out.getvalue(), copy.width, copy.height
 

@@ -10,7 +10,7 @@ import { FishArt } from "@/components/fish/FishArt";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { useLocale, useLocaleTag, useT } from "@/i18n/client";
-import { localSpecies } from "@/i18n/names";
+import { localGearName, localSpecies } from "@/i18n/names";
 import { ApiError } from "@/lib/api/client";
 import { addPhotos, deletePhoto, deletePin, getPin, getPinOptions, updatePin } from "@/lib/api/session";
 import { waterFor } from "@/lib/fishArt";
@@ -18,7 +18,7 @@ import type { PinDetail, PinOptions, PinVisibility } from "@/lib/api/types";
 import { PhotoPicker } from "./PhotoPicker";
 import { AdminModeration } from "./AdminModeration";
 import { catchTitle, formatDay, PhotoAtSpot, PinBadges, placeText, SpeciesCheck, speciesCheckShort } from "./PinCard";
-import { ShareSpotToggle, SpeciesOptions, VisibilityToggle } from "./PinForm";
+import { GearPicker, ShareSpotToggle, SpeciesOptions, VisibilityToggle } from "./PinForm";
 import { ReportDialog } from "./ReportDialog";
 import { CommentsSection, LikeButton } from "./Social";
 
@@ -136,6 +136,11 @@ export function PinDetailView({ pinId }: { pinId: number }) {
 
   const when = formatDay(pin.caught_on, tag);
   const checkNote = speciesCheckShort(all, pin, locale);
+  // What it was caught with (backend ADR 0056), in the reader's language.
+  const gearNames = [
+    ...(pin.gear ?? []).map((g) => localGearName(g.id, locale) ?? g.label),
+    ...(pin.gear_other ? [pin.gear_other] : []),
+  ];
   const waterHref = pin.water?.kind === "lake" ? `/map?lake=${pin.water.id}` : null;
 
   return (
@@ -190,6 +195,12 @@ export function PinDetailView({ pinId }: { pinId: number }) {
             </p>
           )}
           <dl className="pin-facts reveal" style={{ "--i": 5 } as React.CSSProperties}>
+            {gearNames.length > 0 && (
+              <div>
+                <dt>{t.gear}</dt>
+                <dd>{gearNames.join(locale === "zh" || locale === "zht" || locale === "ja" ? "、" : ", ")}</dd>
+              </div>
+            )}
             {(pin.water ?? pin.lake) && (
               <div>
                 <dt>{t.factWater}</dt>
@@ -408,6 +419,8 @@ function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () 
   const all = useT();
   const t = all.catch;
   const [options, setOptions] = useState<PinOptions | null>(null);
+  const [gear, setGear] = useState<string[]>(() => (pin.gear ?? []).map((g) => g.id));
+  const [gearOther, setGearOther] = useState(pin.gear_other ?? "");
   const [title, setTitle] = useState(pin.title);
   const [note, setNote] = useState(pin.note ?? "");
   const [species, setSpecies] = useState(pin.species_slug ?? (pin.species_label ? "__other" : ""));
@@ -436,6 +449,8 @@ function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () 
             ? { species_other: other, species_slug: undefined }
             : { species_slug: species }),
         ...(caughtOn ? { caught_on: caughtOn } : { clear_caught_on: true }),
+        gear,
+        gear_other: gearOther.trim(),
         visibility,
         share_exact: shareExact,
       });
@@ -488,6 +503,14 @@ function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () 
         {species !== (pin.species_slug ?? (pin.species_label ? "__other" : "")) && species !== "" && (
           <p className="hint">{t.fishChangeNote}</p>
         )}
+        <GearPicker
+          options={options}
+          value={gear}
+          onChange={setGear}
+          other={gearOther}
+          onOtherChange={setGearOther}
+          known={pin.gear}
+        />
         <label className="field">
           <span>{t.notes}</span>
           <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} />
@@ -496,6 +519,7 @@ function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () 
           <span>{t.whoSees}</span>
           <VisibilityToggle value={visibility} onChange={setVisibility} />
         </div>
+        <p className="hint">{t.spotPromise}</p>
         {visibility === "public" && <ShareSpotToggle value={shareExact} onChange={setShareExact} />}
         {error && (
           <p className="form-error" role="alert">

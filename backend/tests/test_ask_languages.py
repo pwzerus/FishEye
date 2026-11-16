@@ -24,7 +24,9 @@ def test_spanish_is_told_apart(question, spanish):
 
 def test_a_spanish_question_is_searched_in_the_guides_words():
     assert es.to_english("¿Qué carnada uso para bagre?") == "what bait use for catfish"
-    assert es.to_english("¿Cómo pesco LOBINA NEGRA en la orilla?") == "how catch largemouth bass in la bank shore"
+    # Spanish's little words ("la", "el", "un") are dropped (2026-11-16).
+    assert es.to_english("¿Cómo pesco LOBINA NEGRA en la orilla?") == "how catch largemouth bass in bank shore"
+    assert es.to_english("¿Cómo se arma un aparejo wacky?") == "how rig set up wacky rig"
     # Longest phrase first: the bluegill isn't just any "mojarra".
     assert "bluegill" in es.to_english("mojarra de agallas azules")
     assert es.to_english("bagre de canal") == "channel catfish"
@@ -51,7 +53,9 @@ def test_spanish_questions_find_the_passage(client, question, expected):
     body = client.post("/api/ask", json={"question": question, "lang": "es"}).json()
     assert body["answer_source"] == "passages", body
     assert expected in [c["id"] for c in body["citations"]]
-    assert body["answer"].startswith("Esto es lo que dicen las guías")
+    # Every passage now has its Spanish (ADR 0058): no "(en inglés)", no English quote.
+    assert body["answer"] == replies.passages_intro_translated("es")
+    assert all(c["lang"] == "es" for c in body["citations"])
 
 
 def test_a_spanish_off_topic_question_is_declined_in_spanish(client):
@@ -101,6 +105,34 @@ def test_japanese_and_korean_questions_are_searched_in_the_guides_words():
     assert ko.to_english("블루길 바늘 크기는요?") == "bluegill hook size"
     # A stew isn't a bobber, and nothing Korean reaches the Chinese rules.
     assert ko.to_english("김치찌개 만드는 방법") == ""
+    # 줄 is a line with its particles, not when it means to cut down or a jump rope.
+    assert ko.to_english("초보자는 어떤 줄을 써야 해요?") == "beginner what line use"
+    assert "line" not in ko.to_english("체중을 줄이려면 어떻게 해요?") + ko.to_english("줄넘기 잘하는 법")
+    assert ja.to_english("ワッキーリグの作り方は？") == "wacky rig"
+
+
+@pytest.mark.parametrize(
+    ("question", "lang", "expected"),
+    [
+        # Found by asking the same questions in six languages (2026-11-16).
+        ("¿Cómo se arma un aparejo wacky?", "es", "all-fish#rig-wacky"),
+        ("¿Cómo armo un plomo corredizo con destorcedor?", "es", "all-fish#rig-bottom"),
+        ("¿A qué hora del día es mejor pescar?", "es", "all-fish#timing-day"),
+        ("ワッキーリグの作り方は？", "ja", "all-fish#rig-wacky"),
+        ("魚が生きられるようにリリースするには？", "ja", "all-fish#care-release"),
+        ("タル型サルカンは何のために使うの？", "ja", "all-fish#tackle-leaders"),
+        ("와키 리그는 어떻게 만들어요?", "ko", "all-fish#rig-wacky"),
+        ("물고기가 살 수 있게 놓아주려면 어떻게 해요?", "ko", "all-fish#care-release"),
+        ("초보자는 어떤 줄을 써야 해요?", "ko", "all-fish#start-what-to-buy"),
+    ],
+)
+def test_beginner_questions_in_other_languages_find_their_topic(client, question, lang, expected):
+    # Keyword search only here (RAG_SEMANTIC=off): the live search, with the
+    # embedding model, puts each of these first (F:/tmp/ask_verify, round 2).
+    body = client.post("/api/ask", json={"question": question, "lang": lang}).json()
+    assert body["answer_source"] == "passages", body
+    assert expected in [c["id"] for c in body["citations"]]
+    assert all(c["lang"] == lang for c in body["citations"])
 
 
 @pytest.mark.parametrize(
@@ -120,7 +152,8 @@ def test_japanese_and_korean_questions_find_the_passage(client, question, lang, 
     body = client.post("/api/ask", json={"question": question, "lang": lang}).json()
     assert body["answer_source"] == "passages", body
     assert expected in [c["id"] for c in body["citations"]]
-    assert body["answer"] == replies.passages_intro(lang)
+    assert body["answer"] == replies.passages_intro_translated(lang)
+    assert all(c["lang"] == lang for c in body["citations"])
 
 
 def test_japanese_and_korean_off_topic_questions_are_declined_in_their_language(client):
@@ -130,3 +163,60 @@ def test_japanese_and_korean_off_topic_questions_are_declined_in_their_language(
     body = client.post("/api/ask", json={"question": "김치찌개 만드는 방법"}).json()
     assert body["trace"]["outcome"] == "off_topic", body
     assert body["answer"].startswith("낚시 질문이 아닌 것 같아요")
+
+
+# "Why am I not catching anything", the beginner's commonest question, found
+# the kids' page in English; in Spanish, Japanese and Korean it found "Bites,
+# but nothing on the hook" first (2026-11-16, retriever._SKUNKED_RE).
+@pytest.mark.parametrize(
+    ("question", "lang"),
+    [
+        ("Why am I not catching anything?", "en"),
+        ("Why isn't my kid catching anything?", "en"),
+        ("The fish aren't biting today, what should I change?", "en"),
+        ("Why am I not catching any bass?", "en"),
+        ("¿Por qué no saco nada?", "es"),
+        ("全然釣れないのはなぜ？", "ja"),
+        ("왜 하나도 안 잡혀요?", "ko"),
+    ],
+)
+def test_catching_nothing_finds_the_no_bites_topic_first(client, question, lang):
+    body = client.post("/api/ask", json={"question": question, "lang": lang}).json()
+    assert body["answer_source"] == "passages", body
+    assert body["citations"][0]["id"] == "all-fish#trouble-no-bites"
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "I get bites but can't hook them",
+        "Me pican pero no saco nada, ¿qué hago mal?",
+        "アタリはあるのに釣れないのはなぜ？",
+        "입질은 오는데 왜 안 잡혀요?",
+    ],
+)
+def test_bites_and_nothing_hooked_is_the_other_topic(client, question):
+    body = client.post("/api/ask", json={"question": question}).json()
+    assert body["citations"][0]["id"] == "all-fish#trouble-stolen-bait", body
+
+
+def test_what_counts_as_catching_nothing():
+    from app.services.rag.retriever import AMBIGUOUS_ALIASES, asks_why_nothing_caught, caught_as_fish
+
+    for said in ("Why am I not catching anything?", "I can't catch a thing", "Why don't I catch any crappie in summer?",
+                 "No luck today", "They aren't biting", "Skunked again"):
+        assert asks_why_nothing_caught(said), said
+    # A rule, a bite named before "but", and plain how-to are not.
+    for said in ("Can you not catch fish under 14 inches in Texas?", "I get bites but nothing on the hook",
+                 "How do I catch more fish?"):
+        assert not asks_why_nothing_caught(said), said
+    bass = AMBIGUOUS_ALIASES["bass"]
+    assert caught_as_fish("Why am I not catching any bass?", "bass", bass)
+    assert not caught_as_fish("How do I turn the bass up?", "bass", bass)
+    assert not caught_as_fish("Best strings to hook up a bass guitar", "bass", bass)
+
+
+def test_korean_not_getting_stung_asks_how_to_hold(client):
+    assert "hold" in ko.to_english("메기 가시에 안 찔리게 어떻게 잡아요?")
+    body = client.post("/api/ask", json={"question": "메기 가시에 안 찔리게 어떻게 잡아요?"}).json()
+    assert body["citations"][0]["id"] == "all-fish#safe-handling", body

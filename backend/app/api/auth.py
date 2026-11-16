@@ -88,6 +88,7 @@ def user_out(user: User) -> UserOut:
         email_verified=user.email_verified_at is not None,
         verification_required=email_verification.needs_verifying(user),
         hide_from_rankings=user.hide_from_rankings,
+        gear_stats=user.counts_gear,
     )
 
 
@@ -301,6 +302,8 @@ def update_me(payload: ProfileIn, user: User = Depends(require_user), db: Sessio
             _raise(exc)
     if payload.hide_from_rankings is not None:
         user.hide_from_rankings = payload.hide_from_rankings
+    if payload.gear_stats is not None:
+        user.gear_stats = payload.gear_stats
     db.commit()
     return user_out(user)
 

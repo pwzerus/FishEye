@@ -253,7 +253,8 @@ export function listHandbook(locale = "en"): Promise<HandbookTopic[]> {
   return apiFetch<HandbookTopic[]>(`/api/species/handbook?lang=${locale}`);
 }
 
-export function listQuestions(lang: "en" | "zh" | "zht"): Promise<LibraryQuestion[]> {
+// Every site language: Spanish, Japanese and Korean joined on 2026-11-16 (ADR 0058).
+export function listQuestions(lang: Locale): Promise<LibraryQuestion[]> {
   return apiFetch<LibraryQuestion[]>(`/api/species/questions?lang=${lang}`);
 }
 

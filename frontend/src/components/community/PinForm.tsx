@@ -6,7 +6,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { VerifyEmailBanner } from "@/components/auth/VerifyEmailBanner";
 import { useLocale, useLocaleTag, useT } from "@/i18n/client";
 import { MESSAGES, type Messages } from "@/i18n/messages";
-import { localFishName } from "@/i18n/names";
+import { localFishName, localGearCategory, localGearName } from "@/i18n/names";
 import { ApiError } from "@/lib/api/client";
 import { createPin, getPinOptions, identifyFish } from "@/lib/api/session";
 import type { FishIdResult, FishVerdict, PinDetail, PinOptions, PinVisibility } from "@/lib/api/types";
@@ -116,7 +116,103 @@ export function ShareSpotToggle({
   );
 }
 
+// "Other…" in the fish and gear lists: the angler names it themselves.
 const OTHER = "__other";
+
+/**
+ * What the catch was made with (backend ADR 0056): items from the /gear
+ * list, picked one at a time, and anything else in a few words. What
+ * FishEye does with it is in the privacy policy, not under the field (the
+ * owner: the one privacy line the forms show is the spot promise), and the
+ * account page turns the counts off.
+ */
+export function GearPicker({
+  options,
+  value,
+  onChange,
+  other,
+  onOtherChange,
+  known = [],
+  disabled,
+}: {
+  options: PinOptions | null;
+  value: string[];
+  onChange: (ids: string[]) => void;
+  other: string;
+  onOtherChange: (text: string) => void;
+  // English names already known (a saved catch's), until the list loads.
+  known?: { id: string; label: string }[];
+  disabled?: boolean;
+}) {
+  const t = useT().catch;
+  const locale = useLocale();
+  const [showOther, setShowOther] = useState(other.trim() !== "");
+  const items = options?.gear ?? [];
+  const max = options?.max_gear ?? 6;
+  const full = value.length >= max;
+  const name = (id: string) =>
+    localGearName(id, locale) ?? items.find((i) => i.id === id)?.label ?? known.find((i) => i.id === id)?.label ?? id;
+  return (
+    <div className="field gear-field">
+      <span>{t.gear}</span>
+      {value.length > 0 && (
+        <ul className="gear-chips">
+          {value.map((id) => (
+            <li key={id} className="gear-chip">
+              <span>{name(id)}</span>
+              <button
+                type="button"
+                aria-label={t.gearRemove(name(id))}
+                onClick={() => onChange(value.filter((v) => v !== id))}
+                disabled={disabled}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {!(full && showOther) && (
+        <select
+          value=""
+          aria-label={t.gearAdd}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === OTHER) setShowOther(true);
+            else if (v) onChange([...value, v]);
+          }}
+          disabled={disabled || options === null}
+        >
+          <option value="">{full ? t.gearFull(max) : t.gearAdd}</option>
+          {!full &&
+            (options?.gear_categories ?? []).map((c) => (
+              <optgroup key={c.id} label={localGearCategory(c.id, locale) ?? c.label}>
+                {items
+                  .filter((i) => i.category === c.id && !value.includes(i.id))
+                  .map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {name(i.id)}
+                    </option>
+                  ))}
+              </optgroup>
+            ))}
+          {!showOther && <option value={OTHER}>{t.other}</option>}
+        </select>
+      )}
+      {showOther && (
+        <input
+          value={other}
+          onChange={(e) => onOtherChange(e.target.value)}
+          aria-label={t.gearOther}
+          placeholder={t.gearOtherExample}
+          maxLength={60}
+          disabled={disabled}
+        />
+      )}
+    </div>
+  );
+}
+
 // The likeliest guide species is filled in for the angler from this sure.
 const SUGGEST_FROM = 0.5;
 
@@ -312,6 +408,8 @@ export function PinForm({
   const [other, setOther] = useState("");
   const [caughtOn, setCaughtOn] = useState(today());
   const [note, setNote] = useState("");
+  const [gear, setGear] = useState<string[]>([]);
+  const [gearOther, setGearOther] = useState("");
   const [visibility, setVisibility] = useState<PinVisibility>("public");
   const [shareExact, setShareExact] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
@@ -454,6 +552,8 @@ export function PinForm({
           caught_on: caughtOn || undefined,
           visibility,
           share_exact: visibility === "public" && shareExact,
+          gear,
+          gear_other: gearOther.trim() || undefined,
           photos,
         },
         setProgress,
@@ -536,6 +636,15 @@ export function PinForm({
       )}
       {named && photos.length === 0 && <p className="hint">{t.needPhoto}</p>}
 
+      <GearPicker
+        options={options}
+        value={gear}
+        onChange={setGear}
+        other={gearOther}
+        onOtherChange={setGearOther}
+        disabled={busy}
+      />
+
       <label className="field">
         <span>{t.title}</span>
         <input
@@ -563,6 +672,7 @@ export function PinForm({
         <span>{t.whoSees}</span>
         <VisibilityToggle value={visibility} onChange={setVisibility} disabled={busy} />
       </div>
+      <p className="hint">{t.spotPromise}</p>
 
       {visibility === "public" && (
         <>

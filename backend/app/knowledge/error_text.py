@@ -337,6 +337,15 @@ TEXT: dict[str, dict[str, str]] = {
         "zh": "鱼名里有 FishEye 不允许使用的词。", "es": "El nombre del pez incluye una palabra que FishEye no permite.",
         "ko": "물고기 이름에 FishEye에서 쓸 수 없는 말이 들어 있어요.", "ja": "魚の名前に、FishEyeで使えない言葉が含まれています。",
     },
+    # Gear on a catch (ADR 0056).
+    "Pick gear from the list, or use 'Other'.": {
+        "zh": "请从列表里选装备，或者选“其他”。", "es": "Elige el equipo de la lista, o usa «Otro».",
+        "ko": "목록에서 장비를 고르거나 ‘기타’를 선택하세요.", "ja": "リストから道具を選ぶか、「その他」を選んでください。",
+    },
+    "The gear includes a word FishEye doesn't allow.": {
+        "zh": "装备里有 FishEye 不允许使用的词。", "es": "El equipo incluye una palabra que FishEye no permite.",
+        "ko": "장비에 FishEye에서 쓸 수 없는 말이 들어 있어요.", "ja": "道具に、FishEyeで使えない言葉が含まれています。",
+    },
     # --- lake reports
     "You've sent a lot of reports. Try again later.": {
         "zh": "你提交的报告太多了，请稍后再试。", "es": "Has enviado muchos reportes. Intenta más tarde.",
@@ -457,6 +466,9 @@ PATTERNS: list[Pattern] = [
     (re.compile(r"^A catch can have up to (\d+) photos\.$"),
      lambda m, lang: {"zh": f"每条渔获最多 {m[1]} 张照片。", "es": f"Una captura puede tener hasta {m[1]} fotos.",
                    "ko": f"조과 하나에 사진은 {m[1]}장까지예요.", "ja": f"写真は1件の釣果につき{m[1]}枚までです。"}[lang]),
+    (re.compile(r"^A catch can list up to (\d+) pieces of gear\.$"),
+     lambda m, lang: {"zh": f"每条渔获最多记 {m[1]} 件装备。", "es": f"Una captura puede tener hasta {m[1]} piezas de equipo.",
+                   "ko": f"조과 하나에 장비는 {m[1]}개까지예요.", "ja": f"道具は1件の釣果につき{m[1]}つまでです。"}[lang]),
     (re.compile(r"^Photos can be up to (\d+) MB\.$"),
      lambda m, lang: {"zh": f"每张照片最大 {m[1]} MB。", "es": f"Las fotos pueden pesar hasta {m[1]} MB.",
                    "ko": f"사진은 {m[1]}MB까지 올릴 수 있어요.", "ja": f"写真は{m[1]} MBまでです。"}[lang]),

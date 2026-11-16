@@ -2,11 +2,11 @@
 "categories": {
 "start": {
 "en": "Getting started, rules and manners",
-"zh": "入门、规定和礼仪"
+"zh": "入门、规定和钓鱼规矩"
 },
 "setup": {
 "en": "Putting a setup together",
-"zh": "组建和调整装备"
+"zh": "钓具搭配和调整"
 },
 "rods": {
 "en": "Rods",
@@ -18,7 +18,7 @@
 },
 "line": {
 "en": "Line, leaders and knots",
-"zh": "线、前导和线结"
+"zh": "鱼线、前导线和线结"
 },
 "hooks": {
 "en": "Hooks and rigs",
@@ -30,7 +30,7 @@
 },
 "bait": {
 "en": "Natural bait",
-"zh": "天然饵"
+"zh": "天然饵料"
 },
 "technique": {
 "en": "Casting, bites and finding fish",
@@ -42,11 +42,11 @@
 },
 "methods": {
 "en": "Fly, salt water, ice and travel",
-"zh": "飞钓、海钓、冰钓和外出"
+"zh": "飞钓、海钓、冰钓和出行"
 },
 "care": {
 "en": "Releasing, keeping and cleaning",
-"zh": "放流、留鱼和处理"
+"zh": "放生、带走和处理渔获"
 },
 "maintenance": {
 "en": "Care and repair of gear",
@@ -54,7 +54,7 @@
 },
 "accessories": {
 "en": "Tackle boxes, clothing and tools",
-"zh": "渔具包、穿着和工具"
+"zh": "渔具盒、服装和工具"
 },
 "boats": {
 "en": "Boats, kayaks and electronics",
@@ -512,7 +512,7 @@
 "short": "A multi-piece spinning rod of about 7 to 9 feet, rated for 10 to 20 lb line.",
 "body": "Four-piece rods in this range pack small and cast lures of ½ to 1 ounce far enough for shore fishing. Choose corrosion-resistant guides and a saltwater-rated reel of about 3000 to 5000. Braid with a fluorocarbon leader gives distance and abrasion resistance. Rinse everything gently with fresh water afterward and clean the joints, since salt and sand can seize them.",
 "short_zh": "选 7 到 9 英尺的多节直柄竿，标称 10 到 20 磅线。",
-"body_zh": "这个长度的四节竿收纳小，抛 ½ 到 1 盎司的饵，岸钓距离够用。导环要耐腐蚀，轮选厂家标明可用于海水的 3000 到 5000 号。编织线加碳线前导，既能抛远又耐磨。钓完用淡水轻轻冲洗，接口也要清理，盐和沙会把接口卡死。",
+"body_zh": "这个长度的四节竿收纳小，抛 ½ 到 1 盎司的饵，岸钓距离够用。导环要耐腐蚀，轮选厂家标明可用于海水的 3000 到 5000 号。编织线加碳线前导线，既能抛远又耐磨。钓完用淡水轻轻冲洗，接口也要清理，盐和沙会把接口卡死。",
 "basis": "general",
 "source_ids": []
 },
@@ -548,7 +548,7 @@
 "short": "It lets small fish bend the rod and casts tiny lures. A few pounds is a practical limit.",
 "body": "An ultralight rod suits lures of about 1/32 to 1/8 ounce and 2 to 6 lb line, so a half-pound bluegill puts up a real fight. With a smooth drag and open water, a skilled angler can land much larger fish, but a long fight exhausts them, which is hard on a fish you plan to release. Treat a few pounds as the practical upper limit, and go heavier around cover or in warm water, when a fish needs to come in quickly.",
 "short_zh": "小鱼也能把竿压弯，还能抛很小的饵。实用的上限大约是几磅。",
-"body_zh": "超轻竿适合 1/32 到 1/8 盎司的饵和 2 到 6 磅的线，半磅重的蓝鳃太阳鱼也能拉出真正的搏斗感。卸力顺滑、水域开阔时，熟练的人能拉上大得多的鱼，但搏斗时间太长会把鱼累坏，对要放流的鱼不好。把几磅当作实用上限，在障碍区或水温高时要用更重的装备，让鱼尽快上来。",
+"body_zh": "超轻竿适合 1/32 到 1/8 盎司的饵和 2 到 6 磅的线，半磅重的蓝鳃太阳鱼也能拉出真正的搏斗感。卸力顺滑、水域开阔时，熟练的人能拉上大得多的鱼，但搏斗时间太长会把鱼累坏，对要放生的鱼不好。把几磅当作实用上限，在障碍区或水温高时要用更重的装备，让鱼尽快上来。",
 "basis": "general",
 "source_ids": [
 "utah-learn",
@@ -579,7 +579,7 @@
 "short": "The full weight of the lure, repeated all day, plus the strain of a big fish.",
 "body": "Musky lures commonly run from 2 ounces to well over 8 ounces, and big rubber baits pull hard when retrieved. Choose a heavy or extra-heavy rod, often 8 to 9 feet, rated for your lure weight, with a long handle for two-handed casting. A longer rod also helps with figure-eights at the boat. Use strong braid and a bite-proof leader, and carry long pliers, strong hook cutters and a big net, which protects both the fish and you.",
 "short_zh": "要能承受饵的全部重量，整天反复抛，还要能对付大鱼的拉力。",
-"body_zh": "钓马斯基的饵常见 2 盎司到远超 8 盎司，大型软胶饵收线时拉力很大。选硬或超硬的竿，长度常在 8 到 9 英尺，标称要覆盖饵重，后把要长，便于双手抛投。长竿也方便在船边画“8”字诱鱼。用高强度编织线和防咬前导，带上长柄钳、结实的断钩钳和大抄网，这对鱼和人都更安全。",
+"body_zh": "钓马斯基的饵常见 2 盎司到远超 8 盎司，大型软胶饵收线时拉力很大。选硬或超硬的竿，长度常在 8 到 9 英尺，标称要覆盖饵重，后把要长，便于双手抛投。长竿也方便在船边画“8”字诱鱼。用高强度编织线和防咬前导线，带上长柄钳、结实的断钩钳和大抄网，这对鱼和人都更安全。",
 "basis": "general",
 "source_ids": []
 },
@@ -591,7 +591,7 @@
 "short": "Light rod weight, a strong backbone and an action matched to the jig.",
 "body": "You work the rod all day, so short rods of about 5½ to 6½ feet are easiest. The backbone has to lift a heavy jig and a fish from deep water, and the rating should cover the jig weights you plan to use. Slow-pitch rods are softer and use the bend to make the jig flutter, while speed-jigging rods are stiffer. Braid has less stretch and less drag in deep water, so use it with a fluorocarbon leader.",
 "short_zh": "竿要轻，腰力要强，调性要和铁板相配。",
-"body_zh": "一整天都要抖竿，所以 5½ 到 6½ 英尺的短竿最省力。竿腰要能把重铁板和鱼从深水拉上来，标称要覆盖你用的铁板重量。慢摇铁板竿较软，靠弯曲让铁板飘动；快抽铁板竿较硬。编织线延展小，在深水中阻力也小，再配一段碳线前导。",
+"body_zh": "一整天都要抖竿，所以 5½ 到 6½ 英尺的短竿最省力。竿腰要能把重铁板和鱼从深水拉上来，标称要覆盖你用的铁板重量。慢摇铁板竿较软，靠弯曲让铁板飘动；快抽铁板竿较硬。编织线延展小，在深水中阻力也小，再配一段碳线前导线。",
 "basis": "general",
 "source_ids": []
 },
@@ -704,7 +704,7 @@
 "short": "A 2500 or 3000, and a 4000 if you want extra line or drag.",
 "body": "Braid of 8 to 15 lb is thin, so a 2500 holds plenty, especially with a mono backing. A 2500 or 3000 also balances a medium spinning rod of 6½ to 7 feet. A shallow spool saves on backing. FishEye's walleye guide adds a length of clear monofilament as a leader when you fish braid.",
 "short_zh": "2500 或 3000 号，想要更多容线或卸力就选 4000 号。",
-"body_zh": "8 到 15 磅编织线很细，2500 号就能容下足够的线，加尼龙底线更是如此。2500 或 3000 号也能平衡 6½ 到 7 英尺的中等硬度直柄竿。浅线杯可以省下底线。FishEye 的大眼鲈指南建议，用编织线时接一段透明尼龙线作前导。",
+"body_zh": "8 到 15 磅编织线很细，2500 号就能容下足够的线，加尼龙底线更是如此。2500 或 3000 号也能平衡 6½ 到 7 英尺的中等硬度直柄竿。浅线杯可以省下底线。FishEye 的大眼鲈指南建议，用编织线时接一段透明尼龙线作前导线。",
 "basis": "general",
 "source_ids": [
 "mndnr-walleye"
@@ -851,11 +851,11 @@
 "id": "qa-gear-reel-vs-2",
 "category": "reels",
 "question": "Is there still a good reason to choose a spincast reel?",
-"question_zh": "现在还有充分的理由选择卡式轮吗？",
+"question_zh": "现在还有充分的理由选择封闭轮吗？",
 "short": "Yes, for children, first-timers and simple bait fishing.",
 "body": "A spincast reel is the simplest to cast: press the button, swing and let go. The closed cover keeps tangles to a minimum, which means less time spent fixing problems. It holds less line and has a weaker drag, so it isn't the best choice for larger fish or long casts. Its sealed housing is a drawback in salt water, because cleaning the inside means taking the reel apart. It is still a sensible way to get a child or first-timer fishing.",
 "short_zh": "有，适合孩子、第一次钓鱼的人和简单的天然饵钓法。",
-"body_zh": "卡式轮抛投最简单：按住按钮，挥竿，松开。封闭的外壳把缠线减到最少，也就少花时间处理问题。它容线少、卸力弱，不太适合大鱼或远投。封闭的外壳也不适合海钓，因为要清洁内部就得把轮拆开。对孩子和刚入门的人来说，它仍然是很合理的选择。",
+"body_zh": "封闭轮抛投最简单：按住按钮，挥竿，松开。封闭的外壳把缠线减到最少，也就少花时间处理问题。它容线少、卸力弱，不太适合大鱼或远投。封闭的外壳也不适合海钓，因为要清洁内部就得把轮拆开。对孩子和刚入门的人来说，它仍然是很合理的选择。",
 "basis": "guide",
 "source_ids": [
 "qa-pdf-sc-fresh",
@@ -1150,7 +1150,7 @@
 "short": "Yes, if it is cleaned after each saltwater trip.",
 "body": "Use it in salt only if you are willing to clean it soon afterward. Give it a light freshwater spray with the drag tight, air-dry it, then apply a thin coat of lubricant suitable for salt water on the outside moving parts. Clean the rod and tackle as well, since one salty lure can rust a whole box. Before moving on to other waters, clean, drain and dry your gear so you don't carry invasive species.",
 "short_zh": "可以，但每次钓完海水都要清洁。",
-"body_zh": "只有愿意在钓完后尽快清洁，才适合带去海水里用。拧紧卸力，用淡水轻轻喷洗，晾干，再在外部活动部位薄薄地涂一层适合海水的润滑剂。竿和渔具也要清洁，一个带盐的饵就能让整盒渔具生锈。换到别的水域之前，要清洁、排水、晾干装备，以免带去入侵物种。",
+"body_zh": "只有愿意在钓完后尽快清洁，才适合带去海水里用。拧紧卸力，用淡水轻轻喷洗，晾干，再在外部活动部位薄薄地涂一层适合海水的润滑剂。竿和渔具也要清洁，一个带盐的饵就能让整盒渔具生锈。换到别的水域之前，要清洗、排水、晾干装备，以免带去入侵物种。",
 "basis": "guide",
 "source_ids": [
 "qa-tpwd-gear",
@@ -1191,7 +1191,7 @@
 "short": "Mono is the easy, forgiving choice. Fluorocarbon is hard to see and abrasion resistant. Braid is thin, strong and has almost no stretch.",
 "body": "Monofilament is cheap and stretchy and sinks slowly. Its stretch dulls bites at long range, and cheap mono holds coils from the spool. Fluorocarbon is hard to see underwater, resists abrasion and sinks faster, but it is stiffer and costs more, so it is often used as a leader. Braid floats, is far thinner than mono of the same strength, casts far and transmits small bites. It is also easy for fish to see, wears faster against rock and wood, and can slip on a bare spool. For a beginner on a spinning reel, 6 to 10 lb mono is the simple choice. Move to braid with a short leader when you want more sensitivity or distance.",
 "short_zh": "尼龙线省事、容错高。碳线在水下不显眼，而且耐磨。编织线细、强度高、几乎没有延展。",
-"body_zh": "尼龙线便宜，有弹性，下沉慢。它的弹性会让远距离的咬钩信号变钝，便宜的尼龙线还容易保留线杯上的卷曲。碳线在水下不显眼，耐磨，下沉快，但偏硬、价格高，常用作前导线。编织线会浮在水面，同样强度下比尼龙线细得多，抛得远，轻微的咬钩也能传到手上；但鱼容易看见，碰到岩石和木头磨损更快，在光滑的线杯上还可能打滑。新手用纺车轮的话，6 到 10 磅的尼龙线最省事。想要更好的手感或更远的距离时，再换成编织线加一段短前导。",
+"body_zh": "尼龙线便宜，有弹性，下沉慢。它的弹性会让远距离的咬钩信号变钝，便宜的尼龙线还容易保留线杯上的卷曲。碳线在水下不显眼，耐磨，下沉快，但偏硬、价格高，常用作前导线。编织线会浮在水面，同样强度下比尼龙线细得多，抛得远，轻微的咬钩也能传到手上；但鱼容易看见，碰到岩石和木头磨损更快，在光滑的线杯上还可能打滑。新手用纺车轮的话，6 到 10 磅的尼龙线最省事。想要更好的手感或更远的距离时，再换成编织线加一段短前导线。",
 "basis": "guide",
 "source_ids": [
 "qa-pdf-sc-salt",
@@ -1210,7 +1210,7 @@
 "short": "Usually only on small reels with lighter line.",
 "body": "Fluorocarbon is stiffer than mono and holds coils from the spool, so thick line on a spinning reel tends to jump off in loops. In 4 to 8 lb on a properly filled reel it works well for finesse fishing. For most spinning setups, braid with a fluorocarbon leader is easier to manage. If you do use straight fluorocarbon, choose a limp version, don't overfill, and replace it when it starts to coil.",
 "short_zh": "通常只适合小轮和细线。",
-"body_zh": "碳线比尼龙线硬，容易保留线杯上的卷曲，粗一些的碳线在纺车轮上常常成圈跳出。上线量合适时，4 到 8 磅的碳线很适合微物钓。多数纺车轮配置，用编织线加碳线前导更好打理。如果确实要全部用碳线，就选柔软型号，不要上太满，开始卷曲就换。",
+"body_zh": "碳线比尼龙线硬，容易保留线杯上的卷曲，粗一些的碳线在纺车轮上常常成圈跳出。上线量合适时，4 到 8 磅的碳线很适合微物钓。多数纺车轮配置，用编织线加碳线前导线更好打理。如果确实要全部用碳线，就选柔软型号，不要上太满，开始卷曲就换。",
 "basis": "general",
 "source_ids": [
 "fs-line",
@@ -1225,7 +1225,7 @@
 "short": "It can be tied directly, and that is often fine in heavy cover or dirty water.",
 "body": "A palomar knot holds braid well. Add a leader if the water is clear, if the line will rub against rock or wood, or if the lure needs some shock absorption. Braid has no stretch, so a fish that makes a sudden run can pull the hooks free if the drag is too tight. With toothy fish, use a wire or heavy fluorocarbon leader.",
 "short_zh": "可以直接绑，在重障碍区或浑水里通常也没问题。",
-"body_zh": "帕洛马结绑编织线很牢。水很清、线会摩擦岩石或木头，或者饵需要一点缓冲时，再加前导线。编织线没有延展，卸力太紧时，鱼突然发力可能把钩扯脱。钓利齿鱼要用钢丝前导或粗碳线前导。",
+"body_zh": "帕洛马结绑编织线很牢。水很清、线会摩擦岩石或木头，或者饵需要一点缓冲时，再加前导线。编织线没有延展，卸力太紧时，鱼突然发力可能把钩扯脱。钓利齿鱼要用钢丝前导线或粗碳线前导线。",
 "basis": "general",
 "source_ids": [
 "zebco-knots",
@@ -1274,7 +1274,7 @@
 "short": "Monofilament, about 6 to 10 lb.",
 "body": "Mono is cheap and easy to tie, it stretches enough to forgive a hard hook set or a tight drag, and it doesn't slip on the spool. Braid needs different knots and is prone to wind knots on spinning reels. Fluorocarbon is stiffer and costs more. Once you've fished a while and want more feel, try braid with a leader.",
 "short_zh": "尼龙线，大约 6 到 10 磅。",
-"body_zh": "尼龙线便宜、好打结，有足够的弹性，提竿过猛或卸力太紧时都有缓冲，也不会在线杯上打滑。编织线需要不同的结，在纺车轮上容易出风结。碳线偏硬，价格也高。钓一段时间、想要更好的手感时，再试试编织线加前导。",
+"body_zh": "尼龙线便宜、好打结，有足够的弹性，提竿过猛或卸力太紧时都有缓冲，也不会在线杯上打滑。编织线需要不同的结，在纺车轮上容易出风结。碳线偏硬，价格也高。钓一段时间、想要更好的手感时，再试试编织线加前导线。",
 "basis": "guide",
 "source_ids": [
 "fs-line",
@@ -1303,8 +1303,8 @@
 "question_zh": "小型纺车轮用哪种线表现最好？",
 "short": "Limp monofilament, or thin braid with a leader.",
 "body": "On a small spool, stiff lines hold tight coils and leap off in loops. Light 4 to 6 lb mono is forgiving. Braid of 6 to 10 lb casts farther but needs a leader and care to keep tension. Use fluorocarbon only in light sizes. Fill to just below the rim and replace the line once it starts coming off in curls.",
-"short_zh": "柔软的尼龙线，或者细编织线加前导。",
-"body_zh": "小线杯上，偏硬的线卷得很紧，容易成圈跳出。4 到 6 磅的细尼龙线容错高。6 到 10 磅编织线抛得更远，但需要前导，也要注意保持张力。碳线只用细号。上线到杯沿下方一点，线开始一圈圈卷着出来时就要换。",
+"short_zh": "柔软的尼龙线，或者细编织线加前导线。",
+"body_zh": "小线杯上，偏硬的线卷得很紧，容易成圈跳出。4 到 6 磅的细尼龙线容错高。6 到 10 磅编织线抛得更远，但需要前导线，也要注意保持张力。碳线只用细号。上线到杯沿下方一点，线开始一圈圈卷着出来时就要换。",
 "basis": "general",
 "source_ids": []
 },
@@ -1316,7 +1316,7 @@
 "short": "Braid or monofilament, because neither drags a floating lure down.",
 "body": "Fluorocarbon sinks and pulls the nose of a small topwater down, which spoils the action. Braid floats, has no stretch and gives a strong hook set on long casts, so it is the usual choice for frogs and large walking baits. Mono also sits well for smaller poppers, and its stretch gives a fish a little more time to take the lure. A short mono leader on braid adds some stretch.",
 "short_zh": "编织线或尼龙线，因为它们不会把浮水饵往下拽。",
-"body_zh": "碳线会下沉，把小型水面饵的头拉低，动作就不对了。编织线会浮在水面，没有延展，远距离也能有力地提竿，所以青蛙饵和大型走狗饵通常用它。尼龙线也适合较小的 popper，它的弹性还能给鱼多一点咬实的时间。在编织线上接一段短尼龙前导，可以增加一些弹性。",
+"body_zh": "碳线会下沉，把小型水面饵的头拉低，动作就不对了。编织线会浮在水面，没有延展，远距离也能有力地提竿，所以青蛙饵和大型走狗饵通常用它。尼龙线也适合较小的 popper，它的弹性还能给鱼多一点咬实的时间。在编织线上接一段短尼龙前导线，可以增加一些弹性。",
 "basis": "general",
 "source_ids": [
 "fs-line",
@@ -1459,8 +1459,8 @@
 "question_zh": "钓白斑狗鱼和其他利齿鱼类用多少磅的线合适？",
 "short": "Braid of at least 15 lb, plus a bite-proof leader.",
 "body": "FishEye's pike guide uses 15 lb or heavier braid with a foot-long steel or fluorocarbon leader. Line strength matters less than the leader, because teeth cut through ordinary line. Heavier braid of 30 to 50 lb suits large lures and heavy cover. Bring long pliers and a net.",
-"short_zh": "至少 15 磅的编织线，再加防咬前导。",
-"body_zh": "FishEye 的白斑狗鱼指南用 15 磅或更强的编织线，加一段一英尺长的钢丝或碳线前导。线的强度不如前导重要，因为鱼牙能切断普通的线。大饵和重障碍区可以用 30 到 50 磅编织线。带上长柄钳和抄网。",
+"short_zh": "至少 15 磅的编织线，再加防咬前导线。",
+"body_zh": "FishEye 的白斑狗鱼指南用 15 磅或更强的编织线，加一段一英尺长的钢丝或碳线前导线。线的强度不如前导线重要，因为鱼牙能切断普通的线。大饵和重障碍区可以用 30 到 50 磅编织线。带上长柄钳和抄网。",
 "basis": "guide",
 "source_ids": [
 "mndnr-pike",
@@ -1475,7 +1475,7 @@
 "short": "Use a leader when fish can see the line or the line will rub on something. Skip it in heavy cover and dirty water.",
 "body": "In clear water a few feet of fluorocarbon hides braid, which is easy to see. Around rocks, docks and wood it takes the abrasion braid handles poorly. If the leader is rated a little lighter than the braid, it breaks first on a snag, so you lose only the hook and lure. A leader is usually unnecessary in dense weeds or lily pads, in muddy water, or with topwater frogs, where braid's strength matters most and fish have little time to inspect the line. Toothy fish such as pike are a separate case: use a wire or heavy fluorocarbon leader whatever the main line.",
 "short_zh": "鱼看得见线，或者线会摩擦到东西时，就加前导线。在重障碍区和浑水里可以不加。",
-"body_zh": "清水里，几英尺碳线可以把显眼的编织线藏起来。在岩石、码头和沉木旁边，前导线可以替编织线承受磨损。前导线比编织线略细时，挂底时先断的是前导线，只损失钩和饵。在很密的水草或睡莲叶里、浑水里，或者打水面青蛙饵时，通常不需要前导线，这时编织线的强度最重要，鱼也没有时间细看线。白斑狗鱼这类利齿鱼是另一回事：无论主线用什么，都要用钢丝前导或粗碳线前导。",
+"body_zh": "清水里，几英尺碳线可以把显眼的编织线藏起来。在岩石、码头和沉木旁边，前导线可以替编织线承受磨损。前导线比编织线略细时，挂底时先断的是前导线，只损失钩和饵。在很密的水草或睡莲叶里、浑水里，或者打水面青蛙饵时，通常不需要前导线，这时编织线的强度最重要，鱼也没有时间细看线。白斑狗鱼这类利齿鱼是另一回事：无论主线用什么，都要用钢丝前导线或粗碳线前导线。",
 "basis": "general",
 "source_ids": [
 "qa-pdf-sc-salt",
@@ -1489,11 +1489,11 @@
 "id": "qa-gear-line-leader-2",
 "category": "line",
 "question": "How long should a fluorocarbon leader be for general freshwater fishing?",
-"question_zh": "一般淡水钓法中，碳线前导应该多长？",
+"question_zh": "一般淡水钓法中，碳线前导线应该多长？",
 "short": "About 2 to 6 feet.",
 "body": "Two to three feet is enough for most fishing and keeps the line-to-line knot out of the reel when casting. In very clear water or with wary fish, 4 to 6 feet gives more separation from the braid. A long leader can make casting harder if the knot runs through the guides, and a slim knot reduces that. Retie whenever the leader feels rough.",
 "short_zh": "大约 2 到 6 英尺。",
-"body_zh": "多数情况下两三英尺就够了，抛投时线结也不会卷进轮里。水很清或鱼很警觉时，4 到 6 英尺能让鱼离编织线更远。前导太长，线结要穿过导环，抛投会受影响，打一个细小的结可以减轻这个问题。摸起来粗糙就重新绑。",
+"body_zh": "多数情况下两三英尺就够了，抛投时线结也不会卷进轮里。水很清或鱼很警觉时，4 到 6 英尺能让鱼离编织线更远。前导线太长，线结要穿过导环，抛投会受影响，打一个细小的结可以减轻这个问题。摸起来粗糙就重新绑。",
 "basis": "general",
 "source_ids": []
 },
@@ -1522,7 +1522,7 @@
 "short": "No. It depends on whether you want the leader to break first or to take abrasion.",
 "body": "A lighter leader breaks first on a snag and saves most of your main line. That is the usual setup on a bait rig with mono, and with braid the leader is lighter anyway because braid is so strong. A heavier leader is used when the fish or the cover would cut lighter line: toothy fish, rocks, oysters or pier pilings. In that case the knot or the main line becomes the weak link.",
 "short_zh": "不一定。要看你希望前导线先断，还是希望它耐磨。",
-"body_zh": "前导线较细时，挂底会先断，主线大多能保住。尼龙线的天然饵钓组通常就是这样；用编织线时，前导线一般也更细，因为编织线太强。如果鱼或障碍物会切断细线，比如利齿鱼、岩石、牡蛎或栈桥桩，就要用更粗的前导，这时线结或主线就成了薄弱环节。",
+"body_zh": "前导线较细时，挂底会先断，主线大多能保住。尼龙线的天然饵钓组通常就是这样；用编织线时，前导线一般也更细，因为编织线太强。如果鱼或障碍物会切断细线，比如利齿鱼、岩石、牡蛎或栈桥桩，就要用更粗的前导线，这时线结或主线就成了薄弱环节。",
 "basis": "guide",
 "source_ids": [
 "fs-line",
@@ -1542,7 +1542,7 @@
 "short": "A double uni is easy and reliable. An FG knot is the slimmest.",
 "body": "The double uni is the easiest to learn and strong enough for most fishing. The surgeon's and blood knots work well for mono and fluorocarbon. For braid to fluorocarbon, the FG knot is very thin and casts best, but it takes practice. A modified Albright is a forgiving alternative when the leader is much heavier than the braid. Wet any knot before tightening, test it with a firm pull, and trim the tags close without cutting them flush.",
 "short_zh": "双 uni 结简单可靠，FG 结最细。",
-"body_zh": "双 uni 结最容易学，强度也足够应付多数情况。外科结和血结适合尼龙线和碳线。编织线接碳线时，FG 结很细，抛投最顺，但需要练习。前导比编织线粗很多时，改良 Albright 结更容易打好。任何结收紧前都要润湿，打好后用力拉一下测试，线头剪短，但不要贴着结剪。",
+"body_zh": "双 uni 结最容易学，强度也足够应付多数情况。外科结和血结适合尼龙线和碳线。编织线接碳线时，FG 结很细，抛投最顺，但需要练习。前导线比编织线粗很多时，改良 Albright 结更容易打好。任何结收紧前都要润湿，打好后用力拉一下测试，线头剪短，但不要贴着结剪。",
 "basis": "general",
 "source_ids": [
 "pfbc-knots"
@@ -1552,11 +1552,11 @@
 "id": "qa-gear-line-leader-6",
 "category": "line",
 "question": "Is a wire or heavy fluorocarbon leader needed for pike?",
-"question_zh": "钓白斑狗鱼需要钢丝前导或粗碳线前导吗？",
+"question_zh": "钓白斑狗鱼需要钢丝前导线或粗碳线前导线吗？",
 "short": "Yes, some form of bite-proof leader.",
 "body": "A pike's teeth can cut ordinary line. FishEye's guide lists a foot-long steel or fluorocarbon leader. Wire is the most secure. Heavy fluorocarbon of about 40 to 80 lb is less visible and works with lighter gear, but a large fish can still cut it. Check the leader for nicks after every fish. Replace wire as soon as it kinks.",
-"short_zh": "需要，要用某种防咬的前导。",
-"body_zh": "白斑狗鱼的牙能切断普通的线。FishEye 的指南列的是一英尺长的钢丝或碳线前导。钢丝最保险。40 到 80 磅的粗碳线不那么显眼，也适合较轻的装备，但大鱼仍可能咬断。每钓到一条鱼，都要检查前导有没有咬痕。钢丝一旦打折就要更换。",
+"short_zh": "需要，要用某种防咬的前导线。",
+"body_zh": "白斑狗鱼的牙能切断普通的线。FishEye 的指南列的是一英尺长的钢丝或碳线前导线。钢丝最保险。40 到 80 磅的粗碳线不那么显眼，也适合较轻的装备，但大鱼仍可能咬断。每钓到一条鱼，都要检查前导线有没有咬痕。钢丝一旦打折就要更换。",
 "basis": "guide",
 "source_ids": [
 "qa-pdf-de-st",
@@ -1575,8 +1575,8 @@
 "question_zh": "近岸海钓适合什么样的前导线配置？",
 "short": "A 2 to 4 foot fluorocarbon leader of about 15 to 30 lb.",
 "body": "A braid main line of 10 to 20 lb with a fluorocarbon leader works for redfish, speckled trout and flounder. Use 15 to 20 lb in open water and clear shallows, and go to 25 to 30 lb near oysters, docks and mangroves or for snook. Join the two with a double uni or FG knot. A loop knot at the lure gives small lures more action.",
-"short_zh": "用 2 到 4 英尺、15 到 30 磅的碳线前导。",
-"body_zh": "10 到 20 磅编织线主线加碳线前导，可以钓红拟石首鱼、斑点海鳟和比目鱼。开阔水域和清澈浅滩用 15 到 20 磅；靠近牡蛎、码头和红树林，或者钓锯盖鱼时，用 25 到 30 磅。两段线用双 uni 结或 FG 结连接。绑饵时打一个活圈结，小饵的动作会更好。",
+"short_zh": "用 2 到 4 英尺、15 到 30 磅的碳线前导线。",
+"body_zh": "10 到 20 磅编织线主线加碳线前导线，可以钓红拟石首鱼、斑点海鳟和比目鱼。开阔水域和清澈浅滩用 15 到 20 磅；靠近牡蛎、码头和红树林，或者钓锯盖鱼时，用 25 到 30 磅。两段线用双 uni 结或 FG 结连接。绑饵时打一个活圈结，小饵的动作会更好。",
 "basis": "general",
 "source_ids": []
 },
@@ -1588,7 +1588,7 @@
 "short": "Fill a spinning reel to about 1/16 to 1/8 inch below the rim. Fill a baitcaster close to full, leaving a small gap.",
 "body": "On a spinning reel, too little line has to climb over the lip on every cast, which costs distance, and too much jumps off in loose coils and tangles. A baitcaster doesn't throw line off the lip. Aim for nearly full with a small gap below the rim, commonly around 1/8 inch, and check that the line can't touch the frame or level-wind when it's wound tight. On either reel, load line with some tension, then check after a few casts and take some off if loops appear. A spincast reel is full at about 100 yards.",
 "short_zh": "纺车轮上到离杯沿大约 1/16 到 1/8 英寸。水滴轮上到接近满杯，留一点空隙。",
-"body_zh": "纺车轮的线上得太少，每次出线都要爬过杯沿，抛不远；上得太满，松线会成圈跳出来，造成缠绕。水滴轮的线不是从杯沿甩出去的，可以接近满杯，但边缘下方要留一点空隙，常见做法是 1/8 英寸左右，并确认线绕紧后碰不到机身或排线器。无论哪种轮，上线时都要保持一点张力，抛几次后再检查，如果出现线圈，就放掉一些线。卡式轮大约 100 码就算满了。",
+"body_zh": "纺车轮的线上得太少，每次出线都要爬过杯沿，抛不远；上得太满，松线会成圈跳出来，造成缠绕。水滴轮的线不是从杯沿甩出去的，可以接近满杯，但边缘下方要留一点空隙，常见做法是 1/8 英寸左右，并确认线绕紧后碰不到机身或排线器。无论哪种轮，上线时都要保持一点张力，抛几次后再检查，如果出现线圈，就放掉一些线。封闭轮大约 100 码就算满了。",
 "basis": "guide",
 "source_ids": [
 "mdc-rigging",
@@ -1730,7 +1730,7 @@
 "short": "It can matter in clear water, but the effect is generally small.",
 "body": "In clear water, thin low-visibility line and a fluorocarbon leader may draw more bites from wary fish. In stained water it matters little. High-visibility line helps you see light bites, which can outweigh any disadvantage, especially with a leader. Controlled evidence is limited, so don't spend much time on color when location, depth or bait size may be the real problem.",
 "short_zh": "在清水里可能有影响，但一般影响不大。",
-"body_zh": "在清水中，细而不显眼的线和碳线前导可能让警觉的鱼更愿意咬。浑水里差别很小。高可见度的线能帮你看到轻微的咬口，这个好处可能超过它的缺点，加上前导时更是如此。严格对照的证据不多，所以位置、水深或饵的大小才可能是真正的问题时，不要在线的颜色上花太多心思。",
+"body_zh": "在清水中，细而不显眼的线和碳线前导线可能让警觉的鱼更愿意咬。浑水里差别很小。高可见度的线能帮你看到轻微的咬口，这个好处可能超过它的缺点，加上前导线时更是如此。严格对照的证据不多，所以位置、水深或饵的大小才可能是真正的问题时，不要在线的颜色上花太多心思。",
 "basis": "general",
 "source_ids": []
 },
@@ -1742,7 +1742,7 @@
 "short": "Stretch the line, and use a limp line.",
 "body": "Cold makes mono and fluorocarbon stiffer. Before fishing, let out a few yards and pull it between your hands, or pull it steadily against the drag. A line conditioner can help for a while. Keep the spool full so the line comes off in larger coils. For cold-weather fishing, limp lines or braid with a short leader have much less memory. Replace old line, which coils the most.",
 "short_zh": "把线拉伸一下，并换用柔软的线。",
-"body_zh": "低温会让尼龙线和碳线变硬。开钓前放出几码线，用双手拉一拉，或者顶着卸力稳稳地拉。线油可以暂时起作用。线杯要上足，线出来时线圈才大。冷天钓鱼，柔软的线或编织线加短前导，卷曲要少得多。旧线卷曲最严重，要及时换。",
+"body_zh": "低温会让尼龙线和碳线变硬。开钓前放出几码线，用双手拉一拉，或者顶着卸力稳稳地拉。线油可以暂时起作用。线杯要上足，线出来时线圈才大。冷天钓鱼，柔软的线或编织线加短前导线，卷曲要少得多。旧线卷曲最严重，要及时换。",
 "basis": "general",
 "source_ids": []
 },
@@ -1909,7 +1909,7 @@
 "short": "Either can work. Bait is better in slow, cold conditions, and lures cover more water.",
 "body": "A sucker or other baitfish fished along a weed edge can tempt a pike that won't chase, especially in cold water. Lures let you search water quickly. Some states limit live bait, so read the rules first. Set the hook soon to avoid deep hooking, and use a steel or fluorocarbon leader.",
 "short_zh": "两者都有效。慢节奏和低水温时天然饵更好，拟饵能搜索更大的水域。",
-"body_zh": "沿水草边缘放亚口鱼或其他饵鱼，能吸引不愿追逐的白斑狗鱼，水温低时尤其如此。拟饵能快速搜索水域。先查好规定，有些州限制活饵。咬钩后尽快提竿，避免吞钩，并使用钢丝或碳线前导。",
+"body_zh": "沿水草边缘放亚口鱼或其他饵鱼，能吸引不愿追逐的白斑狗鱼，水温低时尤其如此。拟饵能快速搜索水域。先查好规定，有些州限制活饵。咬钩后尽快提竿，避免吞钩，并使用钢丝或碳线前导线。",
 "basis": "guide",
 "source_ids": [
 "mdc-tips",
@@ -2210,7 +2210,7 @@
 "short": "A spooled rod and reel, small hooks, split shot, a bobber, bait, pliers, and a license if you need one.",
 "body": "That means a spincast or spinning outfit already spooled with 6 to 10 lb mono, a pack of No. 6 to 8 hooks, a few split shot, two or three bobbers and a tub of nightcrawlers. Add needle-nose pliers, a small tackle box, and a life jacket if you'll be on or near deep water. Lures, a net and a second rod can wait until you know what you like to fish for.",
 "short_zh": "上好线的竿和轮、小钩、咬铅、浮漂、饵、钳子，需要的话还有钓鱼证。",
-"body_zh": "也就是一套已经上好 6 到 10 磅尼龙线的卡式轮或纺车轮钓具，一包 6 到 8 号钩，几粒咬铅，两三个浮漂和一盒蚯蚓。再加尖嘴钳、一个小渔具盒；如果要在深水上或靠近深水，还要有救生衣。拟饵、抄网和第二根竿，等你知道自己喜欢钓什么再买。",
+"body_zh": "也就是一套已经上好 6 到 10 磅尼龙线的封闭轮或纺车轮钓具，一包 6 到 8 号钩，几粒咬铅，两三个浮漂和一盒蚯蚓。再加尖嘴钳、一个小渔具盒；如果要在深水上或靠近深水，还要有救生衣。拟饵、抄网和第二根竿，等你知道自己喜欢钓什么再买。",
 "basis": "guide",
 "source_ids": [
 "tpwd-beginners",
@@ -2226,7 +2226,7 @@
 "short": "Buy a combo for your first setup.",
 "body": "It's cheaper, the rod and reel are already matched, and many come with line on the reel, so you can fish the same day. Look for a spinning or spincast combo with a medium-light rod of about 5½ to 6½ feet, suited to 4 to 12 lb line. If the factory line comes off in coils, replace it. Buy the rod and reel separately once you know what you like to fish for and can name what you want to improve, such as a lighter rod or a smoother drag.",
 "short_zh": "第一套建议买竿轮套装。",
-"body_zh": "它更便宜，竿和轮已经配好，很多还带着线，当天就能去钓。选纺车轮或卡式轮套装，竿选中轻硬度，长度约 5½ 到 6½ 英尺，适合 4 到 12 磅的线。如果原厂线放出来一圈圈卷着，就换新线。等你知道自己喜欢钓什么，也说得出想改进什么，比如更轻的竿或更顺滑的卸力，再分开买。",
+"body_zh": "它更便宜，竿和轮已经配好，很多还带着线，当天就能去钓。选纺车轮或封闭轮套装，竿选中轻硬度，长度约 5½ 到 6½ 英尺，适合 4 到 12 磅的线。如果原厂线放出来一圈圈卷着，就换新线。等你知道自己喜欢钓什么，也说得出想改进什么，比如更轻的竿或更顺滑的卸力，再分开买。",
 "basis": "guide",
 "source_ids": [
 "meateater-rods",
@@ -2249,7 +2249,7 @@
 "short": "A 6 to 7 foot medium-light or medium spinning rod with a 2500 or 3000 reel.",
 "body": "Load it with 6 to 10 lb mono. It handles bait under a bobber, small jigs, spinners and light crankbaits, and it can land panfish, bass, trout and walleye. If you are setting up for a child, a spincast combo is simpler.",
 "short_zh": "6 到 7 英尺的中轻或中等硬度直柄竿，配 2500 或 3000 号轮。",
-"body_zh": "上 6 到 10 磅尼龙线。它能用浮漂钓天然饵，也能用小铅头钩、旋转亮片和轻型 crankbait，小型淡水鱼、鲈鱼、鳟鱼和大眼鲈都能应付。给孩子配的话，卡式轮套装更简单。",
+"body_zh": "上 6 到 10 磅尼龙线。它能用浮漂钓天然饵，也能用小铅头钩、旋转亮片和轻型 crankbait，小型淡水鱼、鲈鱼、鳟鱼和大眼鲈都能应付。给孩子配的话，封闭轮套装更简单。",
 "basis": "guide",
 "source_ids": [
 "tmf-reels",
@@ -2286,8 +2286,8 @@
 "question_zh": "第一套钓具一定要选纺车轮吗？",
 "short": "No. A spincast reel can be a better first choice for children and casual bait fishing.",
 "body": "A spinning setup is the most versatile and the natural first choice for adults who plan to stick with it. A spincast reel is simpler and avoids tangles at the start. A cane pole is simplest of all: no casting, no reeling, and it catches panfish well along a bank. A baitcaster is not the reel to learn to cast on. Connecticut's fishing course goes further and recommends spincast for any beginner, while noting that spinning gear is the better tool once you've practiced.",
-"short_zh": "不一定。对孩子和偶尔钓天然饵的人来说，卡式轮可能更好。",
-"body_zh": "纺车轮最通用，打算长期钓鱼的成年人，自然可以先选它。卡式轮更简单，一开始不容易缠线。手竿最简单：不用抛投也不用摇轮，沿岸钓小型淡水鱼很好用。水滴轮不适合用来学抛投。康涅狄格的钓鱼课程更进一步，建议所有初学者都从卡式轮开始，同时也说练熟之后纺车轮更好用。",
+"short_zh": "不一定。对孩子和偶尔钓天然饵的人来说，封闭轮可能更好。",
+"body_zh": "纺车轮最通用，打算长期钓鱼的成年人，自然可以先选它。封闭轮更简单，一开始不容易缠线。手竿最简单：不用抛投也不用摇轮，沿岸钓小型淡水鱼很好用。水滴轮不适合用来学抛投。康涅狄格的钓鱼课程更进一步，建议所有初学者都从封闭轮开始，同时也说练熟之后纺车轮更好用。",
 "basis": "official",
 "source_ids": [
 "qa-pdf-ct",
@@ -2304,7 +2304,7 @@
 "question_zh": "低于 50 美元的完整入门配置可以包括什么？",
 "short": "A spincast or basic spinning combo, hooks, sinkers, bobbers and bait.",
 "body": "A simple combo usually costs about $25 to $40 and comes with line. Add a pack of hooks, split shot, bobbers, a pair of pliers and a tub of worms, which keeps you under $50. Look for hooks in sizes 6 to 10 and line of 4 to 8 lb, the range beginner guides from federal and state agencies suggest. That kit is enough to catch panfish, small bass and stocked trout. License costs are separate in most states. Prices vary, so choose function over features at this level. A casting plug costs little and lets you practice at home. Discount and hardware stores often sell all of this.",
-"short_zh": "一套卡式轮或基础纺车轮套装，加上钩、铅坠、浮漂和饵。",
+"short_zh": "一套封闭轮或基础纺车轮套装，加上钩、铅坠、浮漂和饵。",
 "body_zh": "简单的套装一般 25 到 40 美元，带线。再买一包钩、咬铅、浮漂、一把钳子和一盒蚯蚓，总共可以控制在 50 美元以内。钩子选 6 到 10 号，线选 4 到 8 磅，这是联邦和州机构入门指南建议的范围。这已经够钓小型淡水鱼、小鲈鱼和放流鳟了。多数州的钓鱼证要另外花钱。价格会变，这个价位以实用为主。练习塞很便宜，可以在家练抛投。折扣店和五金店通常也卖这些。",
 "basis": "official",
 "source_ids": [
@@ -2391,7 +2391,7 @@
 "short": "A 7 to 9 foot spinning rod, a 3000 to 5000 saltwater reel and 10 to 20 lb line.",
 "body": "A simple bottom rig or a jig is enough at first, and shrimp or cut bait is an easy start. Around oyster beds and pilings, begin with a float about 2 feet above the hook in water under 10 feet, or a sliding ½-ounce egg sinker on a 2-foot leader. A sand spike, pliers, a knife and a bucket are useful. Rinse your gear gently with fresh water after each trip. Find out the saltwater license requirements and size limits where you plan to fish. On open beaches a rod of 8 to 12 feet reaches past the breakers, but the deeper troughs right off the sand often fish best, and lighter gear works there.",
 "short_zh": "7 到 9 英尺的直柄竿、3000 到 5000 号海水轮和 10 到 20 磅线。",
-"body_zh": "一开始用简单的底钓组或铅头钩就够了，虾或切块饵最容易上手。在牡蛎礁和桥桩附近，水深不到 10 英尺时先用浮漂，钩子放在浮漂下约 2 英尺；或者用 ½ 盎司的游动橄榄铅，配 2 英尺前导。沙地插竿器、钳子、小刀和水桶都很有用。每次钓完用淡水轻轻冲洗装备。出发前了解当地对海水钓鱼证和尺寸的规定。开阔海滩上，8 到 12 英尺的竿能抛过碎浪区，但紧贴沙滩的深水沟往往更好钓，那里用轻一点的装备就行。",
+"body_zh": "一开始用简单的底钓组或铅头钩就够了，虾或切块饵最容易上手。在牡蛎礁和桥桩附近，水深不到 10 英尺时先用浮漂，钩子放在浮漂下约 2 英尺；或者用 ½ 盎司的游动橄榄铅，配 2 英尺前导线。沙地插竿器、钳子、小刀和水桶都很有用。每次钓完用淡水轻轻冲洗装备。出发前了解当地对海水钓鱼证和尺寸的规定。开阔海滩上，8 到 12 英尺的竿能抛过碎浪区，但紧贴沙滩的深水沟往往更好钓，那里用轻一点的装备就行。",
 "basis": "general",
 "source_ids": [
 "qa-pdf-sc-salt",
@@ -2735,7 +2735,7 @@
 "short": "A pier rod is usually shorter, because you don't need to cast as far.",
 "body": "A rod of 7 to 9 feet is plenty, and fish are often right below you. Use a heavier leader where pilings or barnacles can rub the line. Bottom rigs and light jigs work well. The pilings hold fish themselves, so try close to them before casting far out, and a drop rig fished straight down suits this. Bring a drop net for lifting fish from a height, since line often breaks when you lift over a rail. Some piers limit the number of rods and restrict casting, so read the posted rules.",
 "short_zh": "栈桥竿通常短一些，因为不用抛那么远。",
-"body_zh": "7 到 9 英尺就够了，鱼常常就在脚下。桥桩或藤壶可能磨线的地方，要用粗一点的前导。底钓组和轻型铅头钩都好用。桥桩本身就聚鱼，可以先贴着桥桩钓，再往远处抛，从栈桥垂直放下的串钩钓组很合适。带一个吊网，从高处把鱼提上来，直接越过栏杆提鱼常常会断线。看看栈桥的规定，有些限制竿数，也限制抛投。",
+"body_zh": "7 到 9 英尺就够了，鱼常常就在脚下。桥桩或藤壶可能磨线的地方，要用粗一点的前导线。底钓组和轻型铅头钩都好用。桥桩本身就聚鱼，可以先贴着桥桩钓，再往远处抛，从栈桥垂直放下的串钩钓组很合适。带一个吊网，从高处把鱼提上来，直接越过栏杆提鱼常常会断线。看看栈桥的规定，有些限制竿数，也限制抛投。",
 "basis": "guide",
 "source_ids": [
 "qa-pdf-sc-salt",
@@ -2752,7 +2752,7 @@
 "short": "Use a drop net made for piers, and ask for help.",
 "body": "A pier net is a hoop net on a rope, lowered to the surface so the fish can be led into it. Don't lift by the line, which can break under the weight of a fish out of water. Walk the fish to a low spot or to shore if you can. If a fish is going back, a net is gentler than a gaff. Gaffs aren't allowed everywhere, and you should never use one on a protected or undersized fish.",
 "short_zh": "用栈桥专用的吊网，并请人帮忙。",
-"body_zh": "吊网是系在绳子上的圆环网，放到水面，把鱼引进去。不要靠线提鱼，鱼离水后重量全在线上，容易断。能走到低一点的地方或岸边更好。要放流的鱼，用网比用手钩（gaff）温和。手钩不是到处都允许用，受保护或尺寸不足的鱼绝不能用。",
+"body_zh": "吊网是系在绳子上的圆环网，放到水面，把鱼引进去。不要靠线提鱼，鱼离水后重量全在线上，容易断。能走到低一点的地方或岸边更好。要放生的鱼，用网比用手钩（gaff）温和。手钩不是到处都允许用，受保护或尺寸不足的鱼绝不能用。",
 "basis": "general",
 "source_ids": []
 },
@@ -2836,7 +2836,7 @@
 "short": "Soft plastics, jig heads, braid and medium spinning rods all transfer well.",
 "body": "Paddle tails and shrimp-shaped plastics on 1/4 to 1/2 ounce jig heads catch redfish and speckled trout. Bring a fluorocarbon leader of 15 to 20 lb. Rinse everything with fresh water afterward, because freshwater hooks and reels corrode quickly in salt, and don't put salty lures back in your main box.",
 "short_zh": "软饵、铅头钩、编织线和中等硬度的直柄竿都能直接用。",
-"body_zh": "1/4 到 1/2 盎司铅头钩配桨尾或虾形软饵，可以钓红拟石首鱼和斑点海鳟。带上 15 到 20 磅的碳线前导。钓完要用淡水把所有东西冲洗一遍，淡水钩和轮在海水里腐蚀很快，带盐的饵也不要放回主渔具盒。",
+"body_zh": "1/4 到 1/2 盎司铅头钩配桨尾或虾形软饵，可以钓红拟石首鱼和斑点海鳟。带上 15 到 20 磅的碳线前导线。钓完要用淡水把所有东西冲洗一遍，淡水钩和轮在海水里腐蚀很快，带盐的饵也不要放回主渔具盒。",
 "basis": "maker",
 "source_ids": [
 "qa-tpwd-gear",
@@ -2898,7 +2898,7 @@
 "short": "Yes. One medium-light spinning setup can cover both, within limits.",
 "body": "A 6 to 7 foot medium-light rod with a 2500 reel and 6 to 8 lb line handles stocked trout and small bass. For big bass around heavy cover you'll want heavier gear, and for wary stream trout, lighter. Change the line or add a leader to adapt. It will do well with fish of typical size and less well at the extremes.",
 "short_zh": "可以。一套中轻硬度的直柄配置，在一定范围内能兼顾。",
-"body_zh": "6 到 7 英尺的中轻硬度竿，配 2500 号轮和 6 到 8 磅线，可以钓放流鳟和小鲈鱼。重障碍区的大鲈鱼要更重的装备，警觉的溪流鳟鱼要更轻的。可以换线或加前导来调整。对常见大小的鱼表现不错，到了两头就差一些。",
+"body_zh": "6 到 7 英尺的中轻硬度竿，配 2500 号轮和 6 到 8 磅线，可以钓放流鳟和小鲈鱼。重障碍区的大鲈鱼要更重的装备，警觉的溪流鳟鱼要更轻的。可以换线或加前导线来调整。对常见大小的鱼表现不错，到了两头就差一些。",
 "basis": "guide",
 "source_ids": [
 "tpwd-trout-tips",
@@ -2914,8 +2914,8 @@
 "question_zh": "钓白斑狗鱼的配置，要比钓鲈鱼重多少？",
 "short": "About one step heavier, plus a bite-proof leader.",
 "body": "A 7-foot rod of moderate to medium-heavy power with braid of at least 15 lb handles most pike. The leader is the main difference from a bass setup. Larger lures need a heavier rod. Bring long pliers and a net, because lifting a big pike by the line can break the rod tip.",
-"short_zh": "大约重一个档位，再加防咬前导。",
-"body_zh": "约 7 英尺、中等到中硬的竿，配至少 15 磅编织线，能应付多数白斑狗鱼。和钓鲈鱼最大的区别是前导。饵大就要用更硬的竿。带上长柄钳和抄网，靠线提大鱼可能把竿尖拉断。",
+"short_zh": "大约重一个档位，再加防咬前导线。",
+"body_zh": "约 7 英尺、中等到中硬的竿，配至少 15 磅编织线，能应付多数白斑狗鱼。和钓鲈鱼最大的区别是前导线。饵大就要用更硬的竿。带上长柄钳和抄网，靠线提大鱼可能把竿尖拉断。",
 "basis": "guide",
 "source_ids": [
 "mndnr-pike",
@@ -2930,7 +2930,7 @@
 "short": "A sliding sinker bottom rig with a circle or bait hook.",
 "body": "In ponds, use a spincast or spinning combo, 8 lb line or heavier, a 1/4 to 1/2 ounce egg sinker, a swivel, an 18-inch leader and a No. 4 or 6 hook with worms or liver. For bigger fish, use 15 to 20 lb line, a 1 ounce sinker, a 2-foot leader and a 4/0 to 6/0 hook. Use only enough weight to hold bottom, and move if you get no bite in 15 minutes.",
 "short_zh": "游动铅底钓组，配圆形钩或饵钩。",
-"body_zh": "池塘里用卡式轮或纺车轮套装、8 磅或更粗的线、1/4 到 1/2 盎司橄榄铅、转环、18 英寸前导和 4 号或 6 号钩，挂蚯蚓或鸡肝。钓大一些的鱼，用 15 到 20 磅线、1 盎司铅、2 英尺前导和 4/0 到 6/0 的钩。铅的重量够稳住水底就行，15 分钟没有咬口就换地方。",
+"body_zh": "池塘里用封闭轮或纺车轮套装、8 磅或更粗的线、1/4 到 1/2 盎司橄榄铅、转环、18 英寸前导线和 4 号或 6 号钩，挂蚯蚓或鸡肝。钓大一些的鱼，用 15 到 20 磅线、1 盎司铅、2 英尺前导线和 4/0 到 6/0 的钩。铅的重量够稳住水底就行，15 分钟没有咬口就换地方。",
 "basis": "guide",
 "source_ids": [
 "mn-ccf",
@@ -2960,7 +2960,7 @@
 "short": "A 7-foot medium or medium-light spinning rod, a 3000 reel and 10 to 15 lb braid.",
 "body": "Add a 15 to 20 lb fluorocarbon leader of 2 to 3 feet. Soft plastics on 1/4 to 1/2 ounce jig heads, live shrimp under a float and small topwater plugs all work, and a float rig does best in water under about 10 feet. Use a heavier leader near oysters and mangroves. Rinse your gear with fresh water, and check current size and bag rules for your state.",
 "short_zh": "7 英尺的中等或中轻硬度直柄竿、3000 号轮和 10 到 15 磅编织线。",
-"body_zh": "再加一段 2 到 3 英尺、15 到 20 磅的碳线前导。1/4 到 1/2 盎司铅头钩配软饵、浮漂钓活虾、小型水面硬饵都有效，浮漂钓组在水深约 10 英尺以内效果最好。靠近牡蛎和红树林时要用更粗的前导。钓完用淡水冲洗装备，尺寸和限额以本州当前的规定为准。",
+"body_zh": "再加一段 2 到 3 英尺、15 到 20 磅的碳线前导线。1/4 到 1/2 盎司铅头钩配软饵、浮漂钓活虾、小型水面硬饵都有效，浮漂钓组在水深约 10 英尺以内效果最好。靠近牡蛎和红树林时要用更粗的前导线。钓完用淡水冲洗装备，尺寸和限额以本州当前的规定为准。",
 "basis": "general",
 "source_ids": [
 "qa-pdf-sc-salt"
@@ -2992,7 +2992,7 @@
 "short": "A 6½ to 7 foot medium spinning rod, a 2500 or 3000 reel and 8 to 10 lb line.",
 "body": "It handles bass, walleye, catfish of moderate size and larger trout, with bait or lures. Change the leader or hooks rather than the rod. Small fish can still be caught on small hooks. For bigger pike or catfish, add a heavier second outfit.",
 "short_zh": "6½ 到 7 英尺的中等硬度直柄竿、2500 或 3000 号轮和 8 到 10 磅线。",
-"body_zh": "用天然饵或拟饵，都能钓鲈鱼、大眼鲈、中等大小的鲶鱼和较大的鳟鱼。要调整时换前导或钩，不用换竿。用小钩照样能钓小鱼。钓更大的白斑狗鱼或鲶鱼，再加一套更重的配置。",
+"body_zh": "用天然饵或拟饵，都能钓鲈鱼、大眼鲈、中等大小的鲶鱼和较大的鳟鱼。要调整时换前导线或钩，不用换竿。用小钩照样能钓小鱼。钓更大的白斑狗鱼或鲶鱼，再加一套更重的配置。",
 "basis": "general",
 "source_ids": []
 },
@@ -3042,8 +3042,8 @@
 "question_zh": "什么情况下圆形钩比 J 型钩更好？提竿方式需要怎样改变？",
 "short": "Circle hooks are better when fishing bait and releasing fish. Don't jerk to set them.",
 "body": "A circle hook slides to the corner of the mouth and is rarely swallowed, which makes it useful for catfish and for fish you'll release. J hooks are better with lures and when you want to set the hook quickly. To set a circle hook, reel steadily or pull slowly, because a sharp jerk pulls it out of the fish's mouth. If the rod is in a holder, let it bend over before you lift it out.",
-"short_zh": "钓天然饵并打算放流时，圆形钩更好。提竿时不要猛拉。",
-"body_zh": "圆形钩会滑到嘴角，很少被吞下，适合钓鲶鱼和要放流的鱼。用拟饵，或者想快速提竿时，J 型钩更好。圆形钩要匀速收线或慢慢拉紧，猛地一提会把钩从鱼嘴里扯出来。如果钓竿插在竿架上，等竿子弯下去再拿起来。",
+"short_zh": "钓天然饵并打算放生时，圆形钩更好。提竿时不要猛拉。",
+"body_zh": "圆形钩会滑到嘴角，很少被吞下，适合钓鲶鱼和要放生的鱼。用拟饵，或者想快速提竿时，J 型钩更好。圆形钩要匀速收线或慢慢拉紧，猛地一提会把钩从鱼嘴里扯出来。如果钓竿插在竿架上，等竿子弯下去再拿起来。",
 "basis": "official",
 "source_ids": [
 "qa-pdf-sc-salt",
@@ -3072,7 +3072,7 @@
 "short": "It can, mainly because of the change in weight and drag.",
 "body": "A single hook is usually lighter and has less drag, so a suspending jerkbait may float and a crankbait may run a bit differently. Choose an inline single whose gap is about as wide as the distance between two points of the treble, and weigh both if you can. Test it in clear water, and if needed add a small adhesive lead strip or go up one hook size. Some lure makers publish treble-to-single replacement charts. Single hooks can reduce snags and make release easier, and some waters require them.",
 "short_zh": "可能会，主要是重量和阻力变了。",
-"body_zh": "单钩通常更轻、阻力更小，悬停型 jerkbait 可能变成上浮，crankbait 的游动也可能有点变化。选直排单钩时，钩门宽度要和三本钩两个钩尖之间的距离差不多，有条件就称一下前后的重量。在清水里试一下，必要时贴一小片铅皮，或者把钩换大一号。有些拟饵厂商提供三本钩换单钩的对照表。单钩还能减少挂底，放流也更方便，有些水域也要求用单钩。",
+"body_zh": "单钩通常更轻、阻力更小，悬停型 jerkbait 可能变成上浮，crankbait 的游动也可能有点变化。选直排单钩时，钩门宽度要和三本钩两个钩尖之间的距离差不多，有条件就称一下前后的重量。在清水里试一下，必要时贴一小片铅皮，或者把钩换大一号。有些拟饵厂商提供三本钩换单钩的对照表。单钩还能减少挂底，放生也更方便，有些水域也要求用单钩。",
 "basis": "general",
 "source_ids": []
 },
@@ -3203,7 +3203,7 @@
 "short": "Anchor it on a light hair rig, or use a float near the surface.",
 "body": "Floating baits drift with wind and current. Close in, a hook on plain line is enough: dip the bread in water for a moment to add casting weight. Farther out, use a controller float or a floating casting weight with a fluorocarbon leader. Bread with some crust holds on the hook longer, and it needs replacing every few minutes. On the bottom, a buoyant kernel on a hair with a small weight a few inches below it keeps the bait above the mud. Feed a few handfuls to attract carp, and check whether chumming or surface bread is allowed where you fish.",
 "short_zh": "用轻型头发钓组固定，或者用靠近水面的浮漂。",
-"body_zh": "漂浮的饵会随风和水流移动。距离近时，线上直接绑一个钩就够了，把面包在水里蘸一下，增加抛投重量。距离远时，用控制浮漂或能浮的抛投配重，配碳线前导。带一点面包皮的部分挂得更牢，隔几分钟要换一次。在水底，把会浮的玉米粒挂在头发线上，下方几英寸放一个小铅，饵就能悬在淤泥之上。撒几把饵吸引鲤鱼，也要确认当地允许打窝和用水面面包。",
+"body_zh": "漂浮的饵会随风和水流移动。距离近时，线上直接绑一个钩就够了，把面包在水里蘸一下，增加抛投重量。距离远时，用控制浮漂或能浮的抛投配重，配碳线前导线。带一点面包皮的部分挂得更牢，隔几分钟要换一次。在水底，把会浮的玉米粒挂在头发线上，下方几英寸放一个小铅，饵就能悬在淤泥之上。撒几把饵吸引鲤鱼，也要确认当地允许打窝和用水面面包。",
 "basis": "general",
 "source_ids": [
 "tamu-baits",
@@ -3222,7 +3222,7 @@
 "short": "It can be useful for fishing deeper or in wind, as on a Carolina rig.",
 "body": "On a Texas rig, a sliding bullet weight gets the lure down and lets the plastic move independently, while a pegged weight helps in heavy cover. On a Carolina rig, a sinker above a swivel and leader lets the bait drift free behind it. For shallow bites you don't need one, since an unweighted plastic falls more naturally.",
 "short_zh": "水深或有风时有用，比如卡罗来纳钓组。",
-"body_zh": "德州钓组用可滑动的子弹铅，能让饵沉下去，软饵也能独立摆动；在重障碍区，把铅固定住更好。卡罗来纳钓组把铅放在转环和前导的上方，饵可以在后面自由漂动。浅水区不需要加铅，无铅的软饵下落更自然。",
+"body_zh": "德州钓组用可滑动的子弹铅，能让饵沉下去，软饵也能独立摆动；在重障碍区，把铅固定住更好。卡罗来纳钓组把铅放在转环和前导线的上方，饵可以在后面自由漂动。浅水区不需要加铅，无铅的软饵下落更自然。",
 "basis": "guide",
 "source_ids": [
 "tmf-weights",
@@ -3647,7 +3647,7 @@
 "short": "Yes for sun, cold or toothy fish. Fingerless gloves let you tie knots.",
 "body": "Sun gloves protect the back of the hand during long days. Fingerless or flip-top gloves let you tie knots and feel the line. Neoprene gloves help in cold water, and cut-resistant gloves are useful with toothy fish or when filleting. Wet any glove before handling a fish you plan to release, so you don't strip its slime.",
 "short_zh": "防晒、防寒或处理利齿鱼时值得戴。露指手套还能打结。",
-"body_zh": "防晒手套能在长时间钓鱼时保护手背。露指或可翻盖的手套能打结，也能感觉线。氯丁橡胶手套适合冷水，防割手套适合处理利齿鱼或片鱼。接触要放流的鱼之前，手套要先打湿，以免蹭掉鱼身上的黏液。",
+"body_zh": "防晒手套能在长时间钓鱼时保护手背。露指或可翻盖的手套能打结，也能感觉线。氯丁橡胶手套适合冷水，防割手套适合处理利齿鱼或片鱼。接触要放生的鱼之前，手套要先打湿，以免蹭掉鱼身上的黏液。",
 "basis": "guide",
 "source_ids": [
 "tpwd-cr"
@@ -3669,11 +3669,11 @@
 "id": "qa-gear-accessories-2",
 "category": "accessories",
 "question": "Which landing net material is gentlest on fish that will be released?",
-"question_zh": "对要放流的鱼，哪种材质的抄网最温和？",
+"question_zh": "对要放生的鱼，哪种材质的抄网最温和？",
 "short": "Soft rubber or coated mesh, without knots.",
 "body": "A shallow net of fine mesh is easiest on a fish you'll release, and rubber is gentler still. Knotless mesh protects the slime, and Washington's selective gear rules allow only knotless nets to land fish. Avoid coarse nylon, which can damage fins and eyes. Keep the net wet. Hooks also tangle less in rubber.",
 "short_zh": "软橡胶或涂胶的无结网。",
-"body_zh": "细网眼的浅抄网对放流的鱼最温和，橡胶网更好。无结网能保护鱼身上的黏液，华盛顿州的选择性钓具规则也只允许用无结网。不要用粗糙的尼龙网，可能伤到鱼鳍和鱼眼。网要保持湿润。橡胶网也不容易挂钩。",
+"body_zh": "细网眼的浅抄网对放生的鱼最温和，橡胶网更好。无结网能保护鱼身上的黏液，华盛顿州的选择性钓具规则也只允许用无结网。不要用粗糙的尼龙网，可能伤到鱼鳍和鱼眼。网要保持湿润。橡胶网也不容易挂钩。",
 "basis": "guide",
 "source_ids": [
 "qa-wac",
@@ -3993,8 +3993,8 @@
 "question_zh": "年龄很小的孩子，用多长的竿、什么轮最合适？",
 "short": "A short rod, under about 5 feet, with a push-button reel.",
 "body": "The easiest setup for a child is a push-button (spincast) reel on a short rod with a hook, a split shot and a bobber. The closed reel keeps tangles to a minimum, and a child can see the bobber go down. Cane poles work for the youngest children. Choose a rod the child can actually hold, because toy-style rods can be hard to use.",
-"short_zh": "5 英尺以内的短竿，配按钮式卡式轮。",
-"body_zh": "给孩子最简单的配置，是短竿配卡式轮，再加钩、咬铅和浮漂。封闭的轮很少缠线，孩子也能看到浮漂下沉。年龄最小的孩子可以用手竿。选一根孩子真正拿得住的竿，玩具款的竿可能反而不好用。",
+"short_zh": "5 英尺以内的短竿，配按钮式封闭轮。",
+"body_zh": "给孩子最简单的配置，是短竿配封闭轮，再加钩、咬铅和浮漂。封闭的轮很少缠线，孩子也能看到浮漂下沉。年龄最小的孩子可以用手竿。选一根孩子真正拿得住的竿，玩具款的竿可能反而不好用。",
 "basis": "guide",
 "source_ids": [
 "nydec-kids",
@@ -4038,7 +4038,7 @@
 "short": "Most spinning reels have a handle that can be switched to the other side.",
 "body": "Spinning reels usually let you unscrew the handle and move it. Many push-button reels are also made for either hand or have a reversible handle, so check the packaging. Let the child try reeling with either hand, because a left-handed child may prefer to hold the rod in the left hand and reel with the right, or the other way round.",
 "short_zh": "多数纺车轮的手把都可以换到另一边。",
-"body_zh": "纺车轮通常可以拧下手把换边。很多卡式轮也能左右手通用，或者手把可以换向，看包装说明就行。让孩子两只手都试试，左撇子孩子可能喜欢左手握竿、右手摇轮，也可能正好相反。",
+"body_zh": "纺车轮通常可以拧下手把换边。很多封闭轮也能左右手通用，或者手把可以换向，看包装说明就行。让孩子两只手都试试，左撇子孩子可能喜欢左手握竿、右手摇轮，也可能正好相反。",
 "basis": "general",
 "source_ids": []
 },
@@ -4383,7 +4383,7 @@
 "short": "Yes, with a saltwater-rated reel and some extra care.",
 "body": "A 7-foot medium spinning rod and a 3000 or 4000 reel the maker rates for salt works well in both. Rinse your gear with fresh water after salt trips, and use corrosion-resistant hooks in salt. Clean, drain and dry your gear between different waters. For heavy surf or very large fish you'll need dedicated gear.",
 "short_zh": "可以，但轮要能用于海水，也要多花点心思保养。",
-"body_zh": "7 英尺的中等硬度直柄竿，配厂家标明可用于海水的 3000 或 4000 号轮，在两种水域都好用。钓完海水用淡水冲洗，海水里用耐腐蚀的钩。换水域时要清洁、排水、晾干。遇到大浪或很大的鱼，就要用专门的装备了。",
+"body_zh": "7 英尺的中等硬度直柄竿，配厂家标明可用于海水的 3000 或 4000 号轮，在两种水域都好用。钓完海水用淡水冲洗，海水里用耐腐蚀的钩。换水域时要清洗、排水、晾干。遇到大浪或很大的鱼，就要用专门的装备了。",
 "basis": "guide",
 "source_ids": [
 "tpwd-gear-care",
@@ -4509,7 +4509,7 @@
 "short": "Small taps usually mean a fish is mouthing the bait or a small fish is pecking at it. The hook may not be in its mouth yet.",
 "body": "Reel up any slack so the line is just tight. Then wait for a steadier pull or for the bobber to go under before setting the hook. Don't wait long once it pulls, because a fish that swallows the bait is hard to release. With a lure, treat a tap or sudden slack as a bite and set right away, since a fish spits out plastic quickly. If the taps continue and the bait keeps disappearing, the hook is probably too big for those fish: go down a size, use less bait and thread it on. With a circle hook, don't jerk. Reel steadily until you feel weight.",
 "short_zh": "轻微的点动通常是鱼在试探饵，或者小鱼在啄饵，钩不一定已经进嘴。",
-"body_zh": "先收掉松线，让线刚好绷直。等出现更持续的拉力，或者浮漂沉下去，再提竿；但出现拉力后不要等太久，鱼把饵吞深了就很难放流。用拟饵时，轻点或线突然变松都要当作咬钩，马上提竿，因为鱼吐掉软饵很快。如果点动不断、饵却总是没了，很可能是钩对这些鱼来说太大，换小一号，少挂点饵，把饵穿牢。用圆形钩时不要猛提，匀速收线，感觉到重量就行。",
+"body_zh": "先收掉松线，让线刚好绷直。等出现更持续的拉力，或者浮漂沉下去，再提竿；但出现拉力后不要等太久，鱼把饵吞深了就很难放生。用拟饵时，轻点或线突然变松都要当作咬钩，马上提竿，因为鱼吐掉软饵很快。如果点动不断、饵却总是没了，很可能是钩对这些鱼来说太大，换小一号，少挂点饵，把饵穿牢。用圆形钩时不要猛提，匀速收线，感觉到重量就行。",
 "basis": "guide",
 "source_ids": [
 "mdc-tips",
@@ -4534,7 +4534,7 @@
 "short": "Usually only a moment, once the bobber goes under or the fish starts to pull.",
 "body": "When the bobber goes under, a fish has the bait: reel up the slack and set the hook. Given time, a fish swallows the bait, which is hard on one you mean to release. There are exceptions. With a walleye on a slip-sinker rig, let line run for several seconds, reel until tight, then set. With a circle hook, don't jerk at all.",
 "short_zh": "通常只要等一下，浮漂沉下去或鱼开始拉线就可以提竿。",
-"body_zh": "浮漂沉下去，就说明鱼已经吃了饵：收掉松线，提竿。等太久，鱼会把饵吞下去，不利于放流。也有例外。用游动铅钓组钓大眼鲈时，要让线跑几秒钟，收紧后再提竿。用圆形钩时，完全不要猛提。",
+"body_zh": "浮漂沉下去，就说明鱼已经吃了饵：收掉松线，提竿。等太久，鱼会把饵吞下去，不利于放生。也有例外。用游动铅钓组钓大眼鲈时，要让线跑几秒钟，收紧后再提竿。用圆形钩时，完全不要猛提。",
 "basis": "guide",
 "source_ids": [
 "mdc-tips",
@@ -4971,7 +4971,7 @@
 "short": "It can be cast, but it works best moving slowly.",
 "body": "A crawler harness has blades and hooks on a leader, with a sinker ahead of it. You can cast it and reel slowly enough to keep the blade turning. Trolling or drifting keeps it at a steady speed and depth, so it is more effective from a boat. From shore, retrieve it slowly along the bottom and pause often.",
 "short_zh": "可以抛投，但慢速移动时效果最好。",
-"body_zh": "蚯蚓串钩是在前导上装叶片和钩，前面加铅坠。可以抛出去，慢慢收线，让叶片转起来。拖钓或漂钓能保持稳定的速度和水深，所以在船上更有效。岸钓时，贴着水底慢慢收，多停顿。",
+"body_zh": "蚯蚓串钩是在前导线上装叶片和钩，前面加铅坠。可以抛出去，慢慢收线，让叶片转起来。拖钓或漂钓能保持稳定的速度和水深，所以在船上更有效。岸钓时，贴着水底慢慢收，多停顿。",
 "basis": "general",
 "source_ids": []
 },
@@ -4983,7 +4983,7 @@
 "short": "Use a small swivel ahead of the spinner.",
 "body": "A ball-bearing swivel about a foot above the lure reduces twist, and an off-center keel weight between the line and the leader does the same job. Keep the retrieve steady, check that the blade spins freely and replace a bent shaft. If the line starts curling, remove the lure and let the line trail in current or out across a lawn, then wind it on under tension.",
 "short_zh": "在旋转亮片前面加一个小转环。",
-"body_zh": "在饵上方约一英尺处加一个滚珠转环，可以减少线扭，在主线和前导之间加一个偏心防绕铅也有同样的效果。收线要匀速，确认叶片转动灵活，轴弯了要更换。线开始卷曲时，取下饵，让线在水流中拖一下，或者拉开铺在草地上，再带着张力收回去。",
+"body_zh": "在饵上方约一英尺处加一个滚珠转环，可以减少线扭，在主线和前导线之间加一个偏心防绕铅也有同样的效果。收线要匀速，确认叶片转动灵活，轴弯了要更换。线开始卷曲时，取下饵，让线在水流中拖一下，或者拉开铺在草地上，再带着张力收回去。",
 "basis": "official",
 "source_ids": [
 "qa-pdf-de-st",
@@ -5187,7 +5187,7 @@
 "short": "Yes. It is one of the best techniques for spinning gear.",
 "body": "A light, unweighted worm casts best on a medium or medium-light spinning rod with 8 to 10 lb fluorocarbon, or braid with a leader. Let it sink on slack line and watch the line, because a bite can show as a tap there before you feel it.",
 "short_zh": "能。这是最适合纺车轮的钓法之一。",
-"body_zh": "轻而不加铅的软虫，用中等或中轻硬度的直柄竿最好抛，配 8 到 10 磅碳线，或编织线加前导。让它带着松线下沉，并盯住线，咬口可能先在线上表现为一下轻点，手上还没感觉。",
+"body_zh": "轻而不加铅的软虫，用中等或中轻硬度的直柄竿最好抛，配 8 到 10 磅碳线，或编织线加前导线。让它带着松线下沉，并盯住线，咬口可能先在线上表现为一下轻点，手上还没感觉。",
 "basis": "guide",
 "source_ids": [
 "nydec-bass"
@@ -5330,7 +5330,7 @@
 "question_zh": "鱼把钩吞下去了，是剪断线好，还是尝试取出来好？",
 "short": "Cut the line near the mouth and let the fish go with the hook in place.",
 "body": "Digging for a deep hook does more harm than leaving it. A hook left in place may rust, dissolve or work its way out over time, although not every fish survives. Don't jerk the line to break it off. A hook in the lip is different: hold the shank with pliers or a hook remover and back it out the way it went in, ideally with the fish still in the water. To reduce deep hooking, set the hook soon after the bite. If the fish is legal to keep and you want it, keeping it is also a reasonable choice.",
-"short_zh": "尽量贴近鱼嘴剪断线，把钩留在鱼身上放流。",
+"short_zh": "尽量贴近鱼嘴剪断线，把钩留在鱼身上放生。",
 "body_zh": "硬抠深钩造成的伤害，比把钩留下更大。留在鱼体内的钩子可能会生锈、分解或自行脱落，不过并不是每条鱼都能活下来。不要猛拽线把它扯断。钩在嘴唇上就不一样了：用钳子或摘钩器夹住钩柄，按进去的方向退出来，最好让鱼留在水里操作。想减少吞钩，咬钩后要尽快提竿。如果这条鱼按规定可以留，而你也想留，留下来也是合理的选择。",
 "basis": "official",
 "source_ids": [
@@ -5406,7 +5406,7 @@
 "short": "Split shot adds weight. A swivel connects lines or stops twist.",
 "body": "Split shot pinches onto the line to sink a bait, and suits bobber rigs and light baits. A barrel swivel joins the main line to a leader, stops a sliding sinker and reduces twist with spinning lures. You can use them together.",
 "short_zh": "咬铅用来加重，转环用来连接线或防止线扭。",
-"body_zh": "咬铅夹在线上，让饵下沉，适合浮漂钓组和轻的饵。桶形转环连接主线和前导，挡住游动铅，也能减少旋转饵造成的线扭。两者可以一起用。",
+"body_zh": "咬铅夹在线上，让饵下沉，适合浮漂钓组和轻的饵。桶形转环连接主线和前导线，挡住游动铅，也能减少旋转饵造成的线扭。两者可以一起用。",
 "basis": "guide",
 "source_ids": [
 "tmf-weights",
@@ -5488,7 +5488,7 @@
 "short": "When you need a bait to hold just above the bottom in current.",
 "body": "A three-way swivel has one eye to your main line, one to a sinker on a dropper, usually 12 to 20 inches long, and one to a longer leader with a hook or lure. It is useful for drifting or trolling over deep water or rivers for walleye, salmon, catfish and striped bass, especially in strong current or over rock, where a jig can't stay down or a bottom bouncer keeps hanging up. If the sinker snags, only the dropper breaks, so use lighter line for it.",
 "short_zh": "需要让饵在水流中悬在水底上方时。",
-"body_zh": "三向转环的一端接主线，一端接脑线和铅坠，脑线通常长 12 到 20 英寸，另一端接较长的前导和钩或饵。在深水或河流中漂钓或拖钓大眼鲈、鲑鱼、鲶鱼和条纹鲈时很有用，水流急、水底多石，铅头钩沉不下去或弹跳铅老挂底时尤其合适。铅坠挂底时只断脑线，所以脑线要用细一点的。",
+"body_zh": "三向转环的一端接主线，一端接脑线和铅坠，脑线通常长 12 到 20 英寸，另一端接较长的前导线和钩或饵。在深水或河流中漂钓或拖钓大眼鲈、鲑鱼、鲶鱼和条纹鲈时很有用，水流急、水底多石，铅头钩沉不下去或弹跳铅老挂底时尤其合适。铅坠挂底时只断脑线，所以脑线要用细一点的。",
 "basis": "general",
 "source_ids": []
 },
@@ -5562,8 +5562,8 @@
 "question_zh": "在水上怎样快速重新绑前导线？",
 "short": "Use a swivel or a pre-tied leader.",
 "body": "Pre-tie several leaders at home and keep them on small spools or in a leader wallet. A small swivel at the end of the main line lets you tie on a new leader in seconds. Learn one fast line-to-line knot, such as a surgeon's knot. Cut back any damaged line first.",
-"short_zh": "用转环，或者提前绑好的前导。",
-"body_zh": "在家提前绑好几条前导，绕在小线轴上或放进前导夹里。主线末端接一个小转环，几秒钟就能换上新前导。学会一种快速的线对线结，比如外科结。先把受损的线剪掉。",
+"short_zh": "用转环，或者提前绑好的前导线。",
+"body_zh": "在家提前绑好几条前导线，绕在小线轴上或放进前导线夹里。主线末端接一个小转环，几秒钟就能换上新前导线。学会一种快速的线对线结，比如外科结。先把受损的线剪掉。",
 "basis": "guide",
 "source_ids": [
 "pfbc-knots"
@@ -5577,7 +5577,7 @@
 "short": "Usually too few wraps, or not enough force when wrapping and cinching it down.",
 "body": "The braid holds the leader by friction alone, so it needs tight, even alternating wraps, typically about 15 to 20. A hard, slick leader such as fluorocarbon needs more wraps than a softer one. Keep the braid under tension as you wrap, then wet the wraps and cinch them down hard. Bare hands often can't pull hard enough, so use a cinching tool or wrap the braid around a smooth handle. Finish with several half hitches and test it with a firm pull before fishing. If the wraps creep toward the end of the leader, add a few more. The knot also grips poorly when the leader is much thinner or weaker than the braid. In that case, or if it keeps slipping, tie a double uni or a modified Albright instead.",
 "short_zh": "通常是圈数不够，或者绕线和收紧时用力不够。",
-"body_zh": "编织线只靠摩擦力抓住前导，所以交替绕圈要紧而均匀，一般 15 到 20 圈。碳线这类又硬又滑的前导，要比软一些的前导多绕几圈。绕的时候保持编织线的张力，然后润湿线圈，用力收紧。光靠手拉常常力量不够，可以用收紧工具，或者把编织线绕在光滑的手柄上再拉。最后打几个半结收尾，下水前用力拉一下测试。如果线圈往前导末端滑，就再多绕几圈。前导比编织线细很多、弱很多时，FG 结也抓不牢。遇到这种情况，或者一直滑，就改打双 uni 结或改良 Albright 结。",
+"body_zh": "编织线只靠摩擦力抓住前导线，所以交替绕圈要紧而均匀，一般 15 到 20 圈。碳线这类又硬又滑的前导线，要比软一些的前导线多绕几圈。绕的时候保持编织线的张力，然后润湿线圈，用力收紧。光靠手拉常常力量不够，可以用收紧工具，或者把编织线绕在光滑的手柄上再拉。最后打几个半结收尾，下水前用力拉一下测试。如果线圈往前导线末端滑，就再多绕几圈。前导线比编织线细很多、弱很多时，FG 结也抓不牢。遇到这种情况，或者一直滑，就改打双 uni 结或改良 Albright 结。",
 "basis": "general",
 "source_ids": []
 },
@@ -5589,7 +5589,7 @@
 "short": "Monofilament.",
 "body": "It is cheap, easy to tie and doesn't need a leader. For most freshwater fishing, use 6 to 10 lb. Braid's thin line and special knots are harder for a beginner to manage. Try braid later, when you want more feel.",
 "short_zh": "尼龙线。",
-"body_zh": "它便宜、好打结，也不需要前导。多数淡水钓用 6 到 10 磅。编织线很细，还要用专门的结，新手不容易打理。等想要更好的手感时，再试编织线。",
+"body_zh": "它便宜、好打结，也不需要前导线。多数淡水钓用 6 到 10 磅。编织线很细，还要用专门的结，新手不容易打理。等想要更好的手感时，再试编织线。",
 "basis": "guide",
 "source_ids": [
 "fs-line",
@@ -5644,7 +5644,7 @@
 "short": "Fill it nearly to the rim. You rarely need all of it.",
 "body": "On a spinning reel, stop about 1/16 to 1/8 inch below the rim. A spincast reel is full at about 100 yards. For most freshwater fish, 100 yards is plenty, though a strong fish that can run needs more. Replace line when it has dropped well below the rim, because casting gets worse.",
 "short_zh": "上到接近杯沿就行，很少会用到全部。",
-"body_zh": "纺车轮上到离杯沿约 1/16 到 1/8 英寸。卡式轮大约 100 码就满了。多数淡水鱼，100 码足够；力量大、会跑远的鱼则需要更多。线面明显低于杯沿时要换线，否则抛投会变差。",
+"body_zh": "纺车轮上到离杯沿约 1/16 到 1/8 英寸。封闭轮大约 100 码就满了。多数淡水鱼，100 码足够；力量大、会跑远的鱼则需要更多。线面明显低于杯沿时要换线，否则抛投会变差。",
 "basis": "guide",
 "source_ids": [
 "tpwd-gear-care",
@@ -5732,8 +5732,8 @@
 "question_zh": "近岸海钓应该用什么线？",
 "short": "10 to 20 lb braid with a fluorocarbon leader, or 10 to 20 lb mono.",
 "body": "Saltwater fishing calls for 10 to 20 lb line. Braid casts well and its sensitivity helps. Use a heavier leader near oysters and pilings, about 15 to 30 lb. Mono stretches, which helps beginners, and it costs less. Rinse your gear with fresh water afterward.",
-"short_zh": "10 到 20 磅编织线加碳线前导，或者 10 到 20 磅尼龙线。",
-"body_zh": "海水钓用 10 到 20 磅的线。编织线好抛，也灵敏。靠近牡蛎和桥桩时，用 15 到 30 磅的粗前导。尼龙线有弹性，对新手更友好，也更便宜。钓完用淡水冲洗装备。",
+"short_zh": "10 到 20 磅编织线加碳线前导线，或者 10 到 20 磅尼龙线。",
+"body_zh": "海水钓用 10 到 20 磅的线。编织线好抛，也灵敏。靠近牡蛎和桥桩时，用 15 到 30 磅的粗前导线。尼龙线有弹性，对新手更友好，也更便宜。钓完用淡水冲洗装备。",
 "basis": "guide",
 "source_ids": [
 "tpwd-gear-care",
@@ -5884,7 +5884,7 @@
 "question_zh": "低于 50 美元，合理的第一套竿轮是什么？",
 "short": "A spincast or spinning combo with a medium-light rod.",
 "body": "Look for a rod of 5½ to 6½ feet and a reel with 6 to 10 lb line. A composite rod is harder to break. Check that the reel turns smoothly and the drag works. That combination catches panfish, small bass and stocked trout.",
-"short_zh": "卡式轮或纺车轮套装，配中轻硬度的竿。",
+"short_zh": "封闭轮或纺车轮套装，配中轻硬度的竿。",
 "body_zh": "选 5½ 到 6½ 英尺的竿，轮上 6 到 10 磅的线。复合材料竿不容易断。确认轮转动顺畅，卸力正常。这样一套能钓小型淡水鱼、小鲈鱼和放流鳟。",
 "basis": "guide",
 "source_ids": [
@@ -6226,7 +6226,7 @@
 "id": "qa-fb-fish-id-5",
 "category": "species",
 "question": "What photos should I take of a fish so that others can identify it before I release it?",
-"question_zh": "放流之前，应该拍哪些照片，别人才能帮忙辨认？",
+"question_zh": "放生之前，应该拍哪些照片，别人才能帮忙辨认？",
 "short": "A clear side view, plus the mouth and tail if you can.",
 "body": "Have your camera ready first, and leave the fish in the water until you are ready to shoot. Take one side view with the fins open and one close-up of the head with the mouth closed, and include the tail. Keep the fish out of the water no longer than you can hold your breath. Note the place and the length.",
 "short_zh": "一张清晰的侧面照，能拍的话再加嘴和尾巴。",
@@ -6346,7 +6346,7 @@
 "short": "A light rod, 4 to 8 lb line and a small hook with dough bait, corn or worm.",
 "body": "A simple bottom rig is a 1/8-ounce sinker, a swivel, 18 to 24 inches of 4 lb leader and a No. 6 or 8 hook with floating bait. Or hang the bait under a small bobber. Small spinners and spoons work too. Arrive early on stocking day, and check that corn and bait are allowed.",
 "short_zh": "轻竿、4 到 8 磅线，小钩挂面饵、玉米或蚯蚓。",
-"body_zh": "简单的底钓组是：1/8 盎司铅坠、转环、18 到 24 英寸的 4 磅前导，加 6 号或 8 号钩和浮性饵。也可以把饵挂在小浮漂下面。小旋转亮片和勺形亮片也有效。放流日早点到，并确认当地允许用玉米和天然饵。",
+"body_zh": "简单的底钓组是：1/8 盎司铅坠、转环、18 到 24 英寸的 4 磅前导线，加 6 号或 8 号钩和浮性饵。也可以把饵挂在小浮漂下面。小旋转亮片和勺形亮片也有效。放流日早点到，并确认当地允许用玉米和天然饵。",
 "basis": "guide",
 "source_ids": [
 "tpwd-trout-tips",
@@ -6425,8 +6425,8 @@
 "question_zh": "在岸边钓鲶鱼，最简单有效的底钓组是什么？",
 "short": "An egg sinker, a swivel, a short leader and a bait hook.",
 "body": "Thread the line through a 1/4 to 1/2 ounce egg sinker, tie on a barrel swivel, add an 18-inch leader and a No. 4 or 6 hook. Let it sit on the bottom and reel the line tight. For larger catfish, use a 1 ounce sinker, a 2-foot leader and a 4/0 to 6/0 hook.",
-"short_zh": "橄榄铅、转环、短前导和饵钩。",
-"body_zh": "线穿过 1/4 到 1/2 盎司的橄榄铅，绑上桶形转环，接 18 英寸前导和 4 号或 6 号钩。让饵停在水底，把线收紧。钓大一些的鲶鱼，用 1 盎司铅、2 英尺前导和 4/0 到 6/0 的钩。",
+"short_zh": "橄榄铅、转环、短前导线和饵钩。",
+"body_zh": "线穿过 1/4 到 1/2 盎司的橄榄铅，绑上桶形转环，接 18 英寸前导线和 4 号或 6 号钩。让饵停在水底，把线收紧。钓大一些的鲶鱼，用 1 盎司铅、2 英尺前导线和 4/0 到 6/0 的钩。",
 "basis": "guide",
 "source_ids": [
 "mn-ccf",
@@ -6483,7 +6483,7 @@
 "short": "A simple bottom rig with corn on a size 4 to 8 hook. Feed a few handfuls.",
 "body": "Use an egg sinker, a barrel swivel, a short leader and a size 4 to 8 hook covered with corn. Toss in a few handfuls of corn, and add more every half hour to an hour. Set the drag properly, because carp make long runs, and land them with a net. Chumming isn't allowed everywhere, so confirm it first.",
 "short_zh": "简单的底钓组，4 到 8 号钩挂玉米，再撒几把窝料。",
-"body_zh": "用橄榄铅、桶形转环、短前导和 4 到 8 号钩，把玉米挂满钩。撒几把玉米，每半小时到一小时再补一些。卸力要调好，鲤鱼会长距离冲刺，用抄网收鱼。打窝前先确认当地允许。",
+"body_zh": "用橄榄铅、桶形转环、短前导线和 4 到 8 号钩，把玉米挂满钩。撒几把玉米，每半小时到一小时再补一些。卸力要调好，鲤鱼会长距离冲刺，用抄网收鱼。打窝前先确认当地允许。",
 "basis": "guide",
 "source_ids": [
 "tamu-baits",
@@ -6581,11 +6581,11 @@
 "id": "qa-fb-pike-walleye-salmon-1",
 "category": "species",
 "question": "Is a wire leader necessary for a beginner targeting pike?",
-"question_zh": "新手钓白斑狗鱼，必须用钢丝前导吗？",
+"question_zh": "新手钓白斑狗鱼，必须用钢丝前导线吗？",
 "short": "A bite-proof leader is needed. Wire is the simplest.",
 "body": "FishEye's guide uses a foot-long steel or fluorocarbon leader, because teeth can cut through ordinary line. Buy ready-made leaders with a snap. Heavy fluorocarbon works, but wire is more secure. Bring long pliers too. Irish and German fisheries material treats a steel leader of at least about 30 cm as standard for pike. Throw away any wire leader with a kink.",
-"short_zh": "需要防咬前导，钢丝最简单。",
-"body_zh": "FishEye 的指南用一英尺长的钢丝或碳线前导，因为鱼牙能切断普通的线。买现成带别针的前导就行。粗碳线也可以，但钢丝更保险。也要带长柄钳。爱尔兰和德国的官方资料把至少约 30 厘米的钢丝前导当作钓白斑狗鱼的标准配置。钢丝前导一旦打折就要换掉。",
+"short_zh": "需要防咬前导线，钢丝最简单。",
+"body_zh": "FishEye 的指南用一英尺长的钢丝或碳线前导线，因为鱼牙能切断普通的线。买现成带别针的前导线就行。粗碳线也可以，但钢丝更保险。也要带长柄钳。爱尔兰和德国的官方资料把至少约 30 厘米的钢丝前导线当作钓白斑狗鱼的标准配置。钢丝前导线一旦打折就要换掉。",
 "basis": "official",
 "source_ids": [
 "qa-pdf-ie-lure",
@@ -6623,7 +6623,7 @@
 "short": "A long rod, a float, split shot and roe or another bait under it.",
 "body": "Use a rod of 10 to 13 feet with about 15 lb main line and a float, with enough shot to sink about three quarters of it. Below that goes a leader of 8 to 12 lb fluorocarbon with a hook and roe. Set the depth so the bait drifts just off the bottom, and mend the line so the float leads. Some rivers restrict weights and hooks, so read the rules.",
 "short_zh": "长竿、浮漂、咬铅，下面挂鱼卵或其他饵。",
-"body_zh": "用 10 到 13 英尺的竿，主线约 15 磅，加浮漂和足以压沉约四分之三浮漂的咬铅，再接 8 到 12 磅碳线前导，挂钩和鱼卵。水深调到饵刚好在水底上方漂动，并及时修线，让浮漂走在前面。查好规定，有些河流限制铅坠和钩。",
+"body_zh": "用 10 到 13 英尺的竿，主线约 15 磅，加浮漂和足以压沉约四分之三浮漂的咬铅，再接 8 到 12 磅碳线前导线，挂钩和鱼卵。水深调到饵刚好在水底上方漂动，并及时修线，让浮漂走在前面。查好规定，有些河流限制铅坠和钩。",
 "basis": "general",
 "source_ids": [
 "nydec-steelhead"
@@ -6910,7 +6910,7 @@
 "short": "A bottom rig with a sinker and one or two hooks.",
 "body": "Use a pre-tied two-hook rig or a single hook with a sliding sinker, with bait such as shrimp or cut fish. Pre-tied rigs usually have a swivel at the top and a snap at the bottom for the sinker. Fish right against the pilings, and use a heavier leader where pilings rub the line. Read the pier's rules before you start.",
 "short_zh": "带铅坠和一两个钩的底钓组。",
-"body_zh": "用现成的双钩钓组，或者单钩加游动铅，挂虾或切块鱼。现成的钓组通常上端是转环，下端有挂铅坠的别针。紧贴桥桩钓，桥桩会磨线的地方要用粗一些的前导。开钓前看看栈桥的规定。",
+"body_zh": "用现成的双钩钓组，或者单钩加游动铅，挂虾或切块鱼。现成的钓组通常上端是转环，下端有挂铅坠的别针。紧贴桥桩钓，桥桩会磨线的地方要用粗一些的前导线。开钓前看看栈桥的规定。",
 "basis": "official",
 "source_ids": [
 "qa-pdf-sc-salt",
@@ -6943,7 +6943,7 @@
 "short": "Yes, with care after salt.",
 "body": "Rinse it gently with tap water after each salt trip, let it air-dry and apply a lubricant suitable for salt water. A reel the maker rates for salt lasts longer. Never store a salty reel. Clean, drain and dry your gear before moving between waters.",
 "short_zh": "可以，但钓完海水要好好保养。",
-"body_zh": "每次钓完海水，用自来水轻轻冲洗，晾干，再涂上适合海水的润滑剂。厂家标明可用于海水的轮寿命更长。带盐的轮绝不能直接收起来。换水域之前，要清洁、排水、晾干装备。",
+"body_zh": "每次钓完海水，用自来水轻轻冲洗，晾干，再涂上适合海水的润滑剂。厂家标明可用于海水的轮寿命更长。带盐的轮绝不能直接收起来。换水域之前，要清洗、排水、晾干装备。",
 "basis": "guide",
 "source_ids": [
 "qa-tpwd-gear",
@@ -7022,12 +7022,12 @@
 {
 "id": "qa-fb-rules-1",
 "category": "start",
-"question": "Do I need a licence if I only catch and release?",
-"question_zh": "如果只是钓了放流，也需要钓鱼证吗？",
+"question": "Do I need a license if I only catch and release?",
+"question_zh": "如果只是钓了就放生，也需要钓鱼证吗？",
 "short": "Assume yes unless your state says otherwise. License rules generally cover the act of fishing, not whether you keep the fish.",
 "body": "Texas requires a license for anyone who takes or attempts to take fish in its public waters. California requires one to take fish and defines take to include attempting to catch them. Planning to release the fish doesn't exempt you in either state. Exemptions depend on things like age, free fishing days and certain waters. Texas state parks, California's Free Fishing Days and public ocean piers, and private ponds in Georgia are examples. Rules differ by state, so check your state's agency page before you go.",
 "short_zh": "除非你所在的州明确说不用，否则就当作需要持证。钓鱼证的规定通常针对钓鱼这个行为，不看你留不留鱼。",
-"body_zh": "德克萨斯州要求，在公共水域捕捞或试图捕捞鱼类的人都要持证。加利福尼亚州要求捕捞（take）时持证，并把 take 定义为包括试图捕捉。在这两个州，打算放流并不能免证。豁免通常看年龄、免费钓鱼日和特定水域，例如德州的州立公园、加州的免费钓鱼日和海边公共栈桥、佐治亚州的私人池塘。各州规定不同，出发前请查本州主管机构的页面。",
+"body_zh": "德克萨斯州要求，在公共水域捕捞或试图捕捞鱼类的人都要持证。加利福尼亚州要求捕捞（take）时持证，并把 take 定义为包括试图捕捉。在这两个州，打算放生并不能免证。豁免通常看年龄、免费钓鱼日和特定水域，例如德州的州立公园、加州的免费钓鱼日和海边公共栈桥、佐治亚州的私人池塘。各州规定不同，出发前请查本州主管机构的页面。",
 "basis": "official",
 "source_ids": [
 "qa-tpwd-general",
@@ -7046,7 +7046,7 @@
 {
 "id": "qa-fb-rules-2",
 "category": "start",
-"question": "Can I bring someone with me who does not have a licence?",
+"question": "Can I bring someone with me who does not have a license?",
 "question_zh": "可以带一个没有钓鱼证的人一起吗？",
 "short": "Usually yes, if they only watch, but don't let them fish or help until you have checked.",
 "body": "Rules on helpers vary. Georgia says anyone helping an angler, for example by netting a fish, must be licensed too, and Texas defines fishing as taking or attempting to take aquatic life by any means. Children below the license age can fish without one in many states. Check the rules for your state before someone without a license holds a rod or helps land a fish.",
@@ -7063,7 +7063,7 @@
 {
 "id": "qa-fb-rules-3",
 "category": "start",
-"question": "Does a digital copy of a fishing licence on a phone count?",
+"question": "Does a digital copy of a fishing license on a phone count?",
 "question_zh": "手机里的电子版钓鱼证算数吗？",
 "short": "Sometimes. The accepted form depends on the state, so a photo that works in one state can be invalid in another.",
 "body": "Texas accepts an electronic copy, including a photo or the emailed receipt, for activities that don't need tags or physical stamps. California requires its CDFW License App, says pictures and screenshots are not valid, still requires physical report cards, and treats a dead battery as no excuse. Wisconsin accepts the agency's PDF on a device for inland waters but not for boundary or outlying waters. Alaska allows a signed electronic copy, or a picture of your signed license, on your phone. Check your own state's page, and carry paper or a backup battery if you are unsure.",
@@ -7129,7 +7129,7 @@
 {
 "id": "qa-fb-rules-7",
 "category": "start",
-"question": "What are the usual penalties for fishing with no licence?",
+"question": "What are the usual penalties for fishing with no license?",
 "question_zh": "没有钓鱼证钓鱼，通常会受到什么处罚？",
 "short": "It depends on the state, but expect a fine and possibly points or lost privileges.",
 "body": "Texas lists fines from $25 to $500 for a Class C offense, rising to $500 to $4,000 or jail for Class A. Its page doesn't say which class applies to fishing without a license. South Carolina gives 6 points for fishing without a proper license on its inland system, and privileges are suspended at 18 points. New Jersey revokes sporting licenses for at least two years after a second fish or wildlife violation within five years. Buying a license costs far less.",
@@ -7160,7 +7160,7 @@
 {
 "id": "qa-fb-rules-9",
 "category": "start",
-"question": "Do children need a licence?",
+"question": "Do children need a license?",
 "question_zh": "儿童需要钓鱼证吗？",
 "short": "Often not, but the starting age depends on the state.",
 "body": "In FishEye's state data, the age a resident needs a license runs from 10 in Arizona up to 18. The most common age is 16, in 30 of 51 jurisdictions (the 50 states and DC). Five states start at 12 and five at 18. Hawaii's entry gives no age. Non-residents usually follow the same age, with exceptions: in Alaska residents need one from 18 and non-residents from 16. A child without a license may still need a stamp or report card: California requires report cards for steelhead or sturgeon at any age. An adult who helps may need a license too, as Georgia requires of anyone assisting an angler. Check the state's page before the trip.",
@@ -7181,7 +7181,7 @@
 {
 "id": "qa-fb-rules-10",
 "category": "start",
-"question": "What counts as residency for a resident licence after moving to a new state?",
+"question": "What counts as residency for a resident license after moving to a new state?",
 "question_zh": "搬到新的州之后，什么情况才算居民钓鱼证的居住资格？",
 "short": "Commonly six months of living in the state, but the test differs by state.",
 "body": "Texas requires more than six months of continuous residence right before buying. New Jersey requires an established principal residence for at least the previous six months. North Carolina accepts six months of residence, or 60 days of domicile with intent to stay permanently, and says residency can be established in only one state. Active military and, in some states, students have separate rules. If you have just moved, buy a non-resident license until you qualify, or call the agency.",
@@ -7198,7 +7198,7 @@
 "id": "qa-fb-release-1",
 "category": "care",
 "question": "What handling steps give a released fish the best chance of surviving?",
-"question_zh": "哪些操作最能提高放流鱼的存活机会？",
+"question_zh": "哪些操作最能提高放生鱼的存活机会？",
 "short": "Land it quickly, keep it wet and get it back fast.",
 "body": "Wet your hands first so you don't strip its protective slime, and keep fingers away from the eyes and gills. Keep it out of the water no longer than you can hold your own breath, about 20 to 30 seconds. Back the hook out with pliers, ideally in the water; if it's deep, cut the line. Hold a small fish, under about 5 lb, by the lower jaw, and support a big one horizontally with both hands. If it's tired, face it into the current and support it until it swims away. In still water, hold it with both hands and move it gently in a figure 8 until it can swim off strongly. Water of 70°F and warmer is hard on trout and other coldwater fish, so avoid fishing for them then. Bring fish up slowly from deep water so they can adjust to the pressure change.",
 "short_zh": "把鱼快速收上来，保持湿润，尽快放回去。",
@@ -7254,7 +7254,7 @@
 "id": "qa-fb-release-3",
 "category": "care",
 "question": "Should a bleeding fish still be released?",
-"question_zh": "流血的鱼还应该放流吗？",
+"question_zh": "流血的鱼还应该放生吗？",
 "short": "Usually yes, unless it's legal to keep and you plan to eat it.",
 "body": "A little bleeding from the jaw is common, and such fish often survive. Heavy bleeding from the gills is more serious. If the fish is legal to keep, keeping it for food is reasonable. Otherwise cut the line if it is hooked deep, handle it gently and revive it in the water. Texas makes it illegal to leave edible fish to die without intending to keep them.",
 "short_zh": "通常还是放，除非可以合法留下，而且你打算吃。",
@@ -7311,7 +7311,7 @@
 "id": "qa-fb-release-6",
 "category": "care",
 "question": "Are gloves helpful or harmful when handling fish to be released?",
-"question_zh": "持握要放流的鱼时，戴手套有帮助还是有害？",
+"question_zh": "持握要放生的鱼时，戴手套有帮助还是有害？",
 "short": "Wet cloth or rubber is fine. Dry, rough gloves remove slime.",
 "body": "Wet your hands, or use a wet rag or glove, and don't rub off the slime, which protects the fish from infection. Rough or dry cotton gloves can remove slime and scales. Gloves help with toothy fish or spiny fins, so wet them first.",
 "short_zh": "湿布或橡胶手套没问题，干燥粗糙的手套会蹭掉黏液。",
@@ -7362,7 +7362,7 @@
 "short": "An ice slurry is better for fish you'll eat.",
 "body": "A slush of ice and water chills fish 4 to 5 times faster than ice alone. In warm water, fish in a livewell or on a stringer die quickly. Livewells work for short times or for fish you might release. Fish you plan to eat should go on ice straight away. A stringer also prolongs the struggle, which hurts the meat, and warm water spoils fish sooner, so use one only in cool water and only until you reach ice.",
 "short_zh": "要吃的鱼，用冰水混合物更好。",
-"body_zh": "冰水混合物的降温速度是单纯用冰的 4 到 5 倍。水温高时，活鱼舱或鱼串上的鱼很快就会死。活鱼舱适合短时间存放，或者可能放流的鱼。打算吃的鱼，要马上放到冰上。鱼串还会延长鱼的挣扎，影响肉质，水温高时鱼也坏得更快，所以只在凉水里短时间用，到有冰的地方就换。",
+"body_zh": "冰水混合物的降温速度是单纯用冰的 4 到 5 倍。水温高时，活鱼舱或鱼串上的鱼很快就会死。活鱼舱适合短时间存放，或者可能放生的鱼。打算吃的鱼，要马上放到冰上。鱼串还会延长鱼的挣扎，影响肉质，水温高时鱼也坏得更快，所以只在凉水里短时间用，到有冰的地方就换。",
 "basis": "official",
 "source_ids": [
 "qa-pdf-noaa",
@@ -7420,7 +7420,7 @@
 "short": "There is no single safe amount. It depends on the water, the species, the fish's size and who is eating it.",
 "body": "All 50 states, and some territories and tribes, issue advice on local waters, mostly because of mercury, PFAS, PCBs and DDT. Look for signs at the water, then check your state's health or environmental agency. EPA lists contacts for each state. In an advisory, find the waterbody, then the species and size, then your group. Limits are strictest for people who are pregnant, may become pregnant or are nursing, and for children. In Texas, a consumption ban means you may not keep fish from that area, though catch and release stays legal. An advisory recommends limiting how much you eat. A water that isn't listed hasn't been shown to be clean.",
 "short_zh": "没有统一的安全食用量，要看水域、鱼种、鱼的大小和谁来吃。",
-"body_zh": "全部 50 个州以及部分领地和部落都发布本地水域的食用建议，主要针对汞、PFAS、多氯联苯和滴滴涕。先看水边的告示牌，再查本州的卫生或环境机构，EPA 有各州的联系方式。读建议时，先找水域，再找鱼种和大小，最后找你所属的人群。孕妇、可能怀孕的女性、哺乳期女性和儿童的限制最严。在德州，食用禁令意味着不能留这片水域的鱼，但钓获放流仍然合法。食用建议则是提醒限制食用量。水域不在名单上，并不代表那里的鱼没有问题。",
+"body_zh": "全部 50 个州以及部分领地和部落都发布本地水域的食用建议，主要针对汞、PFAS、多氯联苯和滴滴涕。先看水边的告示牌，再查本州的卫生或环境机构，EPA 有各州的联系方式。读建议时，先找水域，再找鱼种和大小，最后找你所属的人群。孕妇、可能怀孕的女性、哺乳期女性和儿童的限制最严。在德州，食用禁令意味着不能留这片水域的鱼，但钓后放生仍然合法。食用建议则是提醒限制食用量。水域不在名单上，并不代表那里的鱼没有问题。",
 "basis": "guide",
 "source_ids": [
 "epa-fish",
@@ -7560,8 +7560,8 @@
 "question_zh": "第一次带小孩子钓鱼，什么装备最合适？",
 "short": "A short push-button rod, a bobber and worms.",
 "body": "A push-button reel on a short rod with a hook, a split shot and a bobber catches most fish, and the closed cover keeps tangles to a minimum. A child can see the bobber go down. Worms stay on the hook and most fish eat them. A life jacket that fits now is a must near deep water.",
-"short_zh": "按钮式短竿、浮漂和蚯蚓。",
-"body_zh": "短竿配卡式轮，加钩、咬铅和浮漂，能钓到大多数鱼，封闭的外壳也很少缠线。孩子能看到浮漂下沉。蚯蚓挂得牢，多数鱼都吃。在深水附近，一定要穿现在就合身的救生衣。",
+"short_zh": "配封闭轮的短竿、浮漂和蚯蚓。",
+"body_zh": "短竿配封闭轮，加钩、咬铅和浮漂，能钓到大多数鱼，封闭的外壳也很少缠线。孩子能看到浮漂下沉。蚯蚓挂得牢，多数鱼都吃。在深水附近，一定要穿现在就合身的救生衣。",
 "basis": "guide",
 "source_ids": [
 "nydec-kids",
@@ -7647,7 +7647,7 @@
 "short": "Optional for panfish, useful for trout and bigger fish.",
 "body": "A landing net lands more fish, because grabbing a fish by hand or dragging it up the bank is when the line breaks or the hook pulls out. For panfish it is optional, and for trout you should bring one. A shallow net of fine mesh is easiest on a fish you'll release.",
 "short_zh": "钓小型淡水鱼可有可无，钓鳟鱼和大鱼很有用。",
-"body_zh": "用抄网能少跑鱼，用手抓鱼或把鱼拖上岸时，最容易断线或脱钩。钓小型淡水鱼可有可无，钓鳟鱼就要带。细网眼的浅抄网对要放流的鱼最温和。",
+"body_zh": "用抄网能少跑鱼，用手抓鱼或把鱼拖上岸时，最容易断线或脱钩。钓小型淡水鱼可有可无，钓鳟鱼就要带。细网眼的浅抄网对要放生的鱼最温和。",
 "basis": "guide",
 "source_ids": [
 "utah-learn",
@@ -7694,7 +7694,7 @@
 "short": "Keep soft baits flat in their original bags and leaders on small spools.",
 "body": "Put each kind of soft plastic in its own factory bag and keep the bags somewhere cool. Wind leaders onto small spools or keep them in a leader wallet, labeled with their strength. Keep them out of sunlight, and replace any that are nicked.",
 "short_zh": "软饵平放在原包装里，前导线绕在小线轴上。",
-"body_zh": "不同的软饵要分开，放在原包装里，远离高温。前导线绕在小线轴上，或者放进前导夹，并标明磅数。避开阳光，有划痕的就换掉。",
+"body_zh": "不同的软饵要分开，放在原包装里，远离高温。前导线绕在小线轴上，或者放进前导线夹，并标明磅数。避开阳光，有划痕的就换掉。",
 "basis": "maker",
 "source_ids": [
 "qa-tpwd-gear",

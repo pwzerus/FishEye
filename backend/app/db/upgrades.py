@@ -83,6 +83,11 @@ _NULLABLE_COLUMNS = (
     # Feedback without an account (services/feedback.py).
     ("feedback", "signed_out", "BOOLEAN"),
     ("feedback", "contact", "VARCHAR(254)"),
+    # Gear on catches (ADR 0056). The listed items are a table of their
+    # own (catch_gear), which create_all adds. None in gear_stats: the
+    # person hasn't chosen, which on the website counts as yes.
+    ("catch_pins", "gear_other", "VARCHAR(60)"),
+    ("users", "gear_stats", "BOOLEAN"),
 )
 
 # NOT NULL columns with a constant default, added since: (table, column,

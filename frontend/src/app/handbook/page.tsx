@@ -30,12 +30,14 @@ export default async function HandbookPage() {
     [topics, gear, guides] = await Promise.all([
       listHandbook(locale),
       listGear(locale).then((g) => g.items).catch(() => []),
-      listSpeciesGuides().catch(() => []),
+      // In the page's language: the Texas bait rules below come from a guide.
+      listSpeciesGuides(locale).catch(() => []),
     ]);
   } catch {
     failed = true;
   }
-  const baitRules = guides.find((g) => g.legal_notes.length > 0)?.legal_notes ?? [];
+  const baitGuide = guides.find((g) => g.legal_notes.length > 0);
+  const baitRules = baitGuide?.legal_notes ?? [];
 
   return (
     <PageTransition>
@@ -56,7 +58,7 @@ export default async function HandbookPage() {
 
         {baitRules.length > 0 && (
           <div className="rules-stack reveal" style={{ "--i": 6 } as React.CSSProperties}>
-            <BaitRules texasRules={baitRules} texasUrl={guides[0]?.limits_url ?? ""} suffix={all.stateRules.forEveryFish} />
+            <BaitRules texasRules={baitRules} texasLang={baitGuide?.text_lang} texasUrl={guides[0]?.limits_url ?? ""} suffix={all.stateRules.forEveryFish} />
           </div>
         )}
       </main>

@@ -459,6 +459,8 @@ export interface TackleSetup {
   line: string;
   terminal: string;
   sources: GuideSource[];
+  // The handbook topic with a drawing of this rig (backend TackleSetup.rig_topic).
+  rig_topic?: string | null;
 }
 
 export interface SpeciesGuide {
@@ -635,6 +637,9 @@ export interface User {
   verification_required?: boolean;
   // Left the leaderboards (backend services/social.py).
   hide_from_rankings?: boolean;
+  // Their catches' gear and fish go into FishEye's anonymous totals: on
+  // until they turn it off (backend ADR 0056).
+  gear_stats?: boolean;
 }
 
 /** A comment under a catch (backend services/social.py). */
@@ -898,6 +903,11 @@ export interface FishIdResult {
 
 export interface PinDetail extends PinSummary {
   note: string | null;
+  // What it was caught with (backend ADR 0056): /gear items by id, named in
+  // English (src/i18n/names.ts names them in the reader's language), and
+  // anything else in the angler's words.
+  gear?: { id: string; label: string }[];
+  gear_other?: string | null;
   photos: PinPhoto[];
   can_edit: boolean;
   can_report: boolean;
@@ -909,6 +919,11 @@ export interface PinOptions {
   report_reasons: { id: string; label: string }[];
   max_photos: number;
   max_photo_mb: number;
+  // The /gear items a catch can name, in the list's order, and their
+  // categories (backend ADR 0056).
+  gear?: { id: string; label: string; category: string }[];
+  gear_categories?: { id: string; label: string }[];
+  max_gear?: number;
 }
 
 export interface PinUpdate {
@@ -919,6 +934,10 @@ export interface PinUpdate {
   caught_on?: string;
   visibility?: PinVisibility;
   share_exact?: boolean;
+  // The whole gear list, replacing the old one ([] clears it); "" clears
+  // gear_other. Left out, each stays as it was.
+  gear?: string[];
+  gear_other?: string;
   // A new spot (both together); it must be on water like a new catch's.
   latitude?: number;
   longitude?: number;
@@ -1103,6 +1122,8 @@ export interface LibraryQuestion {
   body: string;
   basis: "guide" | "official" | "maker" | "general";
   sources: GuideSource[];
+  /** The language the text came back in ("en" where not translated yet). */
+  lang?: string;
 }
 
 /** A state and who runs its fishing rules (backend app/knowledge/jurisdictions.py).

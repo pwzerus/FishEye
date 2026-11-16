@@ -182,6 +182,16 @@ SOURCES: dict[str, Source] = {
         Source("cdfw-regs-2026", "CDFW: 2026 freshwater sport fishing regulations", "https://nrm.dfg.ca.gov/FileHandler.ashx?DocumentID=209090&inline", "agency"),
         # Every other state's bait rules (knowledge/jurisdictions.py STATE_BAIT_RULES), read 2026-11-01.
         Source("bait-al", "ADCNR: fishing regulations (bait)", "https://www.eregulations.com/alabama/fishing/fishing-regulations", "agency"),
+        # The last five, read 2026-11-16 (docs/data-sources.md).
+        Source("bait-ak", "ADF&G: sport fishing regulations, 5 AAC 75.026 and 75.055 (bait, live fish)", "https://www.akleg.gov/basis/aac.asp#5.75.026", "agency"),
+        Source("bait-ak-area", "ADF&G: 2026 Southcentral regional regulations (area rules come first)", "https://www.adfg.alaska.gov/static/regulations/fishregulations/PDFs/southcentral/2026sc_sfregs_regionalregs.pdf", "agency"),
+        Source("bait-de", "DNREC: non-tidal finfish regulations, 7 DE Admin. Code 3300 (bait)", "https://archive.regulations.delaware.gov/AdminCode/title7/3000/3300/3300.shtml", "agency"),
+        Source("bait-de-trout", "DNREC: freshwater trout fishing (restricted trout streams)", "https://dnrec.delaware.gov/fish-wildlife/fishing/freshwater-trout/", "agency"),
+        Source("bait-hi", "Hawaii DAR: Wahiawā Public Fishing Area (bait)", "https://dlnr.hawaii.gov/dar/regulated-areas/wahiawa-public-fishing-area/", "agency"),
+        Source("bait-hi-wailua", "Hawaii DAR: Wailua Reservoir Public Fishing Area", "https://dlnr.hawaii.gov/dar/regulated-areas/wailua-reservoir-public-fishing-area/", "agency"),
+        Source("bait-hi-kokee", "Hawaii DAR: Kōke‘e Public Fishing Area", "https://dlnr.hawaii.gov/dar/regulated-areas/kokee-public-fishing-area/", "agency"),
+        Source("bait-mt", "Montana FWP: 2026 fishing regulations (bait regulations by district)", "https://fwp.mt.gov/binaries/content/assets/fwp/fish/regulations/2026-fishing-regulations-final-for-web.pdf", "agency"),
+        Source("bait-sd", "SD GFP: non-commercial bait regulations", "https://gfp.sd.gov/nav/1797/", "agency"),
         Source("bait-ar", "AGFC: fishing regulations (bait)", "https://www.agfc.com/news/commission-approves-live-wild-caught-baitfish-transport-ban-postpones-effective-date/", "agency"),
         Source("bait-az", "AZGFD: fishing regulations (bait)", "https://www.eregulations.com/arizona/fishing/general-statewide-fishing-regulations", "agency"),
         Source("bait-co", "CPW: fishing regulations (bait)", "https://www.eregulations.com/colorado/general-information", "agency"),
@@ -336,6 +346,33 @@ class TackleSetup:
     line: str
     terminal: str  # hook, rig, or lure — what goes on the end of the line
     source_ids: tuple[str, ...]
+
+    @property
+    def rig_topic(self) -> str | None:
+        """The handbook topic whose drawing shows how this rig goes together,
+        if one does (RIG_TOPICS). The name decides first: "Minnow under a
+        bobber" is the bobber rig, though its end tackle adds "use a slip
+        bobber to fish deeper"."""
+        for text in (self.name.lower(), f"{self.name} {self.terminal}".lower()):
+            topic = next((topic for words, topic in RIG_TOPICS if any(w in text for w in words)), None)
+            if topic:
+                return topic
+        return None
+
+
+# A setup's rig and the handbook topic with its drawing (frontend RigDiagram),
+# read from the English name and end tackle, first match wins (2026-11-16: the
+# owner, reading "1 oz egg sinker and a barrel swivel" on a fish page, asked
+# what an egg sinker is and how it goes on the line).
+RIG_TOPICS: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("texas",), "rig-texas"),
+    (("wacky",), "rig-wacky"),
+    (("drop shot", "drop-shot"), "rig-drop-shot"),
+    (("ned rig",), "rig-ned"),
+    (("slip bobber",), "rig-slip-bobber"),
+    (("egg sinker", "slip sinker", "slip-sinker", "sliding sinker"), "rig-bottom"),
+    (("bobber",), "tackle-bobbers"),
+)
 
 
 # What each species mainly eats, in one word for a UI badge. "carnivore"

@@ -137,6 +137,17 @@ def coverage(lang: str) -> str:
 
 # When every passage shown is one the question library has in Chinese.
 PASSAGES_INTRO_ZH_ORIGINAL = "以下是 FishEye 中的相关内容："
+# When every passage quoted is in the question's language (ADR 0052, 0058).
+_INTRO_TRANSLATED = {
+    "zh": PASSAGES_INTRO_ZH_ORIGINAL,
+    "es": "Esto es lo que dicen las guías de FishEye:",
+    "ko": "FishEye 가이드에는 이렇게 나와 있어요.",
+    "ja": "FishEyeのガイドには、次のように書かれています。",
+}
+
+
+def passages_intro_translated(lang: str) -> str:
+    return _INTRO_TRANSLATED.get(lang) or passages_intro(lang)
 
 
 def passages_intro(lang: str) -> str:
@@ -211,7 +222,7 @@ _SITE_HELP = {
     },
     "share": {
         "zh": "分享渔获分三步：打开“找钓点”，点击“分享渔获”（需先登录）；在地图上点选你钓鱼的水域；上传一张鱼的照片，系统会自动填写鱼种。每次只分享一条鱼，照片中也只拍这一条。标记必须放在地图上已命名的湖泊、河流或池塘上，否则按钮显示为灰色，并在旁边注明原因。",
-        "en": "Sharing a catch takes three steps: open Find water and press Share a catch (sign in first), tap the water you fished on the map, then add a photo of the fish and FishEye fills in the species. One fish per share, and only that fish in the photo. The pin has to be on a lake, river or pond the map names; otherwise the button stays grey and says why.",
+        "en": "Sharing a catch takes three steps: open Find water and press Share a catch (sign in first), tap the water you fished on the map, then add a photo of the fish and FishEye fills in the species. One fish per share, and only that fish in the photo. The pin has to be on a lake, river or pond the map names; otherwise the button stays gray and says why.",
         "es": "Compartir una captura son tres pasos: abre Dónde pescar y pulsa Compartir una captura (inicia sesión antes), toca en el mapa el agua donde pescaste y añade una foto del pez; FishEye rellena la especie. Un pez por vez, y solo ese pez en la foto. El marcador debe estar en un lago, río o estanque con nombre en el mapa; si no, el botón queda gris y explica por qué.",
         "ko": "조과 공유는 세 단계예요. 낚시터 찾기를 열고 조과 공유를 누른 뒤(먼저 로그인), 지도에서 낚시한 물을 누르고 물고기 사진을 올리면 어종이 자동으로 채워져요. 한 번에 한 마리, 사진에도 그 물고기만 나오게 해 주세요. 표시는 지도에 이름이 있는 호수, 강, 연못 위에 있어야 하고, 아니면 버튼이 회색이 되고 이유가 표시돼요.",
         "ja": "釣果の投稿は3ステップです。釣り場を探すを開いて釣果を投稿を押し（先にログイン）、地図で釣った水面を押して、魚の写真を追加すると魚種が自動で入ります。1回に1匹、写真にもその魚だけが写るようにしてください。印は地図に名前のある湖、川、池の上に置きます。そうでないとボタンは灰色のままで、理由が表示されます。",

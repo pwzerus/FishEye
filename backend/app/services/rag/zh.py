@@ -262,6 +262,9 @@ GLOSSARY: dict[str, str] = {
     "失温": "hypothermia cold water",
     "礼仪": "manners sharing the water",
     "素质": "manners sharing the water",
+    # The topic's Chinese title says 规矩 since 2026-11-16 (礼仪 read as
+    # ceremony and hosting guests).
+    "规矩": "manners sharing the water",
     "儿童": "kid kids",
     "带娃": "kid kids taking kids fishing",
     # Added 2026-11-08 (gear care, new line, hook injuries, black spots, lead,

@@ -40,9 +40,11 @@ from app.services.rag.retriever import (
     BM25Retriever,
     ScoredPassage,
     arrange_routed,
+    caught_as_fish,
     explain_empty,
     is_howto,
     is_on_topic,
+    nothing_caught_first,
     topic_fish_passages,
     names_unguided_fish,
     query_terms,
@@ -229,7 +231,10 @@ class HybridRetriever:
 
     def _resolve(self, question: str, qvec: np.ndarray) -> tuple[tuple[str, ...], str]:
         sims = qvec @ self._vecs.T
-        return resolve_species(question, lambda q, alias, name: self._about_the_fish_sims(sims, qvec, alias, name))
+        return resolve_species(
+            question,
+            lambda q, alias, name: caught_as_fish(q, alias, name) or self._about_the_fish_sims(sims, qvec, alias, name),
+        )
 
     def why_empty(self, question: str, species: tuple[str, ...] | None = None) -> str:
         qvec = self._qvec(question)
@@ -342,9 +347,9 @@ class HybridRetriever:
         hits = [ScoredPassage(self.passages[i], s) for i, s in fused.items()]
         hits.sort(key=lambda h: (-h.score, h.passage.id))
         if not routed:
-            return hits[:k]
-        arranged = arrange_routed(hits, query, k)
+            return nothing_caught_first(question, hits, self.passages)[:k]
+        arranged = nothing_caught_first(question, arrange_routed(hits, query, k), self.passages)
         if asked and asked[0].closeness >= ROUTED_ASK_FIRST and (i := self._topic.get(asked[0].topic)) is not None:
             first = next(h for h in hits if h.passage is self.passages[i])
             return [first, *(h for h in arranged if h is not first)][:k]
-        return arranged
+        return arranged[:k]

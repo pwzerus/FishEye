@@ -69,6 +69,12 @@ class User(Base):
     # Unlimited AI answers on Ask (services/ai_quota.py). Set by an admin
     # until payments are built (the product owner, 2026-11-12).
     plus_until: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    # May FishEye count the gear and fish of this person's catches in its
+    # totals (ADR 0056)? None: never chosen, and on the website that means
+    # yes, as the privacy policy says. False: no, wherever it was said; the
+    # gear stays in their own catches. The App Store app asks first while
+    # it is None (Apple 5.1.1). `counts_gear` is the answer to use.
+    gear_stats: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
 
     sessions: Mapped[list[UserSession]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
@@ -93,6 +99,10 @@ class User(Base):
     @property
     def is_active(self) -> bool:
         return self.status == USER_ACTIVE
+
+    @property
+    def counts_gear(self) -> bool:
+        return self.gear_stats is not False
 
 
 class UserSession(Base):
@@ -223,6 +233,9 @@ class CatchPin(Base):
     species_slug: Mapped[str | None] = mapped_column(String(64), nullable=True)
     species_other: Mapped[str | None] = mapped_column(String(60), nullable=True)
     caught_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Gear that isn't on the /gear list, in the angler's words (ADR 0056);
+    # the listed items are in `gear`.
+    gear_other: Mapped[str | None] = mapped_column(String(60), nullable=True)
     # The photo check (services/fish_id.py) of the species named, against
     # `species_check_photo_id`: "confirmed" (the photo shows that species),
     # "group" (a look-alike of it; the species is the angler's call), or
@@ -283,6 +296,22 @@ class CatchPin(Base):
     )
     likes: Mapped[list[PinLike]] = relationship(cascade="all, delete-orphan")
     comments: Mapped[list[PinComment]] = relationship(back_populates="pin", cascade="all, delete-orphan")
+    gear: Mapped[list[CatchGear]] = relationship(cascade="all, delete-orphan", order_by="CatchGear.position")
+
+
+class CatchGear(Base):
+    """One item of the /gear list (app/knowledge/gear.py) a catch was made
+    with (ADR 0056). A row per item, so totals are a GROUP BY: which gear
+    caught which fish. Totals leave out people with `User.counts_gear`
+    off and never carry the spot or the angler."""
+
+    __tablename__ = "catch_gear"
+    __table_args__ = (UniqueConstraint("pin_id", "item_id", name="uq_catch_gear_pin_item"), _NO_ID_REUSE)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    pin_id: Mapped[int] = mapped_column(ForeignKey("catch_pins.id", ondelete="CASCADE"), index=True)
+    item_id: Mapped[str] = mapped_column(String(40), index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class PinPhoto(Base):

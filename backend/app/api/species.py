@@ -7,7 +7,7 @@ from dataclasses import asdict
 from fastapi import APIRouter, HTTPException
 
 from app.knowledge import angling_qa
-from app.knowledge.translations import Translator
+from app.knowledge.translations import OTHER_LANGUAGES, Translator, table
 from app.knowledge.angling_handbook import CATEGORIES, TOPICS
 from app.knowledge.species_guides import (
     GENERAL_SUMMARIES,
@@ -73,6 +73,7 @@ def to_out(guide: SpeciesGuide, lang: str = "en") -> SpeciesGuideOut:
                 line=t.text(f"setups#{i}.line", s.line),
                 terminal=t.text(f"setups#{i}.terminal", s.terminal),
                 sources=_sources(s.source_ids),
+                rig_topic=s.rig_topic,
             )
             for i, s in enumerate(guide.setups)
         ],
@@ -132,24 +133,31 @@ def list_handbook(lang: str = "en") -> list[HandbookTopicOut]:
 
 @router.get("/questions", response_model=list[QuestionOut])
 def list_questions(lang: str = "en") -> list[QuestionOut]:
-    """In page order, in Chinese for `lang=zh` and in English otherwise (the
-    library has only those two)."""
+    """In page order, in `lang`: Chinese from the library's own fields,
+    Spanish, Japanese and Korean from translations/<lang>_qa.json (since
+    2026-11-16), English otherwise. An item missing any of its three parts
+    in a language comes back whole in English, and `lang` says which."""
     zh = lang == "zh"
+    words = table("qa", lang) if lang in OTHER_LANGUAGES else {}
     order = {c: i for i, c in enumerate(angling_qa.CATEGORIES)}
     ranked = sorted(enumerate(angling_qa.ITEMS), key=lambda pair: (order[pair[1].category], pair[0]))
-    return [
-        QuestionOut(
-            id=i.id,
-            category=i.category,
-            category_label=angling_qa.CATEGORIES[i.category]["zh" if zh else "en"],
-            question=i.question_zh if zh else i.question,
-            short=i.short_zh if zh else i.short,
-            body=i.body_zh if zh else i.body,
-            basis=i.basis,
-            sources=_unique_sources(i.source_ids),
+
+    def out(i: angling_qa.QaItem) -> QuestionOut:
+        label = angling_qa.CATEGORIES[i.category]["zh" if zh else "en"]
+        label = words.get(f"categories.{i.category}", label)
+        parts = [words.get(f"{i.id}.{f}") for f in ("question", "short", "body")]
+        if zh:
+            question, short, body, text_lang = i.question_zh, i.short_zh, i.body_zh, "zh"
+        elif all(parts):
+            (question, short, body), text_lang = parts, lang
+        else:
+            question, short, body, text_lang = i.question, i.short, i.body, "en"
+        return QuestionOut(
+            id=i.id, category=i.category, category_label=label, question=question, short=short, body=body,
+            basis=i.basis, sources=_unique_sources(i.source_ids), lang=text_lang,
         )
-        for _, i in ranked
-    ]
+
+    return [out(i) for _, i in ranked]
 
 
 @router.get("/questions/sources", response_model=list[GuideSourceOut])

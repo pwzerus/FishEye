@@ -58,6 +58,27 @@ def test_every_setup_names_whether_its_lure_or_bait():
             assert setup.method in {"lure", "bait", "either"}, (guide.common_name, setup.name)
 
 
+def test_a_setup_names_the_handbook_drawing_of_its_rig(client):
+    """A fish page links a setup to the handbook's drawing of its rig
+    (2026-11-16: "what is an egg sinker and how does it go on the line"),
+    read from the English, so it is the same in every language."""
+    from app.knowledge.angling_handbook import TOPICS
+    from app.knowledge.species_guides import RIG_TOPICS
+
+    topics = {t.id for t in TOPICS}
+    assert {topic for _, topic in RIG_TOPICS} <= topics
+    by_name = {(g.slug, s.name): s.rig_topic for g in GUIDES for s in g.setups}
+    assert by_name[("channel-catfish", "Lake bottom rig")] == "rig-bottom"
+    assert by_name[("largemouth-bass", "Texas-rigged worm")] == "rig-texas"
+    assert by_name[("walleye", "Slip bobber")] == "rig-slip-bobber"
+    # The name decides first: this one's end tackle also mentions a slip bobber.
+    assert by_name[("black-crappie", "Minnow under a bobber")] == "tackle-bobbers"
+    assert by_name[("bluegill", "Cane pole")] == "tackle-bobbers"
+    assert by_name[("rainbow-trout", "Small spinner")] is None
+    body = client.get("/api/species/guides/channel-catfish?lang=ja").json()
+    assert [s["rig_topic"] for s in body["setups"]] == ["rig-bottom", "rig-bottom"]
+
+
 def test_forage_fish_have_no_rod_setups_and_say_how_to_get_them():
     forage = [g for g in GUIDES if g.role == "forage"]
     assert {g.common_name for g in forage} == {"Gizzard Shad", "Threadfin Shad"}

@@ -24,10 +24,12 @@ export default async function QuestionsPage() {
   const all = await getT();
   const t = all.questionsPage;
   const locale = await getLocale();
-  // Chinese either way (the API writes Traditional from the Simplified), else English.
-  const chinese = locale === "zh" || locale === "zht";
-  const questions: LibraryQuestion[] = await listQuestions(chinese ? locale : "en").catch(() => []);
-  const lang = locale === "zht" ? "zh-Hant" : chinese ? "zh" : "en";
+  // Every language the library is written in (Traditional is made from the
+  // Simplified by the API); an answer not yet translated comes back English
+  // and says so in its `lang`.
+  const questions: LibraryQuestion[] = await listQuestions(locale).catch(() => []);
+  const translated = locale !== "en" && questions.length > 0 && questions.every((q) => q.lang && q.lang !== "en");
+  const lang = !translated ? "en" : locale === "zht" ? "zh-Hant" : locale;
 
   return (
     <PageTransition>
@@ -40,7 +42,7 @@ export default async function QuestionsPage() {
         </header>
 
         {questions.length === 0 && <div className="backend-error">{all.fish.loadError}</div>}
-        {questions.length > 0 && locale !== "en" && !chinese && <p className="hint">{t.englishOnly}</p>}
+        {questions.length > 0 && locale !== "en" && !translated && <p className="hint">{t.englishOnly}</p>}
 
         {questions.length > 0 && <QuestionLibrary questions={questions} lang={lang} />}
 

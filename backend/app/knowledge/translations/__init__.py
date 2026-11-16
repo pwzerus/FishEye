@@ -13,8 +13,13 @@ from functools import lru_cache
 from pathlib import Path
 
 HERE = Path(__file__).parent
-# Only these reach the file system: `lang` comes from the URL.
-LANGUAGES = ("zh",)
+# Only these reach the file system: `lang` comes from the URL. Spanish,
+# Japanese and Korean joined Chinese on 2026-11-16 (ADR 0058): the owner
+# found a Spanish page that was half English.
+LANGUAGES = ("zh", "es", "ja", "ko")
+# The languages beside Chinese, which keep their text in tables of their own
+# (Chinese also has fields of its own on passages and library items).
+OTHER_LANGUAGES = ("es", "ja", "ko")
 
 
 @lru_cache(maxsize=None)

@@ -60,6 +60,25 @@ _LOOK_LIKE_RE = re.compile(r"\blooks? like\b")
 # cooler, so say so in the query (docs/adr/0026).
 _SPOIL_RE = re.compile(r"\b(?:go(?:ing|es)?|went)\s+bad\b|\bspoil(?:ing|s|ed)?\b|\bstay\s+fresh\b|\brot(?:ting|s)?\b")
 _TABLE_RE = re.compile(r"\b(?:good|safe|ok|okay|fit)\s+to\s+eat\b|\beat(?:ing)?\s+(?:it|them|one)\b|\btable\s+fare\b")
+# "Why am I not catching anything", "no luck", "they aren't biting": the
+# handbook's "No bites, nothing caught? What to change", in its words
+# (2026-11-16: the English question found the kids' page, and the Spanish,
+# Japanese and Korean ones, which reach the search in English, found "Bites,
+# but nothing on the hook" first). A question that has bites and still
+# nothing ("bites but nothing on the hook") is that other topic, so a bite
+# named before a "but" leaves the question as it is.
+# "Can you not catch fish under 14 inches" is a rule, so "not catch" counts
+# only as "not catching"; up to two words may stand between ("isn't my kid
+# catching anything", "don't I catch any").
+_NOTHING = r"(?:anything|any\b|a\s+(?:thing|fish|bite|single)|fish\b|bites?\b)"
+_SKUNKED_RE = re.compile(
+    rf"\b(?:not|never|isn'?t|aren'?t|wasn'?t|weren'?t)\s+(?:\w+\s+){{0,2}}?(?:catching|getting)\s+{_NOTHING}"
+    rf"|\b(?:can'?t|cannot|couldn'?t|never)\s+(?:catch|get)\s+{_NOTHING}"
+    r"|\b(?:don'?t|didn'?t|haven'?t|hasn'?t)\s+(?:\w+\s+){0,2}?(?:catch|caught|get|got)\s+(?:anything|any\b|a\s+(?:thing|fish|bite|single))"
+    r"|\b(?:catch(?:ing)?|caught|got|getting)\s+nothing\b|\bnothing\s+caught\b|\bno\s+(?:luck|bites?)\b"
+    r"|\bskunked\b|\b(?:aren'?t|are\s+not|not|won'?t)\s+biting\b|\bwon'?t\s+bite\b"
+)
+_GOT_BITES_RE = re.compile(r"\bon the hook\b|\bbites?\b[^.?!]*\bbut\b")
 # "why" is not a stopword: "why use minnows for crappie" should find the
 # "Why these baits work" passage, whose title says so (docs/adr/0024).
 # "fish", "catch", "fishing", "texas", "best" appear in nearly every question
@@ -536,6 +555,12 @@ ZH_SPECIES_ALIASES: dict[str, tuple[str, ...]] = {
     "线鳍鲥": ("threadfin-shad",),
     "线鳍真鰶": ("threadfin-shad",),
     "鲥鱼": ("gizzard-shad", "threadfin-shad"),
+    # What the Chinese guides call shad (and the photo check's group, 2026-11-16).
+    "西鲱": ("gizzard-shad", "threadfin-shad"),
+    # Alewife and American shad have no guide, as in English; listed so the
+    # 西鲱 inside their names isn't read as gizzard or threadfin shad.
+    "灰西鲱": (),
+    "美洲西鲱": (),
     "虹鳟": ("rainbow-trout",),
     "鳟鱼": ("rainbow-trout", "brown-trout", "brook-trout"),
     "白梭吻鲈": ("walleye",),
@@ -840,7 +865,38 @@ def tokenize_query(text: str) -> list[str]:
     text = _QUERY_NOISE_RE.sub(" ", text.lower())
     text = _TABLE_RE.sub(lambda m: f" {m.group(0)} table cook ", text)
     text = _SPOIL_RE.sub(lambda m: f" {m.group(0)} fresh ice cooler keep ", text)
+    if not _GOT_BITES_RE.search(text):
+        text = _SKUNKED_RE.sub(lambda m: f" {m.group(0)} no bites nothing caught change move quiet ", text, count=1)
     return tokenize(_LOOK_LIKE_RE.sub(" recognise ", text))
+
+
+NOTHING_CAUGHT = f"{SHARED_SLUG}#trouble-no-bites"
+
+
+def asks_why_nothing_caught(question: str) -> bool:
+    """"Why am I not catching anything", "no luck", "they aren't biting"
+    (_SKUNKED_RE), with no bite named before a "but"."""
+    text = question.lower()
+    return bool(_SKUNKED_RE.search(text)) and not _GOT_BITES_RE.search(text)
+
+
+def nothing_caught_first(question: str, hits: list[ScoredPassage], passages: list[Passage]) -> list[ScoredPassage]:
+    """The handbook's "No bites, nothing caught? What to change" first for a
+    question that says so, whatever else matched. The words alone rank it
+    first, by a wide margin, but the embedding model's closeness for such a
+    question is the same within a hair for many passages (0.850 to 0.858,
+    the kids' page and life jackets among them), and in the hybrid a passage
+    near the top of both lists outranked it. With a fish named ("not catching
+    any bass"), that fish's passages follow."""
+    if not hits or not asks_why_nothing_caught(question):
+        return hits
+    found = next((h for h in hits if h.passage.id == NOTHING_CAUGHT), None)
+    if found is None:
+        passage = next((p for p in passages if p.id == NOTHING_CAUGHT), None)
+        if passage is None:
+            return hits
+        found = ScoredPassage(passage, 0.0)
+    return [found, *(h for h in hits if h is not found)]
 
 
 _COMPARE_RE = re.compile(r"\b(?:or|vs\.?|versus)\b|还是|区别|不同")
@@ -978,6 +1034,21 @@ def about_the_fish_by_rule(question: str, alias: str, name: AmbiguousName) -> bo
     if name.fish_by_default:
         return True
     return is_on_topic(rest) or bool(split_species(rest)[0])
+
+
+# A nickname beside a word for catching it is the fish, whatever the model
+# says: "why am I not catching any bass" read as closer to "turning the bass
+# up" than to the bass guides, and was turned away (2026-11-16).
+_CATCH_WORDS = frozenset(
+    "catch catches catching caught fishing fished angling lure lures bait baits hook hooks hooked rod rods reel reels biting".split()
+)
+
+
+def caught_as_fish(question: str, alias: str, name: AmbiguousName) -> bool:
+    """The nickname with a word for catching (_CATCH_WORDS) and none of its
+    everyday words ("bass guitar", "oil drum")."""
+    words = set(_TOKEN_RE.findall(_strip(question.lower(), alias)))
+    return bool(words & _CATCH_WORDS) and not words & name.everyday
 
 
 def resolve_species(
@@ -1186,7 +1257,7 @@ class BM25Retriever:
                 # the rainbow's own passages.
                 best = with_topic_fish(hits, topics, self.passages, 1)
                 routed_hits = (best + [h for h in routed_hits if h.passage.id != best[0].passage.id])[:k]
-            return routed_hits
+            return nothing_caught_first(question, routed_hits, self.passages)[:k]
 
         if topics:
             query = query_terms(question, question, ())
@@ -1195,7 +1266,9 @@ class BM25Retriever:
         if not is_on_topic(question) or names_unguided_fish(question):
             return []
         query = query_terms(question, question, ())
-        return self._rank(query, None)[:k] if query else []
+        if not query:
+            return []
+        return nothing_caught_first(question, self._rank(query, None), self.passages)[:k]
 
     def resolve(self, question: str) -> tuple[tuple[str, ...], str]:
         """Which fish the question is about. HybridRetriever overrides the

@@ -93,7 +93,7 @@ ITEMS: tuple[GearItem, ...] = (
         "rod-baitcasting", "Baitcasting rod", "rods-reels",
         "A rod with the reel on top and a trigger under the handle, made for heavier lures and "
         "line: bass with big baits, pike, catfish.",
-        "Learn on a spinning rod first; a baitcaster needs a practised thumb.",
+        "Learn on a spinning rod first; a baitcaster needs a practiced thumb.",
         "tackle-rods", _BASS + _CAT + ("northern-pike", "striped-bass"),
     ),
     GearItem(
@@ -172,13 +172,15 @@ ITEMS: tuple[GearItem, ...] = (
         "Weights with a hole through them. The line slides through, so a fish can take the bait "
         "without feeling the weight: the basis of a bottom rig for catfish.",
         "Stop it with a swivel and tie 1 to 2 ft of leader below.",
-        "tackle-sinkers", _CAT + ("common-carp", "freshwater-drum"),
+        # The sliding sinker rig is this sinker (2026-11-16: that card showed a
+        # pyramid sinker, which ties on the end of the line instead).
+        "rig-bottom", _CAT + ("common-carp", "freshwater-drum"),
     ),
     GearItem(
         "sinker-bank", "Bank and pyramid sinkers", "terminal",
         "Heavier weights that tie on the end of a line to hold the bottom in current or wind.",
         "Use only enough weight to hold bottom.",
-        "rig-bottom", _CAT + ("freshwater-drum",),
+        "tackle-sinkers", _CAT + ("freshwater-drum",),
     ),
     GearItem(
         "bobber", "Bobbers (round floats)", "terminal",
@@ -328,7 +330,7 @@ ITEMS: tuple[GearItem, ...] = (
     ),
     GearItem(
         "bait-leech", "Leeches", "bait",
-        "Ribbon leeches, a favourite walleye and smallmouth bait in the north.",
+        "Ribbon leeches, a favorite walleye and smallmouth bait in the north.",
         "Hook through the sucker end so it swims.",
         "bait-worms", ("walleye", "smallmouth-bass", "yellow-perch"),
     ),
@@ -408,10 +410,10 @@ ITEMS: tuple[GearItem, ...] = (
         "technique-measure", (),
     ),
     GearItem(
-        "tool-sunglasses", "Polarised sunglasses", "tools",
+        "tool-sunglasses", "Polarized sunglasses", "tools",
         "Cut the glare off the water so you can see weeds, fish and drop-offs, and protect your "
         "eyes from hooks.",
-        "Grey or brown lenses suit most days.",
+        "Gray or brown lenses suit most days.",
         "cond-clarity", (),
     ),
     GearItem(

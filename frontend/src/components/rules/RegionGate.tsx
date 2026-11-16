@@ -117,12 +117,16 @@ export function baitRulesAnchor(code: string): string {
  */
 export function BaitRules({
   texasRules,
+  texasLang = null,
   texasUrl,
   suffix = "",
   className = "rules-card",
   picker = false,
 }: {
   texasRules: string[];
+  // The language `texasRules` came back in (the guide's text_lang), so the
+  // first card is tagged right before the state list replaces it.
+  texasLang?: string | null;
   texasUrl: string;
   suffix?: string;
   className?: string;
@@ -136,7 +140,7 @@ export function BaitRules({
   const withRules = list?.filter((j) => j.covered && j.bait_rules.length > 0) ?? null;
   type Card = Pick<Jurisdiction, "code" | "name" | "bait_rules"> &
     Partial<Pick<Jurisdiction, "bait_rules_sources" | "bait_rules_lang">>;
-  const loading: Card[] = [{ code: "TX", name: "Texas", bait_rules: texasRules }];
+  const loading: Card[] = [{ code: "TX", name: "Texas", bait_rules: texasRules, bait_rules_lang: texasLang }];
 
   let shown: Card[];
   if (state === null) shown = withRules ?? loading;

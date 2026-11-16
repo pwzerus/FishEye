@@ -9,6 +9,8 @@ import { Contents, Heading, sec, type SectionTitles, type TermsText } from "./sh
 // added. Read against Fishbrain's and onX's terms, Anthropic's Usage Policy
 // (AI disclosure; products open to minors) and Apple's minimum terms for an
 // app's own license. A draft until a lawyer has read it: see lib/legal.ts.
+// The license for what people post was widened like Fishbrain's on
+// 2026-11-15, partners and ads included (docs/adr/0057).
 //
 // The disclaimers, the limits on liability and the release are set apart in
 // bold boxes (.legal-conspicuous): Texas enforces a release of someone's own
@@ -62,7 +64,8 @@ function Body() {
             <strong>AI answers come from an AI, not a person.</strong> They can be wrong. Check anything that matters.
           </li>
           <li>
-            <strong>You own what you post.</strong> You let FishEye show it, and you&apos;re responsible for it.
+            <strong>You own what you post.</strong> FishEye may use it and share it with partners, but won&apos;t reveal
+            your fishing spots. You&apos;re responsible for what you post.
           </li>
           <li>
             <strong>FishEye Plus renews until you cancel</strong>, and you can cancel any time.
@@ -273,11 +276,17 @@ function Body() {
       <section id="your-content">
         <Heading id="your-content" titles={TITLES} />
         <p>
-          You keep ownership of the catches, photos, notes and comments you post. So that FishEye can run, you give
-          FishEye a worldwide, non-exclusive, royalty-free license to store, copy (for example as smaller versions of a
-          photo or in backups), and display them in FishEye: to everyone for a public catch or comment, and only to you
-          (and moderators) for a private one. The license ends when you delete the content or your account, apart from
-          copies in backups that are replaced over time.
+          You keep ownership of the catches, photos, notes and comments you post. You give FishEye and its affiliates a
+          worldwide, non-exclusive, perpetual, irrevocable, royalty-free, transferable and sublicensable license to use,
+          store, copy, modify, translate, display and publish them in any media, and to make derivative works from
+          them, including to run, promote and improve FishEye and to develop new products and services. In FishEye, a
+          public catch or comment is shown to everyone, and a private one only to you and moderators. FishEye may give
+          what you share publicly to its affiliates and partners.
+        </p>
+        <p>
+          By posting, you also let FishEye, its affiliates and partners use your display name and the catches you share
+          publicly (such as the fish you caught and the gear you used) in ads, offers and sponsored content, in FishEye
+          and elsewhere, without paying you.
         </p>
         <ul>
           <li>
@@ -346,7 +355,7 @@ function Body() {
             account doesn&apos;t cancel Plus bought through Apple or Google; cancel it there.
           </li>
           <li>
-            Sections {sec("your-content")} (the license for what you&apos;ve shared, until it is deleted) and{" "}
+            Sections {sec("your-content")} (the license for what you&apos;ve shared) and{" "}
             {sec("our-content")} to {sec("general")} still apply after your account is closed.
           </li>
         </ul>

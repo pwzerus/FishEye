@@ -81,6 +81,67 @@ def test_bait_rules_come_back_in_chinese(client):
     assert all(s["bait_rules_lang"] is None for s in client.get("/api/jurisdictions").json())
 
 
+# Spanish, Japanese and Korean (ADR 0058): the same tables, plus the question library.
+OTHER = ("es", "ja", "ko")
+SCRIPT = {
+    "es": re.compile(r"[a-záéíóúñü]", re.I),
+    "ja": re.compile(r"[぀-ヿ]"),  # kana: kanji alone could be Chinese
+    "ko": re.compile(r"[가-힣]"),
+}
+
+
+def _qa() -> dict[str, str]:
+    from app.knowledge import angling_qa
+
+    out = {f"categories.{c}": v["en"] for c, v in angling_qa.CATEGORIES.items()}
+    for item in angling_qa.ITEMS:
+        for part in ("question", "short", "body"):
+            out[f"{item.id}.{part}"] = getattr(item, part)
+    return out
+
+
+@pytest.mark.parametrize("lang", OTHER)
+@pytest.mark.parametrize("name, english", [*TABLES, ("qa", _qa)])
+def test_every_sentence_has_its_spanish_japanese_and_korean(name, english, lang):
+    assert set(table(name, lang)) == set(english())
+
+
+@pytest.mark.parametrize("lang", OTHER)
+@pytest.mark.parametrize("name, english", [*TABLES, ("qa", _qa)])
+def test_other_languages_keep_their_numbers_and_are_not_english(name, english, lang):
+    source = english()
+    for key, text in table(name, lang).items():
+        # A short Japanese label can be kanji alone (竿, a rod).
+        assert SCRIPT[lang].search(text) or (lang == "ja" and len(text) <= 4 and CJK.search(text)), (key, text)
+        lost = set(NUMBER.findall(source[key])) - set(NUMBER.findall(text))
+        assert not lost, (key, lost)
+        # A long sentence left in English would read as a half translation.
+        assert len(source[key]) < 40 or text != source[key], key
+
+
+@pytest.mark.parametrize("lang", OTHER)
+def test_every_guide_is_fully_translated_in_other_languages(lang):
+    assert [g.slug for g in GUIDES if to_out(g, lang).text_lang != lang] == []
+
+
+@pytest.mark.parametrize("lang", OTHER)
+def test_every_passage_ask_can_quote_has_its_other_languages(lang):
+    # Only the text: a guide section's title is the page's own label, in Chinese too.
+    assert [p.id for p in build_passages() if not p.text_in(lang)] == []
+
+
+@pytest.mark.parametrize("lang", OTHER)
+def test_every_page_of_long_text_comes_back_in_other_languages(client, lang):
+    items = client.get("/api/gear", params={"lang": lang}).json()["items"]
+    assert items and all(i["text_lang"] == lang for i in items)
+    topics = client.get("/api/species/handbook", params={"lang": lang}).json()
+    assert topics and all(t["body_lang"] == lang for t in topics)
+    states = [s for s in client.get("/api/jurisdictions", params={"lang": lang}).json() if s["bait_rules"]]
+    assert states and all(s["bait_rules_lang"] == lang for s in states)
+    questions = client.get("/api/species/questions", params={"lang": lang}).json()
+    assert questions and all(q["lang"] == lang and SCRIPT[lang].search(q["question"]) for q in questions)
+
+
 @pytest.mark.parametrize("lang", ["en", "fr", "../../etc/passwd", ""])
 def test_a_language_without_a_table_stays_english(client, lang):
     assert table("gear", lang) == {}

@@ -9,7 +9,7 @@ import { makeUser, renderApp } from "@/test-utils";
 vi.mock("next/navigation", async () => (await import("@/test-utils")).navigationMock());
 vi.mock("@/lib/api/session", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api/session")>("@/lib/api/session");
-  return { ...actual, getMe: vi.fn(), getPinOptions: vi.fn(), createPin: vi.fn(), listPins: vi.fn(), listPinPlaces: vi.fn(), pinWhere: vi.fn(), adminSetPinStatus: vi.fn(), adminPurgePin: vi.fn(), identifyFish: vi.fn(), getPin: vi.fn() };
+  return { ...actual, getMe: vi.fn(), getPinOptions: vi.fn(), createPin: vi.fn(), updatePin: vi.fn(), listPins: vi.fn(), listPinPlaces: vi.fn(), pinWhere: vi.fn(), adminSetPinStatus: vi.fn(), adminPurgePin: vi.fn(), identifyFish: vi.fn(), getPin: vi.fn() };
 });
 const session = await import("@/lib/api/session");
 const { PhotoPicker } = await import("./PhotoPicker");
@@ -26,6 +26,18 @@ const OPTIONS = {
   report_reasons: [{ id: "spam", label: "Spam or advertising" }],
   max_photos: 4,
   max_photo_mb: 10,
+  gear: [
+    { id: "rod-spinning", label: "Spinning rod", category: "rods-reels" },
+    { id: "lure-soft-worm", label: "Soft plastic worms", category: "lures" },
+    { id: "bait-nightcrawler", label: "Nightcrawlers and worms", category: "bait" },
+  ],
+  gear_categories: [
+    { id: "rods-reels", label: "Rods and reels" },
+    { id: "lures", label: "Lures" },
+    { id: "bait", label: "Live and natural bait" },
+  ],
+  // Fewer than the server's 6, to reach the cap in a test.
+  max_gear: 2,
 };
 
 function pin(overrides: Partial<PinSummary> = {}): PinSummary {
@@ -231,9 +243,12 @@ describe("PinForm", () => {
     renderApp(<PinForm point={{ latitude: 32.8, longitude: -95.6 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
     await screen.findByRole("option", { name: "Bluegill" });
     expect(screen.getByRole("checkbox", { name: /Show other anglers the exact spot/ })).not.toBeChecked();
+    // The promise stands beside the choice, public or private.
+    expect(screen.getByText(/never sells your spots/)).toBeInTheDocument();
     // A private catch has no one to share the spot with.
     fireEvent.click(screen.getByRole("radio", { name: /Only me/ }));
     expect(screen.queryByRole("checkbox", { name: /exact spot/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/never sells your spots/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("radio", { name: /Public/ }));
     fireEvent.click(screen.getByRole("checkbox", { name: /Show other anglers the exact spot/ }));
@@ -241,6 +256,31 @@ describe("PinForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Share catch" }));
     await waitFor(() =>
       expect(vi.mocked(session.createPin).mock.calls[0][0]).toMatchObject({ visibility: "public", share_exact: true }),
+    );
+  });
+
+  it("lists the bait and gear it was caught with, and anything else in a few words", async () => {
+    const created = { ...pin({ is_mine: true }), note: null, photos: [], can_edit: true, can_report: false, reported_by_me: false };
+    vi.mocked(session.createPin).mockResolvedValue(created);
+    renderApp(<PinForm point={{ latitude: 32.8, longitude: -95.6 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    await screen.findByRole("option", { name: "Soft plastic worms" });
+    // What FishEye does with gear is in the privacy policy, not under the
+    // field (backend ADR 0056).
+    expect(screen.queryByText(/anonymous totals/)).not.toBeInTheDocument();
+    const add = screen.getByRole("combobox", { name: "Add bait or gear…" });
+    fireEvent.change(add, { target: { value: "lure-soft-worm" } });
+    // Picked once, it leaves the list and shows as a chip that can come off.
+    expect(screen.queryByRole("option", { name: "Soft plastic worms" })).not.toBeInTheDocument();
+    fireEvent.change(add, { target: { value: "rod-spinning" } });
+    expect(screen.getByRole("option", { name: "Up to 2 items" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Nightcrawlers and worms" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Remove Spinning rod" }));
+    fireEvent.change(add, { target: { value: "__other" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Other gear" }), { target: { value: " Topwater frog " } });
+    fireEvent.change(screen.getByPlaceholderText("e.g. Rocks by the boat ramp"), { target: { value: "Creek mouth" } });
+    fireEvent.click(screen.getByRole("button", { name: "Share catch" }));
+    await waitFor(() =>
+      expect(vi.mocked(session.createPin).mock.calls[0][0]).toMatchObject({ gear: ["lure-soft-worm"], gear_other: "Topwater frog" }),
     );
   });
 
@@ -328,6 +368,32 @@ describe("PinDetailView", () => {
     expect(await screen.findByText("32.8000, -95.6000")).toBeInTheDocument();
     expect(screen.getByText("Others see")).toBeInTheDocument();
     expect(screen.getByText("Somewhere in Wood County, TX")).toBeInTheDocument();
+  });
+
+  it("names the bait and gear, and lets the owner change them", async () => {
+    const detail = {
+      ...pin({ is_mine: true }),
+      note: null, photos: [], can_edit: true, can_report: false, reported_by_me: false,
+      gear: [
+        { id: "lure-soft-worm", label: "Soft plastic worms" },
+        { id: "rod-spinning", label: "Spinning rod" },
+      ],
+      gear_other: "Topwater frog",
+    };
+    vi.mocked(session.getPin).mockResolvedValue(detail);
+    vi.mocked(session.updatePin).mockResolvedValue({ ...detail, gear: [detail.gear[0]], gear_other: null });
+    renderApp(<PinDetailView pinId={7} />);
+    expect(await screen.findByText("Soft plastic worms, Spinning rod, Topwater frog")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Remove Spinning rod" }));
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Other gear" }), { target: { value: "" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(session.updatePin).toHaveBeenCalledWith(7, expect.objectContaining({ gear: ["lure-soft-worm"], gear_other: "" })),
+    );
+    expect(await screen.findByText("Soft plastic worms")).toBeInTheDocument();
   });
 
   it("lets the owner delete, but not edit, a catch a moderator hid", async () => {

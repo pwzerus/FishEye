@@ -62,6 +62,7 @@ def test_a_display_name_with_a_slur_is_refused(make_client):
         ({"title": "Caught by a k i k e s"}, "The title includes a word FishEye doesn't allow."),
         ({"note": "Some 黑鬼 was fishing here"}, "The notes include a word FishEye doesn't allow."),
         ({"species_other": "spic fish"}, "The fish's name includes a word FishEye doesn't allow."),
+        ({"gear_other": "kikes jig"}, "The gear includes a word FishEye doesn't allow."),
     ],
 )
 def test_a_catch_with_a_slur_is_refused_in_the_readers_language(make_client, fields, message):

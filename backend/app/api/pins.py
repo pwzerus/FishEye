@@ -34,6 +34,7 @@ from app.schemas.pins import (
     FishVerdictOut,
     PinAuthorOut,
     PinDetailOut,
+    PinGearOut,
     PinLakeOut,
     PinOptionsOut,
     PinPhotoOut,
@@ -48,6 +49,7 @@ from app.schemas.pins import (
     WhereOut,
     WhereWaterOut,
 )
+from app.knowledge.gear import ITEM_BY_ID
 from app.knowledge.jurisdictions import STATE_NAMES
 from app.services import alerts, audit, counties, email_verification, fish_id, social, water
 from app.services import pins as svc
@@ -176,6 +178,9 @@ def detail_out(db: Session, pin: CatchPin, user: User | None) -> PinDetailOut:
     return PinDetailOut(
         **summary_fields(pin, user, waters_for(db, [pin]), social.counts(db, [pin.id], user)[pin.id]),
         note=pin.note,
+        # An item since dropped from the /gear list isn't shown.
+        gear=[PinGearOut(id=g.item_id, label=svc.GEAR_LABELS[g.item_id]) for g in pin.gear if g.item_id in svc.GEAR_LABELS],
+        gear_other=pin.gear_other,
         photos=[
             PinPhotoOut(id=p.id, url=_media_url(p), thumb_url=_media_url(p, thumb=True), width=p.width, height=p.height)
             for p in pin.photos
@@ -232,6 +237,9 @@ def pin_options() -> PinOptionsOut:
         report_reasons=[{"id": k, "label": v} for k, v in svc.REPORT_REASONS.items()],
         max_photos=s.max_photos_per_pin,
         max_photo_mb=s.max_photo_bytes // (1024 * 1024),
+        gear=[{"id": i, "label": label, "category": ITEM_BY_ID[i].category} for i, label in svc.GEAR_LABELS.items()],
+        gear_categories=[{"id": k, "label": v} for k, v in svc.GEAR_CATEGORIES.items()],
+        max_gear=svc.MAX_GEAR,
     )
 
 
@@ -366,6 +374,9 @@ def create_pin(
     caught_on: date | None = Form(default=None),
     visibility: str = Form(default=VISIBILITY_PUBLIC),
     share_exact: bool = Form(default=False),
+    # /gear items, one form field each (ADR 0056), and anything else.
+    gear: list[str] | None = Form(default=None),
+    gear_other: str | None = Form(default=None, max_length=120),
     photos: list[UploadFile] | None = File(default=None),
     user: User = Depends(require_user),
     db: Session = Depends(get_db),
@@ -384,6 +395,8 @@ def create_pin(
             caught_on=caught_on,
             visibility=visibility,
             share_exact=share_exact,
+            gear=gear,
+            gear_other=gear_other,
         )
         pin = svc.create_pin(db, user, fields, uploads, get_store())
     except PinError as exc:
@@ -441,6 +454,8 @@ def update_pin(
             else (payload.caught_on if payload.caught_on is not None else pin.caught_on),
             visibility=payload.visibility or pin.visibility,
             share_exact=pin.share_exact if payload.share_exact is None else payload.share_exact,
+            gear=[g.item_id for g in pin.gear] if payload.gear is None else payload.gear,
+            gear_other=pin.gear_other if payload.gear_other is None else payload.gear_other,
         )
     except PinError as exc:
         _raise(exc)
@@ -454,6 +469,8 @@ def update_pin(
     pin.title, pin.note = fields.title, fields.note
     pin.species_slug, pin.species_other = fields.species_slug, fields.species_other
     pin.caught_on, pin.visibility = fields.caught_on, fields.visibility
+    svc.set_gear(pin, fields.gear)
+    pin.gear_other = fields.gear_other
     if payload.latitude is not None and payload.longitude is not None:
         try:
             svc.move_pin(db, pin, payload.latitude, payload.longitude)
