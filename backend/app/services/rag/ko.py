@@ -52,10 +52,10 @@ GLOSSARY: dict[str, str] = {
     "수온약층": "thermocline layers",
     "옆줄": "lateral line vibration",
     "후각": "smell scent",
-    "알": "eggs spawn sac",
+    "연어알": "salmon eggs spawn sac", "연어 알": "salmon eggs spawn sac",
     "계류": "stream river",
     # not fishing, though they contain a fishing word
-    "찌개": "", "방법": "", "하루 중": "time of day", "시간대": "time of day", "몇 시": "what time",
+    "찌개": "", "방법": "", "하루 중": "time of day", "시간대": "time of day", "몇 시": "time of day",
     "하루": "day", "시간": "time", "추천": "best",
     # fish
     "큰입배스": "largemouth bass", "큰입우럭": "largemouth bass", "라지마우스": "largemouth bass",
@@ -86,7 +86,7 @@ GLOSSARY: dict[str, str] = {
     "밀웜": "mealworm", "왁스웜": "wax worm", "귀뚜라미": "cricket", "메뚜기": "grasshopper", "가재": "crayfish",
     "새우": "shrimp", "닭 간": "chicken liver", "닭간": "chicken liver", "치즈": "cheese", "옥수수": "corn",
     "소시지": "hot dog", "핫도그": "hot dog", "토막": "cut bait", "미노우": "minnow minnows",
-    "작은 물고기": "minnow minnows", "피라미": "minnow",
+    "작은 물고기": "small fish", "피라미": "minnow",
     # Added 2026-11-16, from asking Ask the same 30 questions in six languages:
     # rigs by name, the parts of a rig, a fish where it is, a line that tangles.
     "와키 리그": "wacky rig", "와키리그": "wacky rig", "와키": "wacky rig", "텍사스 리그": "texas rig",
@@ -101,8 +101,45 @@ GLOSSARY: dict[str, str] = {
     # What a beginner asks with (round 2 of the six-language check).
     "입질은 오는데": "bites but nothing on the hook", "입질이 오는데": "bites but nothing on the hook",
     "입질": "bite bites", "잡혀": "catch", "안 잡": "no bites nothing caught what to change", "하나도": "",
-    "필레": "fillet", "가시": "spines", "안 찔리게": "without getting stung hold", "안 찔리도록": "without getting stung hold", "찔리": "stung", "찔려": "stung", "살려": "keep alive",
+    "필레": "fillet", "가시": "spines", "안 찔리게": "without getting stung hold", "안 찔리도록": "without getting stung hold",
+    "찔리": "stung", "찔려": "stung", "살려": "keep alive",
     "집에서": "home", "먹어도": "eat safe", "안전": "safe",
+    # Other ways of saying the same things (synonym check, 2026-11-16).
+    "끼어요": "snag stuck", "끼었": "snag stuck",
+    "낚시 포인트": "spot points cover", "낚시 장비": "fishing gear tackle what to buy",
+    "캐스팅 하는 법": "how cast casting rod", "캐스팅하는 법": "how cast casting rod", "캐스팅 요령": "how cast casting rod",
+    "캐스팅 방법": "how cast casting rod", "작은 물고기 미끼": "minnow minnows live bait",
+    "미끼용 작은 물고기": "minnow minnows live bait", "못 낚": "no bites nothing caught what to change", "낚았": "catch",
+    "냉장고": "refrigerator", "며칠": "how many days", "껍질 벗기": "skin", "걸리면": "hooked playing landing",
+    "쑥 들어가": "bobber goes under bite", "파운드": "pound test", "다치": "injury handling", "냄새": "smell spoiled fresh",
+    "바로": "when",
+    "상한 생선": "spoiled fish", "상한 물고기": "spoiled fish", "물이 흐릴": "muddy water",
+    "안 물려": "no bites nothing caught what to change", "안 물었": "no bites nothing caught what to change",
+    "멀리 던지": "cast farther", "멀리 캐스팅": "cast farther",
+    "손이 찔렸": "hook in finger injury", "꿰는": "how to hook", "끼우는": "how to hook", "포인트": "spot",
+    "입질 온 거": "tell bite when to set the hook", "입질인지": "tell bite when to set the hook",
+    "낚싯줄 몇 호": "line pound test mono braid fluorocarbon", "줄 몇 호": "line pound test mono braid fluorocarbon",
+    "한 마리도 못": "no bites nothing caught what to change", "못 잡": "no bites nothing caught what to change",
+    "꽝": "skunked no bites nothing caught what to change", "안 물어": "no bites nothing caught what to change",
+    "입질이 없": "no bites nothing caught what to change",
+    "입질이 전혀 없": "no bites nothing caught what to change", "입질이 하나도 없": "no bites nothing caught what to change",
+    "입질 없": "no bites nothing caught what to change", "입질이 안": "no bites nothing caught what to change",
+    "미끼만": "bait stolen bites but nothing on the hook", "뜯겨": "stolen", "뜯어": "stolen",
+    "챔질하면 빠져": "set hook bites but nothing on the hook", "챔질": "set hook", "빠져요": "come off",
+    "밑걸림": "snag snags stuck bottom hook", "바닥에 걸려": "snag snags stuck bottom", "바닥에 걸렸": "snag snags stuck bottom",
+    "꼬여": "line twist", "꼬이": "line twist", "꼬임": "line twist", "꼬였": "line twist",
+    "놓아줄": "catch and release", "풀어주": "catch and release", "풀어줄": "catch and release",
+    "신선": "fresh keep cold", "상하지": "spoiled fresh keep cold", "상했": "spoiled fresh refrigerator",
+    "회 뜨": "fillet fish", "회를 뜨": "fillet fish", "비늘 벗기": "scale fish scaling", "비늘 제거": "scale fish scaling",
+    "손가락": "finger", "바늘이 박혔": "hook in finger injury", "바늘에 찔": "hook in finger injury",
+    "바늘이 손": "hook in finger injury", "장비": "",
+    "추 무게": "sinker weight", "봉돌 무게": "sinker weight",
+    "몇 호": "size", "끌어올리": "playing landing fish net", "랜딩": "landing fish net", "큰 고기": "big fish",
+    "생선": "fish", "어떻게 들어": "how hold fish handling", "드는 법": "how hold fish handling",
+    "천둥": "lightning thunderstorm", "번개": "lightning thunderstorm", "멀리": "far distance",
+    "한파": "cold front", "흐린 물": "muddy water", "물이 흐": "muddy water",
+    "에티켓": "manners etiquette", "매너": "manners etiquette",
+    "낚시터": "fishing",
     # lures and tackle
     "루어": "lure lures", "스피너베이트": "spinnerbait", "스피너": "spinner", "스푼": "spoon",
     "크랭크베이트": "crankbait", "크랭크": "crankbait", "바이브레이션": "lipless crankbait",
@@ -115,7 +152,7 @@ GLOSSARY: dict[str, str] = {
     "낚싯대": "rod", "낚시대": "rod", "로드": "rod",
     "스피닝 릴": "spinning reel", "스피닝릴": "spinning reel", "베이트 릴": "baitcasting reel",
     "베이트릴": "baitcasting reel", "베이트캐스팅": "baitcasting reel", "스핀캐스트": "spincast",
-    "캐치 앤 릴리스": "catch and release", "릴리스": "release", "릴": "reel",
+    "캐치 앤 릴리스": "catch and release", "릴리스": "release",
     "낚싯줄": "line", "낚시줄": "line", "원줄": "line", "라인": "line", "합사": "braid line",
     "플로로카본": "fluorocarbon", "카본": "fluorocarbon", "나일론": "monofilament",
     "좁쌀봉돌": "split shot", "봉돌": "sinker", "찌": "bobber", "도래": "swivel", "스위벨": "swivel",
@@ -129,7 +166,8 @@ GLOSSARY: dict[str, str] = {
     "낚는": "catch", "낚아": "catch", "낚으": "catch", "낚을": "catch",
     "잡는": "catch", "잡아": "catch", "잡히": "catch", "잡으": "catch", "잡을": "catch", "잡았": "catch",
     "캐스팅": "cast", "던지": "cast", "던져": "cast",
-    "포 뜨기": "fillet", "포뜨기": "fillet", "포를 뜨": "fillet", "손질": "clean", "껍질": "skin", "비늘": "scale",
+    "포 뜨기": "fillet", "포뜨기": "fillet", "포를 뜨": "fillet", "손질": "clean fish fillet", "껍질": "skin",
+    "비늘": "scale fish scaling",
     "요리": "cook", "조리": "cook", "튀기": "fry", "튀김": "fry", "냉동": "freeze", "얼리": "freeze",
     "방생": "catch and release", "놓아주": "catch and release", "가져가": "keep", "가져갈": "keep", "보관": "keep",
     "피 빼기": "bleed", "피빼기": "bleed", "피를 빼": "bleed", "길이": "measure", "재는": "measure",
@@ -142,7 +180,7 @@ GLOSSARY: dict[str, str] = {
     "물가": "bank shore", "연안": "bank shore", "선착장": "dock pier", "잔교": "dock pier",
     "저수지": "reservoir", "호수": "lake", "강가": "river bank", "강에서": "in river", "강에": "river",
     "하천": "river", "개울": "creek", "계곡": "creek", "연못": "pond",
-    "밤낚시": "night", "야간": "night", "밤": "night", "새벽": "dawn morning", "아침": "morning",
+    "밤낚시": "night fishing", "야간": "night", "밤": "night", "새벽": "dawn morning", "아침": "morning",
     "해 질 녘": "dusk evening", "해질녘": "dusk evening", "저녁": "evening",
     "겨울": "winter", "여름": "summer", "가을": "fall", "봄": "spring", "바람": "wind",
     "비 오는": "rain", "비가": "rain", "전선": "front", "흙탕물": "muddy water", "탁한": "muddy water",
@@ -166,6 +204,17 @@ for _code, _name in STATE_NAMES.items():
 _PHRASES = sorted(GLOSSARY.items(), key=lambda kv: -len(kv[0]))
 _NOT_ENGLISH = re.compile(r"[^a-z0-9 ]+")
 _BARE_LINE = re.compile(r"(?<![가-힣])줄(?=[은는을를이가로에도]|[^가-힣]|$)")
+# 알 (eggs) and 릴 (a reel) are inside everyday words: 알려 주세요, 알아요
+# (know), 흐릴 때 (when it's cloudy) were read as eggs and a reel (2026-11-16).
+# Only on their own, or with a particle, as 줄 above.
+_BARE_EGGS = re.compile(r"(?<![가-힣])알(?=[은는을를이로도]|[^가-힣]|$)")
+_BARE_REEL = re.compile(r"(?<![가-힣])릴(?=[은는을를이로에도]|[^가-힣]|$)")
+# 고기 is meat as often as fish (소고기, 고기 굽기 stay out: a word on its own
+# after a space), 추 a sinker only before a particle (춤추는 is dancing), and
+# 매 "tie" only on its own (헤매는 is getting lost).
+_BARE_FISH = re.compile(r"(?<![가-힣])고기(?=[가는를도]|[^가-힣]|$)")
+_BARE_SINKER = re.compile(r"(?<![가-힣])추(?=[는를가])")
+_BARE_TIE = re.compile(r"(?<![가-힣])매(?=요|는|나|야|면)")
 
 
 def is_korean(text: str) -> bool:
@@ -182,4 +231,9 @@ def to_english(text: str) -> str:
     # What is left of a 줄 after the longer words (낚싯줄, 목줄, 줄무늬농어) went
     # is a fishing line: 줄은, 줄을, 줄이, 줄로, 줄에, 줄도, or 줄 on its own.
     out = _BARE_LINE.sub(" line ", out)
+    out = _BARE_EGGS.sub(" eggs spawn sac ", out)
+    out = _BARE_REEL.sub(" reel ", out)
+    out = _BARE_FISH.sub(" fish ", out)
+    out = _BARE_SINKER.sub(" sinker weight ", out)
+    out = _BARE_TIE.sub(" tie ", out)
     return " ".join(_NOT_ENGLISH.sub(" ", out).split())

@@ -40,12 +40,14 @@ from app.services.rag.retriever import (
     BM25Retriever,
     ScoredPassage,
     arrange_routed,
+    asks_why_nothing_caught,
     caught_as_fish,
     explain_empty,
     is_howto,
     is_on_topic,
     nothing_caught_first,
     topic_fish_passages,
+    without_bait_netting,
     names_unguided_fish,
     query_terms,
     resolve_species,
@@ -265,6 +267,11 @@ class HybridRetriever:
             return not self.ways.means_fishing(zh_vec)
         if _GEAR_WORD.search(question):
             return False
+        # "I haven't caught a single fish all day", "Nothing is biting": an
+        # angler reporting a slow day, which the meaning comparison put
+        # nearer the decoys (2026-11-16).
+        if asks_why_nothing_caught(question):
+            return False
         return not self.en_gate.is_fishing(qvec)
 
     def _qvec(self, question: str) -> np.ndarray:
@@ -347,7 +354,7 @@ class HybridRetriever:
         hits = [ScoredPassage(self.passages[i], s) for i, s in fused.items()]
         hits.sort(key=lambda h: (-h.score, h.passage.id))
         if not routed:
-            return nothing_caught_first(question, hits, self.passages)[:k]
+            return nothing_caught_first(question, without_bait_netting(question, hits), self.passages)[:k]
         arranged = nothing_caught_first(question, arrange_routed(hits, query, k), self.passages)
         if asked and asked[0].closeness >= ROUTED_ASK_FIRST and (i := self._topic.get(asked[0].topic)) is not None:
             first = next(h for h in hits if h.passage is self.passages[i])

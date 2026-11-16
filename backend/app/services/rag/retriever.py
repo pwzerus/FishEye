@@ -77,6 +77,7 @@ _SKUNKED_RE = re.compile(
     r"|\b(?:don'?t|didn'?t|haven'?t|hasn'?t)\s+(?:\w+\s+){0,2}?(?:catch|caught|get|got)\s+(?:anything|any\b|a\s+(?:thing|fish|bite|single))"
     r"|\b(?:catch(?:ing)?|caught|got|getting)\s+nothing\b|\bnothing\s+caught\b|\bno\s+(?:luck|bites?)\b"
     r"|\bskunked\b|\b(?:aren'?t|are\s+not|not|won'?t)\s+biting\b|\bwon'?t\s+bite\b"
+    r"|\bnothing(?:'s|\s+is|\s+was|\s+has\s+been|\s+will\s+be)\s+(?:biting|bit)\b"
 )
 _GOT_BITES_RE = re.compile(r"\bon the hook\b|\bbites?\b[^.?!]*\bbut\b")
 # "why" is not a stopword: "why use minnows for crappie" should find the
@@ -287,6 +288,12 @@ FISHING_PHRASES = (
     "mussel fee",
     "golden mussel",
     "cold front",
+    # A slow day said without "fish" (2026-11-16): "Nothing is biting".
+    "nothing is biting",
+    "nothing's biting",
+    "nothing biting",
+    "aren't biting",
+    "not biting",
     "drop off",
     "drop-off",
     "cast farther",
@@ -896,7 +903,36 @@ def nothing_caught_first(question: str, hits: list[ScoredPassage], passages: lis
         if passage is None:
             return hits
         found = ScoredPassage(passage, 0.0)
-    return [found, *(h for h in hits if h is not found)]
+    ranked = [found, *(h for h in hits if h is not found)]
+    # A cause named with it ("no bites since the cold front", "nothing in
+    # muddy water") is the answer, and the general list follows (2026-11-16).
+    for pattern, pid in _NAMED_CAUSES:
+        if pattern.search(question.lower()):
+            cause = next((h for h in hits if h.passage.id == pid), None)
+            if cause is None:
+                passage = next((p for p in passages if p.id == pid), None)
+                cause = ScoredPassage(passage, 0.0) if passage else None
+            if cause is not None:
+                return [cause, *(h for h in ranked if h is not cause)]
+    return ranked
+
+
+_NAMED_CAUSES = (
+    (re.compile(r"\bfronts?\b(?! of)"), f"{SHARED_SLUG}#cond-fronts"),
+    (re.compile(r"\bmuddy\b|\bstained\b"), f"{SHARED_SLUG}#cond-clarity"),
+)
+
+
+# A bait fish's "How to get them" is about throwing a cast net. It shares
+# "cast" with every casting question, and "how do I cast farther" in other
+# words went there (2026-11-16); it answers only a question about netting.
+_NETTING_RE = re.compile(r"\b(?:nets?|netting|shad|bait ?fish|baitfish)\b|网")
+
+
+def without_bait_netting(question: str, hits: list[ScoredPassage]) -> list[ScoredPassage]:
+    if _NETTING_RE.search(question.lower()):
+        return hits
+    return [h for h in hits if h.passage.section != "how_to_get"]
 
 
 _COMPARE_RE = re.compile(r"\b(?:or|vs\.?|versus)\b|还是|区别|不同")

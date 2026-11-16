@@ -224,3 +224,109 @@ def test_korean_not_getting_stung_asks_how_to_hold(client):
     assert "hold" in ko.to_english("메기 가시에 안 찔리게 어떻게 잡아요?")
     body = client.post("/api/ask", json={"question": "메기 가시에 안 찔리게 어떻게 잡아요?"}).json()
     assert body["citations"][0]["id"] == "all-fish#safe-handling", body
+
+
+# Other words for the same question (synonym check, 2026-11-16): each of these
+# found the wrong topic, or none, before the glossaries learned its wording.
+@pytest.mark.parametrize(
+    ("question", "lang", "expected"),
+    [
+        ("老是空军怎么办", "zh", "trouble-no-bites"),
+        ("泄力调多紧合适", "zh", "technique-drag"),
+        ("要用多重的坠子", "zh", "tackle-sinkers"),
+        ("No he sacado ni uno hoy", "es", "trouble-no-bites"),
+        ("Pican pero se sueltan", "es", "trouble-stolen-bait"),
+        ("Siempre se me atora en las piedras", "es", "trouble-snags"),
+        ("¿Cómo devuelvo el pez al agua?", "es", "care-release"),
+        ("¿Cómo quito las escamas?", "es", "clean-scaling"),
+        ("¿Qué línea uso?", "es", "tackle-line"),
+        ("¿Puedo pescar si hay rayos?", "es", "safe-lightning"),
+        ("¿Qué uso si el agua está turbia?", "es", "cond-clarity"),
+        ("¿Cómo sé que picó?", "es", "technique-bite"),
+        ("一匹も釣れません", "ja", "trouble-no-bites"),
+        ("ボウズばかりです、どうすれば", "ja", "trouble-no-bites"),
+        ("エサだけ取られる", "ja", "trouble-stolen-bait"),
+        ("根掛かりしたらどうする", "ja", "trouble-snags"),
+        ("糸ヨレがひどい", "ja", "trouble-line-twist"),
+        ("ウロコの取り方", "ja", "clean-scaling"),
+        ("ドラグはどのくらい締める", "ja", "technique-drag"),
+        ("ラインは何号がいい", "ja", "tackle-line"),
+        ("雷の時に釣りしても大丈夫？", "ja", "safe-lightning"),
+        ("한 마리도 못 잡았어요", "ko", "trouble-no-bites"),
+        ("왜 고기가 안 물어요?", "ko", "trouble-no-bites"),
+        ("자꾸 미끼만 뜯겨요", "ko", "trouble-stolen-bait"),
+        ("밑걸림 나면 어떻게 해요?", "ko", "trouble-snags"),
+        ("낚싯줄이 자꾸 꼬여요", "ko", "trouble-line-twist"),
+        ("비늘 벗기는 법", "ko", "clean-scaling"),
+        ("추는 몇 호를 써야 해요?", "ko", "tackle-sinkers"),
+        ("물이 흐릴 때 뭐 써요?", "ko", "cond-clarity"),
+        ("입질 온 거 어떻게 알아요?", "ko", "technique-bite"),
+        ("I haven't caught a single fish all day", "en", "trouble-no-bites"),
+        ("Nothing is biting, what should I try?", "en", "trouble-no-bites"),
+    ],
+)
+def test_other_words_for_the_same_question_find_its_topic(client, question, lang, expected):
+    body = client.post("/api/ask", json={"question": question, "lang": lang}).json()
+    assert body["answer_source"] == "passages", body
+    assert body["citations"][0]["id"] == f"all-fish#{expected}", body
+
+
+def test_a_cause_named_with_no_bites_comes_first(client):
+    for question, lang in (("¿Pican después de un frente frío?", "es"), ("寒冷前線の後は釣れない？", "ja"),
+                           ("한파 오고 나서 입질이 없어요", "ko")):
+        body = client.post("/api/ask", json={"question": question, "lang": lang}).json()
+        assert body["citations"][0]["id"] == "all-fish#cond-fronts", (question, body)
+
+
+def test_korean_words_inside_everyday_words_are_left_alone():
+    # 알 (eggs) in 알려 주세요 and 알아요, 릴 (a reel) in 흐릴, 고기 (fish) in
+    # 소고기 (beef), 추 (a sinker) in 춤추는, 매 (tie) in 헤매는.
+    for said in ("알려 주세요", "알아요?", "날씨가 흐릴 때", "소고기 굽는 법", "춤추는 법", "길을 헤매는 이유"):
+        assert ko.to_english(said) == "", said
+    assert ko.to_english("물고기 알 미끼") == "fish eggs spawn sac bait"
+    assert ko.to_english("릴 추천") == "reel best"
+    assert ko.to_english("추는 몇 호를 써야 해요?").startswith("sinker weight")
+    assert ko.to_english("어떻게 매요?") == "how tie"
+    # A small fish to let go is not a bait minnow.
+    assert "minnow" not in ko.to_english("작은 물고기 풀어주는 방법")
+
+
+def test_other_meanings_stay_out():
+    assert "set hook" not in ja.to_english("ルアーとラインの組み合わせ方")
+    from app.services.rag import zh
+    assert "cold front" not in zh.with_english("钓鱼中暑怎么降温")
+    assert "cast farther" not in ko.to_english("멀리 가는 법")
+
+
+@pytest.mark.parametrize(
+    ("question", "lang"),
+    [
+        ("¿Dónde compro un equipo de fútbol?", "es"),
+        ("¿Cómo mantengo frescas las verduras?", "es"),
+        ("ドラマのキャストは誰？", "ja"),
+        ("道具箱の整理方法", "ja"),
+        ("ポイントカードの使い方", "ja"),
+        ("자동차 장비 추천", "ko"),
+        ("포인트 적립 방법", "ko"),
+        ("감기에 걸리면 어떻게 해요?", "ko"),
+    ],
+)
+def test_new_glossary_words_do_not_let_other_subjects_in(client, question, lang):
+    body = client.post("/api/ask", json={"question": question, "lang": lang}).json()
+    assert body["answer_source"] == "no_match", body
+
+
+def test_spanish_typed_without_accents_is_spanish():
+    for said in ("Me pican pero no pesco nada", "El hilo se hace rizos", "No he sacado ni uno hoy"):
+        assert es.is_spanish(said), said
+
+
+def test_the_cast_net_section_answers_only_netting():
+    from app.services.rag.retriever import ScoredPassage, default_retriever, without_bait_netting
+
+    passages = default_retriever().passages
+    net = next(p for p in passages if p.section == "how_to_get")
+    other = next(p for p in passages if p.id == "all-fish#cast-spinning")
+    hits = [ScoredPassage(net, 1.0), ScoredPassage(other, 0.5)]
+    assert [h.passage for h in without_bait_netting("how do I cast farther", hits)] == [other]
+    assert without_bait_netting("how do I throw a cast net for shad", hits) == hits

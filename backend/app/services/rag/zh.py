@@ -37,6 +37,8 @@ FISHING_TERMS = (
     # Added 2026-11-10: a tester's "蚯蚓怎么保存" and "怎么放生" were turned away.
     "蚯蚓", "放生", "咬铅", "穿心铅", "子弹铅", "钓点", "渔具", "中鱼", "中了鱼",
     "中暑", "量鱼", "飞钓",
+    # Added 2026-11-16 (synonym check): skunked, a drag, a sinker by their other names.
+    "空军了", "老是空军", "又空军", "总是空军", "泄力", "坠子",
     # Added 2026-11-11 with 繁體中文: what anglers in Taiwan call a reel and a
     # bobber (a question in Traditional reaches here in Simplified).
     "卷线器", "浮标",
@@ -242,6 +244,17 @@ GLOSSARY: dict[str, str] = {
     "不咬钩": "no bites nothing caught what to change",
     "没有口": "no bites nothing caught what to change",
     "一口都没有": "no bites nothing caught what to change",
+    # Other ways of saying the same things (synonym check, 2026-11-16).
+    "空军": "skunked no bites nothing caught what to change",
+    "不上鱼": "no bites nothing caught what to change",
+    "不开口": "no bites nothing caught what to change",
+    "拴钩": "knot improved clinch palomar", "系钩": "knot improved clinch palomar",
+    "养活": "keep alive", "收拾鱼": "clean fillet",
+    "泄力": "drag", "刹车": "drag",
+    "坠子": "sinker weight", "铅皮": "split shot sinker",
+    # 降温 on its own is also cooling off in the heat ("中暑怎么降温").
+    "冷空气": "cold front", "降温后": "cold front", "降温以后": "cold front", "突然降温": "cold front",
+    "大降温": "cold front", "浑浊": "muddy stained water clarity",
     "提竿": "set the hook bite",
     "刺鱼": "set the hook",
     "遛鱼": "playing landing fish drag",

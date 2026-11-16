@@ -141,8 +141,10 @@ GLOSSARY: dict[str, str] = {
     "enrede": "tangle", "enreda": "tangle", "enredos": "tangles", "enredan": "tangle",
     "pongo": "set", "poner": "set", "dia": "day", "debe": "should", "deberia": "should",
     # What a beginner asks with (round 2 of the six-language check).
-    "me pican pero no saco nada": "bites but nothing on the hook", "pican pero no saco nada": "bites but nothing on the hook",
-    "no saco nada": "no bites nothing caught what to change", "saco": "catch", "nada": "nothing", "hago mal": "doing wrong",
+    "me pican pero no saco nada": "bites but nothing on the hook",
+    "pican pero no saco nada": "bites but nothing on the hook",
+    "no saco nada": "no bites nothing caught what to change", "saco": "catch", "nada": "nothing",
+    "hago mal": "doing wrong",
     # The other verbs for catching nothing ("¿Por qué no pesco nada?" went to
     # bait minnows, "no atrapo nada" found nothing; live check 2026-11-16).
     **{f"pican pero no {verb} nada": "bites but nothing on the hook"
@@ -154,6 +156,49 @@ GLOSSARY: dict[str, str] = {
                     "consigo pescar", "consigo sacar", "logro pescar", "puedo pescar", "puedo sacar")},
     **{f"no {verb} ni uno": "no bites nothing caught what to change"
        for verb in ("saco", "pesco", "atrapo", "agarro", "he sacado", "he pescado")},
+    # Other ways of saying the same things (synonym check, 2026-11-16).
+    "no he pescado": "no bites nothing caught what to change",
+    "no he sacado": "no bites nothing caught what to change",
+    "no he atrapado": "no bites nothing caught what to change",
+    "no hemos pescado": "no bites nothing caught what to change", "ni un pez": "", "ni un pescado": "",
+    "lanza": "cast", "como lanzo": "how cast casting", "como se lanza": "how cast casting",
+    "como lanzar": "how cast casting", "equipo de pesca": "fishing gear tackle",
+    "equipo para pescar": "fishing gear tackle", "que equipo": "what gear tackle", "piques": "bites", "pique": "bite",
+    "nada de piques": "no bites nothing caught what to change", "todo el dia": "all day", "atasco": "snag stuck hook",
+    "regreso": "release", "regresar": "release", "devolver": "release", "vivo": "alive", "dias": "days",
+    "dura": "last keep", "refri": "refrigerator", "refrigerador": "refrigerator", "nevera": "refrigerator",
+    "picarme": "stung spines", "sin": "without", "tronar": "thunder lightning", "truena": "thunder lightning",
+    "huele": "smell spoiled", "olor": "smell spoiled", "clavar": "set hook", "espero": "wait",
+    "se caiga": "fall off stay on hook", "caiga": "fall off",
+    "lanzo mas lejos": "cast farther", "lanzar mas lejos": "cast farther", "lanzo lejos": "cast farther",
+    "lanzar lejos": "cast farther",
+    "a que hora": "time of day", "grosor de hilo": "line pound test mono braid fluorocarbon",
+    "grosor de linea": "line pound test mono braid fluorocarbon", "en el dedo": "in finger injury",
+    "en la mano": "in finger injury", "pongo la lombriz": "how to hook worm", "a casa": "take home cold",
+    "se que pico": "tell bite when to set the hook", "que pico": "tell bite when to set the hook",
+    "que linea uso": "what line mono braid fluorocarbon", "que linea": "what line mono braid fluorocarbon",
+    "que hilo": "what line mono braid fluorocarbon", "puedo": "can", "si": "if", "hay": "there is",
+    "se sueltan": "bites but nothing on the hook", "se zafan": "bites but nothing on the hook",
+    "no los engancho": "bites but nothing on the hook", "no se clavan": "bites but nothing on the hook",
+    "roban": "stolen", "engancho": "set hook", "enganchar": "set hook",
+    "se atora": "snag stuck hook", "atora": "snag stuck hook", "atascado": "snag stuck hook",
+    "atasca": "snag stuck hook", "se engancho en": "snag stuck", "rama": "branch", "piedras": "rocks",
+    "rizos": "twist", "se tuerce": "line twist", "tuerce": "twist", "ato": "tie",
+    "hace falta": "need", "devuelvo": "release", "libero": "release", "agua": "water",
+    "frescos": "fresh keep cold", "fresco": "fresh keep cold", "frescas": "fresh keep cold",
+    "fresca": "fresh keep cold",
+    "eche a perder": "spoiled fresh cold", "echa a perder": "spoiled fresh cold", "malo": "spoiled fresh refrigerator",
+    "saco filetes": "fillet fish", "filetes": "fillet fish", "quito": "remove", "escamas": "scale fish scaling",
+    "mano": "hand", "enterro": "hook in finger injury",
+    "comprar": "buy", "compro": "buy", "equipo": "", "empezar": "start beginner",
+    "mas": "", "pico": "bite", "picaron": "bite", "recojo": "playing landing fish", "grande": "big", "rompa": "break",
+    "grosor": "thickness pound test", "sostengo": "hold fish handling", "sostener": "hold fish handling",
+    "tormenta electrica": "lightning thunderstorm", "peligroso": "dangerous safe",
+    "lejos": "far distance", "bote": "boat", "lancha": "boat", "desde tierra": "bank shore",
+    "despues": "after", "turbia": "muddy stained water clarity", "hijos": "kids", "mis": "",
+    "encarno": "bait hook", "encarnar": "bait hook",
+    "cortesia": "manners etiquette", "etiqueta": "manners etiquette",
+    "mido": "measure", "congelo": "freeze", "jalo": "set hook", "jalar": "set hook",
     "primera salida": "first trip", "salida": "trip", "llevo": "bring", "llevar": "bring",
     "mantengo vivas": "keep alive", "mantengo vivos": "keep alive", "vivas": "alive", "vivos": "alive",
     "casa": "home", "libras": "pound lb", "seguro": "safe", "agarro": "hold", "agarrar": "hold",
@@ -281,9 +326,9 @@ GLOSSARY: dict[str, str] = {
     "otono": "fall",
     "viento": "wind",
     "lluvia": "rain",
-    "frente frio": "cold front",
+    "frente frio": "cold front fronts pressure",
     "frente": "front",
-    "agua turbia": "muddy water",
+    "agua turbia": "muddy stained water clarity",
     "agua clara": "clear water",
     "profundidad": "depth deep",
     "hondo": "deep",
@@ -330,7 +375,7 @@ GLOSSARY: dict[str, str] = {
     "en el fondo": "on the bottom",
     "fondo": "bottom",
     "trueno": "thunder",
-    "truenos": "thunder",
+    "truenos": "thunder lightning",
     "rayo": "lightning",
     "rayos": "lightning",
     "relampago": "lightning",
@@ -358,7 +403,7 @@ GLOSSARY: dict[str, str] = {
     "puntos negros": "black spot parasite",
     "manchas negras": "black spot parasite",
     "se me clavo": "hook stuck in skin",
-    "dedo": "finger",
+   
     "sembrada": "stocked",
     "sembradas": "stocked",
     "necesito": "need",
@@ -389,7 +434,8 @@ _SPANISH_WORDS = frozenset(
     "con el la los las del una uno es en mi por uso usar hay necesito puedo mejor bagre lobina mojarra "
     "trucha licencia lago rio orilla "
     # A question typed without accents ("Me pican pero no pesco nada").
-    "pero nada pican pica peces pez saco atrapo agarro porque hago".split()
+    "pero nada pican pica peces pez saco atrapo agarro porque hago hilo hace hoy sacado siempre linea carrete "
+    "cana boya plomo nudo pescado".split()
 )
 _SPANISH_CHARS = re.compile(r"[ñ¿¡]|[áéíóú]")
 _WORD_RE = re.compile(r"[a-z0-9']+")
