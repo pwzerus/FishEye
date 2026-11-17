@@ -151,11 +151,15 @@ async def limit_body_size(request: Request, call_next):  # type: ignore[no-untyp
 
 # On every API answer; the pages get theirs from frontend/next.config.ts.
 # The API is never meant to be framed or sniffed as anything but what it
-# says it is. HSTS only with HTTPS (a browser ignores it over HTTP anyway).
+# says it is. It answers with JSON and photos, never a page, so the CSP lets
+# nothing run: an answer opened on its own (a photo, say) can't be turned
+# into a page that does. HSTS only with HTTPS (a browser ignores it over
+# HTTP anyway).
 SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
 }
 if settings.frontend_origin.startswith("https://"):
     SECURITY_HEADERS["Strict-Transport-Security"] = "max-age=31536000"

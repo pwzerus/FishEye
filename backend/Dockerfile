@@ -35,4 +35,4 @@ USER fisheye
 EXPOSE 8000
 # Seed the three demo lakes (a no-op once any data exists), then serve.
 # Tables are created by the app's own startup; the seed creates them too.
-CMD ["sh", "-c", "python -m app.data_import.seed_tx_lakes && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "python -m app.data_import.seed_tx_lakes && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-server-header"]

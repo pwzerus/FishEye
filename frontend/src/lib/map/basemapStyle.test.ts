@@ -85,6 +85,14 @@ describe("styleAttribution", () => {
     expect(styleAttribution(style, "fallback")).toBe("A, B");
   });
 
+  it("lets through only text and https links, so a credit can't run script", () => {
+    const style = withSources({
+      a: { type: "vector", attribution: '<details open onload="1" ontoggle="alert(1)">x</details><img src=x onerror=alert(1)>' },
+      b: { type: "vector", attribution: '<a href="javascript:alert(1)">bad</a> <a href="https://ok.example/" onclick="alert(1)" target="_blank">&copy; OK</a> <script>alert(1)</script> 1 < 2 & 3' },
+    });
+    expect(styleAttribution(style, "fallback")).toBe('x, bad <a href="https://ok.example/">&copy; OK</a> alert(1) 1 &lt; 2 &amp; 3');
+  });
+
   it("falls back rather than showing no credit", () => {
     const style = withSources({ a: { type: "vector" }, b: { type: "vector", attribution: "  " } });
     expect(styleAttribution(style, "fallback")).toBe("fallback");

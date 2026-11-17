@@ -13,7 +13,8 @@ import { MAP_STYLE_URL, PLAIN_STYLE_URL, TILE_ATTRIBUTION, TILE_URL } from "@/li
 function hasWebGL(): boolean {
   try {
     const canvas = document.createElement("canvas");
-    return Boolean(canvas.getContext("webgl2") ?? canvas.getContext("webgl"));
+    // MapLibre 6 draws with WebGL2 only; without it the raster tiles are used.
+    return Boolean(canvas.getContext("webgl2"));
   } catch {
     return false;
   }
@@ -59,7 +60,13 @@ export function BaseMap({ satellite = false }: { satellite?: boolean }) {
     let cancelled = false;
 
     (async () => {
-      const bridge = await import("@maplibre/maplibre-gl-leaflet").catch(() => null);
+      const [bridge, maplibre] = await Promise.all([
+        import("@maplibre/maplibre-gl-leaflet").catch(() => null),
+        import("maplibre-gl").catch(() => null),
+      ]);
+      // MapLibre 6 looks for its worker beside its own file, which bundling
+      // moves; the worker is copied to public/ (scripts/copy-maplibre-worker.mjs).
+      maplibre?.setWorkerUrl(`/maplibre/maplibre-gl-worker.mjs?v=${maplibre.getVersion()}`);
       for (const url of stylesKey.split(" ")) {
         if (cancelled || !bridge) break;
         try {

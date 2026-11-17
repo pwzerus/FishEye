@@ -272,6 +272,8 @@ def test_photos_are_cached_privately_only(make_client):
     resp = c.get(url[url.index("/api/"):])
     assert resp.headers["cache-control"] == "private, max-age=600"
     assert resp.headers["x-content-type-options"] == "nosniff"
+    # A photo opened on its own can't run anything (2026-11-16).
+    assert resp.headers["content-security-policy"].startswith("default-src 'none'")
 
 
 # ------------------------------------------------------- request size caps

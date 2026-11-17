@@ -60,9 +60,43 @@ export function styleAttribution(style: StyleSpecification, fallback: string): s
   const seen = new Set<string>();
   for (const source of Object.values(style.sources ?? {})) {
     const text = (source as { attribution?: unknown }).attribution;
-    if (typeof text === "string" && text.trim()) seen.add(text.trim());
+    if (typeof text === "string" && safeCredit(text)) seen.add(safeCredit(text));
   }
-  return seen.size ? [...seen].join(", ") : fallback;
+  return seen.size ? [...seen].join(", ") : safeCredit(fallback);
+}
+
+const LINK = /<a\s[^>]*?href\s*=\s*(["'])(https:\/\/[^"'<>\s]+)\1[^>]*>([^<]*)<\/a>/gi;
+
+/** Text with every tag dropped and what's left escaped; entities such as
+ * `&copy;` are kept as they are. */
+function plain(text: string): string {
+  return text
+    .replace(/<[^>]*>/g, "")
+    .replace(/&(?!(?:[a-z]+|#\d+|#x[0-9a-f]+);)/gi, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/**
+ * A credit line safe to put in the page as HTML: plain text and
+ * `<a href="https://…">text</a>` links, nothing else.
+ *
+ * Needed because Leaflet writes the credit into the page as HTML without
+ * checking it, and part of it comes from another site (the style and its
+ * TileJSON). MapLibre 6.4 fixed a hole in its own cleaning of credits
+ * (GHSA-jrc7-96c5-q579, 2026-09); this keeps a credit from either site from
+ * running script in FishEye's pages whatever the libraries do.
+ */
+export function safeCredit(html: string): string {
+  const out: string[] = [];
+  let last = 0;
+  for (const m of html.matchAll(LINK)) {
+    out.push(plain(html.slice(last, m.index)), `<a href="${m[2].replace(/&(?!amp;)/g, "&amp;")}">${plain(m[3])}</a>`);
+    last = m.index + m[0].length;
+  }
+  out.push(plain(html.slice(last)));
+  return out.join("").replace(/\s+/g, " ").trim();
 }
 
 /**
