@@ -1,12 +1,14 @@
 import type { GearPhoto as Photo } from "@/lib/api/types";
+import { licenseName } from "@/lib/licenseName";
 import { sized } from "@/lib/photoSizes";
 
 /**
  * A gear photo, whole (object-fit: contain), with the credit its licence asks
- * for under it (backend app/knowledge/gear.py). Commons photos are hot-linked
- * as served, like the fish photos (ADR 0015); Flickr ones are in /gear-photos.
+ * for under it (backend app/knowledge/gear.py). All are in /gear-photos, with
+ * a 500px copy (since 2026-11-16; the Commons ones used to be hot-linked).
  */
-export function GearPhoto({ photo, alt, small = false }: { photo: Photo; alt: string; small?: boolean }) {
+export function GearPhoto({ photo, alt, small = false, publicDomain = "Public domain" }: { photo: Photo; alt: string; small?: boolean; publicDomain?: string }) {
+  const license = licenseName(photo.license, publicDomain);
   return (
     <figure className={`gear-photo${small ? " gear-photo-small" : ""}`}>
       <div className="gear-photo-frame">
@@ -18,10 +20,10 @@ export function GearPhoto({ photo, alt, small = false }: { photo: Photo; alt: st
         {photo.author} ·{" "}
         {photo.license_url ? (
           <a href={photo.license_url} target="_blank" rel="noreferrer">
-            {photo.license}
+            {license}
           </a>
         ) : (
-          photo.license
+          license
         )}{" "}
         ·{" "}
         <a href={photo.file_page} target="_blank" rel="noreferrer">

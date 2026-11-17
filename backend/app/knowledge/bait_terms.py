@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 
 from app.knowledge.angling_handbook import TOPICS
 from app.knowledge.species_guides import GUIDES
+from app.knowledge.translations import Translator
 
 
 @dataclass(frozen=True)
@@ -116,18 +117,34 @@ def _covered_by_longer(text: str, term: BaitTerm) -> str:
     return text
 
 
-def _sentence(topic_id: str, *starts: str) -> str | None:
-    for s in _TOPICS[topic_id].body:
+def _sentence(topic_id: str, *starts: str) -> int | None:
+    """Where the topic's sentence starting with one of `starts` is."""
+    for i, s in enumerate(_TOPICS[topic_id].body):
         if s.startswith(starts):
-            return s
+            return i
     return None
+
+
+# The label a card's "why" and "how" sentences start with ("Why they work:",
+# "How to hook a cricket:"). The card shows its own heading instead.
+_EN_LABEL = re.compile(r"^(?:Why[^:]*|How to [^:]*|When):\s*")
+# The same label in a translation: up to its colon, if that comes early.
+_TR_LABEL = re.compile(r"^[^:：]{1,24}[:：]\s*")
+
+
+def _unlabelled(english: str, text: str) -> str:
+    """`text` (the English or its translation) without the English's label."""
+    if not _EN_LABEL.match(english):
+        return text
+    rest = _EN_LABEL.sub("", text) if text is english else _TR_LABEL.sub("", text)
+    return rest[:1].upper() + rest[1:]
 
 
 @dataclass(frozen=True)
 class FishLink:
     slug: str
     name: str
-    why: str | None  # the guide's sentence on why this fish takes it
+    why: int | None  # which of the guide's `why_these_baits` says why this fish takes it
 
 
 def fish_for(term: BaitTerm) -> list[FishLink]:
@@ -140,26 +157,50 @@ def fish_for(term: BaitTerm) -> list[FishLink]:
         listed = " ".join((*g.live_baits, *g.lures, *(s.terminal for s in g.setups)))
         if not pattern.search(_covered_by_longer(listed, term)):
             continue
-        why = next((w for w in g.why_these_baits if pattern.search(_covered_by_longer(w, term))), None)
+        why = next((i for i, w in enumerate(g.why_these_baits) if pattern.search(_covered_by_longer(w, term))), None)
         out.append(FishLink(g.slug, g.common_name, why))
     return out
 
 
-def card(term: BaitTerm) -> dict:
+_GUIDES = {g.slug: g for g in GUIDES}
+
+
+def card(term: BaitTerm, lang: str = "en") -> dict:
+    """A term's card, its sentences in `lang` (zh, es, ja, ko) where the
+    handbook and guide tables have them. `lang` is the language they came
+    back in: None when any stayed English."""
     topic = _TOPICS[term.topic]
-    return {
+    words = Translator("handbook", lang)
+    guides = Translator("guides", lang)
+
+    def body(i: int | None) -> str | None:
+        if i is None:
+            return None
+        english = topic.body[i]
+        return _unlabelled(english, words.text(f"{topic.id}#{i}", english))
+
+    def fish_why(f: FishLink) -> str | None:
+        if f.why is None:
+            return None
+        english = _GUIDES[f.slug].why_these_baits[f.why]
+        return guides.text(f"{f.slug}.why_these_baits#{f.why}", english)
+
+    out = {
         "id": term.id,
         "topic": topic.id,
-        "title": topic.title,
-        "what": topic.body[0],
-        "why": _sentence(topic.id, "Why"),
-        "how": _sentence(topic.id, "How to", "Fish them", "When"),
+        "title": topic.title,  # the page names it from names.ts
+        "what": body(0),
+        "why": body(_sentence(topic.id, "Why")),
+        "how": body(_sentence(topic.id, "How to", "Fish them", "When")),
         "names": {lang: list(names) for lang, names in term.names.items()},
         "skip_on": list(SKIP_ON.get(term.id, ())),
-        "fish": [{"slug": f.slug, "name": f.name, "why": f.why} for f in fish_for(term)],
+        "fish": [{"slug": f.slug, "name": f.name, "why": fish_why(f)} for f in fish_for(term)],
         "source_ids": list(topic.source_ids),
     }
+    # The language the sentences came back in; English if any of them stayed English.
+    out["lang"] = lang if lang != "en" and words.entries and words.complete and guides.complete else "en"
+    return out
 
 
-def all_cards() -> list[dict]:
-    return [card(t) for t in TERMS]
+def all_cards(lang: str = "en") -> list[dict]:
+    return [card(t, lang) for t in TERMS]

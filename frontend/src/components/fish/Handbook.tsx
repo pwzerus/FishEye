@@ -11,6 +11,7 @@ import { localCategory, localGearName, localStateName, localTopicTitle } from "@
 import type { GearItem, HandbookTopic, Jurisdiction } from "@/lib/api/types";
 import { useJurisdictions, useSelectedState } from "@/lib/jurisdiction";
 import { sized } from "@/lib/photoSizes";
+import { sourceLabel } from "@/lib/sourceLabel";
 import { stateSlug } from "@/lib/stateSlug";
 
 /**
@@ -167,7 +168,8 @@ export function Handbook({
   // Beside the search box: which state's rules to show.
   children?: React.ReactNode;
 }) {
-  const tr = useT().fish;
+  const all = useT();
+  const tr = all.fish;
   const locale = useLocale();
   const [query, setQuery] = useState("");
   const state = useSelectedState();
@@ -325,14 +327,9 @@ export function Handbook({
                     const local = localTopicTitle(t.id, locale);
                     const card = (
                       <article key={t.id} id={t.id} className="handbook-card">
-                        <h3>
-                          {local ?? t.title}
-                          {local && (
-                            <span className="name-en" lang="en">
-                              {t.title}
-                            </span>
-                          )}
-                        </h3>
+                        {/* No English title under it (2026-11-16): a topic's
+                            title isn't what a store or a sign says. */}
+                        <h3>{local ?? t.title}</h3>
                         {/* Each term underlined once per card, and never the card's own. */}
                         {t.body.map((sentence, i) => (
                           <p key={sentence} lang={t.body_lang ?? "en"}>
@@ -348,8 +345,8 @@ export function Handbook({
                             {t.sources.map((s, i) => (
                               <span key={s.url}>
                                 {i > 0 && " · "}
-                                <a href={s.url} target="_blank" rel="noreferrer" lang="en">
-                                  {s.label}
+                                <a href={s.url} target="_blank" rel="noreferrer" lang={sourceLabel(s, locale, all.rulesPage.limitsHeading).lang}>
+                                  {sourceLabel(s, locale, all.rulesPage.limitsHeading).text}
                                 </a>
                               </span>
                             ))}

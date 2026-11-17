@@ -60,3 +60,31 @@ if a number is lost, or if a long sentence is left in English.
   pages, wording that changes between visits, and nothing a test can hold.
 - Keeping the English note and leaving the text in English: that is the half
   translation the owner reported.
+
+## Addendum, 2026-11-16: the bait cards and a scan of every page
+
+The owner opened a bait card on a Chinese fish page and read English. The
+cards (`/api/baits`) were built from the handbook and guides but never read
+their tables. They now take `lang` like the other routes: `what`, `why`,
+`how` and each fish's reason come from `<lang>_handbook.json` and
+`<lang>_guides.json`, the "Why they work:" label is cut in every language
+(the card has its own heading), and `lang` says what came back. 繁體 pages
+match baits by the Chinese names the API returns in Traditional.
+
+Also changed after a headless-browser scan of every page (static pages,
+28 fish, 51 states, Ask) in zh, zht, es, ja and ko, every bait and term card
+opened:
+
+- A handbook card's title no longer has its English title under it. Fish
+  and gear keep their English names: those are what regulations and
+  packaging say.
+- `/sources` shows a guide's setups by their translated names.
+- "<agency>: size and bag limits" is FishEye's wording, so its second half
+  is translated (`lib/sourceLabel.ts`). Other sources keep their own English
+  titles, which are what the linked pages say.
+- `i18n.test.tsx` fails if a message of three or more words is left the
+  same as the English.
+
+What stays English on purpose: source titles, photo credits, agency,
+program and brand names inside translated sentences, and the English names
+under fish and gear.

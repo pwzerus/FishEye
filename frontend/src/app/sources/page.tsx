@@ -4,11 +4,14 @@ import Link from "next/link";
 import { PageTransition } from "@/components/motion/Transition";
 import { RevealFromHash } from "@/components/sources/RevealFromHash";
 import { localCategory, localFishName, localStateName, localTopicTitle } from "@/i18n/names";
+import type { Locale } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import type { Messages } from "@/i18n/messages";
 import { listHandbook, listJurisdictions, listQuestionSources, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
 import type { GuideSource, HandbookTopic, Jurisdiction, SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
 import { DATA_SOURCES } from "@/lib/dataSources";
+import { licenseName } from "@/lib/licenseName";
+import { sourceLabel } from "@/lib/sourceLabel";
 
 // Same reason as /fish: a build without the API running would bake in an empty page.
 export const dynamic = "force-dynamic";
@@ -18,14 +21,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: `${t.sourcesPage.title} · FishEye`, description: t.sourcesPage.lede, alternates: { canonical: "/sources" } };
 }
 
-function Links({ sources, guideSite }: { sources: GuideSource[]; guideSite: string }) {
+function Links({ sources, guideSite, locale, limits }: { sources: GuideSource[]; guideSite: string; locale: Locale; limits: string }) {
   return (
     <>
       {sources.map((s, i) => (
         <span key={s.url}>
           {i > 0 && " · "}
-          <a href={s.url} target="_blank" rel="noreferrer" lang="en">
-            {s.label}
+          <a href={s.url} target="_blank" rel="noreferrer" lang={sourceLabel(s, locale, limits).lang}>
+            {sourceLabel(s, locale, limits).text}
           </a>
           {s.kind === "guide" && <span className="muted">{guideSite}</span>}
         </span>
@@ -59,7 +62,8 @@ export default async function SourcesPage() {
   const [guides, handbook, states, photos, questionSources]: [
     SpeciesGuide[], HandbookTopic[], Jurisdiction[], SpeciesPhotos, GuideSource[],
   ] = await Promise.all([
-    listSpeciesGuides().catch(() => []),
+    // In the page's language: a setup's name is shown (2026-11-16, English on a Chinese page).
+    listSpeciesGuides(locale).catch(() => []),
     listHandbook().catch(() => []),
     listJurisdictions().catch(() => []),
     listSpeciesPhotos().catch(() => ({})),
@@ -94,12 +98,12 @@ export default async function SourcesPage() {
               <dl>
                 <div>
                   <dt>{t.guideText}</dt>
-                  <dd><Links sources={g.sources} guideSite={guideSite} /></dd>
+                  <dd><Links sources={g.sources} guideSite={guideSite} locale={locale} limits={all.rulesPage.limitsHeading} /></dd>
                 </div>
                 {g.setups.filter((s) => s.sources.length > 0).map((s) => (
                   <div key={s.name}>
-                    <dt>{t.setup} <span lang="en">{s.name}</span></dt>
-                    <dd><Links sources={s.sources} guideSite={guideSite} /></dd>
+                    <dt>{t.setup} <span lang={g.text_lang ? undefined : "en"}>{s.name}</span></dt>
+                    <dd><Links sources={s.sources} guideSite={guideSite} locale={locale} limits={all.rulesPage.limitsHeading} /></dd>
                   </div>
                 ))}
               </dl>
@@ -115,7 +119,7 @@ export default async function SourcesPage() {
                 {general.filter((h) => h.category === id).map((h) => (
                   <div key={h.id} id={`topic-${h.id}`}>
                     <dt><Link href={`/handbook#${h.id}`}>{localTopicTitle(h.id, locale) ?? h.title}</Link></dt>
-                    <dd><Links sources={h.sources} guideSite={guideSite} /></dd>
+                    <dd><Links sources={h.sources} guideSite={guideSite} locale={locale} limits={all.rulesPage.limitsHeading} /></dd>
                   </div>
                 ))}
               </dl>
@@ -125,7 +129,7 @@ export default async function SourcesPage() {
 
         <Group id="questions" title={t.questions} count={t.count(questionSources.length)}>
           <p className="muted">{t.questionsLede}</p>
-          <p><Links sources={questionSources} guideSite={guideSite} /></p>
+          <p><Links sources={questionSources} guideSite={guideSite} locale={locale} limits={all.rulesPage.limitsHeading} /></p>
         </Group>
 
         <Group id="rules" title={t.rules} count={t.count(stateRows.length)}>
@@ -137,13 +141,13 @@ export default async function SourcesPage() {
                 {j.bait_rules_sources.length > 0 && (
                   <div>
                     <dt>{t.baitRules}</dt>
-                    <dd><Links sources={j.bait_rules_sources} guideSite={guideSite} /></dd>
+                    <dd><Links sources={j.bait_rules_sources} guideSite={guideSite} locale={locale} limits={all.rulesPage.limitsHeading} /></dd>
                   </div>
                 )}
                 {topics.map((h) => (
                   <div key={h.id}>
                     <dt><Link href={`/handbook#${h.id}`}>{localTopicTitle(h.id, locale) ?? h.title}</Link></dt>
-                    <dd><Links sources={h.sources} guideSite={guideSite} /></dd>
+                    <dd><Links sources={h.sources} guideSite={guideSite} locale={locale} limits={all.rulesPage.limitsHeading} /></dd>
                   </div>
                 ))}
               </dl>
@@ -173,12 +177,12 @@ export default async function SourcesPage() {
               return (
                 <div key={g.slug}>
                   <dt><Link href={`/fish/${g.slug}`}>{localFishName(g.slug, locale) ?? g.common_name}</Link></dt>
-                  <dd lang="en">
-                    {photo.author} ·{" "}
+                  <dd>
+                    <span lang="en">{photo.author}</span> ·{" "}
                     {photo.license_url ? (
-                      <a href={photo.license_url} target="_blank" rel="noreferrer">{photo.license}</a>
+                      <a href={photo.license_url} target="_blank" rel="noreferrer">{licenseName(photo.license, all.fish.publicDomain)}</a>
                     ) : (
-                      photo.license
+                      licenseName(photo.license, all.fish.publicDomain)
                     )}{" "}
                     · <a href={photo.file_page} target="_blank" rel="noreferrer">Wikimedia</a>
                   </dd>

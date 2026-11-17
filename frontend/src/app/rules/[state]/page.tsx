@@ -5,9 +5,11 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { PageTransition } from "@/components/motion/Transition";
 import { RulesStatePicker } from "@/components/rules/RulesStatePicker";
 import { localStateName, localTopicTitle } from "@/i18n/names";
+import type { Locale } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import { listHandbook, listJurisdictions } from "@/lib/api/client";
 import type { GuideSource, HandbookTopic, Jurisdiction } from "@/lib/api/types";
+import { sourceLabel } from "@/lib/sourceLabel";
 import { stateSlug } from "@/lib/stateSlug";
 
 // From the API at request time, like /fish: a build has no API to ask.
@@ -37,15 +39,15 @@ export async function generateMetadata({ params }: PageProps<"/rules/[state]">):
   return { title: `${t.title(name)} · FishEye`, description: t.lede(name), alternates: { canonical: `/rules/${stateSlug(state.name)}` } };
 }
 
-function Sources({ sources }: { sources: GuideSource[] }) {
+function Sources({ sources, locale, limits }: { sources: GuideSource[]; locale: Locale; limits: string }) {
   if (sources.length === 0) return null;
   return (
     <p className="muted small">
       {sources.map((s, i) => (
         <span key={s.url}>
           {i > 0 && " · "}
-          <a href={s.url} target="_blank" rel="noreferrer" lang="en">
-            {s.label}
+          <a href={s.url} target="_blank" rel="noreferrer" lang={sourceLabel(s, locale, limits).lang}>
+            {sourceLabel(s, locale, limits).text}
           </a>
         </span>
       ))}
@@ -99,7 +101,7 @@ export default async function StateRulesPage({ params }: PageProps<"/rules/[stat
                   {line}
                 </p>
               ))}
-              <Sources sources={license.sources} />
+              <Sources sources={license.sources} locale={locale} limits={t.limitsHeading} />
             </>
           ) : (
             <p>{t.licenseFromAgency(agency)}</p>
@@ -135,7 +137,7 @@ export default async function StateRulesPage({ params }: PageProps<"/rules/[stat
                 <li key={rule}>{rule}</li>
               ))}
             </ul>
-            <Sources sources={state.bait_rules_sources} />
+            <Sources sources={state.bait_rules_sources} locale={locale} limits={t.limitsHeading} />
           </section>
         )}
 
@@ -150,7 +152,7 @@ export default async function StateRulesPage({ params }: PageProps<"/rules/[stat
                     {line}
                   </p>
                 ))}
-                <Sources sources={h.sources} />
+                <Sources sources={h.sources} locale={locale} limits={t.limitsHeading} />
               </details>
             ))}
           </section>

@@ -807,6 +807,8 @@ const es: Messages = {
     allFish: "Todos los peces",
     illustration: (name: string) => `Ilustración de ${name}`,
     realPhoto: "Foto real",
+    publicDomain: "Dominio público",
+    photoCredit: (author: string, license: string) => `Foto: ${author} (${license})`,
     photoOf: (name: string) => `Foto de ${name}`,
     whatItEats: "Qué come",
     onThisPage: "En esta página",

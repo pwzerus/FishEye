@@ -41,6 +41,7 @@ FIXES: dict[str, str] = {
     "新增到主螢幕": "加入主畫面",
     "安裝應用”": "安裝應用程式”",
     "安卓": "Android",
+    "面餌": "麵餌",  # dough bait: flour is 麵 (面 alone is a face)
     # Taiwan's quotation marks (after the fixes above, which match “”).
     "“": "「",
     "”": "」",

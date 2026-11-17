@@ -2,6 +2,7 @@
 
 import { useT } from "@/i18n/client";
 import type { SpeciesPhoto } from "@/lib/api/types";
+import { licenseName } from "@/lib/licenseName";
 import { sized } from "@/lib/photoSizes";
 
 /**
@@ -17,6 +18,7 @@ import { sized } from "@/lib/photoSizes";
 export function HeroPhoto({ photo, name }: { photo: SpeciesPhoto | null; name: string }) {
   const t = useT().fish;
   if (!photo) return null;
+  const license = licenseName(photo.license, t.publicDomain);
   return (
     <figure className="hero-photo">
       <span className="hero-photo-label">{t.realPhoto}</span>
@@ -29,10 +31,10 @@ export function HeroPhoto({ photo, name }: { photo: SpeciesPhoto | null; name: s
         {photo.author} ·{" "}
         {photo.license_url ? (
           <a href={photo.license_url} target="_blank" rel="noreferrer">
-            {photo.license}
+            {license}
           </a>
         ) : (
-          photo.license
+          license
         )}{" "}
         ·{" "}
         <a href={photo.file_page} target="_blank" rel="noreferrer">

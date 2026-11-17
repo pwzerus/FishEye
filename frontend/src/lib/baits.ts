@@ -1,27 +1,35 @@
 import { useEffect, useState } from "react";
 
 import type { Locale } from "@/i18n/config";
+import { useLocale } from "@/i18n/client";
 import { listBaits } from "@/lib/api/client";
 import type { BaitCard } from "@/lib/api/types";
 
-// Fetched once per page load and shared (backend app/api/baits.py).
-let baits: Promise<BaitCard[]> | null = null;
+// Fetched once per page load and language, and shared (backend app/api/baits.py).
+// The cards' sentences come in the reader's language: an English card on a
+// Chinese page was the owner's report (2026-11-16).
+const baits = new Map<Locale, Promise<BaitCard[]>>();
 
 export function useBaitCards(): BaitCard[] | null {
-  const [list, setList] = useState<BaitCard[] | null>(null);
+  const locale = useLocale();
+  const [list, setList] = useState<{ locale: Locale; cards: BaitCard[] } | null>(null);
   useEffect(() => {
     let live = true;
-    baits ??= listBaits();
-    baits
-      .then((l) => live && setList(l))
+    let request = baits.get(locale);
+    if (!request) {
+      request = listBaits(locale);
+      baits.set(locale, request);
+    }
+    request
+      .then((cards) => live && setList({ locale, cards }))
       .catch(() => {
-        baits = null; // a later mount retries
+        baits.delete(locale); // a later mount retries
       });
     return () => {
       live = false;
     };
-  }, []);
-  return list;
+  }, [locale]);
+  return list && list.locale === locale ? list.cards : null;
 }
 
 export interface BaitMatch {
@@ -46,7 +54,8 @@ function matcher(cards: BaitCard[], locale: Locale): Matcher {
   if (cached) return cached;
   const byName = new Map<string, BaitCard>();
   for (const c of cards) {
-    for (const lang of locale === "en" ? ["en"] : ["en", locale]) {
+    // 繁體 pages get the Chinese names, made Traditional by the API (lang=zht).
+    for (const lang of locale === "en" ? ["en"] : ["en", locale === "zht" ? "zh" : locale]) {
       for (const n of c.names[lang] ?? []) byName.set(n.toLowerCase(), c);
     }
   }

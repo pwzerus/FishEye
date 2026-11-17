@@ -814,6 +814,8 @@ const ko: Messages = {
     allFish: "모든 어종",
     illustration: (name: string) => `${name} 그림`,
     realPhoto: "실제 사진",
+    publicDomain: "퍼블릭 도메인",
+    photoCredit: (author: string, license: string) => `사진: ${author} (${license})`,
     photoOf: (name: string) => `${name} 사진`,
     whatItEats: "먹이",
     onThisPage: "이 페이지 내용",

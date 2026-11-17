@@ -42,6 +42,17 @@ describe("the dictionaries", () => {
     expect(empty).toEqual([]);
   });
 
+  it.each(OTHERS)("%s leaves no sentence in English", (lang) => {
+    // 2026-11-16, the owner: English on a page in another language. A phrase
+    // of three or more words left as English's own is a missed translation
+    // (names such as "FishEye Plus" are shorter).
+    const en = new Map(leaves(MESSAGES.en));
+    const same = leaves(MESSAGES[lang]).filter(
+      ([p, v]) => !p.endsWith(".match") && v === en.get(p) && (v.match(/\b[A-Za-z][a-z'’]+\b/g) ?? []).length >= 3,
+    );
+    expect(same).toEqual([]);
+  });
+
   it("names every fish, handbook topic, look-alike group and state in every language", () => {
     for (const table of [FISH_NAMES, HANDBOOK_TITLES, GROUP_NAMES]) {
       const keys = Object.keys(table.zh).sort();

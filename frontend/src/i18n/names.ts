@@ -714,7 +714,7 @@ export const HANDBOOK_TITLES: Record<Exclude<Locale, "en">, Record<string, strin
     "bait-shad-cut": "西鯡和切塊魚餌",
     "bait-liver-soft": "雞肝、熱狗腸、乳酪等軟質餌料",
     "bait-stink": "臭餌、膏狀餌和蘸餌",
-    "bait-dough-corn": "面餌、PowerBait 和玉米",
+    "bait-dough-corn": "麵餌、PowerBait 和玉米",
     "bait-shrimp": "蝦",
     "lure-soft-plastics": "軟餌和鉛頭鉤",
     "lure-crankbaits": "搖擺餌和其他硬餌",

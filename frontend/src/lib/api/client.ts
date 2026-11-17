@@ -266,8 +266,8 @@ export function listGear(locale = "en"): Promise<Gear> {
   return apiFetch<Gear>(`/api/gear?lang=${locale}`);
 }
 
-export function listBaits(): Promise<BaitCard[]> {
-  return apiFetch<BaitCard[]>("/api/baits");
+export function listBaits(locale = "en"): Promise<BaitCard[]> {
+  return apiFetch<BaitCard[]>(`/api/baits?lang=${locale}`);
 }
 
 export function listJurisdictions(locale = "en"): Promise<Jurisdiction[]> {

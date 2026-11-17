@@ -9,12 +9,13 @@ const card = (id: string, topic: string, title: string, names: Record<string, st
   topic,
   title,
   what: `${title}: what it is.`,
-  why: "Why use them: fish eat them.",
-  how: "How to hook: through the lips.",
+  why: "Fish eat them.",
+  how: "Through the lips.",
   names,
   skip_on: [],
   fish: [],
   sources: [],
+  lang: "en",
   ...extra,
 });
 
@@ -29,11 +30,19 @@ const CARDS: BaitCard[] = [
   card("cut-bait", "bait-shad-cut", "Shad and cut bait", { en: ["cut bait", "shad"] }, { skip_on: ["gizzard-shad"] }),
 ];
 
+// The cards in Chinese, as /api/baits?lang=zh returns them.
+const ZH_CARDS: BaitCard[] = CARDS.map((c) =>
+  c.id === "worms"
+    ? { ...c, what: "最好用的万能饵。", why: "便宜，容易找。", how: "钩穿过蚯蚓。", lang: "zh", fish: [{ slug: "bluegill", name: "Bluegill", why: "成鱼吃昆虫，一小段蚯蚓就够。" }] }
+    : c,
+);
+const listBaits = vi.fn(async (locale?: string) => (locale === "zh" ? ZH_CARDS : CARDS));
 vi.mock("@/lib/api/client", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api/client")>("@/lib/api/client");
-  return { ...actual, listBaits: vi.fn(async () => CARDS) };
+  return { ...actual, listBaits: (locale?: string) => listBaits(locale) };
 });
 const { BaitText } = await import("./BaitTip");
+const { I18nProvider } = await import("@/i18n/client");
 
 describe("findBaits", () => {
   it("finds each bait once, the longer name first", () => {
@@ -62,12 +71,29 @@ describe("BaitText", () => {
     const tip = screen.getByRole("dialog", { name: "Worms and nightcrawlers" });
     expect(tip).toHaveTextContent("Why Bluegill takes it");
     expect(tip).toHaveTextContent("a piece of worm wins");
-    expect(tip).toHaveTextContent("through the lips");
+    expect(tip).toHaveTextContent("Through the lips");
     expect(screen.getByRole("link", { name: "Channel Catfish" })).toHaveAttribute("href", "/fish/channel-catfish");
     expect(screen.getByRole("link", { name: "Ask about it →" }).getAttribute("href")).toContain("/ask?q=");
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(word).toHaveFocus();
+  });
+
+  it("shows the card in the reader's language", async () => {
+    // 2026-11-16, the owner: a Chinese fish page opened an English card.
+    render(
+      <I18nProvider locale="zh">
+        <BaitText text="用一小段蚯蚓" fish="bluegill" />
+      </I18nProvider>,
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "蚯蚓" }));
+    const tip = screen.getByRole("dialog");
+    expect(listBaits).toHaveBeenCalledWith("zh");
+    expect(tip).toHaveTextContent("最好用的万能饵");
+    expect(tip).toHaveTextContent("一小段蚯蚓就够");
+    expect(tip).toHaveTextContent("钩穿过蚯蚓");
+    expect(tip.textContent).not.toMatch(/[A-Za-z]{4,} [a-z]{3,}/);
+    expect(tip.querySelector("[lang=en]")).toBeNull();
   });
 
   it("keeps one card open at a time", async () => {

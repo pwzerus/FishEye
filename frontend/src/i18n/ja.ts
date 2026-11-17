@@ -814,6 +814,8 @@ const ja: Messages = {
     allFish: "すべての魚",
     illustration: (name: string) => `${name}のイラスト`,
     realPhoto: "実物の写真",
+    publicDomain: "パブリックドメイン",
+    photoCredit: (author: string, license: string) => `写真：${author}（${license}）`,
     photoOf: (name: string) => `${name}の写真`,
     whatItEats: "食べるもの",
     onThisPage: "このページの内容",

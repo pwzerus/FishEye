@@ -49,6 +49,7 @@ FIXES: dict[str, str] = {
     "新增到主螢幕": "加入主畫面",
     "安裝應用”": "安裝應用程式”",
     "安卓": "Android",
+    "面餌": "麵餌",  # dough bait: flour is 麵 (面 alone is a face)
     # An arbitration hearing by video call (the terms): 影片 is a video clip.
     "以影片或電話": "以視訊或電話",
     # The legal pages: 电子邮箱 came out 電子電子郵件, a one-way code

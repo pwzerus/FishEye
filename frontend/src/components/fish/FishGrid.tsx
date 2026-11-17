@@ -5,6 +5,7 @@ import { useDeferredValue, useMemo, useState } from "react";
 
 import { VT } from "@/components/motion/Transition";
 import { useLocale, useT } from "@/i18n/client";
+import { licenseName } from "@/lib/licenseName";
 import type { Locale } from "@/i18n/config";
 import { localFishName } from "@/i18n/names";
 import { useSelectedState } from "@/lib/jurisdiction";
@@ -103,7 +104,7 @@ export function FishGrid({ guides, photos }: { guides: SpeciesGuide[]; photos: S
                       </div>
                     </VT>
                     {photo && (
-                      <span className="fish-card-photo" title={`Photo: ${photo.author} (${photo.license})`}>
+                      <span className="fish-card-photo" title={t.photoCredit(photo.author, licenseName(photo.license, t.publicDomain))}>
                         {/* Wikimedia thumbnail, hot-linked as served and credited in full on the
                             fish's page (ADR 0015); next/image would re-host a resized copy. */}
                         {/* eslint-disable-next-line @next/next/no-img-element */}

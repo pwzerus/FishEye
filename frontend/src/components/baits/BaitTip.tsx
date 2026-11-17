@@ -14,7 +14,7 @@ import { findBaits, useBaitCards } from "@/lib/baits";
  * named in an answer is underlined, and tapping it opens a card — what it
  * is, why this fish takes it (the fish's own guide says why), how to use it,
  * the other fish it catches, and where to get it. The card's text is the
- * guides' and handbook's own, in English like the guides themselves.
+ * guides' and handbook's own, in the reader's language (`card.lang`).
  */
 
 // One card open at a time.
@@ -57,6 +57,7 @@ export function BaitTip({ card, fish, children }: { card: BaitCard; fish?: strin
   const forFish = fish ? card.fish.find((f) => f.slug === fish) : undefined;
   const fishName = (slug: string, name: string) => localFishName(slug, locale) ?? name;
   const others = card.fish.filter((f) => f.slug !== fish).slice(0, 6);
+  const textLang = card.lang && card.lang !== "en" ? tag : "en";
 
   return (
     <span className="bait-term-wrap" ref={wrap}>
@@ -78,24 +79,24 @@ export function BaitTip({ card, fish, children }: { card: BaitCard; fish?: strin
               ×
             </button>
           </span>
-          <span lang="en">{card.what}</span>
+          <span lang={textLang}>{card.what}</span>
           {forFish?.why ? (
             <>
               <span className="bait-tip-label">{t.whyFish(fishName(forFish.slug, forFish.name))}</span>
-              <span lang="en">{forFish.why}</span>
+              <span lang={textLang}>{forFish.why}</span>
             </>
           ) : (
             card.why && (
               <>
                 <span className="bait-tip-label">{t.whyItWorks}</span>
-                <span lang="en">{card.why.replace(/^Why[^:]*:\s*/, "")}</span>
+                <span lang={textLang}>{card.why}</span>
               </>
             )
           )}
           {card.how && (
             <>
               <span className="bait-tip-label">{t.howToUse}</span>
-              <span lang="en">{card.how.replace(/^(How to [^:]*|When):\s*/, "")}</span>
+              <span lang={textLang}>{card.how}</span>
             </>
           )}
           {others.length > 0 && (

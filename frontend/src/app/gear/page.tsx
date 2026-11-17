@@ -20,15 +20,16 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: `${t.title} · FishEye`, description: t.lede, alternates: { canonical: "/gear" } };
 }
 
-function Card({ item, locale, t }: {
+function Card({ item, locale, t, publicDomain }: {
   item: GearItem;
   locale: Locale;
   t: Awaited<ReturnType<typeof getT>>["gearPage"];
+  publicDomain: string;
 }) {
   const local = localGearName(item.id, locale);
   return (
     <article id={item.id} className="gear-card">
-      {item.photo ? <GearPhoto photo={item.photo} alt={local ?? item.name} /> : <div className="gear-photo gear-no-photo">{t.noPhoto}</div>}
+      {item.photo ? <GearPhoto photo={item.photo} alt={local ?? item.name} publicDomain={publicDomain} /> : <div className="gear-photo gear-no-photo">{t.noPhoto}</div>}
       <div className="gear-card-body">
         <h3>
           {local ?? item.name}
@@ -103,7 +104,7 @@ export default async function GearPage() {
                 <section key={c.id} id={`gear-${c.id}`} className="gear-section">
                   <h2>{localGearCategory(c.id, locale) ?? c.label}</h2>
                   <div className="gear-grid">
-                    {items.map((i) => <Card key={i.id} item={i} locale={locale} t={t} />)}
+                    {items.map((i) => <Card key={i.id} item={i} locale={locale} t={t} publicDomain={all.fish.publicDomain} />)}
                   </div>
                 </section>
               );

@@ -859,6 +859,7 @@ export interface BaitCard {
   skip_on: string[]; // fish pages where it isn't a bait (shad on a shad's)
   fish: { slug: string; name: string; why: string | null }[];
   sources: GuideSource[];
+  lang: string; // the language what/why/how came back in ("en" if any stayed English)
 }
 
 /** POST /api/ask/photo: the AI's answer about a photo (backend services/rag/photo.py). */

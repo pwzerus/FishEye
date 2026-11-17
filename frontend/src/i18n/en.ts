@@ -824,6 +824,8 @@ const en = {
     allFish: "All fish",
     illustration: (name: string) => `Illustration of a ${name}`,
     realPhoto: "Real photo",
+    publicDomain: "Public domain",
+    photoCredit: (author: string, license: string) => `Photo: ${author} (${license})`,
     photoOf: (name: string) => `Photo of a ${name}`,
     whatItEats: "What it eats",
     onThisPage: "On this page",
