@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -7,6 +7,17 @@ import { photoSrcSet, sized } from "./photoSizes";
 
 const BASS =
   "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Largemouth_Bass_%28Micropterus_salmoides%29.jpg/960px-Largemouth_Bass_%28Micropterus_salmoides%29.jpg";
+
+/** A JPEG's width, from its start-of-frame header. */
+function jpegWidth(data: Buffer): number {
+  let i = 2;
+  while (i < data.length) {
+    const marker = data[i + 1];
+    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) return data.readUInt16BE(i + 7);
+    i += 2 + data.readUInt16BE(i + 2);
+  }
+  throw new Error("no frame header");
+}
 
 describe("smaller copies of the 960px photos", () => {
   it("asks Wikimedia for its standard widths", () => {
@@ -46,11 +57,13 @@ describe("smaller copies of the 960px photos", () => {
     expect(sized(BASS, 960, "56px")).toMatchObject({ src: BASS, sizes: "56px" });
   });
 
-  it("has a 500px copy of every own gear photo (all are wider than that)", () => {
+  it("has a 500px copy of every own gear photo wider than that", () => {
     const dir = join(process.cwd(), "public", "gear-photos");
     const photos = readdirSync(dir).filter((f) => statSync(join(dir, f)).isFile());
-    expect(photos.length).toBeGreaterThan(0);
+    expect(photos.length).toBeGreaterThanOrEqual(52); // every gear item's, since 2026-11-16
     const copies = new Set(readdirSync(join(dir, "500")));
-    expect(photos.filter((f) => !copies.has(f))).toEqual([]);
+    const wide = photos.filter((f) => jpegWidth(readFileSync(join(dir, f))) > 500);
+    expect(wide.length).toBeGreaterThan(40);
+    expect(wide.filter((f) => !copies.has(f))).toEqual([]);
   });
 });

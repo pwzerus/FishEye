@@ -7,7 +7,7 @@
  *
  * Wikimedia makes its thumbnails on request at its standard widths (330, 500,
  * 960…), from a 960px thumbnail's URL or from an original file's. The gear
- * photos FishEye keeps itself (/gear-photos, from Flickr) have a 500px copy
+ * photos FishEye keeps itself (/gear-photos, all of them) have a 500px copy
  * in /gear-photos/500 (photoSizes.test.ts checks every one does).
  */
 const COMMONS_960 = /\/960px-([^/]+)$/;

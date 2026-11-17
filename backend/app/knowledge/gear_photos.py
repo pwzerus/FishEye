@@ -7,7 +7,7 @@ from app.knowledge.gear import GearPhoto
 PHOTOS: dict[str, GearPhoto] = {
     'bait-corn': GearPhoto(
         file='File:Starr-090807-4116-Zea mays-UH Yellow sweet kernels-Olinda-Maui (24604322749).jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/4/42/Starr-090807-4116-Zea_mays-UH_Yellow_sweet_kernels-Olinda-Maui_%2824604322749%29.jpg/960px-Starr-090807-4116-Zea_mays-UH_Yellow_sweet_kernels-Olinda-Maui_%2824604322749%29.jpg',
+        url='/gear-photos/bait-corn.jpg',
         width=960,
         height=720,
         author='Forest and Kim Starr',
@@ -17,7 +17,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'bait-crayfish': GearPhoto(
         file='File:Usfws-st-francis-river-crayfish-large.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ce/Usfws-st-francis-river-crayfish-large.jpg/960px-Usfws-st-francis-river-crayfish-large.jpg',
+        url='/gear-photos/bait-crayfish.jpg',
         width=960,
         height=631,
         author='Chris Lukhaup/Missouri Department of Conservation',
@@ -27,7 +27,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'bait-cricket': GearPhoto(
         file='File:Acheta domesticus.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fd/Acheta_domesticus.jpg/960px-Acheta_domesticus.jpg',
+        url='/gear-photos/bait-cricket.jpg',
         width=960,
         height=633,
         author='Brian Gratwicke',
@@ -47,7 +47,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'bait-leech': GearPhoto(
         file='File:European medicinal leech (Hirudo medicinalis) at the California Academy of Sciences 01.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/5/57/European_medicinal_leech_%28Hirudo_medicinalis%29_at_the_California_Academy_of_Sciences_01.jpg/960px-European_medicinal_leech_%28Hirudo_medicinalis%29_at_the_California_Academy_of_Sciences_01.jpg',
+        url='/gear-photos/bait-leech.jpg',
         width=960,
         height=467,
         author='EvanBaldonado',
@@ -57,7 +57,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'bait-liver': GearPhoto(
         file='File:Preparing Chicken Liver 01.JPG',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/9/96/Preparing_Chicken_Liver_01.JPG/960px-Preparing_Chicken_Liver_01.JPG',
+        url='/gear-photos/bait-liver.jpg',
         width=960,
         height=720,
         author="Poupou l'quourouce",
@@ -67,7 +67,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'bait-minnow': GearPhoto(
         file='File:Pimephales promelas 306781241.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/2/27/Pimephales_promelas_306781241.jpg/960px-Pimephales_promelas_306781241.jpg',
+        url='/gear-photos/bait-minnow.jpg',
         width=960,
         height=521,
         author='AVNJ',
@@ -77,7 +77,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'bait-nightcrawler': GearPhoto(
         file='File:Lumbricus terrestris (26559560801).jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/Lumbricus_terrestris_%2826559560801%29.jpg/960px-Lumbricus_terrestris_%2826559560801%29.jpg',
+        url='/gear-photos/bait-nightcrawler.jpg',
         width=960,
         height=640,
         author='Donald Hobern from Copenhagen, Denmark',
@@ -87,9 +87,9 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'bait-roe': GearPhoto(
         file='File:Dworshak NFH salmon eggs poured 23 November 2021.png',
-        url='https://upload.wikimedia.org/wikipedia/commons/f/f9/Dworshak_NFH_salmon_eggs_poured_23_November_2021.png',
-        width=960,
-        height=979,
+        url='/gear-photos/bait-roe.jpg',
+        width=922,
+        height=940,
         author='USFWS',
         licence='Public domain',
         licence_url=None,
@@ -97,7 +97,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'bait-shrimp': GearPhoto(
         file='File:Raw Shrimp.jpg',
-        url='https://upload.wikimedia.org/wikipedia/commons/a/ab/Raw_Shrimp.jpg',
+        url='/gear-photos/bait-shrimp.jpg',
         width=960,
         height=1280,
         author='Perplexing',
@@ -107,7 +107,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'bait-waxworm': GearPhoto(
         file='File:Wax worm, U, Maryland, side 2015-07-13-13.01.17 ZS PMax.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/7/75/Wax_worm%2C_U%2C_Maryland%2C_side_2015-07-13-13.01.17_ZS_PMax.jpg/960px-Wax_worm%2C_U%2C_Maryland%2C_side_2015-07-13-13.01.17_ZS_PMax.jpg',
+        url='/gear-photos/bait-waxworm.jpg',
         width=960,
         height=577,
         author='Sam Droege',
@@ -128,7 +128,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'combo-spincast': GearPhoto(
         file='File:Abu Garcia Abumatic spincast reel.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ee/Abu_Garcia_Abumatic_spincast_reel.jpg/960px-Abu_Garcia_Abumatic_spincast_reel.jpg',
+        url='/gear-photos/combo-spincast.jpg',
         width=960,
         height=720,
         author='Petey21',
@@ -138,7 +138,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'float-slip': GearPhoto(
         file='File:Floats.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/0/06/Floats.jpg/960px-Floats.jpg',
+        url='/gear-photos/float-slip.jpg',
         width=960,
         height=720,
         author='Petey21',
@@ -148,9 +148,9 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'fly-dry': GearPhoto(
         file='File:Black Woolly Bugger by Mike Cline.jpg',
-        url='https://upload.wikimedia.org/wikipedia/commons/4/4f/Black_Woolly_Bugger_by_Mike_Cline.jpg',
-        width=960,
-        height=531,
+        url='/gear-photos/fly-dry.jpg',
+        width=879,
+        height=486,
         author='Mike Cline at English Wikipedia',
         licence='Public domain',
         licence_url=None,
@@ -158,9 +158,9 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'hook-circle': GearPhoto(
         file='File:Circle-hook.jpg',
-        url='https://upload.wikimedia.org/wikipedia/commons/1/11/Circle-hook.jpg',
-        width=960,
-        height=886,
+        url='/gear-photos/hook-circle.jpg',
+        width=300,
+        height=277,
         author='Luenibaer (Jens Kraglund',
         licence='Public domain',
         licence_url=None,
@@ -168,7 +168,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'hook-j': GearPhoto(
         file='File:FishHooks.JPG',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/9/95/FishHooks.JPG/960px-FishHooks.JPG',
+        url='/gear-photos/hook-j.jpg',
         width=960,
         height=720,
         author='Viridiflavus',
@@ -188,7 +188,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'jig-head': GearPhoto(
         file='File:Jig-Twister lure 2009 G1.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/Jig-Twister_lure_2009_G1.jpg/960px-Jig-Twister_lure_2009_G1.jpg',
+        url='/gear-photos/jig-head.jpg',
         width=960,
         height=640,
         author='George Chernilevsky',
@@ -209,7 +209,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'line-braid': GearPhoto(
         file='File:Fishing lines 2025 G1.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a9/Fishing_lines_2025_G1.jpg/960px-Fishing_lines_2025_G1.jpg',
+        url='/gear-photos/line-braid.jpg',
         width=960,
         height=768,
         author='George Chernilevsky',
@@ -230,7 +230,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'lure-crankbait': GearPhoto(
         file='File:Verschiedene Crankbaits.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/4/48/Verschiedene_Crankbaits.jpg/960px-Verschiedene_Crankbaits.jpg',
+        url='/gear-photos/lure-crankbait.jpg',
         width=960,
         height=1402,
         author='Danndorfer1914',
@@ -240,7 +240,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'lure-grub': GearPhoto(
         file='File:Zwei Twister.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/Zwei_Twister.jpg/960px-Zwei_Twister.jpg',
+        url='/gear-photos/lure-grub.jpg',
         width=960,
         height=1100,
         author='Danndorfer1914',
@@ -250,7 +250,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'lure-inline-spinner': GearPhoto(
         file='File:Moderne Spinner.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/6/69/Moderne_Spinner.jpg/960px-Moderne_Spinner.jpg',
+        url='/gear-photos/lure-inline-spinner.jpg',
         width=960,
         height=1265,
         author='Danndorfer1914',
@@ -260,7 +260,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'lure-jerkbait': GearPhoto(
         file='File:Ein Wobbler aus Gummi.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/Ein_Wobbler_aus_Gummi.jpg/960px-Ein_Wobbler_aus_Gummi.jpg',
+        url='/gear-photos/lure-jerkbait.jpg',
         width=960,
         height=580,
         author='Danndorfer1914',
@@ -270,7 +270,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'lure-lipless': GearPhoto(
         file='File:バイブレーション.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fc/%E3%83%90%E3%82%A4%E3%83%96%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3.jpg/960px-%E3%83%90%E3%82%A4%E3%83%96%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3.jpg',
+        url='/gear-photos/lure-lipless.jpg',
         width=960,
         height=638,
         author='サミー',
@@ -280,7 +280,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'lure-popper': GearPhoto(
         file='File:Zwei Wobbler für das Angeln an der Oberfläche.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/7/70/Zwei_Wobbler_f%C3%BCr_das_Angeln_an_der_Oberfl%C3%A4che.jpg/960px-Zwei_Wobbler_f%C3%BCr_das_Angeln_an_der_Oberfl%C3%A4che.jpg',
+        url='/gear-photos/lure-popper.jpg',
         width=960,
         height=910,
         author='Danndorfer1914',
@@ -290,7 +290,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'lure-soft-worm': GearPhoto(
         file='File:ストレートワーム.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2f/%E3%82%B9%E3%83%88%E3%83%AC%E3%83%BC%E3%83%88%E3%83%AF%E3%83%BC%E3%83%A0.jpg/960px-%E3%82%B9%E3%83%88%E3%83%AC%E3%83%BC%E3%83%88%E3%83%AF%E3%83%BC%E3%83%A0.jpg',
+        url='/gear-photos/lure-soft-worm.jpg',
         width=960,
         height=638,
         author='サミー',
@@ -300,7 +300,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'lure-spinnerbait': GearPhoto(
         file='File:Spinnerbait.png',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b5/Spinnerbait.png/960px-Spinnerbait.png',
+        url='/gear-photos/lure-spinnerbait.jpg',
         width=960,
         height=855,
         author='Danndorfer1914',
@@ -310,7 +310,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'lure-spoon': GearPhoto(
         file='File:Spoon-bait 2008 G1.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2a/Spoon-bait_2008_G1.jpg/960px-Spoon-bait_2008_G1.jpg',
+        url='/gear-photos/lure-spoon.jpg',
         width=960,
         height=624,
         author='George Chernilevsky',
@@ -320,7 +320,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'lure-swimbait': GearPhoto(
         file='File:Twister 2008 G01.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/3/35/Twister_2008_G01.jpg/960px-Twister_2008_G01.jpg',
+        url='/gear-photos/lure-swimbait.jpg',
         width=960,
         height=576,
         author='George Chernilevsky',
@@ -330,9 +330,9 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'pole-cane': GearPhoto(
         file='File:Young women fishing with cane poles from a jetty (3247306451).jpg',
-        url='https://upload.wikimedia.org/wikipedia/commons/b/b5/Young_women_fishing_with_cane_poles_from_a_jetty_%283247306451%29.jpg',
-        width=960,
-        height=744,
+        url='/gear-photos/pole-cane.jpg',
+        width=600,
+        height=465,
         author='State Library and Archives of Florida',
         licence='Public domain',
         licence_url=None,
@@ -340,7 +340,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'reel-baitcasting': GearPhoto(
         file='File:Shimano Corsair CS 400 fishing reel 20200613 001.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4d/Shimano_Corsair_CS_400_fishing_reel_20200613_001.jpg/960px-Shimano_Corsair_CS_400_fishing_reel_20200613_001.jpg',
+        url='/gear-photos/reel-baitcasting.jpg',
         width=960,
         height=1280,
         author='Mikko J. Putkonen (Methem',
@@ -350,7 +350,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'reel-spinning': GearPhoto(
         file='File:Fishing-spinning-reel.JPG',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/7/77/Fishing-spinning-reel.JPG/960px-Fishing-spinning-reel.JPG',
+        url='/gear-photos/reel-spinning.jpg',
         width=960,
         height=720,
         author='Jonathan Ewen & Stephen Ewen',
@@ -360,7 +360,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'rod-baitcasting': GearPhoto(
         file='File:Abu Garcia Ambassadeur baitcasting reel.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/2/20/Abu_Garcia_Ambassadeur_baitcasting_reel.jpg/960px-Abu_Garcia_Ambassadeur_baitcasting_reel.jpg',
+        url='/gear-photos/rod-baitcasting.jpg',
         width=960,
         height=720,
         author='Petey21',
@@ -370,7 +370,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'rod-fly': GearPhoto(
         file='File:Bamboo fly rod (51481672).jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c5/Bamboo_fly_rod_%2851481672%29.jpg/960px-Bamboo_fly_rod_%2851481672%29.jpg',
+        url='/gear-photos/rod-fly.jpg',
         width=960,
         height=720,
         author='aliferste',
@@ -380,9 +380,9 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'rod-ice': GearPhoto(
         file='File:Haarukkavapa.JPG',
-        url='https://upload.wikimedia.org/wikipedia/commons/7/73/Haarukkavapa.JPG',
-        width=960,
-        height=1458,
+        url='/gear-photos/rod-ice.jpg',
+        width=555,
+        height=843,
         author='Jacofin',
         licence='Public domain',
         licence_url=None,
@@ -390,7 +390,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'rod-spinning': GearPhoto(
         file='File:Two spinning fishing reels on pier.JPG',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/3/35/Two_spinning_fishing_reels_on_pier.JPG/960px-Two_spinning_fishing_reels_on_pier.JPG',
+        url='/gear-photos/rod-spinning.jpg',
         width=960,
         height=638,
         author='Juliancolton',
@@ -400,7 +400,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'sinker-bank': GearPhoto(
         file='File:Lead sinker.JPG',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6a/Lead_sinker.JPG/960px-Lead_sinker.JPG',
+        url='/gear-photos/sinker-bank.jpg',
         width=960,
         height=720,
         author='Chemicalinterest',
@@ -420,7 +420,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'sinker-split-shot': GearPhoto(
         file='File:Split shot 1.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/Split_shot_1.jpg/960px-Split_shot_1.jpg',
+        url='/gear-photos/sinker-split-shot.jpg',
         width=960,
         height=1280,
         author='Mx. Granger',
@@ -452,7 +452,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'tool-ice-auger': GearPhoto(
         file='File:Ice drill.JPG',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4a/Ice_drill.JPG/960px-Ice_drill.JPG',
+        url='/gear-photos/tool-ice-auger.jpg',
         width=960,
         height=1280,
         author='SeppVei',
@@ -462,7 +462,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'tool-lifejacket': GearPhoto(
         file='File:Life jackets Russian student rescue corps (01).jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/a/aa/Life_jackets_Russian_student_rescue_corps_%2801%29.jpg/960px-Life_jackets_Russian_student_rescue_corps_%2801%29.jpg',
+        url='/gear-photos/tool-lifejacket.jpg',
         width=960,
         height=960,
         author='Georg Pik',
@@ -472,7 +472,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'tool-measure': GearPhoto(
         file='File:Measuring Board (27503770328).jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a4/Measuring_Board_%2827503770328%29.jpg/960px-Measuring_Board_%2827503770328%29.jpg',
+        url='/gear-photos/tool-measure.jpg',
         width=960,
         height=640,
         author='BLM Alaska',
@@ -482,7 +482,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'tool-net': GearPhoto(
         file='File:Landing net 2.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/2/23/Landing_net_2.jpg/960px-Landing_net_2.jpg',
+        url='/gear-photos/tool-net.jpg',
         width=960,
         height=720,
         author='Huangdan2060',
@@ -492,7 +492,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'tool-pliers': GearPhoto(
         file='File:Long-nosePliers.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b9/Long-nosePliers.jpg/960px-Long-nosePliers.jpg',
+        url='/gear-photos/tool-pliers.jpg',
         width=960,
         height=636,
         author='Raysonho @ Open Grid Scheduler / Grid Engine',
@@ -513,7 +513,7 @@ PHOTOS: dict[str, GearPhoto] = {
     ),
     'tool-sunglasses': GearPhoto(
         file='File:Test for polarized and non-polarized sunglasses.jpg',
-        url='https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0f/Test_for_polarized_and_non-polarized_sunglasses.jpg/960px-Test_for_polarized_and_non-polarized_sunglasses.jpg',
+        url='/gear-photos/tool-sunglasses.jpg',
         width=960,
         height=725,
         author='Keministi',

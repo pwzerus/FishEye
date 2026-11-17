@@ -1,27 +1,35 @@
 """Write app/knowledge/gear_photos.py from the photos picked by eye.
 
     python -m app.cli.gear_photos          # from backend/, after picking
+    python -m app.cli.gear_photos --fetch  # also download any photo not kept yet
 
 Input, in gear_cache/ (git-ignored): candidates*.json, the search results
 with their licence and creator (PD, CC0 or CC BY only, checked with
 fish_id_commons.licence_ok), and picks.tsv, one line per gear item:
-`<item id><TAB><file title>`. Only the metadata is kept. A Commons photo stays
-on Wikimedia and is hot-linked with its credit; a Flickr photo (titled
-`Flickr:<id>`) or a crop of a Commons one (`Crop:<name>`) lives in
-frontend/public/gear-photos/<item>.jpg.
+`<item id><TAB><file title>`. Every photo lives in
+frontend/public/gear-photos/<item>.jpg, with a 500px copy in /500, and is
+shown with its credit. Commons photos were hot-linked until 2026-11-16, when
+some tiles came up blank on a phone; `--fetch` copies the 960px Commons
+thumbnail (one request a second, FishEye's User-Agent). A Flickr photo
+(titled `Flickr:<id>`) or a crop of a Commons one (`Crop:<name>`) was put
+there by hand.
 """
 from __future__ import annotations
 
 import html
 import json
 import re
+import io
 import sys
+import time
 from pathlib import Path
 
 from app.cli.fish_id_commons import licence_ok
 
 CACHE = Path("gear_cache")
 OUT = Path("app/knowledge/gear_photos.py")
+PUBLIC = Path("../frontend/public/gear-photos")
+SMALL = 500  # the srcset's smaller copy (frontend lib/photoSizes.ts)
 
 
 def _plain(value: str) -> str:
@@ -61,7 +69,8 @@ def build(cache: Path = CACHE) -> dict[str, dict]:
             raise SystemExit(f"{item}: {title} has licence {c['licence']!r}, not PD/CC0/CC BY")
         photos[item] = {
             "file": title,
-            "url": c["thumb"].split("?")[0],
+            "source": c["thumb"].split("?")[0],
+            "url": f"/gear-photos/{item}.jpg",
             "width": int(c["thumb_w"]),
             "height": int(c["thumb_h"]),
             "author": _author(c["artist_html"], title),
@@ -94,9 +103,63 @@ def render(photos: dict[str, dict]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _save(data: bytes, item: str, public: Path) -> None:
+    """Writes <item>.jpg as served (a PNG goes on white) and its 500px copy."""
+    from PIL import Image
+
+    image = Image.open(io.BytesIO(data))
+    image.load()
+    if image.format == "JPEG":
+        (public / f"{item}.jpg").write_bytes(data)
+    if image.mode != "RGB":
+        rgba = image.convert("RGBA")
+        image = Image.new("RGB", rgba.size, "white")
+        image.paste(rgba, mask=rgba.getchannel("A"))
+    if not (public / f"{item}.jpg").exists():
+        image.save(public / f"{item}.jpg", quality=88, optimize=True)
+    if image.width > SMALL:
+        small = image.resize((SMALL, round(image.height * SMALL / image.width)), Image.LANCZOS)
+        small.save(public / str(SMALL) / f"{item}.jpg", quality=85, optimize=True)
+
+
+def fetch(photos: dict[str, dict], public: Path = PUBLIC) -> list[str]:
+    """Downloads each photo not in `public` yet. Returns the items fetched."""
+    import httpx
+
+    from app.data_import.provenance import USER_AGENT
+
+    (public / str(SMALL)).mkdir(parents=True, exist_ok=True)
+    fetched = []
+    with httpx.Client(headers={"User-Agent": USER_AGENT}, timeout=60, follow_redirects=True) as client:
+        for item, p in sorted(photos.items()):
+            if (public / f"{item}.jpg").exists():
+                continue
+            if not p["source"].startswith("https://"):
+                raise SystemExit(f"{item}: {p['file']} has to be put in {public} by hand")
+            response = client.get(p["source"])
+            response.raise_for_status()
+            _save(response.content, item, public)
+            fetched.append(item)
+            time.sleep(1)
+    return fetched
+
+
 def main(argv: list[str] | None = None) -> int:
+    args = sys.argv[1:] if argv is None else argv
     photos = build()
-    OUT.write_text(render(photos), encoding="utf-8")
+    if "--fetch" in args:
+        print(f"{len(fetch(photos))} photos downloaded to {PUBLIC}")
+    missing = [i for i in photos if not (PUBLIC / f"{i}.jpg").exists()]
+    if PUBLIC.is_dir() and missing:
+        raise SystemExit(f"not in {PUBLIC} yet (run with --fetch): {', '.join(missing)}")
+    if PUBLIC.is_dir():
+        # The file's own size: Commons can report 960 for an original that is smaller.
+        from PIL import Image
+
+        for item, p in photos.items():
+            with Image.open(PUBLIC / f"{item}.jpg") as image:
+                p["width"], p["height"] = image.size
+    OUT.write_text(render(photos), encoding="utf-8", newline="\n")
     print(f"{len(photos)} gear photos written to {OUT}")
     return 0
 

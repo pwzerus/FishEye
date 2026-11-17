@@ -534,6 +534,17 @@ Added from Commons and hot-linked: `File:Circle-hook.jpg`, `File:ストレート
 `File:バイブレーション.jpg` (public domain), `File:Shimano Corsair CS 400 fishing reel
 20200613 001.jpg` and `File:Zwei Twister.jpg` (CC0).
 
+### Gear photos kept by FishEye, 2026-11-16
+
+The Commons photos were hot-linked from Wikimedia until the owner saw blank
+tiles on /gear on a phone. All 52 now live in `frontend/public/gear-photos/`
+with a 500px copy in `/500`: `python -m app.cli.gear_photos --fetch`
+downloaded the 42 Commons files' 960px thumbnails (or the original where it
+is smaller) once, one request a second with FishEye's User-Agent. The two
+PNGs were saved as JPEG on white. Licences allow copying with credit (public
+domain, CC0, CC BY); each photo keeps its author, licence and link to its
+Commons page beside it. The fish photos are still hot-linked (ADR 0015).
+
 ## Fish photo gate: training photos, 2026-11-10
 
 `models/fish-id/gate.npz` (ADR 0053) was fitted on the fish training photos

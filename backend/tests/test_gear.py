@@ -26,22 +26,16 @@ def test_photos_are_open_licence_and_credited():
         assert item in gear.ITEM_BY_ID, item
         assert licence_ok(p.licence), (item, p.licence)
         assert p.author and p.author.lower() not in ("own work", "unknown author"), item
-        if p.url.startswith("/gear-photos/"):
-            # Self-hosted (a Flickr photo or a crop of a Commons one), so the file has to be in the repo.
-            assert p.url == f"/gear-photos/{item}.jpg", item
-            if p.file.startswith("Flickr:"):
-                assert p.page.startswith("https://www.flickr.com/photos/"), item
-                assert p.title, item  # CC BY 2.0 wants the work's title shown
-            else:
-                assert p.file.startswith("Crop:") and p.page.startswith("https://commons.wikimedia.org/wiki/File:"), item
-            if PUBLIC.is_dir():  # the frontend isn't there when only the backend is checked out
-                assert (PUBLIC / p.url.lstrip("/")).is_file(), item
-            continue
-        assert p.url.startswith("https://") and "wikimedia.org" in p.url, item
-        assert p.page.startswith("https://commons.wikimedia.org/wiki/File:"), item
-        # Wikimedia serves only its standard thumbnail widths (or the original).
-        width = re.search(r"/(\d+)px-", p.url)
-        assert width is None or width.group(1) in ("250", "330", "500", "960", "1280"), item
+        # Kept by FishEye since 2026-11-16 (hot-linked Commons tiles came up blank on a phone).
+        assert p.url == f"/gear-photos/{item}.jpg", item
+        if p.file.startswith("Flickr:"):
+            assert p.page.startswith("https://www.flickr.com/photos/"), item
+            assert p.title, item  # CC BY 2.0 wants the work's title shown
+        else:
+            assert p.file.startswith(("File:", "Crop:")), item
+            assert p.page.startswith("https://commons.wikimedia.org/wiki/File:"), item
+        if PUBLIC.is_dir():  # the frontend isn't there when only the backend is checked out
+            assert (PUBLIC / p.url.lstrip("/")).is_file(), item
 
 
 def test_every_item_has_a_photo_of_its_own():

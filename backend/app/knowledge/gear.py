@@ -13,11 +13,10 @@ nothing.
 Photos are picked by eye, one per item and never the same one twice: a clear
 picture of the thing itself, public domain, CC0 or CC BY only, so they are
 safe in a commercial product with their credit (docs/data-sources.md, "Gear
-photos"). Most are Wikimedia Commons files, hot-linked with the credit beside
-them, like the fish photos (ADR 0015). Commons has no good picture of a few
-things; those are CC BY 2.0 photos from Flickr, or a close crop of a CC0
-Commons photo, kept in frontend/public/gear-photos/ so the page doesn't
-depend on another site for them.
+photos"). Most are Wikimedia Commons files, the rest CC BY 2.0 photos from
+Flickr or a close crop of a CC0 Commons photo, all shown with their credit.
+All are kept in frontend/public/gear-photos/ (with a 500px copy): the Commons
+ones were hot-linked until 2026-11-16, when some tiles came up blank on a phone.
 """
 from __future__ import annotations
 
@@ -37,7 +36,7 @@ CATEGORIES: dict[str, str] = {
 @dataclass(frozen=True)
 class GearPhoto:
     file: str  # "File:Spinning reel.jpg", "Crop:Spinning reel.jpg" or "Flickr:8028982344"
-    url: str  # a 960 px (or smaller, whole) Commons thumbnail, or /gear-photos/<item>.jpg
+    url: str  # /gear-photos/<item>.jpg: a 960 px Commons thumbnail (or the smaller original), Flickr photo or crop
     width: int
     height: int
     author: str
