@@ -863,6 +863,13 @@ BEGINNER_CASES: tuple[RagCase, ...] = (
     _c("bg-zh-no-bite", "钓了一下午一口都没有是什么原因", f"{_A}trouble-no-bites"),
     _c("bg-zh-set-hook", "怎么判断鱼咬钩了，什么时候提竿", f"{_A}technique-bite"),
     _c("bg-zh-snag", "鱼钩挂底了怎么办", f"{_A}trouble-snags"),
+    # The owner's questions, 2026-11-17 (the snag card was rewritten for them
+    # and the tying-back-on card added).
+    _c("bg-zh-snag-rock", "卡在石头下面还是卡水草，怎么确认", f"{_A}trouble-snags"),
+    _c("bg-zh-snag-cut", "挂底了什么时候该切线", f"{_A}trouble-snags"),
+    _c("bg-zh-retie", "切线之后怎么重新绑钩", f"{_A}trouble-retie", f"{_A}knot-improved-clinch", f"{_A}knot-palomar"),
+    _c("bg-snag-or-fish", "how can I tell if it's a snag or a fish", f"{_A}trouble-snags", f"{_A}technique-bite"),
+    _c("bg-retie", "my line broke on a snag, how do I tie a new hook back on", f"{_A}trouble-retie", f"{_A}knot-improved-clinch"),
     _c("bg-zh-line-twist", "鱼线老是打卷缠在一起怎么办", f"{_A}trouble-line-twist"),
     _c("bg-zh-release", "放流的时候怎么做才不会伤到鱼", f"{_A}care-release"),
     _c("bg-zh-eat-safe", "湖里钓的鱼能吃吗", f"{_A}care-eating-safely"),

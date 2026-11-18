@@ -15,6 +15,11 @@ import { findTerms, TERM_TOPIC, type TermId } from "@/lib/terms";
 
 const en = MESSAGES.en;
 
+// Punctuation that mustn't be left at the start or end of a line apart from
+// the word it belongs to (LinkedText keeps it with a term).
+const OPENING = /[“‘（(「『【《]+$/;
+const CLOSING = /^[”’）)」』】》、。，；：！？…,.;:!?]+/;
+
 // One card open at a time, shared with nothing else: a bait card closes on
 // its own outside-click.
 let closeOpen: (() => void) | null = null;
@@ -156,9 +161,16 @@ export function LinkedText({
   const parts: ReactNode[] = [];
   let at = 0;
   for (const m of found) {
-    parts.push(text.slice(at, m.start));
+    // A term is a button, and a line may break on either side of it: the
+    // 。 after 帕洛马结 opened the next line, a “ before 德州钓组 ended one
+    // (2026-11-17). Punctuation touching the term goes with it.
+    let before = text.slice(at, m.start);
+    const lead = before.match(OPENING)?.[0] ?? "";
+    before = before.slice(0, before.length - lead.length);
+    const trail = text.slice(m.end).match(CLOSING)?.[0] ?? "";
+    parts.push(before);
     const word = text.slice(m.start, m.end);
-    parts.push(
+    const tip =
       m.kind === "term" ? (
         <TermTip key={`t${m.start}`} id={m.id}>
           {word}
@@ -167,9 +179,19 @@ export function LinkedText({
         <BaitTip key={`b${m.start}`} card={m.card} fish={fish}>
           {word}
         </BaitTip>
+      );
+    parts.push(
+      lead || trail ? (
+        <span key={`g${m.start}`} className="term-glue">
+          {lead}
+          {tip}
+          {trail}
+        </span>
+      ) : (
+        tip
       ),
     );
-    at = m.end;
+    at = m.end + trail.length;
   }
   parts.push(text.slice(at));
   return <>{parts}</>;

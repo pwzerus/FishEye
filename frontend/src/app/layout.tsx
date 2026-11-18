@@ -42,7 +42,14 @@ export async function generateMetadata(): Promise<Metadata> {
 // light), so the phone's browser bar takes the header's colour in both; a
 // dark-mode navy here sat above a cream page.
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
   themeColor: "#f7f8f2",
+  // Lets env(safe-area-inset-*) report the iPhone's home bar and notch.
+  // Without it they are 0, and in the home-screen app the bottom bar's
+  // labels sat on the home indicator (2026-11-17). The bars pad themselves
+  // by the insets (refinements.css); html pads the sides in landscape.
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

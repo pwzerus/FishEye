@@ -236,6 +236,12 @@ GLOSSARY: dict[str, str] = {
     "需要钓鱼证": "need a fishing license",
     "卸力": "drag",
     "挂底": "snagged snag free hook",
+    # Added 2026-11-17 with the rewritten snag card and the tying-back-on
+    # card: "卡在石头下面" (stuck under a rock), when to cut, tying back on.
+    "卡在": "snagged snag stuck",
+    "卡住": "snagged snag stuck",
+    "切线": "break the line snagged",
+    "重新绑": "tying back on new hook",
     "打卷": "line twist loops tangle",
     "缠线": "line twist tangle",
     "咬钩": "bite set the hook",

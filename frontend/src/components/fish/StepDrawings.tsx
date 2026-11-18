@@ -612,7 +612,24 @@ const deepHook: Step[] = [
   ),
 ];
 
+// 2026-11-17: the snag card was rewritten (a fish or a snag, plucking the
+// line, breaking it near the snag); its drawings follow the new text.
 const snag: Step[] = [
+  // A fish moves off with the line; a snag doesn't move at all.
+  () => (
+    <>
+      <Water y={30} h={90} />
+      <path className="rig-divider" d="M80 36 V116" />
+      <path className="rig-line" d="M22 0 L30 70" />
+      <FishShape x={30} y={74} len={38} />
+      <Arrow motion d="M60 100 H16" at={[16, 100]} deg={180} />
+      <path className="rig-rock" d="M96 120 C96 100 116 90 142 96 L158 120 Z" />
+      <path className="rig-line" d="M112 0 L124 96" />
+      <g transform="translate(124 96) scale(0.55)">
+        <Hook kind="j" L={14} R={7} P={9} />
+      </g>
+    </>
+  ),
   () => (
     <>
       <Water y={64} h={56} />
@@ -635,6 +652,20 @@ const snag: Step[] = [
       <Arrow motion d="M46 68 H112" at={[112, 68]} deg={0} />
     </>
   ),
+  // Pluck the line between the reel and the first guide, like a guitar string.
+  () => (
+    <>
+      <Rod from={[4, 40]} to={[156, 26]} handle={0.3} />
+      <SpinningReel x={40} y={37} />
+      <path className="rig-metal-thin" d="M92 32 v4" />
+      <circle className="rig-metal" cx={92} cy={39} r={3} />
+      <path className="rig-line rig-work" d="M30 48 L62 80 L90 41" />
+      <path className="rig-line" d="M95 38 L156 28 L160 44" />
+      <Finger x={62} y={100} deg={-90} len={20} w={9} />
+      <Arrow motion d="M80 58 V84" at={[80, 84]} deg={90} />
+      <Arrow d="M98 84 V60" at={[98, 60]} deg={-90} />
+    </>
+  ),
   () => (
     <>
       <Water y={70} h={50} />
@@ -643,6 +674,54 @@ const snag: Step[] = [
       <path className="rig-line rig-work" d="M44 42 c4 4 4 12 0 16 M50 42 c4 4 4 12 0 16 M150 100 L56 50" />
       <Rod from={[8, 64]} to={[60, 54]} />
       <Arrow motion d="M28 92 H4" at={[4, 92]} deg={180} />
+    </>
+  ),
+  // Broken by pulling, the line parts near the snag; cut at the reel, a long
+  // piece stays in the water.
+  () => (
+    <>
+      <Water y={22} h={98} />
+      <path className="rig-divider" d="M80 28 V116" />
+      <path className="rig-rock" d="M10 120 C10 102 30 94 56 100 L70 120 Z" />
+      <path className="rig-line" d="M38 98 l5 -12" />
+      <Yes x={40} y={56} />
+      <path className="rig-rock" d="M90 120 C90 102 110 94 136 100 L150 120 Z" />
+      <path className="rig-line" d="M118 98 C108 80 138 72 124 56 C112 42 136 34 128 22" />
+      <No x={146} y={56} />
+    </>
+  ),
+];
+
+// After a break-off (trouble-retie): cut off frayed line, tie a new hook,
+// put back what came off with it.
+const retie: Step[] = [
+  () => (
+    <>
+      <path className="rig-line" d="M156 50 H62" />
+      <path className="rig-line rig-work" d="M62 50 l-9 -7 M62 50 l-10 1 M62 50 l-8 8 M58 49 l-9 -2" />
+      <circle className="rig-hot" cx={55} cy={50} r={13} />
+      <path className="rig-cut" d="M86 34 V66" />
+      <path className="rig-clipper" d="M104 92 l-14 -18 M116 88 l-26 -14" />
+    </>
+  ),
+  () => (
+    <>
+      <path className="rig-line" d="M156 30 H64" />
+      <Wraps x0={48} x1={64} y={30} n={5} h={6} />
+      <path className="rig-line" d="M64 36 l5 6" />
+      <KnotHook x={40} y={30} />
+      <Yes x={120} y={80} />
+    </>
+  ),
+  () => (
+    <>
+      <Water y={36} h={84} />
+      <path className="rig-line" d="M80 0 V98" />
+      <Bobber x={80} y={36} />
+      <circle className="rig-lead" cx={80} cy={78} r={4.5} />
+      <g transform="translate(80 98) scale(0.8)">
+        <Hook kind="j" L={14} R={6} P={8} />
+      </g>
     </>
   ),
 ];
@@ -1433,6 +1512,7 @@ export const STEP_DRAWINGS = {
   release,
   deepHook,
   snag,
+  retie,
   catfishHold,
   worm,
   minnow,

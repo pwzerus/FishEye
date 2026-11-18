@@ -37,6 +37,8 @@ const es: Messages = {
     catches: "Capturas",
     ask: "Preguntar",
     unavailable: (label: string) => `${label} (no disponible)`,
+    // The phone's bottom bar: six short labels side by side.
+    tabs: { home: "Inicio", map: "Mapa", fish: "Peces", handbook: "Manual", catches: "Capturas", ask: "Preguntar" },
   },
   installTip: {
     title: "Ten FishEye en tu pantalla de inicio",
@@ -784,11 +786,9 @@ const es: Messages = {
     topicGear: "Así se ve",
     gearLink: "Qué comprar",
     questionsLink: "Preguntas frecuentes",
-    eyebrow: "Guía de peces",
     title: "Conoce los peces",
-    lede: "Elige un pez para ver carnada y equipo. Abre el manual para nudos, lances y lo básico.",
-    toSpecies: "Especies ↓",
-    photoId: "¿No sabes qué pescaste? Identifícalo con una foto →",
+    lede: "Elige un pez para ver qué carnada y equipo usar.",
+    photoId: "Identificar con foto",
     loadError: "No pudimos cargar las guías. Actualiza la página para intentar de nuevo.",
     backendDown: "No pudimos cargar las guías de peces ahora. Intenta de nuevo en un momento.",
     englishContent: "Por ahora el texto de la guía está en inglés; los nombres y títulos están traducidos.",
@@ -1614,11 +1614,23 @@ const es: Messages = {
     snag: {
       title: "Cómo desatorar el anzuelo",
       parts: [
+        "Un pez se lleva la línea. Un atorón no se mueve",
         "Sube la punta de la caña y sacúdela",
         "Camina unos pasos a un lado y jala desde otro ángulo",
+        "Pulsa la línea entre el carrete y la primera guía, como la cuerda de una guitarra",
         "Si sigue atorado: enrolla la línea en una mano con guante, apunta la caña al atorón y jala parejo o camina hacia atrás",
+        "Rota así, la línea se parte cerca del atorón. Cortada junto al carrete, queda un tramo largo en el agua",
       ],
       note: "No jales con la caña: se puede romper antes que la línea. Voltea la cara: el anzuelo puede salir volando.",
+    },
+    retie: {
+      title: "Volver a amarrar",
+      parts: [
+        "Corta la punta deshilachada de la línea",
+        "Amarra un anzuelo nuevo con el nudo clinch mejorado o el nudo Palomar",
+        "Vuelve a poner los plomos partidos y la boya, igual que antes",
+      ],
+      note: "",
     },
     catfishHold: {
       title: "Cómo agarrar un bagre",

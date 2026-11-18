@@ -821,6 +821,43 @@ Booklets read for it, as facts + link (the files are not in this repository):
 | Knot-Tying Guide, Illinois DNR | https://dnr.illinois.gov/content/dam/soi/en/web/dnr/publications/documents/00000150.pdf | RESTRICTED: no statement in the file |
 | Sportfishing manual, University of Wyoming 4-H | https://4-h.ksu.edu/projects/natural-resources/sport-fishing/docs/sportfishing%20manual.pdf | RESTRICTED: no statement in the file |
 
+## Snags and tying back on, 2026-11-17 — PD and RESTRICTED (facts + link)
+
+The owner asked how to tell what a hook is caught on, what to do, when to
+cut the line, and how to tie back on, with drawings. The handbook's snag
+card was rewritten and a card on tying back on added
+(`knowledge/angling_handbook.py`: `trouble-snags`, `trouble-retie`). Every
+page below was opened once, its terms and `robots.txt` read first; facts are
+in our own words, with the link in `SOURCES`.
+
+| Source id | Page | Class and basis |
+|---|---|---|
+| `usfs-wildlife-hook` | US Forest Service, Umpqua NF, "Let wildlife off the hook" (updated 2025-03-14) | PD: a federal work. Break the line by pulling, rod pointed at the snag, rather than cutting it at the reel: it parts near the snag and leaves less line behind. |
+| `noaa-fishing-responsibly` | NOAA Marine Debris Program blog, "Enjoy fishing, responsibly!" (2017) | PD: a federal work; the program's disclaimer says its information "may be distributed or copied". If you must cut, cut as close to the snag as you can. |
+| `butler-eagle-snags` | Butler Eagle, Jeff Knapp, "Preventing lures from snagging equates to fine fishing" (2015-11-28) | RESTRICTED: "© The Butler Eagle", no terms page; `robots.txt` allows the article. Light pressure tells a fish from a snag; plucking the line between the reel and the first guide. |
+| `mndnr-minnaqua-casting` | Minnesota DNR, MinnAqua lesson 5:2 (PDF, in `docs/learn-material/`) | RESTRICTED, as the other MinnAqua lessons above: the same steps work on rocks, logs and water plants. |
+| `tpwd-beginning-angler` | TPWD, "A basic guide for the beginning angler" (PDF, in `docs/learn-material/`) | RESTRICTED (TPWD, above): jiggle the line back and forth and side to side. Downloaded 2026-11-08 and first cited now. |
+
+Also cited, already in the register: `mdc-tips`, `mndnr-minnaqua-safety`,
+`mndnr-minnaqua-tackle`, `nydec-guide`, `nydec-kids`, `usfws-tips`,
+`zebco-knots`, `pfbc-knots`.
+
+Not used, and why (the facts on telling weeds from rock by feel were in
+none of the usable pages, so the card says the same steps work for all):
+
+- **MeatEater** ("Snag solutions"): its terms forbid any "robot" or "spider"
+  and commercial use without consent. FORBIDDEN. The article was opened
+  once before its terms were checked; nothing from it is used.
+- **Outdoor Life** (Recurrent Ventures) and **Sports Illustrated** (Minute
+  Media): terms forbid robots and crawlers. Not opened.
+- **FishUSA**: terms say no commercial use "of any of the information" on
+  the site. NC; not used.
+- **Discover Boating** (NMMA): no terms of its own; NMMA's legal page limits
+  use to "personal, non-commercial informational purposes". Not used
+  (Needs human review if it is ever wanted).
+- **Wired2Fish**, **NSW DPI**, **Kayak Angler**, **Nebraska Game and Parks
+  magazine**: refused automated access (403). Not used.
+
 ## Not used
 
 - **Flickr API**: no longer free for this use; Open Images already holds the

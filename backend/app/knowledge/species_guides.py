@@ -332,6 +332,13 @@ SOURCES: dict[str, Source] = {
         Source("odwc-fits", "Oklahoma Dept. of Wildlife Conservation: Fishing in the Schools manual (PDF, 2025)", "https://www.wildlifedepartment.com/sites/default/files/2026-02/2025-Fishing%20in%20the%20Schools%20Manual-online.pdf", "agency"),
         # Added 2026-11-08 (forum questions, second pass): is it still good to eat.
         Source("fda-seafood", "US Food and Drug Administration: selecting and serving fresh and frozen seafood safely", "https://www.fda.gov/food/buy-store-serve-safe-food/selecting-and-serving-fresh-and-frozen-seafood-safely", "agency"),
+        # Added 2026-11-17: telling a snag from a fish, freeing it, when and
+        # how to break off, tying back on (docs/data-sources.md).
+        Source("usfs-wildlife-hook", "US Forest Service, Umpqua National Forest: let wildlife off the hook (2025)", "https://www.fs.usda.gov/r06/umpqua/safety-ethics/let-wildlife-hook", "agency"),
+        Source("noaa-fishing-responsibly", "NOAA Marine Debris Program: enjoy fishing, responsibly (2017)", "https://blog.marinedebris.noaa.gov/enjoy-fishing-responsibly", "agency"),
+        Source("mndnr-minnaqua-casting", "Minnesota DNR, MinnAqua leader's guide: casting a closed-face rod and reel (PDF, 2010)", "https://files.dnr.state.mn.us/education_safety/education/minnaqua/leadersguide/chapter_5/5_2_casting_a_closed_face_rod_and_reel.pdf", "agency"),
+        Source("tpwd-beginning-angler", "TPWD: Fish Texas, a basic guide for the beginning angler (PDF)", "https://tpwd.texas.gov/publications/pwdpubs/media/pwd_bk_k0700_0639d.pdf", "agency"),
+        Source("butler-eagle-snags", "Butler Eagle (Jeff Knapp): preventing lures from snagging (2015)", "https://www.butlereagle.com/20151128/preventing-lures-from-snagging-equates-to-fine-fishing/", "publication"),
     ]
 }
 

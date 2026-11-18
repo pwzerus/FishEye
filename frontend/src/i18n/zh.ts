@@ -36,6 +36,8 @@ const zh: Messages = {
     catches: "渔获",
     ask: "问答",
     unavailable: (label: string) => `${label}（暂不可用）`,
+    // The phone's bottom bar: six short labels side by side.
+    tabs: { home: "首页", map: "找钓点", fish: "鱼类", handbook: "手册", catches: "渔获", ask: "问答" },
   },
   installTip: {
     title: "把 FishEye 放到手机桌面",
@@ -772,12 +774,10 @@ const zh: Messages = {
     gearAll: "全部渔具和照片 →",
     topicGear: "实物图",
     gearLink: "买什么",
-    questionsLink: "钓鱼常见问题",
-    eyebrow: "鱼类指南",
+    questionsLink: "常见问题",
     title: "认识这些鱼",
-    lede: "选择一种鱼，查看适用的饵和装备；绳结、抛投等基础知识见手册。",
-    toSpecies: "鱼种 ↓",
-    photoId: "不知道钓到的是什么鱼？拍照识别 →",
+    lede: "选一种鱼，了解该用什么饵和装备。",
+    photoId: "拍照识鱼",
     loadError: "无法加载指南，请刷新重试。",
     backendDown: "鱼类指南暂时无法加载，请稍后再试。",
     englishContent: "下面的指南正文暂时是英文；鱼名和标题已经翻译。",
@@ -1597,11 +1597,23 @@ const zh: Messages = {
     snag: {
       title: "挂底了怎么办",
       parts: [
+        "鱼会带着线游走，挂底则纹丝不动",
         "把竿尖举高，抖一抖",
         "往旁边走几步，换个角度拉",
+        "在渔轮和第一个导环之间勾住线，像拨吉他弦一样弹",
         "还拉不出来：线在戴手套的手上绕几圈，竿尖对准挂底处，稳稳拉或往后退",
+        "这样拉断，线在挂底处附近断开；在渔轮旁剪断，会有一长段线留在水里",
       ],
       note: "不要用竿硬拽，竿可能先断。脸转开：脱出的钩可能弹回来。",
+    },
+    retie: {
+      title: "重新绑钩",
+      parts: [
+        "线头磨毛的部分剪掉",
+        "绑上新钩：改良克林奇结或帕洛马结",
+        "咬铅和浮漂照原样装回去",
+      ],
+      note: "",
     },
     catfishHold: {
       title: "怎么拿鲶鱼",

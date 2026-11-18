@@ -34,7 +34,7 @@ function matches(g: SpeciesGuide, filter: Filter, q: string, locale: Locale): bo
   return hay.includes(q.toLowerCase());
 }
 
-export function FishGrid({ guides, photos }: { guides: SpeciesGuide[]; photos: SpeciesPhotos }) {
+export function FishGrid({ guides, photos, tools }: { guides: SpeciesGuide[]; photos: SpeciesPhotos; tools?: React.ReactNode }) {
   const t = useT().fish;
   const locale = useLocale();
   const filters: { id: Filter; label: string }[] = [
@@ -72,18 +72,23 @@ export function FishGrid({ guides, photos }: { guides: SpeciesGuide[]; photos: S
             </button>
           ))}
         </div>
-        <label className="search-field">
-          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
-            <path d="M20 20l-4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t.search}
-            aria-label={t.search}
-          />
-        </label>
+        {/* Search and the state picker share a row (the page passes the
+            picker in), one line less above the first fish on a phone. */}
+        <div className="fish-find">
+          <label className="search-field">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
+              <path d="M20 20l-4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t.search}
+              aria-label={t.search}
+            />
+          </label>
+          {tools}
+        </div>
       </div>
 
       {shown.length === 0 ? (

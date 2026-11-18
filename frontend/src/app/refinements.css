@@ -34,11 +34,38 @@
 .plan-updating { font-size:14.5px; color:var(--brand); padding:4px 0; }
 .plan-card[aria-busy="true"] .plan-rows { opacity:.3; pointer-events:none; }
 .panel-error .btn { margin-top:10px; }
-.guide-shortcuts { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0; }
-/* On a phone the four links squeezed into one row, "What to buy" three words
-   to a line; two by two they read evenly. */
-@media (max-width: 560px) { .guide-shortcuts { display:grid; grid-template-columns:1fr 1fr; } }
-.guide-shortcuts a { border:1px solid var(--line); border-radius:7px; padding:8px 13px; font-size:15px; color:var(--brand); }
+/* The fish guide's three shortcuts: small pills in one row, the photo check
+   first and filled (2026-11-17: it used to be five boxed links, two by two). */
+.guide-shortcuts { display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 4px; }
+.guide-shortcuts a { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:7px 14px; font-size:15px; font-weight:600; color:var(--brand); background:var(--surface); white-space:nowrap; transition:border-color var(--dur), background var(--dur); }
+.guide-shortcuts a:hover { border-color:var(--brand); }
+.guide-shortcuts a.is-main { background:var(--brand); border-color:var(--brand); color:#fff; }
+.guide-shortcuts a.is-main:hover { background:var(--brand-strong); }
+.fish-intro { gap:12px; }
+.fish-find { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.fish-find .state-picker select { height:42px; padding:0 12px; }
+.fish-intro .lede { margin:0; }
+@media (max-width: 560px) {
+  .fish-intro { padding-top:8px; padding-bottom:14px; }
+  .fish-intro h1 { font-size:34px; }
+  .fish-find { width:100%; flex-wrap:nowrap; }
+  .fish-find .search-field { flex:1; min-width:0; }
+  /* The select reads "Any state" or the state's name: the label can go. */
+  .fish-find .state-picker-label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  .fish-find .state-picker select { max-width:44vw; }
+  /* Two fish to a row on a phone, the name and level only: the whole card
+     opens the fish, so "Bait and gear →" under each one was just more words. */
+  .fish-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
+  .fish-card { border-radius:12px; }
+  .fish-card-art { padding:8px 10px 6px; }
+  .fish-card-photo { width:44px; height:33px; right:6px; bottom:6px; border-radius:7px; border-width:1.5px; }
+  .fish-card-body { padding:10px 12px 12px; gap:6px; }
+  .fish-card-top { flex-direction:column; align-items:flex-start; gap:6px; }
+  .fish-card-top h2 { font-size:17px; line-height:1.25; }
+  .fish-card-top .name-en { font-size:13.5px; }
+  .fish-card-top .tag { font-size:13px; padding:2px 8px; }
+  .fish-card-cta { display:none; }
+}
 .handbook-group { border-top:1px solid var(--line); padding:0; scroll-margin-top:calc(var(--header-h) + 16px); }
 .handbook-group > summary { display:flex; align-items:center; gap:12px; cursor:pointer; padding:19px 0; }
 .handbook-group > summary::after { content:'+'; margin-left:auto; font-size:20px; color:var(--brand); }
@@ -85,7 +112,7 @@ button:active:not(:disabled), .btn:active { translate:0 1px; }
   .brand-link picture { display:block; }
   .brand-link .brand-mark { display:none; }
 }
-.mobile-site-nav { position:fixed; left:0; right:0; bottom:0; height:calc(var(--mobile-nav-h) + env(safe-area-inset-bottom)); z-index:2000; display:grid; grid-template-columns:repeat(5,1fr); padding:5px 12px calc(5px + env(safe-area-inset-bottom)); background:var(--surface); border-top:1px solid var(--line); box-shadow:0 -4px 20px #203c3307; }
+.mobile-site-nav { position:fixed; left:0; right:0; bottom:0; height:calc(var(--mobile-nav-h) + env(safe-area-inset-bottom)); z-index:2000; display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); padding:5px max(6px, env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); background:var(--surface); border-top:1px solid var(--line); box-shadow:0 -4px 20px #203c3307; }
 @media(max-width:760px) {
   .site-header .brand-link picture { display:block; }
   .site-header .brand-link .brand-lockup { display:block; height:27px; }
@@ -609,17 +636,21 @@ figure.rig-steps ol li p > b { display: grid; place-items: center; width: 22px; 
    the links stay on one line: first without their icons, then (up to 960px)
    without Home (the logo is home) and the language code (the globe stays).
    If a long language still doesn't fit, the links scroll sideways instead of
-   pushing the logo off. The phone's bottom bar keeps five equal columns; a
-   two-word label may take two lines there. */
+   pushing the logo off. The phone's bottom bar has six equal columns with
+   short labels (messages nav.tabs), one line each. */
 .site-nav-link { white-space: nowrap; }
 .site-header .brand-link { flex-shrink: 0; }
-.mobile-site-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); padding-inline: 6px; }
+.mobile-site-nav { grid-template-columns: repeat(6, minmax(0, 1fr)); padding-inline: max(6px, env(safe-area-inset-left)) max(6px, env(safe-area-inset-right)); }
 .mobile-site-nav .site-nav-link { white-space: normal; text-align: center; padding: 4px 0; }
-/* keep-all: a Japanese label (ハンドブック) stays whole instead of leaving
-   one character on a second line. */
+/* keep-all: a Japanese or Korean label stays whole instead of leaving one
+   character on a second line. */
 .mobile-site-nav .site-nav-link span { font-size: 12.5px; line-height: 1.15; word-break: keep-all; }
-/* On the narrowest phones (320px) five labels at that size would touch. */
+/* On the narrowest phones (320px) six labels at that size would touch. */
 @media (max-width: 340px) { .mobile-site-nav .site-nav-link span { font-size: 11px; } }
+/* Spanish has the longest words (Capturas, Preguntar): on phones under 390px
+   they would touch. */
+@media (max-width: 389px) { :lang(es) .mobile-site-nav .site-nav-link span { font-size: 11px; letter-spacing: -0.01em; } }
+@media (max-width: 340px) { :lang(es) .mobile-site-nav .site-nav-link span { font-size: 10px; } }
 @media (min-width: 761px) and (max-width: 1180px) {
   .site-header .site-nav-link svg { display: none; }
   .site-header .site-nav-link { padding: 8px 9px; }
@@ -648,3 +679,12 @@ figure.rig-steps ol li p > b { display: grid; place-items: center; width: 22px; 
   .home-action { grid-column: span 2; }
   .home-action:nth-child(n+4) { grid-column: span 3; }
 }
+
+/* viewport-fit=cover (app/layout.tsx): turned sideways, the page keeps clear
+   of an iPhone's notch and rounded corners. The fixed bottom bar pads itself. */
+html { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+
+/* A term with the punctuation around it (components/terms/TermText.tsx):
+   the line breaks before or after the group, never inside it. */
+.term-glue { white-space: nowrap; }
+.term-glue button { white-space: normal; }

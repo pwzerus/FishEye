@@ -1964,26 +1964,67 @@ TOPICS += (
     HandbookTopic(
         id="trouble-snags",
         category="trouble",
-        title="Snagged: freeing a hook, and snagging less",
+        # Rewritten 2026-11-17 at the owner's request: is it a fish, weeds or
+        # a rock; what to try, gentlest first; when to give up and break the
+        # line. Tying back on is its own card (trouble-retie).
+        title="Snagged: freeing a hook, and when to break the line",
         body=(
             "Rocks, sticks, logs, weeds, docks and cables catch every angler's hook sometimes. Snags "
             "are part of fishing.",
-            "First, hold the rod tip high and jiggle it. Moving a few steps to one side, to pull "
-            "from another angle, often frees it.",
-            "If it won't come, don't heave on the rod: it can snap before the line does. Wrap the "
-            "line several times around your hand, over a sleeve or a glove, point the rod tip "
-            "straight at the snag, and pull steadily or walk backwards until the line breaks or the "
-            "hook comes free. Turn your face away and keep others back: a hook that pulls free can "
-            "fly at you.",
-            "Then check the hook: replace it if it is bent or broken, and cut off and retie any line "
-            "that is frayed near it.",
+            "Fish or snag? Keep light pressure on the line for a moment. A fish gives a little, taps "
+            "or moves off with the line. A snag stays solid, with no sign of life.",
+            "Weeds, a rock or a log? Often you can't see which, and you don't need to. The same steps "
+            "work for all of them, gentlest first.",
+            "First, hold the rod tip high and jiggle it, back and forth and side to side. Moving a few "
+            "steps to one side, to pull from another angle, often frees it.",
+            "Still stuck? Pluck the line. Pull it a little tight, hook it with a finger of your free "
+            "hand between the reel and the first guide, then pull it down and let it snap back, like "
+            "a guitar string. This works with any line.",
+            "If you can reach the hook from where you stand, free it by hand. Mind your footing. Wet "
+            "rocks, roots and logs are slippery, and the bottom can drop off suddenly.",
+            "If a few tries don't free it, break the line. Don't heave on the rod, which can snap "
+            "before the line does.",
+            "Point the rod tip straight at the snag. Wrap the line several times around your hand, "
+            "over a sleeve or a glove, since bare line can cut your fingers. Pull steadily or walk "
+            "backwards until the line breaks or the hook comes free.",
+            "Turn your face away and keep others back. A hook that pulls free can fly at you.",
+            "Broken this way, the line parts near the snag and leaves far less of it in the water "
+            "than cutting it at the reel. If you have to cut, cut as close to the snag as you can "
+            "safely reach.",
+            "Then check the hook. Replace it if it is bent or broken, and cut off and retie any line "
+            "that is frayed near it (see Tying back on after a break-off).",
             "To snag less: a bobber keeps the bait up off the bottom; a hook point buried in a soft "
             "plastic slides through cover (see Texas rig); and a leader a little weaker than the "
             "main line breaks first, so a snag costs only the hook (see Leaders and swivels).",
             "Take broken line home: hooks and line left behind harm people and wildlife (see Old "
             "fishing line).",
         ),
-        source_ids=("mdc-tips", "nydec-kids", "usfws-tips", "mndnr-minnaqua-safety"),
+        source_ids=(
+            "mdc-tips", "nydec-kids", "usfws-tips", "mndnr-minnaqua-safety", "mndnr-minnaqua-casting",
+            "tpwd-beginning-angler", "butler-eagle-snags", "nydec-guide", "usfs-wildlife-hook",
+            "noaa-fishing-responsibly",
+        ),
+    ),
+    HandbookTopic(
+        id="trouble-retie",
+        category="trouble",
+        # Added 2026-11-17 with the rewrite above: after a break-off, back to
+        # fishing. The knots and rigs it names have their own cards, with
+        # step drawings.
+        title="Tying back on after a break-off",
+        body=(
+            "Losing a hook to a snag is common. Keep spare hooks, sinkers and bobbers in your tackle "
+            "box for it, and spare line too.",
+            "Reel in what's left and look at the end of the line. If it is frayed, cut that part off "
+            "before you tie on.",
+            "Tie on a new hook or lure with the improved clinch knot for monofilament, or the Palomar "
+            "knot for braid or mono. Wet the knot, pull it tight, and trim the end, not too close.",
+            "Put back what came off with it, the same way as before: split shot, a sliding sinker or "
+            "a bobber (see Split shot, Bobbers and Sliding sinker bottom rig).",
+            "Lost a lot of line? When the spool runs low, put new line on (see Changing your fishing "
+            "line).",
+        ),
+        source_ids=("mndnr-minnaqua-tackle", "mndnr-minnaqua-safety", "mdc-tips", "zebco-knots", "pfbc-knots"),
     ),
     HandbookTopic(
         id="trouble-line-twist",

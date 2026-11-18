@@ -36,6 +36,7 @@ export const RIG_DIAGRAMS: Record<string, RigKey | RigKey[]> = {
   "care-release": "release",
   "care-deep-hook": "deepHook",
   "trouble-snags": "snag",
+  "trouble-retie": "retie",
   "safe-handling": "catfishHold",
   "bait-worms": "worm",
   "bait-minnows": "minnow",

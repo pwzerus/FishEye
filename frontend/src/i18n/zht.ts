@@ -38,6 +38,8 @@ const zht: Messages = {
     catches: "漁獲",
     ask: "問答",
     unavailable: (label: string) => `${label}（暫不可用）`,
+    // The phone's bottom bar: six short labels side by side.
+    tabs: { home: "首頁", map: "找釣點", fish: "魚類", handbook: "手冊", catches: "漁獲", ask: "問答" },
   },
   installTip: {
     title: "把 FishEye 放到手機桌面",
@@ -774,12 +776,10 @@ const zht: Messages = {
     gearAll: "全部漁具和照片 →",
     topicGear: "實物圖",
     gearLink: "買什麼",
-    questionsLink: "釣魚常見問題",
-    eyebrow: "魚類指南",
+    questionsLink: "常見問題",
     title: "認識這些魚",
-    lede: "選擇一種魚，檢視適用的餌和裝備；繩結、拋投等基礎知識見手冊。",
-    toSpecies: "魚種 ↓",
-    photoId: "不知道釣到的是什麼魚？拍照識別 →",
+    lede: "選一種魚，瞭解該用什麼餌和裝備。",
+    photoId: "拍照識魚",
     loadError: "無法載入指南，請重新整理重試。",
     backendDown: "魚類指南暫時無法載入，請稍後再試。",
     englishContent: "下面的指南正文暫時是英文；魚名和標題已經翻譯。",
@@ -1599,11 +1599,23 @@ const zht: Messages = {
     snag: {
       title: "掛底了怎麼辦",
       parts: [
+        "魚會帶著線遊走，掛底則紋絲不動",
         "把竿尖舉高，抖一抖",
         "往旁邊走幾步，換個角度拉",
+        "在捲線器和第一個導環之間勾住線，像撥吉他弦一樣彈",
         "還拉不出來：線在戴手套的手上繞幾圈，竿尖對準掛底處，穩穩拉或往後退",
+        "這樣拉斷，線在掛底處附近斷開；在捲線器旁剪斷，會有一長段線留在水裡",
       ],
       note: "不要用竿硬拽，竿可能先斷。臉轉開：脫出的鉤可能彈回來。",
+    },
+    retie: {
+      title: "重新綁鉤",
+      parts: [
+        "線頭磨毛的部分剪掉",
+        "綁上新鉤：改良克林奇結或帕洛馬結",
+        "咬鉛和浮標照原樣裝回去",
+      ],
+      note: "",
     },
     catfishHold: {
       title: "怎麼拿鯰魚",

@@ -40,7 +40,7 @@ function unavailable(item: NavItem): boolean {
   return item.href === "/community" && !CATCHES_AVAILABLE;
 }
 
-function UnavailableNavItem({ item }: { item: NavItem }) {
+function UnavailableNavItem({ item, short = false }: { item: NavItem; short?: boolean }) {
   const toast = useToast();
   const t = useT();
   const label = t.nav[item.label];
@@ -54,7 +54,7 @@ function UnavailableNavItem({ item }: { item: NavItem }) {
       onClick={() => toast(t.common.catchesSoon, "info")}
     >
       <NavIcon name={item.icon} />
-      <span>{label}</span>
+      <span>{short ? t.nav.tabs[item.label] : label}</span>
       <span className="nav-unavailable">{t.common.unavailable}</span>
     </button>
   );
@@ -183,7 +183,31 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
-    {mobile && createPortal(<nav className="mobile-site-nav" aria-label={t.nav.main}>{NAV.filter((item) => item.href !== '/').map((item) => unavailable(item) ? <UnavailableNavItem key={item.href} item={item} /> : <Link key={item.href} href={item.href} className={`site-nav-link${pathname.startsWith(item.href) ? ' active' : ''}`} aria-current={pathname.startsWith(item.href) ? 'page' : undefined} aria-label={t.nav[item.label]}><NavIcon name={item.icon}/><span>{t.nav[item.label]}</span></Link>)}</nav>, document.body)}
+    {/* The phone's bottom bar has Home too (2026-11-17): opened from the
+        home screen there is no address bar or back button, and with Home
+        missing the bar showed nothing selected on the home page. Six short
+        labels (t.nav.tabs) so each stays on one line. */}
+    {mobile && createPortal(
+      <nav className="mobile-site-nav" aria-label={t.nav.main}>
+        {NAV.map((item) => {
+          if (unavailable(item)) return <UnavailableNavItem key={item.href} item={item} short />;
+          const active = item.href === "/" ? onRoot : pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`site-nav-link${active ? " active" : ""}`}
+              aria-current={active ? "page" : undefined}
+              aria-label={t.nav[item.label]}
+            >
+              <NavIcon name={item.icon} />
+              <span>{t.nav.tabs[item.label]}</span>
+            </Link>
+          );
+        })}
+      </nav>,
+      document.body,
+    )}
     </>
   );
 }

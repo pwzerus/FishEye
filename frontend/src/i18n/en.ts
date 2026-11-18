@@ -39,6 +39,8 @@ const en = {
     catches: "Catches",
     ask: "Ask",
     unavailable: (label: string) => `${label} (unavailable)`,
+    // The phone's bottom bar: six short labels side by side.
+    tabs: { home: "Home", map: "Map", fish: "Fish", handbook: "Handbook", catches: "Catches", ask: "Ask" },
   },
   // Once, after signing up (components/InstallTip.tsx).
   installTip: {
@@ -800,12 +802,10 @@ const en = {
     gearAll: "Everything to buy, with photos →",
     topicGear: "What it looks like",
     gearLink: "What to buy",
-    questionsLink: "Questions anglers ask",
-    eyebrow: "Fish guide",
+    questionsLink: "Common questions",
     title: "Meet the fish",
-    lede: "Pick a fish for bait and gear. Open the handbook for knots, casting and the basics.",
-    toSpecies: "Fish species ↓",
-    photoId: "Not sure what you caught? Identify it from a photo →",
+    lede: "Pick a fish to see what bait and gear to use.",
+    photoId: "Identify from a photo",
     loadError: "We couldn't load the guides. Please refresh to try again.",
     backendDown: "Couldn't load the fish guides right now. Try again in a moment.",
     englishContent: "The guide's text below is in English for now; names and headings are translated.",
@@ -1645,11 +1645,23 @@ const en = {
     snag: {
       title: "Freeing a snag",
       parts: [
+        "A fish moves off with the line. A snag doesn't move at all",
         "Hold the rod tip high and jiggle it",
         "Walk a few steps to one side and pull from another angle",
+        "Pluck the line between the reel and the first guide, like a guitar string",
         "Still stuck: wrap the line round a gloved hand, point the rod at the snag, and pull steadily or walk backwards",
+        "Broken this way, the line parts near the snag. Cut at the reel, a long piece stays in the water",
       ],
       note: "Don't heave on the rod, which can snap before the line. Turn your face away, since a hook can fly back.",
+    },
+    retie: {
+      title: "Tying back on",
+      parts: [
+        "Cut off line that is frayed at the end",
+        "Tie on a new hook with an improved clinch knot or a Palomar knot",
+        "Put back the split shot and bobber, the same way as before",
+      ],
+      note: "",
     },
     catfishHold: {
       title: "Holding a catfish",

@@ -39,6 +39,8 @@ const ko: Messages = {
     catches: "조과",
     ask: "질문하기",
     unavailable: (label: string) => `${label}(사용할 수 없음)`,
+    // The phone's bottom bar: six short labels side by side.
+    tabs: { home: "홈", map: "낚시터", fish: "어종", handbook: "핸드북", catches: "조과", ask: "질문" },
   },
   installTip: {
     title: "FishEye를 홈 화면에",
@@ -790,12 +792,10 @@ const ko: Messages = {
     gearAll: "모든 장비 사진 보기 →",
     topicGear: "이렇게 생겼어요",
     gearLink: "무엇을 살까",
-    questionsLink: "낚시 자주 묻는 질문",
-    eyebrow: "어종 가이드",
+    questionsLink: "자주 묻는 질문",
     title: "물고기를 만나 보세요",
-    lede: "어종을 고르면 미끼와 장비를 볼 수 있어요. 매듭, 캐스팅 같은 기본은 핸드북에 있어요.",
-    toSpecies: "어종 ↓",
-    photoId: "무슨 물고기인지 모르겠다면? 사진으로 찾기 →",
+    lede: "어종을 고르면 미끼와 장비를 볼 수 있어요.",
+    photoId: "사진으로 찾기",
     loadError: "가이드를 불러오지 못했어요. 새로고침해서 다시 시도하세요.",
     backendDown: "지금은 어종 가이드를 불러올 수 없어요. 잠시 후 다시 시도하세요.",
     englishContent: "아래 가이드 본문은 아직 영어로만 있어요. 이름과 제목은 한국어로 옮겼어요.",
@@ -1621,11 +1621,23 @@ const ko: Messages = {
     snag: {
       title: "밑걸림 푸는 법",
       parts: [
+        "물고기는 줄을 끌고 가요. 밑걸림은 꿈쩍도 안 해요",
         "낚싯대 끝을 높이 들고 흔들어요",
         "옆으로 몇 걸음 옮겨 다른 각도에서 당겨요",
+        "릴과 첫 번째 가이드 사이의 줄을 기타 줄처럼 튕겨요",
         "그래도 안 빠지면 장갑 낀 손에 줄을 감고, 낚싯대 끝을 걸린 곳으로 향한 채 천천히 당기거나 뒤로 걸어요",
+        "이렇게 끊으면 걸린 곳 가까이에서 끊어져요. 릴 옆에서 자르면 긴 줄이 물속에 남아요",
       ],
       note: "낚싯대로 억지로 당기지 마세요. 줄보다 낚싯대가 먼저 부러져요. 얼굴은 돌리세요. 바늘이 튀어 올 수 있어요.",
+    },
+    retie: {
+      title: "바늘 다시 묶기",
+      parts: [
+        "끝이 해진 줄을 잘라 내요",
+        "새 바늘을 묶어요. 개량 클린치 노트나 팔로마 노트로",
+        "좁쌀봉돌과 찌를 전과 같이 다시 달아요",
+      ],
+      note: "",
     },
     catfishHold: {
       title: "메기 잡는 법",
