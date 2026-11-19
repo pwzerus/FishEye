@@ -17,7 +17,7 @@ from app.services.geo import haversine_km
 router = APIRouter(prefix="/shops", tags=["shops"], dependencies=[Depends(rate_limits.MAP)])
 
 MAX_SHOPS = 500
-_OSM_TYPES = {"n": "node", "w": "way"}
+_OSM_TYPES = {"n": "node", "w": "way", "r": "relation"}
 
 
 def osm_url(ref: str) -> str:

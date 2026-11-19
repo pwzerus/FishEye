@@ -34,7 +34,7 @@ import io
 import json
 import logging
 import threading
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import lru_cache
 from pathlib import Path
 
@@ -42,7 +42,18 @@ import numpy as np
 from PIL import Image
 
 from app.core.config import get_settings
-from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, GUIDED_SINCE_BUILD, LOOK_ALIKES, NOT_FISH, OTHER_FISH, SAME_FISH, group_label
+from app.services.fish_id_classes import (
+    BY_SLUG,
+    CLAIM_GROUPS,
+    GUIDE,
+    GUIDED_SINCE_BUILD,
+    LOOK_ALIKES,
+    NOT_FISH,
+    OTHER_FISH,
+    SAME_FISH,
+    SEA_ONLY,
+    group_label,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +107,18 @@ class Identification:
     def fish(self, n: int = 3) -> list[Candidate]:
         """The likeliest fish, guide or not."""
         return [c for c in self.candidates if c.kind != NOT_FISH][:n]
+
+    def inland(self) -> Identification:
+        """This reading for a catch far from the sea (services/coast.py): its
+        fish of the sea taken out and the rest scaled back up to a whole, as
+        if the model had never known them. Measured: docs/adr/0063."""
+        kept = [c for c in self.candidates if c.slug not in SEA_ONLY]
+        total = sum(c.probability for c in kept)
+        if total <= 0:
+            return self
+        return Identification(
+            tuple(replace(c, probability=c.probability / total) for c in kept), f"{self.model}+inland", self.gate
+        )
 
 
 @dataclass(frozen=True)
@@ -230,7 +253,10 @@ class FishRecognizer:
         self._lock = threading.Lock()
         self._running = threading.Lock()
         variant = "int8" if onnx_path.name.endswith("int8.onnx") else "fp32"
-        self.encoder = f"{source['repo'].split('/')[-1]}@{source['revision'][:12]}/{variant}"
+        # A fine-tuned build names its tuning in SOURCE.json ("tuned"), so its
+        # photo vectors (cached per encoder) and gate never mix with the original's.
+        tuned = f"+{source['tuned']}" if source.get("tuned") else ""
+        self.encoder = f"{source['repo'].split('/')[-1]}@{source['revision'][:12]}{tuned}/{variant}"
         self._w, self._b = self.zero_shot_weights(), np.zeros(len(self._classes), dtype=np.float32)
         self.name = self.encoder
         head = model_dir / "head.npz"

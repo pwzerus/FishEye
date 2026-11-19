@@ -18,13 +18,14 @@ import {
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 
-import type { PinSummary, Shop, WaterGroup, WaterbodyListItem } from "@/lib/api/types";
+import type { CoastalSpot, PinSummary, Shop, WaterGroup, WaterbodyListItem } from "@/lib/api/types";
 import { useBasemapChoice } from "@/lib/map/basemapChoice";
 import { MAP_MAX_ZOOM, MAP_MIN_ZOOM, MAP_STYLE_URL } from "@/lib/map/tiles";
 import { BaseMap } from "./BaseMap";
 import { waterIcon } from "./waterIcon";
 import { useT } from "@/i18n/client";
 import { DraftMarker, PinMarkers, PlaceOnClick, WaterGroupMarkers } from "./PinLayer";
+import { CoastalSpotMarkers } from "./CoastalSpotLayer";
 import { ShopMarkers } from "./ShopLayer";
 import { MAP_POPUP_PAD } from "./popupPad";
 import { StatesLayer } from "./StatesLayer";
@@ -536,6 +537,7 @@ export default function LakeMap({
   pins = [],
   groups = [],
   shops = [],
+  coastSpots = [],
   placing = false,
   draft = null,
   draftLabel = null,
@@ -566,6 +568,8 @@ export default function LakeMap({
   groups?: WaterGroup[];
   // Bait and tackle shops in view (ShopLayer.tsx).
   shops?: Shop[];
+  // Saltwater piers, jetties and fishing spots in view (CoastalSpotLayer.tsx).
+  coastSpots?: CoastalSpot[];
   placing?: boolean;
   draft?: { latitude: number; longitude: number } | null;
   // The water the draft pin is on, or that it's on none (`draftOff`).
@@ -668,6 +672,7 @@ export default function LakeMap({
         </MarkerClusterGroup>
 
         <ShopMarkers shops={shops} region={region} />
+        <CoastalSpotMarkers spots={coastSpots} region={region} />
         <WaterGroupMarkers groups={groups} />
         <PinMarkers pins={pins} />
         </>

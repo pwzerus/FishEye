@@ -1183,27 +1183,9 @@
   }
 }
 @media (max-width: 760px) {
-  /* Row 1 is the search bar, full width. Row 2: "Use my location" on the
-     left, the pin buttons on the right as icons (their names stay as
-     aria-labels). Status messages go below both rows. */
-  /* Scoped under .map-container: community.css, loaded after this file,
-     sets .map-fabs's desktop position. */
-  .map-container .map-fabs {
-    top: 62px;
-    flex-direction: row;
-    align-items: center;
-  }
-  .map-container .map-fabs .fab-label {
-    display: none;
-  }
-  .map-container .map-fabs .map-toggle,
-  .map-container .map-fabs .map-add {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    justify-content: center;
-    border-radius: 999px;
-  }
+  /* Row 1 is the search bar, full width. Row 2: "Use my location". The
+     map's buttons are icons down the right edge (refinements.css). Status
+     messages go below both rows. */
   .map-status-stack {
     top: 112px;
   }

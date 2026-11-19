@@ -18,6 +18,7 @@ from app.models.community import (  # noqa: F401
     User,
     UserSession,
 )
+from app.models.coastal_spot import CoastalSpot  # noqa: F401
 from app.models.shop import TackleShop  # noqa: F401
 from app.models.visits import PageVisit  # noqa: F401
 from app.models.water import River, RiverReach, WaterPiece  # noqa: F401
@@ -65,6 +66,7 @@ __all__ = [
     "AiUsage",
     "AskMiss",
     "TackleShop",
+    "CoastalSpot",
     "River",
     "RiverReach",
     "WaterPiece",

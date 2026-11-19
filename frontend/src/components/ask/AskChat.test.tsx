@@ -522,6 +522,45 @@ describe("AskChat", () => {
       expect(askAboutPhoto).toHaveBeenCalledWith(photo, "en");
     });
 
+    // 2026-11-18: a crucian carp came back "goldfish 48%" with no way to the
+    // AI, and "is this a crucian carp?" went to the guides, blind to the photo.
+    const unsure = {
+      available: true, model: "m", fish_probability: 0.95, verdict: null,
+      candidates: [
+        { slug: "goldfish", label: "Goldfish", probability: 0.48, in_guides: false },
+        { slug: "bigmouth-buffalo", label: "Bigmouth Buffalo", probability: 0.28, in_guides: false },
+      ],
+    };
+
+    it("offers the AI when the fish check names a fish without being sure", async () => {
+      mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: 3, remaining: 3, enabled: true } }));
+      vi.mocked(identifyFish).mockResolvedValue(unsure);
+      render(<AskChat suggestions={SUGGESTIONS} />);
+      await askVia("what bait for crappie");
+      await screen.findByText("Here's what the FishEye guides say:");
+      pick();
+      expect(await screen.findByRole("button", { name: "Ask the AI about this photo" })).toBeInTheDocument();
+    });
+
+    it("puts a question about the photo just sent to the AI, with the photo", async () => {
+      mockedAsk.mockResolvedValue(searchResult({ ai: { signed_in: true, limit: 3, remaining: 3, enabled: true } }));
+      vi.mocked(identifyFish).mockResolvedValue(unsure);
+      vi.mocked(askAboutPhoto).mockResolvedValue({
+        answer: "Yes, a crucian carp: no barbels, a deep body.", answer_source: "llm",
+        ai: { signed_in: true, limit: 3, remaining: 2, enabled: true },
+      });
+      render(<AskChat suggestions={SUGGESTIONS} />);
+      await askVia("what bait for crappie");
+      await screen.findByText("Here's what the FishEye guides say:");
+      mockedAsk.mockClear();
+      pick();
+      await screen.findByRole("button", { name: "Ask the AI about this photo" });
+      await askVia("is this a crucian carp?");
+      expect(await screen.findByText("Yes, a crucian carp: no barbels, a deep body.")).toBeInTheDocument();
+      expect(askAboutPhoto).toHaveBeenCalledWith(photo, "en", "is this a crucian carp?");
+      expect(mockedAsk).not.toHaveBeenCalled();
+    });
+
     it("asks a signed-out visitor to sign in once the day's free checks are used", async () => {
       vi.mocked(identifyFish).mockRejectedValue(new ApiError("You've used today's free photo checks.", 429));
       render(<AskChat suggestions={SUGGESTIONS} />);

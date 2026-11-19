@@ -148,6 +148,82 @@ Terms read on 2026-10-26. Not legal advice; re-read before each bulk import.
   158, FL 92, CA 74). The payload a server imports is
   `osm_cache/tackle_shops.json`.
 
+## On the coast: piers, jetties and shore spots, 2026-11-18
+
+The owner asked for the public piers, jetties, seawalls and shore access of
+every coastal state, Alaska and Hawaii included, on the map (ADR 0062).
+
+### OpenStreetMap: saltwater piers, jetties, fishing spots, boat ramps — OPEN (ODbL 1.0)
+
+- Data: Geofabrik extracts of the 23 coastal states, each downloaded, read
+  with pyosmium and deleted again (the owner: "用完之后你帮我删掉"). What
+  stays is `osm_cache/coastal_spots.json`.
+- Terms: as for the lakes above (ODbL 1.0, credit OpenStreetMap).
+- Stored: `man_made=pier` marked for fishing or named for it, or a named
+  pier or wharf that is not a ferry, navy, marina or numbered harbour berth;
+  breakwaters and groynes marked for fishing or named a jetty (and piers
+  named a jetty); `leisure=fishing`; parks named a fishing pier or a jetty;
+  bridges, walls and beaches marked `fishing=yes`; `leisure=slipway` as boat
+  ramps. Private ones (`access=private|no|customers|permit`, `fishing=no`)
+  and businesses (charters, guides, lodges) are left out. Kept when mapped:
+  name, point, fee, hours, lights, operator, website, the OSM element.
+- Coastal: any part within about a kilometre of `natural=coastline`, which
+  OSM draws along the sea and bays but not the Great Lakes. The state is the
+  one whose Census county (1:500k, ~100 m) holds a point of the spot: an
+  extract reaches past its border, and the 1:10M outline can't tell which
+  side of the Hudson a pier is on. A spot wholly at sea counts within 1.5 km
+  of the state's outline, except on the few foreign shores that close.
+- One pier mapped twice (two ways, or a way and a fishing node on it) is one
+  spot.
+- Tool: `coastal_spots.py` (extract), `coastal_spots_db.py` (import).
+  Extracted 2026-11-18 (all 23 extracts deleted afterwards): 4,360 elements;
+  imported into the local database with CDFW's piers as 3,624 spots: 546
+  piers, 106 jetties, 114 other fishing spots and 2,858 boat ramps. The first
+  pass, counted the same way, had 384 piers and jetties.
+
+### CDFW Public Piers and Jetties, BIOS ds3090 — OPEN (CC BY 4.0)
+
+- Data: https://data-cdfw.opendata.arcgis.com/datasets/CDFW::public-piers-and-jetties-r7-cdfw-ds3090
+  (GeoJSON, 38 KB, fetched once into `cdfw_cache/ds3090.geojson`).
+- Terms (dataset metadata, https://filelib.wildlife.ca.gov/Public/BDB/GIS/BIOS/metadata/DS3090.html):
+  "This work is licensed under Creative Commons Attribution 4.0
+  International License". Citation as BIOS asks
+  (https://www.wildlife.ca.gov/Data/BIOS/Citing-BIOS).
+- What it is: the public piers, jetties and breakwaters of 14 CCR 1.88, on
+  which no fishing license is needed (all other rules apply). CDFW's notes
+  say where next to one a license is needed again (the rock wall where a
+  jetty meets the shore, a breakwater, a footbridge).
+- Stored: name, point, pier or jetty (from the name), the note as a code the
+  app words in each language. A pier also in OpenStreetMap is one spot with
+  CDFW's name and OSM's position, hours, fee and lights.
+- Shown: "No fishing license needed here" and the note, "Data: California
+  Department of Fish and Wildlife" linking to the dataset, and the OSM credit
+  when the pier is mapped there too.
+- Imported 2026-11-18: 130 (97 piers, 33 jetties and breakwaters), 18 with a
+  note; 55 matched to an OpenStreetMap spot, the rest at CDFW's point.
+
+### NOAA Fisheries Public Fishing Access Site Register — PD, not used yet
+
+- What: about 5,300 public fishing sites on the Atlantic and Gulf coasts,
+  Puerto Rico and Hawai'i (piers, jetties, beaches, ramps), with coordinates,
+  kept for the MRIP survey (InPort item 21158).
+- Terms: NOAA Fisheries' Policies & Disclaimer: information on its sites "is
+  considered public information and may be distributed or copied"; work of
+  the US government is not under copyright. Credit "NOAA Fisheries".
+- Access: only through the Site Register app's "Guest Login" and its CSV
+  export (InPort: "Site Register data is publicly accessible via the 'Guest
+  Login' feature"). The login page carries the US government system banner
+  ("use of this system ... constitutes consent to monitoring"). Waiting for
+  the owner's go-ahead before clicking through it (Needs human review 18).
+
+### WDFW public fishing piers (Puget Sound) — not used
+
+- https://wdfw.wa.gov/places-to-go/fishing-piers lists 60+ public piers from
+  Tacoma to Bellingham, loaded by script, with no download; the site says
+  "All rights reserved". Its robots.txt (read 2026-11-18) has
+  `Disallow: /` for ClaudeBot, anthropic-ai, GPTBot and other AI agents, so
+  FishEye's tools don't read it. Washington's piers come from OSM only.
+
 ## Places
 
 ### US Census Bureau county boundaries (cb_2024_us_county_500k) — PD
@@ -202,6 +278,12 @@ Terms read on 2026-10-26. Not legal advice; re-read before each bulk import.
 - Tools: `fish_id_photos.py`, `fish_id_train.py`, `fish_id_eval.py` (ADR 0037).
 - Fetched again 2026-11-06 for the 22 classes added then (salmon, sturgeon,
   burbot, whitefish…) and the six fish that got guides; same filters.
+- Fetched again 2026-11-18 (`fish_id_photos.py --train --world`): training
+  photos from any country, 2008–2023, same licences, for the 207 classes added
+  then (23 freshwater fish, 184 of the sea, Alaska and Hawaii included) and
+  more for the rest; 25,661 training photos, 5,237 test photos (US, 2024 on).
+  The head shipped is fitted on 25,567 of them (ADR 0063); all 25,661 creators
+  are credited between `TRAINING_CREDITS.json` and `GATE_CREDITS.json`.
 
 ### Wikimedia Commons photos — public domain, CC0 and CC BY only
 
@@ -557,6 +639,8 @@ Openverse. All are PD, CC0 or CC BY. Their creators are in
 synthetic screens made by `tools/fish_gate/make_screens.py` from FishEye's own
 text. Only the weights ship. Another 431 open-licence photos from Commons and
 31 more catches were used only to test it, and are not kept in the repository.
+Refitted 2026-11-19 with the same photos with no fish and every fish training
+photo of 2026-11-18, sea fish included (ADR 0063).
 
 ## Gear photo recognition: training photos, 2026-11-06
 
@@ -949,3 +1033,8 @@ none of the usable pages, so the card says the same steps work for all):
 17. **230 answers in the question library are general knowledge** that no
     expert has reviewed. They are labelled; review them, safety-related ones
     first. 33 of them include points first met in forum reading.
+18. **NOAA's Public Fishing Access Site Register** (2026-11-18): public
+    information by NOAA Fisheries' own policy, but reachable only through the
+    Site Register app's "Guest Login", whose page carries the US government
+    system-use banner (using it is consent to monitoring). Using the guest
+    login and its CSV export needs the owner's go-ahead.

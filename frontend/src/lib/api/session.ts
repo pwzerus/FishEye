@@ -194,12 +194,22 @@ export const pinWhere = (lat: number, lng: number, precise = false) => {
 };
 
 /** What fish a photo shows and, given a species, whether it backs it. The
- * server checks again on save; this is the form's early warning. */
-export function identifyFish(photo: File, claim: { species_slug?: string; species_other?: string } = {}) {
+ * server checks again on save; this is the form's early warning. `near`: where
+ * the catch's pin is, so far from the sea the fish of the sea are left out as
+ * on save (backend services/coast.py). */
+export function identifyFish(
+  photo: File,
+  claim: { species_slug?: string; species_other?: string } = {},
+  near?: { latitude: number; longitude: number },
+) {
   const form = new FormData();
   form.append("photo", photo, photo.name);
   if (claim.species_slug) form.set("species_slug", claim.species_slug);
   if (claim.species_other) form.set("species_other", claim.species_other);
+  if (near) {
+    form.set("latitude", near.latitude.toFixed(5));
+    form.set("longitude", near.longitude.toFixed(5));
+  }
   return sfetch<FishIdResult>("/api/fish-id", { method: "POST", body: form });
 }
 

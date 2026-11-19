@@ -99,8 +99,14 @@ button:active:not(:disabled), .btn:active { translate:0 1px; }
 @media(max-width:1100px) {
   .map-container .location-search-bar { max-width:none; }
   .map-container .location-search-form { flex:1 0 100%; min-width:0; }
-  .map-container .map-fabs { top:70px; flex-direction:row; }
-  .map-container .map-status-stack { top:122px; }
+  /* Phones and tablets: the map's buttons are icons in a column down the right
+     edge (their names stay as aria-labels). In a row, five of them ran into
+     "Use my location" on a phone and past the map's edge on a tablet
+     (2026-11-18, when the sea piers button came). */
+  .map-container .map-fabs { top:70px; flex-direction:column; align-items:flex-end; }
+  .map-container .map-fabs .fab-label, .map-container .map-fabs .fab-unavailable { display:none; }
+  .map-container .map-fabs .map-toggle, .map-container .map-fabs .map-add { width:40px; height:40px; padding:0; justify-content:center; border-radius:999px; }
+  .map-container .map-status-stack { top:122px; right:64px; }
 }
 @media(min-width:761px) and (max-width:1100px) { .map-view .side-panel { width:340px; } }
 @media(max-width:760px) {
@@ -192,17 +198,16 @@ button:active:not(:disabled), .btn:active { translate:0 1px; }
 .map-offshore { display: flex; gap: 6px; pointer-events: auto; }
 .map-offshore-state { cursor: pointer; border: 1px solid var(--line); font: inherit; }
 .map-offshore-state:hover { border-color: var(--brand); color: var(--brand); }
-/* Phone: the map's buttons are icons only (globals.css); the greyed icon and
-   the "coming soon" message on tap say it, without a badge that overflows. */
-@media (max-width: 760px) {
-  .map-container .map-fabs .fab-unavailable { display: none; }
-}
-/* The satellite button's "free in beta" tag (SatelliteToggle.tsx). On a phone
-   the button is an icon, so the tag hangs just under it. */
+/* The satellite button's "free in beta" tag (SatelliteToggle.tsx). On phones
+   and tablets the button is an icon in the right-hand column (the greyed
+   icons say "coming soon" on tap, without a badge), so the tag hangs just
+   under it, in a gap kept for it before the next button. */
 .map-toggle-tag { font-size: 13px; font-weight: 700; line-height: 1.5; padding: 0 7px; border-radius: 999px; background: #e5f4e4; color: #1d6b3a; white-space: nowrap; }
-@media (max-width: 760px) {
-  .map-container .map-fabs .map-toggle:has(.map-toggle-tag) { position: relative; }
+@media (max-width: 1100px) {
+  .map-container .map-fabs .map-toggle:has(.map-toggle-tag) { position: relative; margin-bottom: 24px; }
   .map-container .map-fabs .map-toggle-tag { position: absolute; top: calc(100% + 4px); right: -4px; pointer-events: none; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+  /* A popup can reach under it; the tag steps aside while one is open. */
+  .map-container:has(.leaflet-popup) .map-fabs .map-toggle-tag { visibility: hidden; }
 }
 /* Photo ID in Ask: the camera beside the question box, and the photo sent. */
 .ask-form .photo-btn { flex:none; width:42px; height:42px; margin-left:-8px; border-radius:50%; border:1px solid var(--line); background:transparent; color:var(--brand); display:grid; place-items:center; cursor:pointer; transition:border-color var(--dur), background var(--dur); }
@@ -688,3 +693,10 @@ html { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-ins
    the line breaks before or after the group, never inside it. */
 .term-glue { white-space: nowrap; }
 .term-glue button { white-space: normal; }
+/* Phones: the Home hero reads down the middle, not hung on the left (the owner, 2026-11-19). */
+@media(max-width:760px) {
+  .home-refined .field-hero-copy { text-align:center; }
+  .home-refined .field-kicker { justify-content:center; }
+  .home-refined .field-lede { margin-inline:auto; }
+  .home-refined .field-hero .hero-actions { justify-content:center; }
+}

@@ -13,10 +13,11 @@ import { useT } from "@/i18n/client";
 import { localStateName } from "@/i18n/names";
 import { useLocale } from "@/i18n/client";
 import { CATCHES_AVAILABLE } from "@/lib/features";
-import { ApiError, listShops, listStates, listWaterbodies } from "@/lib/api/client";
+import { ApiError, listCoastalSpots, listShops, listStates, listWaterbodies } from "@/lib/api/client";
 import { getPin, listPins, listWaterGroups, pinWhere, updatePin } from "@/lib/api/session";
 import { rememberState, useSelectedState } from "@/lib/jurisdiction";
 import type {
+  CoastalSpot,
   LakeMatch,
   PinDetail,
   PinSummary,
@@ -174,6 +175,11 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   const [showShops, setShowShops] = useState(true);
   const [shops, setShops] = useState<Shop[]>([]);
   const latestShops = useRef(0);
+  // Saltwater piers, jetties and fishing spots (CoastalSpotLayer.tsx), on
+  // the same terms as shops: a coastal state's, from the same zoom.
+  const [showCoast, setShowCoast] = useState(true);
+  const [coastSpots, setCoastSpots] = useState<CoastalSpot[]>([]);
+  const latestCoast = useRef(0);
   const [placing, setPlacing] = useState(CATCHES_AVAILABLE && params.get("addPin") === "1");
   const [draft, setDraft] = useState<Point | null>(null);
   // The water under the draft pin (/api/pins/where), for the map's label and
@@ -228,6 +234,18 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     }
     listShops(bbox, state.code)
       .then((s) => id === latestShops.current && setShops(s))
+      .catch(() => undefined); // the lake map works without them
+  }, []);
+
+  const loadCoast = useCallback((bbox: string | null, atZoom: number | null) => {
+    const id = ++latestCoast.current;
+    const state = regionRef.current;
+    if (!bbox || !state || atZoom === null || atZoom < MIN_ZOOM_FOR_SHOPS) {
+      setCoastSpots([]);
+      return;
+    }
+    listCoastalSpots(bbox, state.code)
+      .then((s) => id === latestCoast.current && setCoastSpots(s))
       .catch(() => undefined); // the lake map works without them
   }, []);
 
@@ -322,11 +340,13 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     ++latestRequest.current;
     ++latestPins.current;
     ++latestShops.current;
+    ++latestCoast.current;
     lastBbox.current = null;
     setWaterbodies([]);
     setPins([]);
     setGroups([]);
     setShops([]);
+    setCoastSpots([]);
     setTruncated(false);
     setLoading(false);
   }
@@ -406,6 +426,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
     // With no state yet this clears them; the call below, once the state
     // under the map is known, loads that state's.
     if (showShops) loadShops(bbox, newZoom);
+    if (showCoast) loadCoast(bbox, newZoom);
 
     const state = regionRef.current;
     if (!state) {
@@ -761,6 +782,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
               pins={showPins && !placing ? pins : []}
               groups={showPins && !placing ? groups : []}
               shops={showShops ? shops : []}
+              coastSpots={showCoast ? coastSpots : []}
               placing={placing}
               draft={draft}
               draftLabel={
@@ -842,6 +864,21 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
               >
                 <span className="legend-shop" aria-hidden="true" /> <span className="fab-label">{t.shopsToggle}</span>
               </button>
+              {coastSpots.length > 0 || !showCoast ? (
+                <button
+                  type="button"
+                  className={showCoast ? "map-toggle active" : "map-toggle"}
+                  aria-pressed={showCoast}
+                  aria-label={t.coastToggleLabel}
+                  onClick={() => {
+                    const next = !showCoast;
+                    setShowCoast(next);
+                    if (next) loadCoast(lastBbox.current, zoom);
+                  }}
+                >
+                  <span className="legend-coast" aria-hidden="true" /> <span className="fab-label">{t.coastToggle}</span>
+                </button>
+              ) : null}
               {/* Satellite on a state's map, never the country's (SatelliteToggle). */}
               {!national && <SatelliteToggle />}
               {!placing && (
@@ -861,7 +898,11 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
                 </button>
               )}
             </div>
-            <MapLegend showPins={showPins && (pins.length > 0 || groups.length > 0)} showShops={showShops && shops.length > 0} />
+            <MapLegend
+              showPins={showPins && (pins.length > 0 || groups.length > 0)}
+              showShops={showShops && shops.length > 0}
+              showCoast={showCoast && coastSpots.length > 0}
+            />
             {missingAt && (
               <LakeReportDialog
                 target={{ kind: "missing", point: { latitude: missingAt[0], longitude: missingAt[1] } }}

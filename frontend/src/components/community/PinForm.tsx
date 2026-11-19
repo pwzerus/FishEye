@@ -448,7 +448,7 @@ export function PinForm({
     }
     setCheck({ state: "checking" });
     try {
-      let result = await identifyFish(photo, claim);
+      let result = await identifyFish(photo, claim, point);
       if (id !== checkId.current) return;
       if (!result.available) {
         setCheck({ state: "off" });
@@ -457,7 +457,7 @@ export function PinForm({
       const top = result.candidates[0];
       if (!sp && !picked.current && top?.in_guides && top.probability >= SUGGEST_FROM) {
         setSpecies(top.slug);
-        result = await identifyFish(photo, { species_slug: top.slug });
+        result = await identifyFish(photo, { species_slug: top.slug }, point);
         if (id !== checkId.current) return;
       }
       setCheck({ state: "done", result });

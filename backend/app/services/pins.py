@@ -42,7 +42,7 @@ from app.models.community import (
 )
 from app.models.water import River
 from app.models.waterbody import Waterbody
-from app.services import audit, counties, fish_id, water, word_filter
+from app.services import audit, coast, counties, fish_id, water, word_filter
 from app.db.spatial import bbox_filter
 from app.services.geo import haversine_km
 from app.services.media import MediaStore, PhotoRejected, clean_photo, new_key
@@ -367,10 +367,14 @@ class SpeciesCheck:
     model: str
 
 
-def check_species(species_slug: str | None, species_other: str | None, photo: bytes | None) -> SpeciesCheck | None:
+def check_species(
+    species_slug: str | None, species_other: str | None, photo: bytes | None, inland: bool = False
+) -> SpeciesCheck | None:
     """The photo check on the fish a catch names (services/fish_id.py):
     None when it names none, or the check is off; PinError when the photo
-    doesn't back the claim, with the reason and what the photo shows."""
+    doesn't back the claim, with the reason and what the photo shows.
+    `inland`: the catch is far from the sea, so its fish are left out
+    (services/coast.py)."""
     if species_slug is None and species_other is None:
         return None
     try:
@@ -381,10 +385,13 @@ def check_species(species_slug: str | None, species_other: str | None, photo: by
         return None
     if photo is None:
         raise PinError(422, "Add a photo of the fish: a catch that names a species needs one, and FishEye checks it.")
-    verdict = fish_id.check_claim(recognizer.identify(photo), species_slug)
+    ident = recognizer.identify(photo)
+    if inland:
+        ident = ident.inland()
+    verdict = fish_id.check_claim(ident, species_slug)
     if not verdict.accepted:
         raise PinError(422, verdict.message)
-    return SpeciesCheck(verdict, recognizer.name)
+    return SpeciesCheck(verdict, ident.model)
 
 
 def _record_check(pin: CatchPin, check: SpeciesCheck | None, photo: PinPhoto | None) -> None:
@@ -401,7 +408,9 @@ def recheck_species(db: Session, pin: CatchPin, species_slug: str | None, specie
     """A changed species is checked against the pin's first photo."""
     first = pin.photos[0] if pin.photos else None
     path = store.path(first.storage_key, "full") if first else None
-    check = check_species(species_slug, species_other, path.read_bytes() if path else None)
+    named = species_slug is not None or species_other is not None
+    inland = named and coast.inland(db, pin.latitude, pin.longitude)
+    check = check_species(species_slug, species_other, path.read_bytes() if path else None, inland)
     _record_check(pin, check, first)
 
 
@@ -438,7 +447,9 @@ def create_pin(db: Session, user: User, fields: PinFields, uploads: list[bytes],
     # the one the species is checked against.
     cleaned = _clean_all(uploads)
     match, required = locate(db, fields.latitude, fields.longitude)
-    check = check_species(fields.species_slug, fields.species_other, cleaned[0].full if cleaned else None)
+    named = fields.species_slug is not None or fields.species_other is not None
+    inland = named and coast.inland(db, fields.latitude, fields.longitude)
+    check = check_species(fields.species_slug, fields.species_other, cleaned[0].full if cleaned else None, inland)
     pin = CatchPin(
         user_id=user.id,
         latitude=fields.latitude,

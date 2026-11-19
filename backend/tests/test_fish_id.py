@@ -10,9 +10,11 @@ import pytest
 from PIL import Image
 
 from app.knowledge.species_guides import GUIDES
-from app.services import fish_id
+from app.models.coastal_spot import CoastalSpot
+from app.models.community import CatchPin
+from app.services import coast, fish_id
 from app.services.fish_id import CONFIRMED, GROUP, MISMATCH, NO_FISH, OTHER, UNSURE, Candidate, Identification, check_claim
-from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, CLASSES, GUIDE, GUIDED_SINCE_BUILD
+from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, CLASSES, GUIDE, GUIDED_SINCE_BUILD, SEA_ONLY, UP_RIVERS
 from tests.conftest import signup
 
 
@@ -317,3 +319,86 @@ def test_a_white_bass_that_reads_as_a_white_perch_is_accepted_as_its_group():
     assert v.status == GROUP and v.accepted
     # Named anything else, it's still refused.
     assert check_claim(ident(white_perch=0.9), "bluegill").status == OTHER
+
+
+# ------------------------------------------------- far from the sea (ADR 0063)
+
+# Galveston's pier; Texas City is 15 km off, East Texas (where `create` puts a
+# catch) 350 km, Dallas 400.
+GALVESTON = (29.2925, -94.7897)
+TEXAS_CITY = (29.39, -94.92)
+DALLAS = (32.78, -96.80)
+
+
+def add_spot(db, lat_lng=GALVESTON):
+    db.add(CoastalSpot(ref="w1", kind="pier", coast="gulf", latitude=lat_lng[0], longitude=lat_lng[1], state_code="TX"))
+    db.commit()
+
+
+def drum() -> Identification:
+    """A freshwater drum that half reads as a black drum (v3 did this to 4 of
+    the 50 test photos, 2026-11-19)."""
+    return ident(black_drum=0.5, freshwater_drum=0.45)
+
+
+def test_far_from_the_sea_its_fish_are_left_out():
+    assert check_claim(drum(), "freshwater-drum").status == OTHER  # "this looks like a black drum"
+    inland = drum().inland()
+    assert inland.probability("black-drum") == 0.0
+    assert abs(sum(c.probability for c in inland.candidates) - 1.0) < 1e-6
+    assert check_claim(inland, "freshwater-drum").status == CONFIRMED
+    assert inland.model == "stand-in+inland"
+
+
+def test_fish_of_the_sea_that_swim_up_rivers_stay_inland():
+    assert ident(striped_mullet=0.9).inland().fish(1)[0].slug == "striped-mullet"
+    assert UP_RIVERS.isdisjoint(SEA_ONLY) and UP_RIVERS <= set(BY_SLUG)
+    assert {"black-drum", "hardhead-catfish", "great-barracuda", "big-skate"} <= SEA_ONLY
+    # Fish that live in lakes too are never left out, nor anything not a fish.
+    for slug in ("red-drum", "striped-bass", "american-eel", "chinook-salmon", "alewife", "bluegill", "person"):
+        assert slug not in SEA_ONLY, slug
+
+
+def test_inland_is_far_from_every_coastal_spot(db_session):
+    assert not coast.inland(db_session, *DALLAS)  # no spots imported yet: nothing left out
+    add_spot(db_session)
+    assert coast.inland(db_session, *DALLAS)
+    assert not coast.inland(db_session, *TEXAS_CITY)
+    assert not coast.inland(db_session, *GALVESTON)
+
+
+class Drum(StandIn):
+    def identify(self, photo: bytes) -> Identification:
+        return drum()
+
+
+def test_the_form_sends_where_the_pin_is(make_client, db_session, monkeypatch):
+    monkeypatch.setattr(fish_id, "get_recognizer", lambda: Drum())
+    add_spot(db_session)
+    c = make_client()
+    signup(c)
+
+    def ask(**where):
+        return c.post("/api/fish-id", data={"species_slug": "freshwater-drum", **where},
+                      files={"photo": ("p.jpg", jpeg("green"), "image/jpeg")}).json()
+
+    far = ask(latitude=DALLAS[0], longitude=DALLAS[1])
+    assert far["verdict"]["status"] == "confirmed" and far["model"].endswith("+inland")
+    assert all(cand["slug"] != "black-drum" for cand in far["candidates"])
+    near = ask(latitude=TEXAS_CITY[0], longitude=TEXAS_CITY[1])
+    assert near["verdict"]["status"] == "other_fish" and near["candidates"][0]["slug"] == "black-drum"
+    assert ask()["verdict"]["status"] == "other_fish"  # no pin yet: every fish counts
+
+
+def test_a_catch_far_from_the_sea_is_checked_without_its_fish(make_client, db_session, monkeypatch):
+    monkeypatch.setattr(fish_id, "get_recognizer", lambda: Drum())
+    c = make_client()
+    signup(c)
+    # No coastal spots yet: "where is the sea" is unknown, so every fish counts.
+    assert create(c, photos=[jpeg("green")], species_slug="freshwater-drum").status_code == 422
+    add_spot(db_session)
+    resp = create(c, photos=[jpeg("green")], species_slug="freshwater-drum")
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["species_check"] == "confirmed"
+    pin = db_session.get(CatchPin, resp.json()["id"])
+    assert pin.species_check_model == "stand-in+inland"

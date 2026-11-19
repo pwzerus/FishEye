@@ -51,6 +51,20 @@ PAUSE_S = 1.0
 # come from fish_id_commons.py instead.
 LOOKALIKES = {c.slug: c.scientific for c in CLASSES if c.kind == OTHER_FISH and c.slug not in SAME_FISH}
 
+# More species whose photos train a class (--world only). The goldfish class
+# is the wild Carassius an angler catches: a crucian carp (鲫鱼) came back as
+# "goldfish 48%" on 2026-11-18, with 67 training photos, most of them orange
+# pond fish. The Prussian carp, crucian carp and ginbuna look the same in
+# the hand and are what most open photos of wild Carassius are of.
+EXTRA_TAXA = {
+    "goldfish": ["Carassius gibelio", "Carassius carassius", "Carassius langsdorfii"],
+    # Newer splits of a species the class is named for: same fish to an angler.
+    "longear-sunfish": ["Lepomis aquilensis", "Lepomis peltastes", "Lepomis solis"],
+    "cutthroat-trout": ["Oncorhynchus virginalis", "Oncorhynchus lewisi", "Oncorhynchus bouvieri", "Oncorhynchus henshawi"],
+    "tilapia": ["Oreochromis niloticus", "Oreochromis mossambicus", "Sarotherodon melanotheron"],
+    "yellowtail-amberjack": ["Seriola dorsalis"],
+}
+
 
 def targets() -> dict[str, str]:
     """slug → scientific name: the guide species, then the look-alikes."""
@@ -89,7 +103,10 @@ def pick_photos(results: list[dict[str, Any]], want: int, seen: set[str]) -> lis
     return picked
 
 
-def fetch(per_species: int, lookalikes: int, cache: Path = CACHE, years: str = "2024,2026", scan: int = 900) -> dict[str, Any]:
+def fetch(
+    per_species: int, lookalikes: int, cache: Path = CACHE, years: str = "2024,2026", scan: int = 900,
+    country: str | None = "US", extra: bool = False,
+) -> dict[str, Any]:
     import httpx
 
     client = httpx.Client(headers={"User-Agent": USER_AGENT}, timeout=60, follow_redirects=True)
@@ -113,22 +130,26 @@ def fetch(per_species: int, lookalikes: int, cache: Path = CACHE, years: str = "
         mine = [p for p in manifest["photos"] if p["slug"] == slug]
         if len(mine) >= want:
             continue
-        key = get(f"{GBIF}/species/match", name=name).json().get("usageKey")
-        if key is None:
-            print(f"  {slug}: GBIF has no taxon for {name}; skipped", file=sys.stderr)
-            continue
         seen = {p["observation"] for p in mine}
         picked: list[dict[str, Any]] = []
-        # Only some photos are CC0 or CC BY (iNaturalist's default is CC BY-NC),
-        # so a fish with few photos needs a deeper scan (--scan).
-        for offset in range(0, scan, 300):
-            page = get(
-                f"{GBIF}/occurrence/search",
-                taxonKey=key, mediaType="StillImage", datasetKey=INATURALIST_DATASET,
-                license=["CC0_1_0", "CC_BY_4_0"], year=years, country="US", limit=300, offset=offset,
-            ).json()
-            picked += pick_photos(page["results"], want - len(mine) - len(picked), seen)
-            if len(mine) + len(picked) >= want or page.get("endOfRecords"):
+        for taxon in [name, *(EXTRA_TAXA.get(slug, []) if extra else [])]:
+            key = get(f"{GBIF}/species/match", name=taxon).json().get("usageKey")
+            if key is None:
+                print(f"  {slug}: GBIF has no taxon for {taxon}; skipped", file=sys.stderr)
+                continue
+            # Only some photos are CC0 or CC BY (iNaturalist's default is CC BY-NC),
+            # so a fish with few photos needs a deeper scan (--scan).
+            for offset in range(0, scan, 300):
+                where = {"country": country} if country else {}
+                page = get(
+                    f"{GBIF}/occurrence/search",
+                    taxonKey=key, mediaType="StillImage", datasetKey=INATURALIST_DATASET,
+                    license=["CC0_1_0", "CC_BY_4_0"], year=years, limit=300, offset=offset, **where,
+                ).json()
+                picked += pick_photos(page["results"], want - len(mine) - len(picked), seen)
+                if len(mine) + len(picked) >= want or page.get("endOfRecords"):
+                    break
+            if len(mine) + len(picked) >= want:
                 break
         folder = cache / "photos" / slug
         folder.mkdir(parents=True, exist_ok=True)
@@ -193,12 +214,22 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--train", action="store_true", help="the training set: 2015-2023, fishid_cache/train/")
     parser.add_argument("--scan", type=int, default=900, help="observations to look through per fish for open photos")
     parser.add_argument("--steelhead", action="store_true", help="only: rainbow trout observations called steelhead, into training")
+    parser.add_argument(
+        "--world", action="store_true",
+        help="training only: observations from any country, 2008-2023, and the EXTRA_TAXA (the test set stays US, 2024 on)",
+    )
     args = parser.parse_args(argv)
     if args.steelhead:
         fetch_steelhead()
         return 0
     cache = CACHE / "train" if args.train else CACHE
-    manifest = fetch(args.per_species, args.lookalikes, cache, "2015,2023" if args.train else "2024,2026", args.scan)
+    if args.world and not args.train:
+        parser.error("--world is for the training set (--train): the test set stays US, 2024 on")
+    years = "2008,2023" if args.world else "2015,2023" if args.train else "2024,2026"
+    manifest = fetch(
+        args.per_species, args.lookalikes, cache, years, args.scan,
+        country=None if args.world else "US", extra=args.world,
+    )
     print(f"{len(manifest['photos'])} photos in {cache / 'manifest.json'}")
     return 0
 

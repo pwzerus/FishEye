@@ -108,16 +108,19 @@ def _inside(outline: Outline, lng: float, lat: float) -> bool:
     return inside
 
 
-def in_state(outline: Outline, south: float, west: float, north: float, east: float, code: str) -> bool:
-    """Does this box, widened by STATE_MARGIN_M, touch the state? True when
-    a corner or the centre of the box is inside, or a vertex of the outline
+def in_state(
+    outline: Outline, south: float, west: float, north: float, east: float, code: str,
+    margin_m: float = STATE_MARGIN_M,
+) -> bool:
+    """Does this box, widened by `margin_m`, touch the state? True when a
+    corner or the centre of the box is inside, or a vertex of the outline
     is inside the box. Longitudes east of the date line are shifted by -360
     for Alaska, as its outline is."""
     if code == "AK":
         west = west - 360 if west > 0 else west
         east = east - 360 if east > 0 else east
-    dlat = STATE_MARGIN_M / 111_320.0
-    dlng = STATE_MARGIN_M / (111_320.0 * max(math.cos(math.radians((south + north) / 2)), 0.01))
+    dlat = margin_m / 111_320.0
+    dlng = margin_m / (111_320.0 * max(math.cos(math.radians((south + north) / 2)), 0.01))
     s, w, n, e = south - dlat, west - dlng, north + dlat, east + dlng
     ow, os_, oe, on = outline.bbox
     if e < ow or w > oe or n < os_ or s > on:

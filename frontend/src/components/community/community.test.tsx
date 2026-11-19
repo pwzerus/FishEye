@@ -148,6 +148,8 @@ describe("PinForm", () => {
     choosePhoto(container);
     expect(await screen.findByText("Photo check: this looks like a Largemouth Bass.")).toBeInTheDocument();
     expect(screen.getByLabelText("Fish")).toHaveValue("largemouth-bass");
+    // The check knows where the pin is: far from the sea it leaves the fish of the sea out.
+    expect(vi.mocked(session.identifyFish).mock.calls.at(-1)?.[2]).toEqual({ latitude: 32.8, longitude: -95.6 });
     fireEvent.click(screen.getByRole("button", { name: "Share catch" }));
 
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith(created));

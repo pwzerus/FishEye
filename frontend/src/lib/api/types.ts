@@ -726,6 +726,31 @@ export interface PinPhoto {
 }
 
 /** A bait or tackle shop OpenStreetMap maps (backend app/api/shops.py). */
+/** GET /api/coastal-spots: a saltwater pier, jetty, fishing spot or boat ramp
+ * from OpenStreetMap (backend models/coastal_spot.py). */
+export interface CoastalSpot {
+  id: number;
+  name: string | null;
+  kind: "pier" | "jetty" | "fishing_spot" | "boat_ramp";
+  coast: "atlantic" | "gulf" | "pacific" | "alaska" | "hawaii";
+  latitude: number;
+  longitude: number;
+  state_code: string;
+  fishing_tagged: boolean;
+  fee: string | null;
+  opening_hours: string | null;
+  lit: boolean;
+  operator: string | null;
+  website: string | null;
+  /** A California public pier (14 CCR 1.88): no fishing license needed on it. */
+  no_license: boolean;
+  /** Where next to it a license is needed again (CDFW's notes). */
+  license_note: "shore_wall" | "shore_wall_and_inner_jetty" | "breakwater" | "footbridge" | null;
+  source: "osm" | "cdfw";
+  source_url: string;
+  osm_url: string | null;
+}
+
 export interface Shop {
   id: number;
   name: string;

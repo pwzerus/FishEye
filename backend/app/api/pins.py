@@ -51,7 +51,7 @@ from app.schemas.pins import (
 )
 from app.knowledge.gear import ITEM_BY_ID
 from app.knowledge.jurisdictions import STATE_NAMES
-from app.services import alerts, audit, counties, email_verification, fish_id, social, water
+from app.services import alerts, audit, coast, counties, email_verification, fish_id, social, water
 from app.services import pins as svc
 from app.services.email_verification import VerificationError
 from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, SAME_FISH, group_label
@@ -598,12 +598,17 @@ def identify_fish(
     photo: UploadFile = File(...),
     species_slug: str | None = Form(default=None),
     species_other: str | None = Form(default=None, max_length=120),
+    latitude: float | None = Form(default=None, ge=-90, le=90),
+    longitude: float | None = Form(default=None, ge=-180, le=180),
     user: User | None = Depends(optional_user),
+    db: Session = Depends(get_db),
 ) -> FishIdOut:
     """What fish a photo shows, and, given one, whether it backs the claim:
     the catch form asks as soon as a photo is chosen, so a mismatch is said
     before anything is saved. Saving checks again (services/pins.py); this
-    answer is advice to the form, never trusted.
+    answer is advice to the form, never trusted. The form sends where the
+    pin is, so far from the sea it leaves the fish of the sea out as saving
+    will (services/coast.py); used for that only, never kept.
 
     Signed out, it is a trial with a small daily allowance (_trial)."""
     if user is None:
@@ -626,12 +631,14 @@ def identify_fish(
     except PinError as exc:
         _raise(exc)
     ident = recognizer.identify(cleaned.full)
+    if latitude is not None and longitude is not None and coast.inland(db, latitude, longitude):
+        ident = ident.inland()
     verdict = fish_id.check_claim(ident, claim) if (species_slug or species_other) else None
     # No guesses about a photo that shows no fish: the form used to offer them.
     shows_fish = ident.fish_probability >= fish_id.POLICY.min_fish
     return FishIdOut(
         available=True,
-        model=recognizer.name,
+        model=ident.model,
         fish_probability=round(ident.fish_probability, 3),
         candidates=[
             FishCandidateOut(

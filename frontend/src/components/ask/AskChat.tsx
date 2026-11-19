@@ -10,7 +10,7 @@ import { LakeAnswer } from "@/components/ask/LakeAnswer";
 import { useSignedIn } from "@/components/auth/AuthProvider";
 import { FishArt } from "@/components/fish/FishArt";
 import { GearIdAnswer } from "@/components/gear/IdentifyGear";
-import { FishIdAnswer, likelyFish, MIN_FISH } from "@/components/identify/IdentifyFish";
+import { FishIdAnswer, likelyFish, MIN_FISH, SURE } from "@/components/identify/IdentifyFish";
 import { useLocale, useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages";
@@ -80,9 +80,17 @@ type Turn =
   | { id: number; role: "photo"; src: string }
   | { id: number; role: "fish-id"; check: PhotoCheck; file?: File; aiPhoto?: AiPhoto }
   | { id: number; role: "assistant"; response: AskResponse; summary?: Summary }
+  // A question about the photo just checked ("这个是鲫鱼吗"), put to the AI
+  // with the photo (2026-11-18: it went to the guides, which can't see it).
+  | { id: number; role: "photo-answer"; aiPhoto: AiPhoto }
   | { id: number; role: "error"; question: string; message?: string };
 
 const MAX_LEN = 300;
+
+// A question that points at the photo just sent ("这个是鲫鱼吗", "is this a
+// crappie?", "¿esto es una carpa?"), in any of the site's languages.
+const ABOUT_PHOTO =
+  /这|這|它|图|圖|照片|\b(this|it|that|photo|picture|pic)\b|\b(este|esta|esto|eso|foto|imagen)\b|これ|この|それ|写真|画像|이거|이것|이건|이 물고기|사진/i;
 
 /** The lang attribute for a citation's text: Chinese glyphs by how it's
  * written ("zh-Hant" when the API turned it Traditional), else the language
@@ -378,9 +386,34 @@ export function AskChat({
     async (question: string) => {
       const q = question.trim().slice(0, MAX_LEN);
       if (q.length < 2 || busy) return;
+      // Asked right after a photo, and about it: the AI looks at the photo
+      // with the question, when the person has an AI answer left.
+      const last = turns[turns.length - 1];
+      const photo =
+        last?.role === "fish-id" && last.file && ai?.enabled && ai.signed_in && ai.remaining !== 0 && ABOUT_PHOTO.test(q)
+          ? last.file
+          : null;
       setTurns((t) => [...t, { id: nextId.current++, role: "user", text: q }]);
       setInput("");
       setBusy(true);
+      if (photo) {
+        const id = nextId.current++;
+        const set = (aiPhoto: AiPhoto) =>
+          setTurns((ts) => ts.map((x) => (x.id === id && x.role === "photo-answer" ? { ...x, aiPhoto } : x)));
+        setTurns((ts) => [...ts, { id, role: "photo-answer", aiPhoto: { status: "loading" } }]);
+        try {
+          const r = await askAboutPhoto(photo, locale, q);
+          setAi(r.ai);
+          if (r.answer_source === "llm" && r.answer) set({ status: "done", answer: r.answer });
+          else set({ status: r.answer_source === "off_topic" ? "off_topic" : "failed" });
+        } catch (e) {
+          if (e instanceof ApiError && e.status === 429) setAi((a) => (a ? { ...a, remaining: 0 } : a));
+          set({ status: "error", message: e instanceof ApiError ? e.message : t.serverDown });
+        } finally {
+          setBusy(false);
+        }
+        return;
+      }
       try {
         const response = await postAsk({ question: q, species_slug: speciesSlug ?? null, state, lang: locale });
         setAi(response.ai);
@@ -394,7 +427,7 @@ export function AskChat({
         setBusy(false);
       }
     },
-    [busy, speciesSlug, state, locale],
+    [busy, speciesSlug, state, locale, turns, ai, t.serverDown],
   );
 
   const signedIn = useSignedIn();
@@ -563,11 +596,13 @@ export function AskChat({
             const gearName = gearTop ? (localGearName(gearTop.id, locale) ?? gearTop.name) : "";
             // The question chip leaves out a name's aside: "Bobbers (round floats)".
             const gearAsked = gearName.replace(/\s*[(（][^)）]*[)）]/g, "");
-            // FishEye's own checks couldn't name it: the AI may.
+            // FishEye's own checks couldn't name it, or named it without
+            // being sure (a crucian carp came back "goldfish 48%",
+            // 2026-11-18): the AI may.
             const offerAi =
               ai?.enabled === true &&
               (check.status === "neither" ||
-                (check.status === "done" && check.result.available && !fish) ||
+                (check.status === "done" && check.result.available && (!fish || fish.probability < SURE)) ||
                 (check.status === "gear" && !check.result.sure));
             const aiPhoto = turn.aiPhoto;
             return (
@@ -662,6 +697,36 @@ export function AskChat({
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+            );
+          }
+          if (turn.role === "photo-answer") {
+            const aiPhoto = turn.aiPhoto;
+            return (
+              <div key={turn.id} className="msg msg-assistant">
+                <span className="avatar" aria-hidden="true">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG mark, nothing to optimize */}
+                  <img src="/brand/fisheye-mark.svg" alt="" />
+                </span>
+                <div className="bubble-card">
+                  {aiPhoto.status === "loading" && <span className="muted">{t.photoLooking}</span>}
+                  {aiPhoto.status === "done" && (
+                    <>
+                      <div className="bubble-meta">
+                        <span className="badge badge-ok">{t.aiChecked}</span>
+                      </div>
+                      <div className="answer-text">
+                        {aiPhoto.answer.split("\n\n").map((para, i) => (
+                          <p key={i}>{para}</p>
+                        ))}
+                      </div>
+                      <AiNote />
+                    </>
+                  )}
+                  {aiPhoto.status === "off_topic" && <p className="muted">{t.photoOffTopic}</p>}
+                  {aiPhoto.status === "failed" && <p className="muted">{t.photoAiFailed}</p>}
+                  {aiPhoto.status === "error" && <p className="ai-summary-error">{aiPhoto.message}</p>}
                 </div>
               </div>
             );

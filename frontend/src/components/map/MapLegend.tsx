@@ -11,7 +11,15 @@ const ROWS = [
   { className: "is-osm", label: "legendOsm" },
 ] as const;
 
-export function MapLegend({ showPins = false, showShops = false }: { showPins?: boolean; showShops?: boolean }) {
+export function MapLegend({
+  showPins = false,
+  showShops = false,
+  showCoast = false,
+}: {
+  showPins?: boolean;
+  showShops?: boolean;
+  showCoast?: boolean;
+}) {
   const t = useT().map;
   return (
     <div className="map-legend" aria-label={t.legend}>
@@ -31,6 +39,12 @@ export function MapLegend({ showPins = false, showShops = false }: { showPins?: 
         <div className="map-legend-row">
           <span className="legend-shop" aria-hidden="true" />
           <span>{t.legendShop}</span>
+        </div>
+      )}
+      {showCoast && (
+        <div className="map-legend-row">
+          <span className="legend-coast" aria-hidden="true" />
+          <span>{t.legendCoast}</span>
         </div>
       )}
     </div>

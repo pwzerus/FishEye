@@ -105,7 +105,15 @@ def main(argv: list[str] | None = None) -> int:
     recognizer = FishRecognizer(args.model_dir, use_head=False)
     classes = json.loads((args.model_dir / "classes.json").read_text("utf-8"))
     index = {c["slug"]: i for i, c in enumerate(classes)}
-    photos = [p for p in json.loads((TRAIN / "manifest.json").read_text("utf-8"))["photos"] if p["slug"] in index]
+    # Photos the gate says don't show a fish clearly (a heron with a goldfish,
+    # a pond from the bank) are left out; F:/tmp/fishdata/clean.py-style
+    # checks write the list (2026-11-18).
+    out_path = TRAIN / "excluded.json"
+    excluded = set(json.loads(out_path.read_text("utf-8"))) if out_path.exists() else set()
+    photos = [
+        p for p in json.loads((TRAIN / "manifest.json").read_text("utf-8"))["photos"]
+        if p["slug"] in index and str(p["gbif_id"]) not in excluded
+    ]
     x = vectors(recognizer, photos, TRAIN).astype(np.float64)
     y = np.array([index[p["slug"]] for p in photos])
     w0 = recognizer.zero_shot_weights().astype(np.float64)

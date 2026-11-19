@@ -15,6 +15,7 @@ from app.api import (
     ask,
     auth,
     baits,
+    coastal_spots,
     feedback,
     gear,
     geocode,
@@ -223,6 +224,7 @@ app.include_router(pins.router, prefix=settings.api_prefix)
 app.include_router(social.router, prefix=settings.api_prefix)
 app.include_router(admin_community.router, prefix=settings.api_prefix)
 app.include_router(shops.router, prefix=settings.api_prefix)
+app.include_router(coastal_spots.router, prefix=settings.api_prefix)
 app.include_router(lake_reports.router, prefix=settings.api_prefix)
 app.include_router(visits.router, prefix=settings.api_prefix)
 app.include_router(gear.router, prefix=settings.api_prefix)

@@ -4,6 +4,7 @@ import type {
   AdvisorRequest,
   BaitCard,
   AdvisorResponse,
+  CoastalSpot,
   AskRequest,
   AskResponse,
   SpeciesPhotos,
@@ -144,6 +145,13 @@ export function listShops(bbox: string, stateCode?: string): Promise<Shop[]> {
   const qs = new URLSearchParams({ bbox });
   if (stateCode) qs.set("state_code", stateCode);
   return apiFetch<Shop[]>(`/api/shops?${qs.toString()}`, { cache: "no-store" });
+}
+
+/** Saltwater piers, jetties, fishing spots and boat ramps in a box (a state's). */
+export function listCoastalSpots(bbox: string, stateCode?: string): Promise<CoastalSpot[]> {
+  const qs = new URLSearchParams({ bbox });
+  if (stateCode) qs.set("state_code", stateCode);
+  return apiFetch<CoastalSpot[]>(`/api/coastal-spots?${qs.toString()}`, { cache: "no-store" });
 }
 
 /** The shops closest to a point (a lake), nearest first. */

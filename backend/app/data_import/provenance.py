@@ -113,6 +113,22 @@ DATASETS: dict[str, Dataset] = {
             "osm",
         ),
         Dataset(
+            "osm_coastal_spots", "OpenStreetMap: coastal fishing piers, jetties and spots", "OpenStreetMap contributors",
+            "https://download.geofabrik.de/north-america/us/",
+            "OPEN", "ODbL 1.0",
+            "© OpenStreetMap contributors. Data available under the Open Database License (ODbL 1.0), "
+            "read from Geofabrik's state extracts.",
+            "osm",
+        ),
+        Dataset(
+            "cdfw_ds3090", "Public Piers and Jetties - R7 - CDFW [ds3090]", "California Department of Fish and Wildlife",
+            "https://data-cdfw.opendata.arcgis.com/datasets/CDFW::public-piers-and-jetties-r7-cdfw-ds3090",
+            "OPEN", "CC BY 4.0",
+            "Public Piers and Jetties - R7 - CDFW [ds3090]. California Department of Fish and Wildlife. "
+            "Published 2023-03-21, updated 2024-01-09. Accessed through BIOS. CC BY 4.0. " + BIOS_CITE,
+            "cdfw_bios",
+        ),
+        Dataset(
             "tpwd_records", "Texas Fish Records: Water Body Records", "Texas Parks and Wildlife Department",
             "https://tpwd.texas.gov/fishboat/fish/programs/fishrecords/recordsearch.phtml",
             "RESTRICTED", "Facts + link (no licence stated)",
