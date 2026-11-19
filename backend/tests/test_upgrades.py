@@ -145,8 +145,12 @@ def test_an_old_database_gains_the_photo_check_columns_and_keeps_its_pins(old_en
     assert {"share_exact", "public_latitude", "public_longitude", "public_place"} <= cols
     # Gear in the angler's words (ADR 0056); listed gear is a new table.
     assert "gear_other" in cols
+    # When on the day, and the clock it was told by (catch weather and
+    # analysis); the weather is a new table.
+    assert {"caught_time", "caught_utc_offset"} <= cols
     with old_engine.connect() as conn:
         assert conn.execute(text("SELECT title, species_check FROM catch_pins")).one() == ("Old pin", None)
+        assert conn.execute(text("SELECT caught_time, caught_utc_offset FROM catch_pins")).one() == (None, None)
         assert conn.execute(text("SELECT share_exact, public_place FROM catch_pins")).one() == (0, None)
     assert "ix_catch_pins_public_lat_lng" in {i["name"] for i in inspect(old_engine).get_indexes("catch_pins")}
 

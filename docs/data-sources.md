@@ -942,8 +942,46 @@ none of the usable pages, so the card says the same steps work for all):
 - **Wired2Fish**, **NSW DPI**, **Kayak Angler**, **Nebraska Game and Parks
   magazine**: refused automated access (403). Not used.
 
+## Weather on catches, 2026-11-19
+
+### National Weather Service API (api.weather.gov) — PD
+
+Used for: the weather when a catch was made (ADR 0064,
+`services/catch_weather.py`), from the hourly reports of the airport station
+nearest the catch, and the station list itself
+(`tools/weather/nws_stations.py` -> `app/data/nws_stations.json`: 2,694
+stations, ids and positions only). The map's forecast already used the same
+API (`services/weather_adapter.py`).
+
+- Terms: "All of the information presented via the API is intended to be
+  open data, free to use for any purpose." and "As a public service of the
+  United States Government, we do not charge any fees for the usage of this
+  service, although there are reasonable rate limits in place"
+  (https://www.weather.gov/documentation/services-web-api, read 2026-11-19).
+  "The information on National Weather Service (NWS) Web pages are in the
+  public domain, unless specifically noted otherwise"
+  (https://www.weather.gov/disclaimer).
+- Retention: "only 7 days of observations are retained for weather
+  stations" (same page). Checked: 6 days back answered, 8 days back didn't.
+- Client: one request at a time, a User-Agent with the contact address. A
+  lookup sends a station id and a time window, never the catch's spot (the
+  nearest station is found on FishEye's server).
+- Credit: "National Weather Service" beside a looked-up report on the
+  catch's page, and in the analysis page's notes.
+
+### NOAA NCEI global hourly (ISD) and GHCNh — PD, not used
+
+Checked 2026-11-19 for catches older than 7 days: NCEI's data service
+(`access/services/data/v1?dataset=global-hourly`) returned no 2026 reports
+for any station tried; GHCNh (`oa/global-historical-climatology-network/hourly`)
+is current but one file per station per year (32 MB for Austin Camp Mabry).
+Not used; the place to start if older catches should get weather too.
+
 ## Not used
 
+- **Open-Meteo**: "You may only use the free API services for
+  non-commercial purposes." (https://open-meteo.com/en/terms, read
+  2026-11-19, when looking for weather on catches).
 - **Flickr API**: no longer free for this use; Open Images already holds the
   Flickr photos that were CC BY, with their credits.
 - **ImageNet**: its terms allow non-commercial research only.

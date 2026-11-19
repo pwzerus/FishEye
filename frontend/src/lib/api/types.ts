@@ -934,10 +934,63 @@ export interface PinDetail extends PinSummary {
   // anything else in the angler's words.
   gear?: { id: string; label: string }[];
   gear_other?: string | null;
+  // When on the day by the angler's clock ("06:40"), and the weather then
+  // (backend services/catch_weather.py).
+  caught_time?: string | null;
+  weather?: PinWeather | null;
   photos: PinPhoto[];
   can_edit: boolean;
   can_report: boolean;
   reported_by_me: boolean;
+}
+
+export type Sky = "clear" | "partly" | "cloudy" | "rain" | "snow";
+export const SKIES: Sky[] = ["clear", "partly", "cloudy", "rain", "snow"];
+
+/** The weather when and where a catch was made: the nearest airport
+ * station's report ("nws"), or the angler's own pick of the sky. */
+export interface PinWeather {
+  source: "nws" | "angler";
+  sky: Sky | null;
+  temp_f: number | null;
+  wind_mph: number | null;
+  trend: "rising" | "steady" | "falling" | null;
+}
+
+/** The angler's own catches, counted (backend services/catch_analysis.py). */
+export interface CatchAnalysisCount {
+  key: string;
+  count: number;
+  // A gear item's English name; src/i18n/names.ts names it in other languages.
+  label?: string | null;
+}
+
+export interface CatchAnalysisFish {
+  // A guide species' slug, or "~" and the angler's own name for it.
+  key: string;
+  slug: string | null;
+  label: string;
+  count: number;
+}
+
+export interface CatchAnalysis {
+  all_species: CatchAnalysisFish[];
+  species: string | null;
+  total: number;
+  first_on: string | null;
+  last_on: string | null;
+  fish: CatchAnalysisFish[];
+  waters: { kind: "lake" | "river"; id: number; name: string; count: number }[];
+  months: number[];
+  baits: CatchAnalysisCount[];
+  baits_logged: number;
+  times: CatchAnalysisCount[];
+  times_logged: number;
+  skies: CatchAnalysisCount[];
+  trends: CatchAnalysisCount[];
+  temps: CatchAnalysisCount[];
+  winds: CatchAnalysisCount[];
+  weather_logged: number;
 }
 
 export interface PinOptions {
@@ -964,6 +1017,11 @@ export interface PinUpdate {
   // gear_other. Left out, each stays as it was.
   gear?: string[];
   gear_other?: string;
+  // "HH:MM" with that clock's offset from UTC in minutes; "" clears it.
+  caught_time?: string;
+  utc_offset?: number;
+  // The angler's own sky, for a catch too old to look up; "" clears it.
+  weather_sky?: Sky | "";
   // A new spot (both together); it must be on water like a new catch's.
   latitude?: number;
   longitude?: number;

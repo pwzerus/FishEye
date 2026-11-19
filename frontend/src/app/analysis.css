@@ -1,0 +1,493 @@
+/* My catch analysis (components/analysis/CatchAnalysisView.tsx). Every chart
+   is one series in one colour: a step of the site's green (preview.css
+   --brand, #236957, reads gray in a chart) checked against the page's surface
+   (#fffef9: contrast >= 3:1, lightness and chroma inside the chart bands).
+   The site is light only (color-scheme: light), so there is no dark step.
+   Bars grow from one baseline with a 4px rounded end and the count printed
+   beside them; the hover tip only adds the share. */
+
+.an {
+  --an-bar: #1a8060;
+  max-width: 1040px;
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+}
+
+.an-hero {
+  display: grid;
+  gap: 10px;
+}
+.an-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.an-title-row h1 {
+  margin: 0;
+}
+/* "Free in beta": what will be FishEye Plus (the satellite button's tag). */
+.an-beta {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.7;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: #e5f4e4;
+  color: #1d6b3a;
+  white-space: nowrap;
+}
+.an-lede {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 17px;
+}
+.an-select {
+  justify-self: start;
+  width: min(100%, 320px);
+  max-width: none;
+}
+
+/* The headline numbers. */
+.an-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+@media (max-width: 520px) {
+  .an-tiles {
+    gap: 10px;
+  }
+  .an-tile {
+    padding: 12px 14px;
+  }
+  .an-tile-value {
+    font-size: 19px;
+  }
+}
+.an-tile {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+.an-tile-label {
+  font-size: 14px;
+  color: var(--muted);
+}
+.an-tile-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.an-tile-value svg {
+  flex: none;
+  color: var(--an-bar);
+}
+.an-tile-sub {
+  font-size: 14px;
+  color: var(--muted);
+}
+.an-few {
+  margin: 0;
+}
+
+.an-body {
+  display: grid;
+  gap: 14px;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+/* Another fish loading: the last answer stays, faded, with no jump. */
+.an-body.is-refreshing {
+  opacity: 0.5;
+}
+
+.an-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.an-wide {
+  grid-column: 1 / -1;
+}
+@media (max-width: 760px) {
+  .an-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.an-card {
+  padding: 16px 18px 18px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  min-width: 0;
+}
+.an-card > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 10px;
+}
+.an-card h2 {
+  margin: 0;
+  font-size: 19px;
+}
+.an-caption,
+.an-none {
+  margin: 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+.an-weather {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 32px;
+}
+@media (max-width: 560px) {
+  .an-weather {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.an-weather h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+/* A name, a bar and a count per row, the bars on one baseline. */
+.an-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.an-bar {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(88px, 40%) minmax(0, 1fr) 2.5ch;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 6px;
+  border-radius: 10px;
+  outline: none;
+}
+.an-bar:hover,
+.an-bar:focus-visible {
+  background: var(--brand-soft);
+}
+.an-bar:focus-visible {
+  box-shadow: 0 0 0 2px var(--brand);
+}
+.an-bar-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 15px;
+  color: var(--ink);
+}
+.an-bar-name > span {
+  overflow-wrap: anywhere;
+}
+.an-bar-name svg {
+  flex: none;
+  color: var(--ink-2);
+}
+.an-bar-track {
+  display: block;
+  height: 12px;
+  border-left: 1px solid var(--line-strong);
+}
+.an-bar-fill {
+  display: block;
+  height: 100%;
+  width: calc(var(--w, 0) * 100%);
+  background: var(--an-bar);
+  border-radius: 0 4px 4px 0;
+  transform-origin: left center;
+}
+.an-bar-n {
+  font-size: 15px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--ink);
+}
+
+/* By month: twelve columns on one baseline. */
+.an-cols {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 2px;
+  height: 168px;
+}
+.an-col {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  border-radius: 8px;
+  outline: none;
+}
+.an-col:hover,
+.an-col:focus-visible {
+  background: var(--brand-soft);
+}
+.an-col:focus-visible {
+  box-shadow: 0 0 0 2px var(--brand);
+}
+.an-col-plot {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 0;
+  padding-top: 20px;
+  border-bottom: 1px solid var(--line-strong);
+}
+.an-col-fill {
+  display: block;
+  width: min(20px, 72%);
+  height: calc(var(--h, 0) * 100%);
+  background: var(--an-bar);
+  border-radius: 4px 4px 0 0;
+  transform-origin: center bottom;
+}
+.an-col-n {
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 18px;
+  color: var(--ink);
+}
+.an-col-name {
+  padding-top: 5px;
+  font-size: 13px;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+/* The share, on hover and keyboard focus. */
+.an-tip {
+  position: absolute;
+  right: 6px;
+  bottom: calc(100% - 4px);
+  z-index: 2;
+  padding: 4px 9px;
+  border-radius: 9px;
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+.an-col .an-tip {
+  right: auto;
+  left: 50%;
+  bottom: calc(100% - 14px);
+  transform: translate(-50%, 4px);
+}
+.an-col:nth-child(-n + 2) .an-tip {
+  left: 0;
+  transform: translateY(4px);
+}
+.an-col:nth-last-child(-n + 2) .an-tip {
+  left: auto;
+  right: 0;
+  transform: translateY(4px);
+}
+.an-bar:hover .an-tip,
+.an-bar:focus-visible .an-tip,
+.an-col:hover .an-tip,
+.an-col:focus-visible .an-tip {
+  opacity: 1;
+  transform: none;
+}
+.an-col:not(:nth-child(-n + 2)):not(:nth-last-child(-n + 2)):hover .an-tip,
+.an-col:not(:nth-child(-n + 2)):not(:nth-last-child(-n + 2)):focus-visible .an-tip {
+  transform: translateX(-50%);
+}
+
+.an-empty {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 32px 20px;
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  text-align: center;
+}
+.an-empty p {
+  margin: 0;
+  font-size: 17px;
+  color: var(--ink-2);
+}
+.an-how {
+  margin-top: 4px;
+}
+
+/* The catch form and page: the sky picker and the weather line. */
+.field-row.field-row-pair {
+  grid-template-columns: 1fr 1fr;
+}
+.sky-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sky-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+.sky-option:hover {
+  border-color: var(--line-strong);
+}
+.sky-option.active {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+  font-weight: 600;
+}
+.sky-option:active {
+  transform: scale(0.96);
+}
+.pin-weather {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.pin-weather svg {
+  flex: none;
+  color: var(--ink-2);
+}
+.pin-weather small {
+  font-size: 13px;
+}
+
+/* An entrance for the page: tiles rise, bars and columns grow. */
+@media (prefers-reduced-motion: no-preference) {
+  .an {
+    overflow-anchor: none;
+  }
+  .an-tile {
+    animation: an-rise var(--dur-slow) var(--ease) both;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+  .an-bar-fill {
+    animation: an-grow 700ms var(--ease) both;
+    animation-delay: calc(120ms + var(--i, 0) * 45ms);
+  }
+  .an-col-fill {
+    animation: an-grow-up 700ms var(--ease) both;
+    animation-delay: calc(120ms + var(--i, 0) * 30ms);
+  }
+}
+@keyframes an-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes an-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes an-grow-up {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+/* The way in from the account page's "My catches". */
+.acct-analysis {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: linear-gradient(135deg, var(--brand-soft), transparent 70%), var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+.acct-analysis:hover {
+  border-color: var(--brand);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+.acct-analysis-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--brand);
+  color: #fff;
+}
+.acct-analysis-text {
+  display: grid;
+  gap: 2px;
+}
+.acct-analysis-text strong {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 17px;
+}
+.acct-analysis-text small {
+  font-size: 15px;
+  color: var(--muted);
+}
+.acct-analysis-go {
+  font-size: 20px;
+  color: var(--brand-strong);
+  transition: transform var(--dur-fast) var(--ease);
+}
+.acct-analysis:hover .acct-analysis-go {
+  transform: translateX(3px);
+}

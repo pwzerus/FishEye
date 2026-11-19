@@ -14,7 +14,8 @@ import { localGearName, localSpecies } from "@/i18n/names";
 import { ApiError } from "@/lib/api/client";
 import { addPhotos, deletePhoto, deletePin, getPin, getPinOptions, updatePin } from "@/lib/api/session";
 import { waterFor } from "@/lib/fishArt";
-import type { PinDetail, PinOptions, PinVisibility } from "@/lib/api/types";
+import type { PinDetail, PinOptions, PinVisibility, Sky } from "@/lib/api/types";
+import { SkyIcon, SkyPicker, canLookUpWeather, formatClock, utcOffset, weatherLine } from "./catchWhen";
 import { PhotoPicker } from "./PhotoPicker";
 import { AdminModeration } from "./AdminModeration";
 import { catchTitle, formatDay, PhotoAtSpot, PinBadges, placeText, SpeciesCheck, speciesCheckShort } from "./PinCard";
@@ -134,7 +135,8 @@ export function PinDetailView({ pinId }: { pinId: number }) {
     );
   }
 
-  const when = formatDay(pin.caught_on, tag);
+  const day = formatDay(pin.caught_on, tag);
+  const when = day && pin.caught_time ? `${day} ${formatClock(pin.caught_time, tag)}` : day;
   const checkNote = speciesCheckShort(all, pin, locale);
   // What it was caught with (backend ADR 0056), in the reader's language.
   const gearNames = [
@@ -199,6 +201,16 @@ export function PinDetailView({ pinId }: { pinId: number }) {
               <div>
                 <dt>{t.gear}</dt>
                 <dd>{gearNames.join(locale === "zh" || locale === "zht" || locale === "ja" ? "、" : ", ")}</dd>
+              </div>
+            )}
+            {pin.weather && (
+              <div>
+                <dt>{t.weather}</dt>
+                <dd className="pin-weather">
+                  {pin.weather.sky && <SkyIcon sky={pin.weather.sky} size={18} />}
+                  <span>{weatherLine(t, pin.weather, locale)}</span>
+                  {pin.weather.source === "nws" && <small className="muted">{t.weatherSource}</small>}
+                </dd>
               </div>
             )}
             {(pin.water ?? pin.lake) && (
@@ -426,6 +438,10 @@ function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () 
   const [species, setSpecies] = useState(pin.species_slug ?? (pin.species_label ? "__other" : ""));
   const [other, setOther] = useState(pin.species_slug ? "" : (pin.species_label ?? ""));
   const [caughtOn, setCaughtOn] = useState(pin.caught_on ?? "");
+  const [caughtTime, setCaughtTime] = useState(pin.caught_time ?? "");
+  // The angler's own sky; a looked-up report isn't theirs to replace.
+  const ownSky = pin.weather?.source === "angler" ? (pin.weather.sky ?? "") : "";
+  const [sky, setSky] = useState<Sky | "">(ownSky);
   const [visibility, setVisibility] = useState<PinVisibility>(pin.visibility);
   const [shareExact, setShareExact] = useState(pin.share_exact);
   const [busy, setBusy] = useState(false);
@@ -435,11 +451,20 @@ function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () 
     getPinOptions().then(setOptions).catch(() => undefined);
   }, []);
 
+  const time = caughtOn ? caughtTime : "";
+  const whenChanged = caughtOn !== (pin.caught_on ?? "") || time !== (pin.caught_time ?? "");
+  const lookedUp = pin.weather?.source === "nws" && !whenChanged;
+  const showSky = sky !== "" || (!lookedUp && !canLookUpWeather(caughtOn, time));
+
   async function save() {
     setBusy(true);
     setError(null);
+    const nextSky = showSky ? sky : "";
     try {
       const p = await updatePin(pin.id, {
+        // A new day or time goes with this device's clock offset for it.
+        ...(whenChanged ? { caught_time: time, ...(time ? { utc_offset: utcOffset(caughtOn, time) } : {}) } : {}),
+        ...(nextSky !== ownSky ? { weather_sky: nextSky } : {}),
         title,
         note: note.trim() || undefined,
         clear_note: !note.trim(),
@@ -482,18 +507,12 @@ function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () 
           <span>{t.title}</span>
           <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} />
         </label>
-        <div className="field-row">
-          <label className="field">
-            <span>{t.fish}</span>
-            <select value={species} onChange={(e) => setSpecies(e.target.value)}>
-              <SpeciesOptions options={options} otherValue="__other" />
-            </select>
-          </label>
-          <label className="field">
-            <span>{t.date}</span>
-            <input type="date" value={caughtOn} onChange={(e) => setCaughtOn(e.target.value)} />
-          </label>
-        </div>
+        <label className="field">
+          <span>{t.fish}</span>
+          <select value={species} onChange={(e) => setSpecies(e.target.value)}>
+            <SpeciesOptions options={options} otherValue="__other" />
+          </select>
+        </label>
         {species === "__other" && (
           <label className="field">
             <span>{t.whichFish}</span>
@@ -503,6 +522,17 @@ function EditPinDialog({ pin, onClose, onSaved }: { pin: PinDetail; onClose: () 
         {species !== (pin.species_slug ?? (pin.species_label ? "__other" : "")) && species !== "" && (
           <p className="hint">{t.fishChangeNote}</p>
         )}
+        <div className="field-row field-row-pair">
+          <label className="field">
+            <span>{t.date}</span>
+            <input type="date" value={caughtOn} onChange={(e) => setCaughtOn(e.target.value)} />
+          </label>
+          <label className="field">
+            <span>{t.time}</span>
+            <input type="time" value={time} onChange={(e) => setCaughtTime(e.target.value)} disabled={!caughtOn} />
+          </label>
+        </div>
+        {showSky && <SkyPicker value={sky} onChange={setSky} />}
         <GearPicker
           options={options}
           value={gear}

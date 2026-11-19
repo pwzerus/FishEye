@@ -35,8 +35,8 @@ function Body() {
             con la última vez que se usó la sesión y el nombre y la versión de tu navegador.
           </li>
           <li>
-            <strong>Las capturas que compartes:</strong> dónde colocaste el marcador, su título, notas, peces, fecha, la
-            carnada y el equipo que anotes, y fotos. Volvemos a guardar cada foto y le quitamos los datos ocultos, incluidos la posición GPS y los datos de
+            <strong>Las capturas que compartes:</strong> dónde colocaste el marcador, su título, notas, peces, fecha y
+            hora, la carnada y el equipo que anotes, el clima de ese momento y fotos. Volvemos a guardar cada foto y le quitamos los datos ocultos, incluidos la posición GPS y los datos de
             la cámara, antes de almacenarla.
           </li>
           <li>
@@ -140,6 +140,11 @@ function Body() {
           <li>
             <strong>Nominatim de OpenStreetMap</strong> recibe el texto del lugar que buscas, desde nuestro servidor, no
             desde tu navegador.
+          </li>
+          <li>
+            <strong>El Servicio Meteorológico Nacional</strong> recibe, desde nuestro servidor, la estación meteorológica
+            más cercana a una captura y la hora de la captura, para consultar el clima de ese momento. No recibe el lugar
+            exacto.
           </li>
           <li>
             Tu navegador carga directamente <strong>los mosaicos del mapa de MapTiler</strong> (y de OpenStreetMap, si

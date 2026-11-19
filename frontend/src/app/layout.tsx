@@ -21,6 +21,7 @@ import "./refinements.css";
 import "./start.css";
 import "./lang.css";
 import "./catches.css";
+import "./analysis.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();

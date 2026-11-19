@@ -9,9 +9,9 @@ line ADR 0012 drew for GBIF records, for the same reason.
 """
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, time
 
-from sqlalchemy import Boolean, Date, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, false
+from sqlalchemy import Boolean, Date, Float, ForeignKey, Index, Integer, String, Text, Time, UniqueConstraint, false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -233,6 +233,13 @@ class CatchPin(Base):
     species_slug: Mapped[str | None] = mapped_column(String(64), nullable=True)
     species_other: Mapped[str | None] = mapped_column(String(60), nullable=True)
     caught_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # When on that day, by the clock where the angler was (minutes, no
+    # seconds), and that clock's offset from UTC in minutes (-300 for
+    # Central daylight time), sent by the angler's device with the time.
+    # Together they place the catch against sunrise and sunset and the
+    # weather station's hourly reports (services/catch_weather.py).
+    caught_time: Mapped[time | None] = mapped_column(Time, nullable=True)
+    caught_utc_offset: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Gear that isn't on the /gear list, in the angler's words (ADR 0056);
     # the listed items are in `gear`.
     gear_other: Mapped[str | None] = mapped_column(String(60), nullable=True)
@@ -297,6 +304,7 @@ class CatchPin(Base):
     likes: Mapped[list[PinLike]] = relationship(cascade="all, delete-orphan")
     comments: Mapped[list[PinComment]] = relationship(back_populates="pin", cascade="all, delete-orphan")
     gear: Mapped[list[CatchGear]] = relationship(cascade="all, delete-orphan", order_by="CatchGear.position")
+    weather: Mapped[CatchWeather | None] = relationship(cascade="all, delete-orphan", uselist=False)
 
 
 class CatchGear(Base):
@@ -312,6 +320,39 @@ class CatchGear(Base):
     pin_id: Mapped[int] = mapped_column(ForeignKey("catch_pins.id", ondelete="CASCADE"), index=True)
     item_id: Mapped[str] = mapped_column(String(40), index=True)
     position: Mapped[int] = mapped_column(Integer, default=0)
+
+
+# Where a catch's weather came from: the National Weather Service's nearest
+# airport station (looked up), or the angler, for a catch older than the
+# seven days of reports the weather service keeps.
+WEATHER_NWS = "nws"
+WEATHER_ANGLER = "angler"
+SKIES = ("clear", "partly", "cloudy", "rain", "snow")
+TRENDS = ("rising", "steady", "falling")
+
+
+class CatchWeather(Base):
+    """The weather when and where a catch was made, for the angler's own
+    catch analysis (services/catch_analysis.py). Looked up from the hourly
+    report of the airport station nearest the spot (services/catch_weather.py);
+    only the station's id goes to the weather service, never the spot. A
+    looked-up row with every reading empty means the station had no report
+    then: it isn't asked again. An angler's row has the sky only."""
+
+    __tablename__ = "catch_weather"
+
+    pin_id: Mapped[int] = mapped_column(ForeignKey("catch_pins.id", ondelete="CASCADE"), primary_key=True)
+    source: Mapped[str] = mapped_column(String(8))
+    # The station's id (KATT) and the time of its report, for a looked-up row.
+    station: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    observed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    sky: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    temp_f: Mapped[float | None] = mapped_column(Float, nullable=True)
+    wind_mph: Mapped[float | None] = mapped_column(Float, nullable=True)
+    pressure_hpa: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # The pressure over the three hours before: "rising", "steady", "falling".
+    trend: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
 class PinPhoto(Base):

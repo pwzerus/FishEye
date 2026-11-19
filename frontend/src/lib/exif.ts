@@ -5,16 +5,18 @@
  * reads the person's own file on their own device and sends nothing.
  *
  * JPEG only (what phone cameras hand the browser), and only the three tags
- * needed: DateTimeOriginal and the GPS latitude and longitude.
+ * needed: DateTimeOriginal (the day and the time on the camera's clock) and
+ * the GPS latitude and longitude.
  */
 
 export interface PhotoFacts {
   takenOn: string | null; // "YYYY-MM-DD", the camera's local day
+  takenAt: string | null; // "HH:MM" on the camera's clock that day
   latitude: number | null;
   longitude: number | null;
 }
 
-const NONE: PhotoFacts = { takenOn: null, latitude: null, longitude: null };
+const NONE: PhotoFacts = { takenOn: null, takenAt: null, latitude: null, longitude: null };
 
 export function readExif(buf: ArrayBuffer): PhotoFacts {
   const v = new DataView(buf);
@@ -71,11 +73,15 @@ function fromTiff(v: DataView, tiff: number): PhotoFacts {
 
   const ifd0 = entries(tiff + u32(tiff + 4));
   let takenOn: string | null = null;
+  let takenAt: string | null = null;
   const exifPtr = ifd0.get(0x8769);
   if (exifPtr !== undefined) {
     const date = entries(tiff + u32(exifPtr + 8)).get(0x9003);
-    const m = date !== undefined ? /^(\d{4}):(\d{2}):(\d{2})/.exec(ascii(date)) : null;
-    if (m && m[1] !== "0000") takenOn = `${m[1]}-${m[2]}-${m[3]}`;
+    const m = date !== undefined ? /^(\d{4}):(\d{2}):(\d{2})(?: (\d{2}):(\d{2}))?/.exec(ascii(date)) : null;
+    if (m && m[1] !== "0000") {
+      takenOn = `${m[1]}-${m[2]}-${m[3]}`;
+      if (m[4] !== undefined && Number(m[4]) < 24 && Number(m[5]) < 60) takenAt = `${m[4]}:${m[5]}`;
+    }
   }
   let latitude: number | null = null;
   let longitude: number | null = null;
@@ -92,7 +98,7 @@ function fromTiff(v: DataView, tiff: number): PhotoFacts {
       }
     }
   }
-  return { takenOn, latitude, longitude };
+  return { takenOn, takenAt, latitude, longitude };
 }
 
 export async function readPhotoFacts(file: File): Promise<PhotoFacts> {

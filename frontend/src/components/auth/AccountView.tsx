@@ -263,6 +263,22 @@ export function AccountView() {
             </div>
           ) : (
             <>
+            <Link href="/account/analysis" className="acct-analysis">
+              <span className="acct-analysis-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M5 20V11M10 20V5M15 20v-7M20 20V9" />
+                </svg>
+              </span>
+              <span className="acct-analysis-text">
+                <strong>
+                  {all.analysis.title} <span className="an-beta">{all.analysis.freeBeta}</span>
+                </strong>
+                <small>{all.analysis.description}</small>
+              </span>
+              <span className="acct-analysis-go" aria-hidden="true">
+                →
+              </span>
+            </Link>
             <div className="acct-map" aria-label={t.catchesMap}>
               <MyCatchesMap pins={pins} />
             </div>

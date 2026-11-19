@@ -86,6 +86,9 @@ export function AccountMenu() {
           <Link role="menuitem" href="/account#pins" className="menu-item">
             {t.account.myCatches}
           </Link>
+          <Link role="menuitem" href="/account/analysis" className="menu-item">
+            {t.account.analysis}
+          </Link>
           <Link role="menuitem" href="/map?addPin=1" className="menu-item">
             {t.account.shareCatch}
           </Link>

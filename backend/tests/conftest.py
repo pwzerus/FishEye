@@ -16,6 +16,8 @@ os.environ.setdefault("RAG_SEMANTIC", "off")
 os.environ.setdefault("FISH_ID", "off")
 # Nor the gear camera; tests/test_gear_id.py uses a stand-in.
 os.environ.setdefault("GEAR_ID", "off")
+# Nor the weather service: tests/test_catch_weather.py feeds it reports.
+os.environ.setdefault("CATCH_WEATHER", "off")
 
 from app.api.deps import get_db  # noqa: E402
 from app.db.session import Base, enforce_sqlite_foreign_keys  # noqa: E402

@@ -5,9 +5,11 @@ import { getLocale } from "@/i18n/server";
 
 import { PRIVACY } from "./text";
 
-// This page's own date: gear on catches and the gear counts (backend ADR
-// 0056). Nothing collected before applies: catches had no gear until then.
-const UPDATED = "2026-11-16";
+// This page's own date: the time and weather of a catch, and the National
+// Weather Service as a recipient (backend ADR 0064). Before that, gear on
+// catches and the gear counts (ADR 0056). Nothing collected before applies:
+// catches had no time or weather until then.
+const UPDATED = "2026-11-19";
 
 // The policy in the reader's language (text/): English is the one that
 // applies, and each translation says so at the top.

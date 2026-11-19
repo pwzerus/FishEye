@@ -88,6 +88,11 @@ _NULLABLE_COLUMNS = (
     # person hasn't chosen, which on the website counts as yes.
     ("catch_pins", "gear_other", "VARCHAR(60)"),
     ("users", "gear_stats", "BOOLEAN"),
+    # When on the day a catch was made, and the angler's clock's offset
+    # from UTC (services/catch_weather.py). Its weather is a table of its
+    # own (catch_weather), which create_all adds.
+    ("catch_pins", "caught_time", "TIME"),
+    ("catch_pins", "caught_utc_offset", "INTEGER"),
 )
 
 # NOT NULL columns with a constant default, added since: (table, column,

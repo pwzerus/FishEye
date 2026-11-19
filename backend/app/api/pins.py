@@ -21,6 +21,7 @@ from app.core.security import RateLimiter
 from app.models.community import (
     PIN_PUBLISHED,
     VISIBILITY_PUBLIC,
+    WEATHER_ANGLER,
     CatchPin,
     PinPhoto,
     PinReport,
@@ -29,6 +30,7 @@ from app.models.community import (
 from app.models.water import River
 from app.models.waterbody import Waterbody
 from app.schemas.pins import (
+    CatchAnalysisOut,
     FishCandidateOut,
     FishIdOut,
     FishVerdictOut,
@@ -41,6 +43,7 @@ from app.schemas.pins import (
     PinSummaryOut,
     PinUpdateIn,
     PinWaterOut,
+    PinWeatherOut,
     PlaceOut,
     PlacesOut,
     ReportIn,
@@ -51,7 +54,18 @@ from app.schemas.pins import (
 )
 from app.knowledge.gear import ITEM_BY_ID
 from app.knowledge.jurisdictions import STATE_NAMES
-from app.services import alerts, audit, coast, counties, email_verification, fish_id, social, water
+from app.services import (
+    alerts,
+    audit,
+    catch_analysis,
+    catch_weather,
+    coast,
+    counties,
+    email_verification,
+    fish_id,
+    social,
+    water,
+)
 from app.services import pins as svc
 from app.services.email_verification import VerificationError
 from app.services.fish_id_classes import BY_SLUG, CLAIM_GROUPS, GUIDE, SAME_FISH, group_label
@@ -171,6 +185,13 @@ def waters_for(db: Session, pins: list[CatchPin]) -> Waters:
     return lakes, rivers
 
 
+def _weather_out(pin: CatchPin) -> PinWeatherOut | None:
+    w = pin.weather
+    if w is None or (w.sky is None and w.temp_f is None):
+        return None  # none, or the station had no report then
+    return PinWeatherOut(source=w.source, sky=w.sky, temp_f=w.temp_f, wind_mph=w.wind_mph, trend=w.trend)
+
+
 def detail_out(db: Session, pin: CatchPin, user: User | None) -> PinDetailOut:
     reported = user is not None and db.scalar(
         select(PinReport.id).where(PinReport.pin_id == pin.id, PinReport.reporter_id == user.id)
@@ -181,6 +202,8 @@ def detail_out(db: Session, pin: CatchPin, user: User | None) -> PinDetailOut:
         # An item since dropped from the /gear list isn't shown.
         gear=[PinGearOut(id=g.item_id, label=svc.GEAR_LABELS[g.item_id]) for g in pin.gear if g.item_id in svc.GEAR_LABELS],
         gear_other=pin.gear_other,
+        caught_time=pin.caught_time.strftime("%H:%M") if pin.caught_time else None,
+        weather=_weather_out(pin),
         photos=[
             PinPhotoOut(id=p.id, url=_media_url(p), thumb_url=_media_url(p, thumb=True), width=p.width, height=p.height)
             for p in pin.photos
@@ -347,6 +370,23 @@ def list_pins(
     return [PinSummaryOut(**summary_fields(p, user, waters, likes[p.id])) for p in pins]
 
 
+@router.get("/pins/analysis", response_model=CatchAnalysisOut)
+def catch_analysis_for_me(
+    background: BackgroundTasks,
+    species: str | None = Query(default=None, max_length=80),
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+) -> CatchAnalysisOut:
+    """The signed-in angler's own catches, counted (services/catch_analysis.py):
+    FishEye Plus's log analysis, free while FishEye is in testing. Recent
+    catches whose weather lookup failed are looked up again after the
+    answer, for next time."""
+    if catch_weather.enabled():
+        for pin_id in catch_weather.pending(db, user.id):
+            background.add_task(catch_weather.fill, pin_id)
+    return CatchAnalysisOut(**catch_analysis.analyse(db, user.id, species or None))
+
+
 @router.get("/pins/{pin_id}", response_model=PinDetailOut)
 def get_pin(pin_id: DbId, user: User | None = Depends(optional_user), db: Session = Depends(get_db)) -> PinDetailOut:
     try:
@@ -377,6 +417,11 @@ def create_pin(
     # /gear items, one form field each (ADR 0056), and anything else.
     gear: list[str] | None = Form(default=None),
     gear_other: str | None = Form(default=None, max_length=120),
+    # When on the day ("06:40" by the angler's clock) and that clock's
+    # offset from UTC in minutes; the sky, for a catch too old to look up.
+    caught_time: str | None = Form(default=None, max_length=8),
+    utc_offset: int | None = Form(default=None, ge=-720, le=840),
+    weather_sky: str | None = Form(default=None, max_length=8),
     photos: list[UploadFile] | None = File(default=None),
     user: User = Depends(require_user),
     db: Session = Depends(get_db),
@@ -397,6 +442,9 @@ def create_pin(
             share_exact=share_exact,
             gear=gear,
             gear_other=gear_other,
+            caught_time=svc.parse_time(caught_time),
+            caught_utc_offset=utc_offset,
+            weather_sky=weather_sky or None,
         )
         pin = svc.create_pin(db, user, fields, uploads, get_store())
     except PinError as exc:
@@ -405,9 +453,11 @@ def create_pin(
     notices = alerts.notices_for(db, pin)
     db.commit()
     db.refresh(pin)
-    # After the response: a slow mail server shouldn't hold up the post.
+    # After the response: a slow mail server shouldn't hold up the post,
+    # nor the weather service.
     if notices:
         background.add_task(alerts.send, notices)
+    catch_weather.schedule(background, pin)
     return detail_out(db, pin, user)
 
 
@@ -426,6 +476,7 @@ def _owned_pin(db: Session, pin_id: int, user: User) -> CatchPin:
 def update_pin(
     payload: PinUpdateIn,
     pin_id: DbId,
+    background: BackgroundTasks,
     user: User = Depends(require_user),
     db: Session = Depends(get_db),
 ) -> PinDetailOut:
@@ -441,6 +492,19 @@ def update_pin(
         slug, other = payload.species_slug, None
     elif payload.species_other is not None:
         slug, other = None, payload.species_other
+    # The time: None leaves it (and its offset), "" clears it, a new one
+    # comes with its clock's offset. The sky: None leaves the angler's own
+    # pick, "" clears it.
+    if payload.caught_time is None:
+        caught_time, offset = pin.caught_time, pin.caught_utc_offset
+    else:
+        try:
+            caught_time = svc.parse_time(payload.caught_time)
+        except PinError as exc:
+            _raise(exc)
+        offset = payload.utc_offset if caught_time is not None else None
+    own_sky = pin.weather.sky if pin.weather is not None and pin.weather.source == WEATHER_ANGLER else None
+    sky = own_sky if payload.weather_sky is None else (payload.weather_sky or None)
     try:
         fields = svc.validate(
             latitude=pin.latitude,
@@ -456,9 +520,17 @@ def update_pin(
             share_exact=pin.share_exact if payload.share_exact is None else payload.share_exact,
             gear=[g.item_id for g in pin.gear] if payload.gear is None else payload.gear,
             gear_other=pin.gear_other if payload.gear_other is None else payload.gear_other,
+            caught_time=caught_time,
+            caught_utc_offset=offset,
+            weather_sky=sky,
         )
     except PinError as exc:
         _raise(exc)
+    when_changed = (fields.caught_on, fields.caught_time, fields.caught_utc_offset) != (
+        pin.caught_on,
+        pin.caught_time,
+        pin.caught_utc_offset,
+    )
     if (fields.species_slug, fields.species_other) != (pin.species_slug, pin.species_other):
         # A different fish is checked against the catch's photo, like a new pin.
         try:
@@ -469,19 +541,24 @@ def update_pin(
     pin.title, pin.note = fields.title, fields.note
     pin.species_slug, pin.species_other = fields.species_slug, fields.species_other
     pin.caught_on, pin.visibility = fields.caught_on, fields.visibility
+    pin.caught_time, pin.caught_utc_offset = fields.caught_time, fields.caught_utc_offset
     svc.set_gear(pin, fields.gear)
     pin.gear_other = fields.gear_other
+    moved = False
     if payload.latitude is not None and payload.longitude is not None:
+        moved = (round(payload.latitude, 6), round(payload.longitude, 6)) != (pin.latitude, pin.longitude)
         try:
             svc.move_pin(db, pin, payload.latitude, payload.longitude)
         except PinError as exc:
             db.rollback()
             _raise(exc)
+    svc.set_weather(pin, fields.weather_sky, when_changed or moved)
     if fields.share_exact != pin.share_exact:
         pin.share_exact = fields.share_exact
         svc.set_public_point(db, pin)
     db.commit()
     db.refresh(pin)
+    catch_weather.schedule(background, pin)
     return detail_out(db, pin, user)
 
 

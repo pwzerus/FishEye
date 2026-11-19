@@ -5,6 +5,7 @@ from app.models.community import (  # noqa: F401
     AuditLog,
     CatchGear,
     CatchPin,
+    CatchWeather,
     EmailToken,
     Feedback,
     LakeReport,

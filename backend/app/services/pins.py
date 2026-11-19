@@ -17,7 +17,8 @@ from __future__ import annotations
 import math
 import unicodedata
 from dataclasses import dataclass
-from datetime import date, timedelta
+import re
+from datetime import date, time, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
@@ -32,10 +33,14 @@ from app.models.community import (
     PIN_PUBLISHED,
     PIN_REMOVED,
     REPORT_OPEN,
+    SKIES,
     VISIBILITY_PRIVATE,
     VISIBILITY_PUBLIC,
+    WEATHER_ANGLER,
+    WEATHER_NWS,
     CatchGear,
     CatchPin,
+    CatchWeather,
     PinPhoto,
     PinReport,
     User,
@@ -128,6 +133,12 @@ class PinFields:
     share_exact: bool = False
     gear: tuple[str, ...] = ()
     gear_other: str | None = None
+    # When on the day by the angler's clock, and its offset from UTC in
+    # minutes (services/catch_weather.py); the offset is kept only with a time.
+    caught_time: time | None = None
+    caught_utc_offset: int | None = None
+    # The angler's own sky (SKIES), for a catch too old to look up.
+    weather_sky: str | None = None
 
 
 # Joiners shape emoji and some scripts; the other invisible characters only
@@ -201,6 +212,19 @@ def set_gear(pin: CatchPin, ids: tuple[str, ...]) -> None:
         row.position = n
 
 
+_CLOCK = re.compile(r"(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?")
+
+
+def parse_time(value: str | None) -> time | None:
+    """A time field's "HH:MM" (24-hour, as browsers send it); empty is none."""
+    if value is None or not value.strip():
+        return None
+    m = _CLOCK.fullmatch(value.strip())
+    if m is None or int(m[1]) > 23 or int(m[2]) > 59:
+        raise PinError(422, "That time doesn't look right.")
+    return time(int(m[1]), int(m[2]))
+
+
 def validate(
     *,
     latitude: float,
@@ -214,6 +238,9 @@ def validate(
     share_exact: bool = False,
     gear: list[str] | tuple[str, ...] | None = None,
     gear_other: str | None = None,
+    caught_time: time | None = None,
+    caught_utc_offset: int | None = None,
+    weather_sky: str | None = None,
 ) -> PinFields:
     if not (math.isfinite(latitude) and math.isfinite(longitude)):
         raise PinError(422, "That location isn't valid.")
@@ -238,6 +265,15 @@ def validate(
         # A day of slack for time zones; nothing before modern record-keeping.
         if caught_on > (utcnow() + timedelta(days=1)).date() or caught_on.year < 1950:
             raise PinError(422, "That date doesn't look right.")
+    if caught_time is not None and caught_on is None:
+        raise PinError(422, "Add the date as well as the time.")
+    # Clocks run from UTC-12:00 to UTC+14:00, in quarter hours. A time sent
+    # without its offset is kept; it just can't be placed against the sun
+    # or the weather reports.
+    if caught_utc_offset is not None and (not -720 <= caught_utc_offset <= 840 or caught_utc_offset % 15):
+        caught_utc_offset = None
+    if weather_sky is not None and weather_sky not in SKIES:
+        raise PinError(422, "Pick the weather from the list.")
     return PinFields(
         latitude=round(latitude, 6),
         longitude=round(longitude, 6),
@@ -250,7 +286,29 @@ def validate(
         share_exact=bool(share_exact),
         gear=clean_gear(gear),
         gear_other=clean_gear_other(gear_other),
+        caught_time=caught_time,
+        caught_utc_offset=caught_utc_offset if caught_time is not None else None,
+        weather_sky=weather_sky,
     )
+
+
+def set_weather(pin: CatchPin, sky: str | None, when_or_where_changed: bool = False) -> None:
+    """The angler's own sky (None: none), and a looked-up report dropped
+    when the catch's time or spot changed, so it is looked up again
+    (services/catch_weather.py). A row is changed in place, never swapped
+    for a new one with the same key."""
+    w = pin.weather
+    if sky is not None:
+        if w is None:
+            pin.weather = CatchWeather(source=WEATHER_ANGLER, sky=sky)
+        else:
+            w.source, w.sky = WEATHER_ANGLER, sky
+            w.station = w.observed_at = None
+            w.temp_f = w.wind_mph = w.pressure_hpa = None
+            w.trend = None
+        return
+    if w is not None and (w.source == WEATHER_ANGLER or (w.source == WEATHER_NWS and when_or_where_changed)):
+        pin.weather = None
 
 
 def nearest_waterbody(db: Session, lat: float, lng: float) -> Waterbody | None:
@@ -459,12 +517,15 @@ def create_pin(db: Session, user: User, fields: PinFields, uploads: list[bytes],
         species_slug=fields.species_slug,
         species_other=fields.species_other,
         caught_on=fields.caught_on,
+        caught_time=fields.caught_time,
+        caught_utc_offset=fields.caught_utc_offset,
         gear_other=fields.gear_other,
         visibility=fields.visibility,
         share_exact=fields.share_exact,
         status=PIN_PUBLISHED,
     )
     set_gear(pin, fields.gear)
+    set_weather(pin, fields.weather_sky)
     set_water(db, pin, match, checked=required)
     set_place(pin)
     set_public_point(db, pin)

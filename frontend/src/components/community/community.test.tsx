@@ -310,6 +310,46 @@ describe("PinForm", () => {
     expect(onMove).toHaveBeenCalledWith(expect.closeTo(32.80639, 4), expect.closeTo(-95.58639, 4));
   });
 
+  it("takes the time from the photo too, and sends it with this device's clock offset", async () => {
+    vi.mocked(session.identifyFish).mockResolvedValue(idResult([LARGEMOUTH]));
+    const created = { ...pin({ is_mine: true }), note: null, photos: [], can_edit: true, can_report: false, reported_by_me: false };
+    vi.mocked(session.createPin).mockResolvedValue(created);
+    const { container } = renderApp(<PinForm point={{ latitude: 32.8, longitude: -95.6 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    const photo = new File([fixtureBytes(JPEG_WITH_EXIF)], "phone.jpg", { type: "image/jpeg" });
+    fireEvent.change(container.querySelector("input[type=file][multiple]") as HTMLInputElement, { target: { files: [photo] } });
+    await waitFor(() => expect(screen.getByLabelText("Time")).toHaveValue("06:41"));
+    // September is past the weather service's seven days: the angler picks the sky.
+    fireEvent.click(screen.getByRole("radio", { name: "Cloudy" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Share catch" })).not.toBeDisabled());
+    fireEvent.click(screen.getByRole("button", { name: "Share catch" }));
+    await waitFor(() =>
+      expect(vi.mocked(session.createPin).mock.calls[0][0]).toMatchObject({
+        caught_on: "2026-09-20",
+        caught_time: "06:41",
+        utc_offset: -new Date("2026-09-20T06:41:00").getTimezoneOffset(),
+        weather_sky: "cloudy",
+      }),
+    );
+  });
+
+  it("asks for the sky only when the weather can't be looked up", async () => {
+    renderApp(<PinForm point={{ latitude: 32.8, longitude: -95.6 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
+    await screen.findByRole("option", { name: "Bluegill" });
+    // Today without a time: nothing to look up by, so the sky is asked for.
+    expect(screen.getByRole("radiogroup", { name: "Weather" })).toBeInTheDocument();
+    // Today with a time: the server looks it up.
+    fireEvent.change(screen.getByLabelText("Time"), { target: { value: "00:00" } });
+    expect(screen.queryByRole("radiogroup", { name: "Weather" })).not.toBeInTheDocument();
+    // Months ago: the weather service no longer has it.
+    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-01-05" } });
+    expect(screen.getByRole("radiogroup", { name: "Weather" })).toBeInTheDocument();
+    // A second tap takes the pick off.
+    fireEvent.click(screen.getByRole("radio", { name: "Rain" }));
+    expect(screen.getByRole("radio", { name: "Rain" })).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByRole("radio", { name: "Rain" }));
+    expect(screen.getByRole("radio", { name: "Rain" })).toHaveAttribute("aria-checked", "false");
+  });
+
   it("has nothing to share before a title, a photo or a fish", () => {
     renderApp(<PinForm point={{ latitude: 1, longitude: 2 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
     expect(screen.getByRole("button", { name: "Share catch" })).toBeDisabled();
@@ -370,6 +410,36 @@ describe("PinDetailView", () => {
     expect(await screen.findByText("32.8000, -95.6000")).toBeInTheDocument();
     expect(screen.getByText("Others see")).toBeInTheDocument();
     expect(screen.getByText("Somewhere in Wood County, TX")).toBeInTheDocument();
+  });
+
+  it("says when it was caught and the weather then", async () => {
+    const detail = {
+      ...pin({ is_mine: true }),
+      note: null, photos: [], can_edit: true, can_report: false, reported_by_me: false,
+      caught_time: "06:40",
+      weather: { source: "nws" as const, sky: "partly" as const, temp_f: 71.6, wind_mph: 9.9, trend: "falling" as const },
+    };
+    vi.mocked(session.getPin).mockResolvedValue(detail);
+    vi.mocked(session.updatePin).mockResolvedValue(detail);
+    renderApp(<PinDetailView pinId={7} />);
+    expect(await screen.findByText("Partly cloudy · 72°F · wind 10 mph · pressure falling")).toBeInTheDocument();
+    expect(screen.getByText("National Weather Service")).toBeInTheDocument();
+    expect(screen.getByText(/caught Sep 20, 2026 6:40 AM/)).toBeInTheDocument();
+
+    // A looked-up report isn't the angler's to replace; a new time goes
+    // with this device's clock offset.
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).queryByRole("radiogroup", { name: "Weather" })).not.toBeInTheDocument();
+    fireEvent.change(within(dialog).getByLabelText("Time"), { target: { value: "07:15" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(session.updatePin).toHaveBeenCalledWith(
+        7,
+        expect.objectContaining({ caught_time: "07:15", utc_offset: -new Date("2026-09-20T07:15:00").getTimezoneOffset() }),
+      ),
+    );
+    expect(vi.mocked(session.updatePin).mock.calls[0][1]).not.toHaveProperty("weather_sky");
   });
 
   it("names the bait and gear, and lets the owner change them", async () => {

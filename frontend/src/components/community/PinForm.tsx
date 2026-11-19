@@ -9,8 +9,9 @@ import { MESSAGES, type Messages } from "@/i18n/messages";
 import { localFishName, localGearCategory, localGearName } from "@/i18n/names";
 import { ApiError } from "@/lib/api/client";
 import { createPin, getPinOptions, identifyFish } from "@/lib/api/session";
-import type { FishIdResult, FishVerdict, PinDetail, PinOptions, PinVisibility } from "@/lib/api/types";
+import type { FishIdResult, FishVerdict, PinDetail, PinOptions, PinVisibility, Sky } from "@/lib/api/types";
 import { readPhotoFacts } from "@/lib/exif";
+import { SkyPicker, canLookUpWeather, utcOffset } from "./catchWhen";
 import { PhotoPicker } from "./PhotoPicker";
 
 function today(): string {
@@ -407,6 +408,11 @@ export function PinForm({
   const [species, setSpecies] = useState("");
   const [other, setOther] = useState("");
   const [caughtOn, setCaughtOn] = useState(today());
+  // "HH:MM" by this device's clock: from the photo, or typed. The weather
+  // then is looked up by the server; for a catch too old for that, or with
+  // no time, the angler can pick the sky (backend services/catch_weather.py).
+  const [caughtTime, setCaughtTime] = useState("");
+  const [sky, setSky] = useState<Sky | "">("");
   const [note, setNote] = useState("");
   const [gear, setGear] = useState<string[]>([]);
   const [gearOther, setGearOther] = useState("");
@@ -417,6 +423,7 @@ export function PinForm({
   // Where the catch photo says it was taken, when that isn't where the pin is.
   const [photoSpot, setPhotoSpot] = useState<{ latitude: number; longitude: number } | null>(null);
   const datePicked = useRef(false);
+  const timePicked = useRef(false);
   const catchPhoto = useRef<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -486,7 +493,13 @@ export function PinForm({
     catchPhoto.current = photo;
     const facts = await readPhotoFacts(photo);
     if (catchPhoto.current !== photo) return; // swapped for another meanwhile
-    if (facts.takenOn && facts.takenOn <= today() && !datePicked.current) setCaughtOn(facts.takenOn);
+    const day = facts.takenOn && facts.takenOn <= today() && !datePicked.current ? facts.takenOn : null;
+    if (day) setCaughtOn(day);
+    // The photo's time goes with its day: not onto a day the angler chose.
+    if (facts.takenAt && !timePicked.current && (day ?? caughtOn) === facts.takenOn) {
+      const at = new Date(`${facts.takenOn}T${facts.takenAt}:00`).getTime();
+      if (at <= Date.now() + 60_000) setCaughtTime(facts.takenAt);
+    }
     if (facts.latitude !== null && facts.longitude !== null) {
       const spot = { latitude: facts.latitude, longitude: facts.longitude };
       if (metresApart(spot, point) > 150) setPhotoSpot(spot);
@@ -508,6 +521,8 @@ export function PinForm({
   }
 
   const busy = progress !== null;
+  // The sky is asked for only when the server can't look the weather up.
+  const showSky = sky !== "" || !canLookUpWeather(caughtOn, caughtTime);
   const englishLabel = options?.species.find((s) => s.slug === species)?.label ?? "";
   const speciesLabel = species === OTHER ? other.trim() : (localFishName(species, locale) ?? englishLabel);
   const named = species !== "" && (species !== OTHER || other.trim() !== "");
@@ -550,6 +565,8 @@ export function PinForm({
           species_slug: species && species !== OTHER ? species : undefined,
           species_other: species === OTHER ? other : undefined,
           caught_on: caughtOn || undefined,
+          ...(caughtOn && caughtTime ? { caught_time: caughtTime, utc_offset: utcOffset(caughtOn, caughtTime) } : {}),
+          weather_sky: showSky && sky ? sky : undefined,
           visibility,
           share_exact: visibility === "public" && shareExact,
           gear,
@@ -607,13 +624,21 @@ export function PinForm({
         )}
       </div>
 
-      <div className="field-row">
+      <label className="field">
+        <span>{t.fish}</span>
+        <select value={species} onChange={(e) => changeSpecies(e.target.value)} disabled={busy}>
+          <SpeciesOptions options={options} otherValue={OTHER} />
+        </select>
+      </label>
+      {species === OTHER && (
         <label className="field">
-          <span>{t.fish}</span>
-          <select value={species} onChange={(e) => changeSpecies(e.target.value)} disabled={busy}>
-            <SpeciesOptions options={options} otherValue={OTHER} />
-          </select>
+          <span>{t.whichFish}</span>
+          <input value={other} onChange={(e) => changeOther(e.target.value)} maxLength={60} disabled={busy} />
         </label>
+      )}
+      {named && photos.length === 0 && <p className="hint">{t.needPhoto}</p>}
+
+      <div className="field-row field-row-pair">
         <label className="field">
           <span>{t.date}</span>
           <input
@@ -627,14 +652,20 @@ export function PinForm({
             disabled={busy}
           />
         </label>
-      </div>
-      {species === OTHER && (
         <label className="field">
-          <span>{t.whichFish}</span>
-          <input value={other} onChange={(e) => changeOther(e.target.value)} maxLength={60} disabled={busy} />
+          <span>{t.time}</span>
+          <input
+            type="time"
+            value={caughtTime}
+            onChange={(e) => {
+              timePicked.current = true;
+              setCaughtTime(e.target.value);
+            }}
+            disabled={busy || !caughtOn}
+          />
         </label>
-      )}
-      {named && photos.length === 0 && <p className="hint">{t.needPhoto}</p>}
+      </div>
+      {showSky && <SkyPicker value={sky} onChange={setSky} disabled={busy} />}
 
       <GearPicker
         options={options}

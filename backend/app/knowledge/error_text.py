@@ -226,6 +226,18 @@ TEXT: dict[str, dict[str, str]] = {
         "zh": "这个日期看起来不对。", "es": "Esa fecha no parece correcta.",
         "ko": "날짜가 올바르지 않은 것 같아요.", "ja": "日付が正しくないようです。",
     },
+    "That time doesn't look right.": {
+        "zh": "这个时间看起来不对。", "es": "Esa hora no parece correcta.",
+        "ko": "시간이 올바르지 않은 것 같아요.", "ja": "時刻が正しくないようです。",
+    },
+    "Add the date as well as the time.": {
+        "zh": "填了时间，也请填上日期。", "es": "Indica también la fecha, no solo la hora.",
+        "ko": "시간과 함께 날짜도 입력하세요.", "ja": "時刻と一緒に日付も入力してください。",
+    },
+    "Pick the weather from the list.": {
+        "zh": "请从列表里选天气。", "es": "Elige el tiempo de la lista.",
+        "ko": "목록에서 날씨를 고르세요.", "ja": "天気はリストから選んでください。",
+    },
     "That location isn't valid.": {
         "zh": "这个位置无效。", "es": "Esa ubicación no es válida.",
         "ko": "올바른 위치가 아니에요.", "ja": "その位置は無効です。",

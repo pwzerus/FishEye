@@ -42,8 +42,8 @@ function Body() {
             the session was last used and your browser&apos;s name and version.
           </li>
           <li>
-            <strong>Catches you share:</strong> where you dropped the pin, its title, notes, fish, date, the bait and gear
-            you list, and photos. We re-save every photo and strip its hidden data, including the GPS position and
+            <strong>Catches you share:</strong> where you dropped the pin, its title, notes, fish, date and time, the
+            bait and gear you list, the weather then, and photos. We re-save every photo and strip its hidden data, including the GPS position and
             camera details, before storing it.
           </li>
           <li>
@@ -140,6 +140,10 @@ function Body() {
           <li>
             <strong>OpenStreetMap&apos;s Nominatim</strong> receives the text of a place you search for, from our server,
             not from your browser.
+          </li>
+          <li>
+            <strong>The National Weather Service</strong> receives the weather station nearest a catch and the catch&apos;s
+            time, from our server, to look up the weather then. It doesn&apos;t receive the spot.
           </li>
           <li>
             Your browser loads <strong>map tiles from MapTiler</strong> (and OpenStreetMap, if MapTiler is unavailable)

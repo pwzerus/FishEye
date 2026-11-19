@@ -41,6 +41,8 @@ import type {
   AdminUserCounts,
   AdminUserDetail,
   PinUpdate,
+  CatchAnalysis,
+  Sky,
   User,
 } from "./types";
 
@@ -232,6 +234,9 @@ export function identifyGear(photo: File) {
 }
 
 export const getPin = (id: number) => sfetch<PinDetail>(`/api/pins/${id}`);
+/** The signed-in angler's own catches, counted; one fish at a time with `species`. */
+export const getCatchAnalysis = (species?: string) =>
+  sfetch<CatchAnalysis>(`/api/pins/analysis${species ? `?species=${encodeURIComponent(species)}` : ""}`);
 export const updatePin = (id: number, patch: PinUpdate) => sfetch<PinDetail>(`/api/pins/${id}`, json("PATCH", patch));
 export const deletePin = (id: number) => sfetch<void>(`/api/pins/${id}`, { method: "DELETE" });
 export const deletePhoto = (pinId: number, photoId: number) =>
@@ -275,6 +280,11 @@ export interface NewPin {
   species_slug?: string;
   species_other?: string;
   caught_on?: string;
+  // "HH:MM" by the angler's clock, with its offset from UTC in minutes.
+  caught_time?: string;
+  utc_offset?: number;
+  // The angler's own sky, for a catch too old to look up.
+  weather_sky?: Sky;
   visibility: "public" | "private";
   // Show others the exact spot; by default they see the lake or county.
   share_exact?: boolean;
@@ -294,6 +304,11 @@ export function createPin(pin: NewPin, onProgress?: (fraction: number) => void):
   if (pin.species_slug) form.set("species_slug", pin.species_slug);
   if (pin.species_other) form.set("species_other", pin.species_other);
   if (pin.caught_on) form.set("caught_on", pin.caught_on);
+  if (pin.caught_time) {
+    form.set("caught_time", pin.caught_time);
+    if (pin.utc_offset !== undefined) form.set("utc_offset", String(pin.utc_offset));
+  }
+  if (pin.weather_sky) form.set("weather_sky", pin.weather_sky);
   if (pin.share_exact) form.set("share_exact", "true");
   for (const id of pin.gear ?? []) form.append("gear", id);
   if (pin.gear_other) form.set("gear_other", pin.gear_other);

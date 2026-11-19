@@ -115,6 +115,10 @@ class Settings(BaseSettings):
     # it isn't installed; "off" for the test suite and CI.
     gear_id: str = "on"
     gear_id_model_dir: str = "models/gear-id"
+    # Weather on catches (services/catch_weather.py): "on" looks a new
+    # catch's weather up from the National Weather Service after it is
+    # saved; "off" for the test suite and CI, which never touch the network.
+    catch_weather: str = "on"
 
     # Per-client request limits on the endpoints anyone can call
     # (app/api/rate_limits.py). Only for turning them off in a pinch.

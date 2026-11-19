@@ -82,11 +82,26 @@ class PinGearOut(BaseModel):
     label: str
 
 
+class PinWeatherOut(BaseModel):
+    """The weather when and where the catch was made (services/catch_weather.py)."""
+
+    # "nws": the nearest airport station's report; "angler": their own pick.
+    source: str
+    sky: str | None  # "clear" | "partly" | "cloudy" | "rain" | "snow"
+    temp_f: float | None
+    wind_mph: float | None
+    # The pressure over the three hours before: "rising" | "steady" | "falling".
+    trend: str | None
+
+
 class PinDetailOut(PinSummaryOut):
     note: str | None
     # What the catch was made with (ADR 0056), shown to whoever can see it.
     gear: list[PinGearOut] = []
     gear_other: str | None = None
+    # When on the day, by the angler's clock ("06:40"), and the weather then.
+    caught_time: str | None = None
+    weather: PinWeatherOut | None = None
     photos: list[PinPhotoOut]
     can_edit: bool
     can_report: bool
@@ -105,6 +120,12 @@ class PinUpdateIn(BaseModel):
     # None leaves it. gear_other: "" clears it, None leaves it.
     gear: list[str] | None = Field(default=None, max_length=20)
     gear_other: str | None = Field(default=None, max_length=120)
+    # "HH:MM" by the angler's clock, sent with that clock's offset from UTC
+    # in minutes (-300 for Central daylight time); "" clears the time.
+    caught_time: str | None = Field(default=None, max_length=8)
+    utc_offset: int | None = Field(default=None, ge=-720, le=840)
+    # The angler's own sky for a catch too old to look up; "" clears it.
+    weather_sky: str | None = Field(default=None, max_length=8)
     # A new spot: both or neither. It must be on water, like a new pin's.
     latitude: float | None = None
     longitude: float | None = None
@@ -221,3 +242,57 @@ class WaterGroupOut(BaseModel):
     latest_at: datetime
     species: list[str]  # the most caught first, up to three
     thumb_url: str | None
+
+
+class AnalysisCountOut(BaseModel):
+    """How many catches fall under one key: a gear item's id, a time of day
+    ("dawn"), a sky ("cloudy"), a band ("warm")... The frontend names it in
+    the reader's language."""
+
+    key: str
+    count: int
+    # A gear item's English name (the frontend names it in other languages).
+    label: str | None = None
+
+
+class AnalysisSpeciesOut(BaseModel):
+    # A guide species' slug, or "~" and the angler's own name for a fish
+    # that isn't in the guides.
+    key: str
+    slug: str | None
+    label: str
+    count: int
+
+
+class AnalysisWaterOut(BaseModel):
+    kind: str  # "lake" | "river"
+    id: int
+    name: str
+    count: int
+
+
+class CatchAnalysisOut(BaseModel):
+    """The angler's own catches, counted (services/catch_analysis.py)."""
+
+    # Every fish in the angler's catches, for choosing one; then the counts
+    # for `species` (None: all of them).
+    all_species: list[AnalysisSpeciesOut]
+    species: str | None
+    total: int
+    first_on: date | None
+    last_on: date | None
+    fish: list[AnalysisSpeciesOut]
+    waters: list[AnalysisWaterOut]
+    months: list[int]
+    # Lures and baits (the /gear list's), and how many catches name one.
+    baits: list[AnalysisCountOut]
+    baits_logged: int
+    # Time of day against that day's sunrise and sunset, and how many
+    # catches have a time.
+    times: list[AnalysisCountOut]
+    times_logged: int
+    skies: list[AnalysisCountOut]
+    trends: list[AnalysisCountOut]
+    temps: list[AnalysisCountOut]
+    winds: list[AnalysisCountOut]
+    weather_logged: int
