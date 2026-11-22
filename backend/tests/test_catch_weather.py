@@ -8,7 +8,7 @@ from datetime import date, datetime, time, timedelta, timezone
 import pytest
 from sqlalchemy import select
 
-from app.models.community import WEATHER_ANGLER, WEATHER_NWS, CatchPin, CatchWeather
+from app.models.community import WEATHER_NWS, CatchPin, CatchWeather
 from app.services import catch_weather as cw
 from tests.conftest import TestingSessionLocal, signup
 from tests.test_pins_api import create

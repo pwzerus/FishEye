@@ -1,4 +1,7 @@
-"""Open-licence photos with nothing to do with fishing, from Wikimedia Commons: collect_nonfish.py queries.json root [per_query] [max_per_group]
+"""Open-licence photos with nothing to do with fishing, from Wikimedia Commons: collect_nonfish_slow.py queries.json root [per_query] [max_per_group]
+
+As collect_nonfish.py, slower after HTTP 429s on 2026-11-19: FishEye's own User-Agent (app.data_import.provenance),
+5 s between requests, Retry-After obeyed, found.json saved after every query.
 
 One job at a time, 3 s between requests. Saves 500 px thumbnails and found.json in root/<group>/.
 """
@@ -6,6 +9,7 @@ import json
 import re
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -14,7 +18,7 @@ sys.path.insert(0, 'F:/FishEye/backend')
 sys.stdout.reconfigure(encoding='utf-8')
 from app.cli.fish_id_commons import licence_ok  # noqa: E402
 
-UA = 'open-licence-photo-search/1.0 (small one-off script)'
+from app.data_import.provenance import USER_AGENT as UA  # noqa: E402
 API = 'https://commons.wikimedia.org/w/api.php'
 QUERIES = json.load(open(sys.argv[1], encoding='utf-8'))
 ROOT = Path(sys.argv[2])
@@ -30,11 +34,17 @@ def get(url):
         try:
             with urllib.request.urlopen(req, timeout=60) as r:
                 return r.read()
+        except urllib.error.HTTPError as e:
+            if attempt == 4:
+                raise
+            wait = int(e.headers.get('Retry-After') or 0) or 60 * (attempt + 1)
+            print('retry', e.code, 'waiting', wait, 's', flush=True)
+            time.sleep(wait)
         except Exception as e:
             if attempt == 4:
                 raise
             print('retry', str(e)[:60], flush=True)
-            time.sleep(20 * (attempt + 1))
+            time.sleep(30 * (attempt + 1))
 
 
 for group, qs in QUERIES.items():
@@ -51,7 +61,7 @@ for group, qs in QUERIES.items():
         except Exception as e:
             print('ERR', group, q, str(e)[:80], flush=True)
             continue
-        time.sleep(2.2)
+        time.sleep(5)
         pages = sorted(data.get('query', {}).get('pages', {}).values(), key=lambda p: p.get('index', 0))
         kept = 0
         for p in pages:
@@ -70,6 +80,7 @@ for group, qs in QUERIES.items():
             found[t] = dict(title=t, pageid=p['pageid'], query=q, thumb=ii['thumburl'], page_url=ii['descriptionurl'], licence=lic,
                             artist_html=m.get('Artist', {}).get('value', ''))
             kept += 1
+        json.dump(found, open(fj, 'w', encoding='utf-8'), ensure_ascii=False, indent=0)
         print(group, q, len(found), flush=True)
     n = 0
     for t, f in list(found.items())[:MAX]:
@@ -81,7 +92,7 @@ for group, qs in QUERIES.items():
             n += 1
         except Exception as e:
             print('thumb fail', t[:50], str(e)[:60], flush=True)
-        time.sleep(2.2)
+        time.sleep(5)
     json.dump(found, open(fj, 'w', encoding='utf-8'), ensure_ascii=False, indent=0)
     print('DONE', group, len(found), 'new', n, flush=True)
 print('ALL DONE', flush=True)

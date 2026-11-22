@@ -6,7 +6,13 @@ import { LocationSearchBar, clearPick, splitState } from "./LocationSearchBar";
 
 vi.mock("@/lib/api/client", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api/client")>("@/lib/api/client");
-  return { ...actual, geocodePlace: vi.fn(), searchLakes: vi.fn(), listJurisdictions: vi.fn(async () => STATES) };
+  return {
+    ...actual,
+    geocodePlace: vi.fn(),
+    searchLakes: vi.fn(),
+    suggestPlaceNames: vi.fn(async () => []),
+    listJurisdictions: vi.fn(async () => STATES),
+  };
 });
 const { ApiError, geocodePlace, searchLakes } = await import("@/lib/api/client");
 

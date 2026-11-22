@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api/client";
-import type { GeocodeResult } from "@/lib/api/types";
+import type { GeocodeResult, PlaceSuggestion } from "@/lib/api/types";
 import { suggestPlaces } from "@/lib/usCities";
 import { LocationSearchBar } from "./LocationSearchBar";
 
@@ -11,10 +11,15 @@ vi.mock("@/lib/api/client", async () => {
   return {
     ...actual,
     geocodePlace: vi.fn(),
+    suggestPlaceNames: vi.fn(),
   };
 });
 
-const { geocodePlace } = await import("@/lib/api/client");
+const { geocodePlace, suggestPlaceNames } = await import("@/lib/api/client");
+
+const AUSTIN: PlaceSuggestion = { label: "Austin, TX", name: "Austin", state: "TX", kind: "place", latitude: 30.2986, longitude: -97.7541 };
+const AUSTIN_MN: PlaceSuggestion = { label: "Austin, MN", name: "Austin", state: "MN", kind: "place", latitude: 43.6721, longitude: -92.9779 };
+const SEATTLE: PlaceSuggestion = { label: "Seattle, WA", name: "Seattle", state: "WA", kind: "place", latitude: 47.6211, longitude: -122.3244 };
 
 const mockResult: GeocodeResult = {
   query: "Lake Fork",
@@ -41,30 +46,64 @@ describe("Chinese names", () => {
 describe("LocationSearchBar", () => {
   beforeEach(() => {
     vi.mocked(geocodePlace).mockReset();
+    vi.mocked(suggestPlaceNames).mockReset();
+    vi.mocked(suggestPlaceNames).mockResolvedValue([]);
   });
 
-  it("offers places as you type and searches the one picked", async () => {
-    vi.mocked(geocodePlace).mockResolvedValue(mockResult);
+  it("offers places as you type and goes straight to the one picked", async () => {
+    vi.mocked(suggestPlaceNames).mockResolvedValue([AUSTIN, AUSTIN_MN]);
     const onLocate = vi.fn();
-    render(<LocationSearchBar onLocate={onLocate} />);
-    fireEvent.change(screen.getByLabelText("Search for a location"), { target: { value: "s" } });
-    const names = screen.getAllByRole("option").map((o) => o.textContent);
-    expect(names).toEqual(expect.arrayContaining(["San Antonio, TX", "San Diego, CA"]));
-    fireEvent.click(screen.getByRole("option", { name: "San Diego, CA" }));
-    await waitFor(() => expect(geocodePlace).toHaveBeenCalledWith("San Diego, CA"));
-    await waitFor(() => expect(onLocate).toHaveBeenCalled());
+    render(<LocationSearchBar onLocate={onLocate} stateCode="TX" />);
+    fireEvent.change(screen.getByLabelText("Search for a location"), { target: { value: "aus" } });
+    await screen.findByRole("option", { name: "Austin, MN" });
+    expect(suggestPlaceNames).toHaveBeenCalledWith("aus", expect.objectContaining({ state: null, prefer: "TX" }));
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Austin, TX", "Austin, MN"]);
+    fireEvent.click(screen.getByRole("option", { name: "Austin, MN" }));
+    // The suggestion has its own point: no geocoder.
+    expect(onLocate).toHaveBeenCalledWith({ latitude: 43.6721, longitude: -92.9779, label: "Austin, MN" });
+    expect(geocodePlace).not.toHaveBeenCalled();
     expect(screen.queryByRole("option")).not.toBeInTheDocument();
   });
 
-  it("goes through the suggestions with the arrow keys", async () => {
-    vi.mocked(geocodePlace).mockResolvedValue(mockResult);
+  it("asks for one state's places when a state is typed after the name", async () => {
     render(<LocationSearchBar onLocate={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Search for a location"), { target: { value: "austin, Texas" } });
+    await waitFor(() => expect(suggestPlaceNames).toHaveBeenCalled());
+    // The state list comes from the API; with none loaded the words are kept whole.
+    expect(vi.mocked(suggestPlaceNames).mock.calls[0][0]).toMatch(/^austin/);
+  });
+
+  it("goes through the suggestions with the arrow keys", async () => {
+    vi.mocked(suggestPlaceNames).mockResolvedValue([SEATTLE]);
+    const onLocate = vi.fn();
+    render(<LocationSearchBar onLocate={onLocate} />);
     const box = screen.getByLabelText("Search for a location");
     fireEvent.change(box, { target: { value: "seat" } });
+    await screen.findByRole("option", { name: "Seattle, WA" });
     fireEvent.keyDown(box, { key: "ArrowDown" });
     expect(screen.getByRole("option", { name: "Seattle, WA" })).toHaveAttribute("aria-selected", "true");
     fireEvent.keyDown(box, { key: "Enter" });
+    expect(onLocate).toHaveBeenCalledWith({ latitude: 47.6211, longitude: -122.3244, label: "Seattle, WA" });
+  });
+
+  it("falls back to the page's own cities when the place list can't be reached", async () => {
+    vi.mocked(suggestPlaceNames).mockRejectedValue(new ApiError("boom", 503));
+    vi.mocked(geocodePlace).mockResolvedValue(mockResult);
+    render(<LocationSearchBar onLocate={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Search for a location"), { target: { value: "seat" } });
+    fireEvent.click(await screen.findByRole("option", { name: "Seattle, WA" }));
     await waitFor(() => expect(geocodePlace).toHaveBeenCalledWith("Seattle, WA"));
+  });
+
+  it("uses the place list's point when the name typed is exactly one of its places", async () => {
+    vi.mocked(suggestPlaceNames).mockResolvedValue([AUSTIN, AUSTIN_MN]);
+    const onLocate = vi.fn();
+    render(<LocationSearchBar onLocate={onLocate} />);
+    search("Austin");
+    await waitFor(() =>
+      expect(onLocate).toHaveBeenCalledWith({ latitude: 30.2986, longitude: -97.7541, label: "Austin, TX" }),
+    );
+    expect(geocodePlace).not.toHaveBeenCalled();
   });
 
   it("geocodes the typed query and reports the resolved point", async () => {

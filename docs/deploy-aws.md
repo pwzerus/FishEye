@@ -249,16 +249,21 @@ is safe to run again.
 
 Both are prepared on your machine. The shops are one JSON file
 (`osm_cache/tackle_shops.json`, from `python -m app.data_import.tackle_shops
---states all`). The photo check's model (`models/fish-id/`) is built with
-PyTorch, which the server never installs (`build_fish_id_model.py`,
-`fish_id_train.py`). Copy up the model without its uncompressed encoder (the
-app uses `image_int8.onnx`):
+--states all`). The photo check's model (`models/fish-id/`, BioCLIP 2.5 since
+ADR 0066) is built with PyTorch, which the server never installs
+(`tools/fish_id_b25/`). Copy up the model without its uncompressed encoder
+(the app uses `image_int8.onnx`, 640 MB). It has no `head.npz`: remove the
+old one on the server (the app would leave it unused, with a warning, since
+it was fitted on BioCLIP 2's vectors):
 
 ```
-ssh -i fisheye.pem ubuntu@<ELASTIC_IP> "mkdir -p ~/FishEye/backend/models/fish-id"
-scp -i fisheye.pem models/fish-id/image_int8.onnx models/fish-id/text.npy models/fish-id/head.npz models/fish-id/gate.npz models/fish-id/GATE_CREDITS.json models/fish-id/classes.json models/fish-id/SOURCE.json models/fish-id/TRAINING_CREDITS.json ubuntu@<ELASTIC_IP>:~/FishEye/backend/models/fish-id/
+ssh -i fisheye.pem ubuntu@<ELASTIC_IP> "mkdir -p ~/FishEye/backend/models/fish-id && rm -f ~/FishEye/backend/models/fish-id/head.npz ~/FishEye/backend/models/fish-id/TRAINING_CREDITS.json"
+scp -i fisheye.pem models/fish-id/image_int8.onnx models/fish-id/text.npy models/fish-id/gate.npz models/fish-id/GATE_CREDITS.json models/fish-id/classes.json models/fish-id/SOURCE.json ubuntu@<ELASTIC_IP>:~/FishEye/backend/models/fish-id/
 scp -i fisheye.pem osm_cache/tackle_shops.json ubuntu@<ELASTIC_IP>:~/data/osm_cache/
 ```
+
+BioCLIP 2.5 holds about 670 MB of memory once a photo has been read, against
+BioCLIP 2's 340 MB: check `free -m` on the server first.
 
 On the server, after the backup and `git pull` above (`docker-compose.prod.yml`
 mounts `backend/models/fish-id` into the backend, read-only):
@@ -271,7 +276,7 @@ $DC exec -T backend python -m app.data_import.tackle_shops --from-file /tmp/data
 $DC exec -T backend python -c "from app.services.fish_id import get_recognizer; print(get_recognizer().name)"
 ```
 
-The last line prints `bioclip-2@2957b322090f/int8+head`. Without the model,
+The last line prints `bioclip-2.5-vith14@6e3d04e3d652/int8+gate`. Without the model,
 the site works and a catch that names a fish is refused with "The photo check
 isn't available right now" until it is copied up; `FISH_ID=off` in `.env`
 turns the check off instead (not for a public site).

@@ -60,9 +60,16 @@ def test_a_catfish_posted_as_a_bass_is_refused_and_named():
 
 
 def test_a_look_alike_is_accepted_as_its_group_not_as_the_species():
-    v = check_claim(ident(spotted_bass=0.55, largemouth_bass=0.3), "largemouth-bass")
+    v = check_claim(ident(spotted_bass=0.62, largemouth_bass=0.37), "largemouth-bass")
     assert v.status == GROUP and v.accepted
     assert "a black bass" in v.message and "your call" in v.message
+
+
+def test_a_group_must_be_near_certain_to_be_accepted():
+    # 86% on the black basses isn't enough since BioCLIP 2.5 (docs/adr/0066):
+    # the angler is asked for a clearer photo instead.
+    v = check_claim(ident(spotted_bass=0.55, largemouth_bass=0.3), "largemouth-bass")
+    assert v.status == UNSURE and not v.accepted
 
 
 def test_a_fish_with_no_guide_is_named_and_refused():
@@ -88,7 +95,7 @@ def test_a_photo_that_says_too_little_asks_for_another():
 
 
 def test_the_hybrid_is_checked_as_a_white_or_striped_bass():
-    assert check_claim(ident(striped_bass=0.7, white_bass=0.2), "hybrid-striped-bass").status == GROUP
+    assert check_claim(ident(striped_bass=0.75, white_bass=0.24), "hybrid-striped-bass").status == GROUP
     assert check_claim(ident(channel_catfish=0.9), "hybrid-striped-bass").status == MISMATCH
 
 
@@ -138,7 +145,7 @@ class StandIn:
         colour = "green" if g > 100 and r < 100 else "blue" if b > 100 and r < 100 else "red" if r > 150 and g < 100 else "gray"
         slug = COLOURS[colour]
         if colour == "gray":
-            return ident(spotted_bass=0.5, largemouth_bass=0.35)
+            return ident(spotted_bass=0.6, largemouth_bass=0.39)
         return ident(**{slug.replace("-", "_"): 0.9})
 
 
@@ -315,7 +322,7 @@ def test_a_photo_checked_twice_is_read_once():
 
 
 def test_a_white_bass_that_reads_as_a_white_perch_is_accepted_as_its_group():
-    v = check_claim(ident(white_perch=0.7, white_bass=0.2), "white-bass")
+    v = check_claim(ident(white_perch=0.75, white_bass=0.24), "white-bass")
     assert v.status == GROUP and v.accepted
     # Named anything else, it's still refused.
     assert check_claim(ident(white_perch=0.9), "bluegill").status == OTHER

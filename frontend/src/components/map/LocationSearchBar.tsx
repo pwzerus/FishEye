@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { useLocale, useT } from "@/i18n/client";
 import { localStateName } from "@/i18n/names";
-import { ApiError, geocodePlace, searchLakes } from "@/lib/api/client";
-import type { LakeMatch } from "@/lib/api/types";
+import { ApiError, geocodePlace, searchLakes, suggestPlaceNames } from "@/lib/api/client";
+import type { GeocodeResult, LakeMatch, PlaceSuggestion } from "@/lib/api/types";
 import { kmApart } from "@/lib/geo";
 import { useJurisdictions } from "@/lib/jurisdiction";
 import { suggestPlaces } from "@/lib/usCities";
@@ -75,11 +75,29 @@ export function clearPick(
   return close.length === 1 ? close[0] : null;
 }
 
-// What the box offers as you type: lakes come from FishEye's own search, a
-// moment after the typing stops; places from a list in the page (lib/usCities).
+// What the box offers as you type, a moment after the typing stops: places
+// from FishEye's own list of US places (/api/places/suggest, each with its
+// point, so a chosen one needs no geocoder), lakes from FishEye's own search.
+// State names, and cities typed in Chinese, come from lists in the page
+// (lib/usCities); its English city list stands in when the place list can't
+// be reached.
+const PLACE_HINTS = 5;
+const PLACE_HINT_DELAY_MS = 120;
 const LAKE_HINTS = 4;
 const LAKE_HINT_DELAY_MS = 250;
-type Hint = { kind: "place"; label: string } | { kind: "lake"; lake: LakeMatch };
+type Point = { latitude: number; longitude: number };
+type Hint = { kind: "place"; label: string; point?: Point } | { kind: "lake"; lake: LakeMatch };
+
+const plainName = (text: string) => (text.toLowerCase().match(/[a-z0-9]+/g) ?? []).join(" ");
+const CJK = /[\u3400-\u9fff]/;
+
+/** The suggestion that is exactly what was typed ("austin" or "Austin, TX"),
+ * if one is. */
+export function exactPlace(found: PlaceSuggestion[], typed: string, name: string): PlaceSuggestion | undefined {
+  const all = plainName(typed);
+  const bare = plainName(name);
+  return found.find((p) => plainName(p.label) === all || plainName(p.name) === bare);
+}
 
 export interface LocatedPoint {
   latitude: number;
@@ -126,14 +144,17 @@ export function LocationSearchBar({
   // Lakes of that name in several places: the person says which.
   const [choices, setChoices] = useState<LakeMatch[] | null>(null);
   const [places, setPlaces] = useState<string[]>([]);
+  const [placeHints, setPlaceHints] = useState<PlaceSuggestion[]>([]);
   const [lakeHints, setLakeHints] = useState<LakeMatch[]>([]);
   const [activeHint, setActiveHint] = useState(-1);
   // Only the newest typing's lake answer is shown.
   const hintRun = useRef(0);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const placeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
       if (hintTimer.current) clearTimeout(hintTimer.current);
+      if (placeTimer.current) clearTimeout(placeTimer.current);
     },
     [],
   );
@@ -152,9 +173,25 @@ export function LocationSearchBar({
   function closeHints() {
     hintRun.current += 1;
     if (hintTimer.current) clearTimeout(hintTimer.current);
+    if (placeTimer.current) clearTimeout(placeTimer.current);
     setPlaces([]);
+    setPlaceHints([]);
     setLakeHints([]);
     setActiveHint(-1);
+  }
+
+  /** A place for what was typed: the place list's own when it is exactly
+   * the name typed, else the geocoder's (an address, a landmark). */
+  async function findPlace(typed: string): Promise<GeocodeResult> {
+    const { name, state } = splitState(inEnglish(typed), states ?? []);
+    if (!CJK.test(typed)) {
+      const found = await suggestPlaceNames(name, { state, prefer: stateCode, near, limit: PLACE_HINTS }).catch(
+        () => [] as PlaceSuggestion[],
+      );
+      const same = exactPlace(found, typed, name);
+      if (same) return { query: typed, display_name: same.label, latitude: same.latitude, longitude: same.longitude };
+    }
+    return geocodePlace(typed);
   }
 
   function changeQuery(value: string) {
@@ -168,10 +205,30 @@ export function LocationSearchBar({
     const localStates = /[^\x00-\x7f]/.test(typedLocal)
       ? (states ?? []).filter((s) => localStateName(s.code, s.name, locale).includes(typedLocal)).map((s) => s.name).slice(0, 2)
       : [];
-    setPlaces([...new Set([...localStates, ...suggestPlaces(value, stateNames, 2), ...suggestPlaces(value)])]);
+    const local = [...localStates, ...suggestPlaces(value, stateNames, 2)];
+    const chinese = CJK.test(value);
+    setPlaces([...new Set([...local, ...(chinese ? suggestPlaces(value) : [])])]);
     const run = ++hintRun.current;
     if (hintTimer.current) clearTimeout(hintTimer.current);
+    if (placeTimer.current) clearTimeout(placeTimer.current);
     const typed = inEnglish(value.trim());
+    if (chinese || plainName(typed).replace(/ /g, "").length < 2) {
+      setPlaceHints([]);
+    } else {
+      placeTimer.current = setTimeout(() => {
+        const { name, state } = splitState(typed, states ?? []);
+        suggestPlaceNames(name, { state, prefer: stateCode, near, limit: PLACE_HINTS })
+          .then((found) => {
+            if (run === hintRun.current) setPlaceHints(found);
+          })
+          .catch(() => {
+            // The list can't be reached: the page's own cities, found by the geocoder when picked.
+            if (run !== hintRun.current) return;
+            setPlaceHints([]);
+            setPlaces([...new Set([...local, ...suggestPlaces(value)])]);
+          });
+      }, PLACE_HINT_DELAY_MS);
+    }
     if (!onLake || typed.length < 3) {
       setLakeHints([]);
       return;
@@ -190,6 +247,9 @@ export function LocationSearchBar({
 
   const hints: Hint[] = [
     ...places.map((label): Hint => ({ kind: "place", label })),
+    ...placeHints
+      .filter((p) => !places.includes(p.label))
+      .map((p): Hint => ({ kind: "place", label: p.label, point: { latitude: p.latitude, longitude: p.longitude } })),
     ...lakeHints.map((lake): Hint => ({ kind: "lake", lake })),
   ];
 
@@ -202,6 +262,11 @@ export function LocationSearchBar({
     setQuery(hint.label);
     closeHints();
     setError(null);
+    if (hint.point) {
+      setChoices(null);
+      onLocate({ ...hint.point, label: hint.label });
+      return;
+    }
     searchPlaces(hint.label);
   }
 
@@ -255,7 +320,7 @@ export function LocationSearchBar({
       // offered (the place a click away) when the place found is far from
       // it. "waco" still goes to Waco: Lake Waco is on the map right there.
       const { name, state } = splitState(trimmed, states ?? []);
-      const placeRequest = geocodePlace(typed);
+      const placeRequest = findPlace(typed);
       const [found, place] = await Promise.all([
         searchLakes(name, state ?? stateCode, near).catch(() => [] as LakeMatch[]),
         placeRequest.catch(() => null),
@@ -274,7 +339,7 @@ export function LocationSearchBar({
     searchPlaces(typed);
   }
 
-  function searchPlaces(trimmed: string, request = geocodePlace(trimmed)) {
+  function searchPlaces(trimmed: string, request = findPlace(trimmed)) {
     setChoices(null);
     setSearching(true);
     request
@@ -368,7 +433,7 @@ export function LocationSearchBar({
         <div className="location-search-choices location-search-hints">
           <ul id="location-hints" role="listbox" aria-label={t.suggestions}>
             {hints.map((hint, i) => (
-              <li key={hint.kind === "lake" ? `lake-${hint.lake.id}` : hint.label} role="presentation">
+              <li key={hint.kind === "lake" ? `lake-${hint.lake.id}` : `place-${hint.label}`} role="presentation">
                 <button
                   type="button"
                   id={`location-hint-${i}`}

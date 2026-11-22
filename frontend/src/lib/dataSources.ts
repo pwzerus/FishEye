@@ -10,7 +10,7 @@ export const DATA_SOURCES = [
   { id: "nas", label: "USGS: Nonindigenous Aquatic Species", url: "https://nas.er.usgs.gov/" },
   { id: "gbif", label: "GBIF", url: "https://www.gbif.org/" },
   { id: "nws", label: "National Weather Service", url: "https://www.weather.gov/" },
-  { id: "census", label: "US Census Bureau: county boundaries", url: "https://www.census.gov/geographies/mapping-files/time-series/geo/cartographic-boundary.html" },
-  { id: "bioclip", label: "BioCLIP 2 (Imageomics), with iNaturalist photos through GBIF", url: "https://huggingface.co/imageomics/bioclip-2" },
+  { id: "census", label: "US Census Bureau: county boundaries, place names, ZIP codes and populations", url: "https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" },
+  { id: "bioclip", label: "BioCLIP 2.5 (Imageomics), with Open Images V7 (Google) and Wikimedia Commons photos", url: "https://huggingface.co/imageomics/bioclip-2.5-vith14" },
   { id: "gearcam", label: "Perception Encoder (Meta), with Open Images V7 (Google) and Wikimedia Commons photos", url: "https://huggingface.co/timm/PE-Core-L-14-336" },
 ] as const;

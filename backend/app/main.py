@@ -22,6 +22,7 @@ from app.api import (
     jurisdictions,
     lake_reports,
     pins,
+    places,
     recommendations,
     shops,
     social,
@@ -214,6 +215,7 @@ app.include_router(weather.router, prefix=settings.api_prefix)
 app.include_router(recommendations.router, prefix=settings.api_prefix)
 app.include_router(advisor.router, prefix=settings.api_prefix)
 app.include_router(geocode.router, prefix=settings.api_prefix)
+app.include_router(places.router, prefix=settings.api_prefix)
 app.include_router(species.router, prefix=settings.api_prefix)
 app.include_router(baits.router, prefix=settings.api_prefix)
 app.include_router(feedback.router, prefix=settings.api_prefix)

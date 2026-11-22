@@ -218,7 +218,7 @@ const en = {
       nas: "Where non-native fish have been reported",
       gbif: "Fish records in lakes (CC0 and CC BY only)",
       nws: "Weather forecasts",
-      census: "The state and county of a catch",
+      census: "The state and county of a catch, and the places the search box suggests",
       bioclip: "The photo check for fish",
       gearcam: "The gear camera",
     },

@@ -53,6 +53,17 @@ export interface GeocodeResult {
   longitude: number;
 }
 
+/** A place offered while typing (backend GET /api/places/suggest): FishEye's
+ * own list of US places, each with its point, so choosing one needs no geocoding. */
+export interface PlaceSuggestion {
+  label: string; // "Austin, TX", "Travis County, TX", "78701 (Austin, TX)"
+  name: string;
+  state: string;
+  kind: "place" | "county" | "town" | "zip";
+  latitude: number;
+  longitude: number;
+}
+
 /** A lake whose name matches a search (backend GET /api/waterbodies/search). */
 export interface LakeMatch {
   id: number;

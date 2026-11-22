@@ -2,12 +2,16 @@
 
 A catch pin that names a guide species must come with a photo the
 recognizer agrees with: a catfish posted as a largemouth bass is refused,
-with the reason and the fish the photo does show. The model is BioCLIP 2
-(imageomics/bioclip-2, MIT) with a classifier head fitted on openly licensed
-photos, built into models/fish-id/ by app/cli/build_fish_id_model.py and
-fish_id_train.py and run here with onnxruntime alone: 309 MB on disk, about
-330 MB of memory, a second or two a photo on the server's two CPUs, read once
-however often it is checked.
+with the reason and the fish the photo does show. The model is BioCLIP 2.5
+Huge (imageomics/bioclip-2.5-vith14, MIT) with nothing fitted on iNaturalist
+photos (docs/adr/0066): its own text vectors name the fish, and only the gate
+below and one number, the logit scale, were fitted, on Open Images and
+Wikimedia Commons photos. Built into models/fish-id/ by tools/fish_id_b25/ and
+run here with onnxruntime alone: 640 MB on disk, about 670 MB of memory,
+about twice BioCLIP 2's time a photo (1.0 s against 0.5 s on two laptop
+cores), read once however often it is checked.
+(BioCLIP 2 with a classifier head, app/cli/build_fish_id_model.py and
+fish_id_train.py, still loads the same way.)
 
 How a photo is read:
 1. Two views of it, the middle square (what CLIP-style models are trained
@@ -25,7 +29,7 @@ How a photo is read:
    (confirmed), the same group of look-alikes (accepted; the species stays
    the angler's call, and the pin says so), or not (refused).
 The thresholds in `Policy` come from measuring on photos the model never
-saw (app/cli/fish_id_eval.py, docs/adr/0037).
+saw (app/cli/fish_id_eval.py, docs/adr/0037 and 0066).
 """
 from __future__ import annotations
 
@@ -136,7 +140,7 @@ class Verdict:
 
 @dataclass(frozen=True)
 class Policy:
-    """Thresholds, measured (fish_id_eval.py): see docs/adr/0037."""
+    """Thresholds, measured (fish_id_eval.py): see docs/adr/0037 and 0066."""
 
     # Below this much "some fish" in total, the photo isn't of a fish.
     min_fish: float = 0.5
@@ -144,15 +148,16 @@ class Policy:
     # refusing someone's real catch is worse than letting a strange photo by.
     min_photo: float = 0.3
     # The rest are shares of the fish probability, not of everything.
-    # Chosen on the training set's held-out newest observations
-    # (fish_id_train.py --sweep, BioCLIP 2 + head, 2026-10-27), for accuracy
-    # over acceptance: there no claim of another kind of fish got through
-    # (0.1% at 0.5 / 0.6) and 0.7% of look-alikes passed as the species
-    # (2.5%), for 7 points fewer honest photos accepted (82% against 89%).
+    # For BioCLIP 2.5 with no head (docs/adr/0066), chosen on Wikimedia
+    # Commons photos, not iNaturalist's: at 0.8 / 0.8, the thresholds BioCLIP
+    # 2 with its head used, 5 claims of another kind of fish got through
+    # there; at 0.9 / 0.98, none. On 5,237 iNaturalist test photos that
+    # meant 1 such claim against BioCLIP 2's 5, and the exact species
+    # confirmed for 54.6% of honest claims against 51.7%.
     # The claimed species is the likeliest fish with at least this.
-    confirm: float = 0.8
+    confirm: float = 0.9
     # Its group has at least this, and the likeliest fish is in the group.
-    group: float = 0.8
+    group: float = 0.98
     # A different fish this sure is named as what the photo shows.
     contradict: float = 0.4
 
@@ -248,7 +253,9 @@ class FishRecognizer:
         self._size = int(source["image_size"])
         self._mean = np.array(source["mean"], dtype=np.float32).reshape(3, 1, 1)
         self._std = np.array(source["std"], dtype=np.float32).reshape(3, 1, 1)
-        self._scale = float(source["logit_scale"])
+        # A model with no head may carry a logit scale fitted for it
+        # (docs/adr/0066): BioCLIP 2.5's own 98.9 is surer than it is right.
+        self._scale = float(source.get("calibrated_logit_scale") or source["logit_scale"])
         self._recent: dict[bytes, np.ndarray] = {}
         self._lock = threading.Lock()
         self._running = threading.Lock()
@@ -264,8 +271,12 @@ class FishRecognizer:
             fitted = np.load(head)
             if str(fitted["classes_digest"]) != classes_digest():
                 raise FileNotFoundError(f"{head} was fitted for another class list; refit it")
-            self._w, self._b = fitted["w"], fitted["b"]
-            self.name = f"{self.encoder}+head"
+            if fitted["w"].shape[1] != self._text.shape[1]:
+                # Left behind by another model (BioCLIP 2's head beside BioCLIP 2.5, ADR 0066).
+                logger.warning("%s was fitted for another encoder's vectors; not used", head)
+            else:
+                self._w, self._b = fitted["w"], fitted["b"]
+                self.name = f"{self.encoder}+head"
         self._gate: tuple[np.ndarray, float] | None = None
         gate = model_dir / "gate.npz"
         if use_head and gate.exists():

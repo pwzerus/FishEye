@@ -215,7 +215,7 @@ const es: Messages = {
       nas: "Dónde se han reportado peces no nativos",
       gbif: "Registros de peces en lagos (solo CC0 y CC BY)",
       nws: "Pronóstico del tiempo",
-      census: "El estado y condado de una captura",
+      census: "El estado y condado de una captura, y los lugares sugeridos al buscar",
       bioclip: "La revisión de fotos de peces",
       gearcam: "La cámara para identificar equipo",
     },

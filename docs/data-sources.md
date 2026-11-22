@@ -242,7 +242,24 @@ every coastal state, Alaska and Hawaii included, on the map (ADR 0062).
 
 ## Fish photo check
 
-### BioCLIP 2 (imageomics/bioclip-2) — OPEN (MIT): the model shipped
+### BioCLIP 2.5 Huge (imageomics/bioclip-2.5-vith14) — OPEN (MIT): the model shipped since 2026-11-21
+
+- Model: https://huggingface.co/imageomics/bioclip-2.5-vith14 at commit
+  `6e3d04e3d6522012c88181085c5ae666e14c45cd`; the model card declares
+  "License: MIT" (read 2026-11-21). A CLIP ViT-H/14, built into
+  `models/fish-id/` by `tools/fish_id_b25/` (ADR 0066): its own text vectors,
+  no classifier head. Only the gate and one number (the logit scale) are
+  fitted, on the Open Images and Commons photos below; no iNaturalist photo.
+- What Imageomics trained it on, as its cards say: an updated TreeOfLife-200M
+  (GBIF, which includes iNaturalist, EOL, BIOSCAN-5M and FathomNet; the
+  dataset card says its images carry "a variety of licensing restrictions",
+  FathomNet's CC BY-NC-ND and the GBIF snapshot CC BY-NC) on top of a CLIP
+  pre-trained on LAION-2B. That is their research training, released under
+  MIT; BioCLIP 2, shipped before it, was trained on TreeOfLife-200M too.
+  Whether a model trained on such images may be used commercially downstream
+  is not settled law; switching between the two changes nothing there.
+
+### BioCLIP 2 (imageomics/bioclip-2) — OPEN (MIT): shipped until 2026-11-21
 
 - Model: https://huggingface.co/imageomics/bioclip-2 at commit
   `2957b322090f9cb17ae72c71981c7218a28d81e0`; the model card declares MIT.
@@ -284,6 +301,38 @@ every coastal state, Alaska and Hawaii included, on the map (ADR 0062).
   more for the rest; 25,661 training photos, 5,237 test photos (US, 2024 on).
   The head shipped is fitted on 25,567 of them (ADR 0063); all 25,661 creators
   are credited between `TRAINING_CREDITS.json` and `GATE_CREDITS.json`.
+- **Since 2026-11-21 nothing that ships is fitted on them** (ADR 0066, and
+  "Needs human review" 0): BioCLIP 2.5 has no head, and its gate learned
+  from none of them. The test photos are still measured on.
+
+### Open Images V7 fish photos, for the gate (2026-11-19) — images CC BY 2.0, labels CC BY 4.0
+
+- Data: the human-verified image labels (`oidv6-train-annotations-human-imagelabels.csv`
+  and the validation and test files, https://storage.googleapis.com/openimages/),
+  confidence 1 for Fish, Goldfish, Shark or Seahorse: 9,430 photos, all CC BY
+  2.0 in the image lists. The first 4,000 in a fixed hash order were fetched
+  from the dataset's own S3 mirror (`open-images-dataset.s3.amazonaws.com`),
+  one a second, 640 px; 3,539 were there. Nothing came from Flickr's servers.
+  Tool: `tools/fish_id_b25/oi_fish.py`. The label files (5 GB) were deleted
+  after use.
+- Used: as the gate's fish (ADR 0066). Mostly aquariums, reefs, markets and
+  catches. 61 photos of the shipped gate's not-fish set carry a verified fish
+  label (many of anglers holding their catch); the new gate counts the 60 it
+  has as fish.
+- Credits: each photo's author, licence and Flickr page, in
+  `models/fish-id/GATE_CREDITS.json`. As item 9 of "Needs human review" says,
+  the licence is the one Google lists.
+
+### Wikimedia Commons aquatic animals, for the gate (2026-11-19) — public domain, CC0 and CC BY only
+
+- Data: the MediaWiki API, 35 searches (Latin names of turtles, dolphins,
+  seals, jellyfish, crabs, frogs and the like, `tools/fish_id_b25/queries_t3.json`),
+  up to 8 files each, licences checked by `fish_id_commons.licence_ok`. 229
+  files, 500 px thumbnails, 5 s apart with FishEye's User-Agent (the first
+  try, 2.2 s apart, met HTTP 429 and was stopped).
+- Checked by eye: 18 show or may show a fish (a turtle among small fish, a
+  kelp forest with fish) and are left out (`has_fish_t3.json`); 193 others
+  are the gate's not-fish photos. Credits in `GATE_CREDITS.json`.
 
 ### Wikimedia Commons photos — public domain, CC0 and CC BY only
 
@@ -312,6 +361,25 @@ every coastal state, Alaska and Hawaii included, on the map (ADR 0062).
   by the words in the title and description.
 - Fetched 2026-11-06. Tool: `fish_id_commons.py`. Creators of any photo the
   head is fitted on are in `TRAINING_CREDITS.json`, like iNaturalist's.
+
+## Place names for the search box, 2026-11-21
+
+### US Census Bureau Gazetteer files (2025) and ACS 5-year population (2020–2024) — PD
+
+- Data: `2025_Gaz_place_national.zip`, `2025_Gaz_counties_national.zip`,
+  `2025_Gaz_cousubs_national.zip` and `2025_Gaz_zcta_national.zip` from
+  https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/
+  (names and internal points), and `acsdt5y2024-b01003.dat` (table B01003,
+  total population, every geography) from
+  https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData/.
+  Works of the US government, public domain. Fetched 2026-11-21 into
+  `census_cache/` (git-ignored), 1 to 2 s apart, FishEye's User-Agent.
+- Kept: 69,737 names with their points and populations (ADR 0065): every
+  place and census-designated place, county, New England town and ZIP code in
+  the 50 states and DC, in `app/data/us_places.tsv.gz`, built by
+  `python -m app.cli.us_places`. Population only orders names typed alike.
+- Shown: as suggestions under the search box, "Austin, TX" or
+  "78701 (Austin, TX)". Credit: the Census Bureau on `/sources`.
 
 ## Fish in a lake
 
@@ -641,6 +709,16 @@ text. Only the weights ship. Another 431 open-licence photos from Commons and
 31 more catches were used only to test it, and are not kept in the repository.
 Refitted 2026-11-19 with the same photos with no fish and every fish training
 photo of 2026-11-18, sea fish included (ADR 0063).
+
+Since 2026-11-21 the gate shipped is BioCLIP 2.5's (ADR 0066), fitted on the
+Open Images fish and the Commons photos above, the Commons catches, and the
+same photos with no fish, less two sets. The 61 Open Images photos verified as
+showing a fish no longer count as not-fish. And the 101 Flickr photos found
+through Openverse (47 catches, 54 with no fish) are not fitted on: they were
+fetched from Flickr's own servers by a script, which Flickr's terms forbid
+(see "Not used"). They are only measured on. 7 gear photos whose credit could
+not be found again are left out too. `GATE_CREDITS.json` lists everyone whose
+photo it was fitted on: 4,039 fish photos and 5,314 with no fish.
 
 ## Gear photo recognition: training photos, 2026-11-06
 
@@ -984,6 +1062,20 @@ Not used; the place to start if older catches should get weather too.
   2026-11-19, when looking for weather on catches).
 - **Flickr API**: no longer free for this use; Open Images already holds the
   Flickr photos that were CC BY, with their credits.
+- **Flickr itself, for training photos** (2026-11-21): its Terms of Service
+  forbid "scraping or otherwise using any data mining, robots or similar data
+  gathering or extraction methods on or in connection with the Services"
+  (https://www.flickr.com/help/terms). Logging in changes nothing. Openverse,
+  which indexes Flickr's open-licence photos, says "You must not scrape the
+  content in the Openverse catalog" and asks users to respect "the terms and
+  conditions of platforms hosting CC-licensed works"
+  (https://docs.openverse.org/terms_of_service.html); its anonymous limits
+  are 200 searches and 1,000 thumbnails a day. Flickr photos come only through
+  datasets that hold their own copies (Open Images, YFCC100M on AWS,
+  CommonCatalog on Hugging Face).
+- **The Census Bureau's Data API**: since at least 2026-11-21 every call
+  needs a registered key (a request without one is sent to `missing_key.html`).
+  Its downloadable files are used instead.
 - **ImageNet**: its terms allow non-commercial research only.
 - **Objects365, V3Det**: the annotations are CC BY 4.0, but the images keep
   their original Flickr terms and no per-image licence is given.
@@ -1000,6 +1092,27 @@ Not used; the place to start if older catches should get weather too.
 
 ## Needs human review
 
+0. **iNaturalist's Terms of Use and the fish photos fetched through GBIF**
+   **(what ships, resolved 2026-11-21: ADR 0066 fits nothing on them; still
+   open: measuring on them, and the iNaturalist photos in BioCLIP's own
+   training, released by Imageomics under MIT)**
+   (raised 2026-11-19). The Terms, as a forum moderator quotes them:
+   "Prohibited Use for Commercial AI Training. Users may not use any
+   iNaturalist data for training artificial intelligence, machine learning
+   models, large language models, or similar networks, algorithms, or
+   systems for commercial purposes."
+   (https://forum.inaturalist.org/t/can-i-use-inaturalist-aws-open-data-to-train-commercial-ai-model/77663,
+   2026-04-11; the Terms page itself is behind a bot check). Each photo's own
+   licence (CC0, CC BY) allows commercial use, and ours came through GBIF
+   from iNaturalist's AWS open-data bucket; whether the Terms reach data
+   obtained that way is disputed in that thread, and staff hadn't answered
+   the asker after a month of emails. The shipped fish head and gate were
+   fitted on 25,567 such photos (above). Until iNaturalist answers in
+   writing or a lawyer has read it: no more iNaturalist photos for training.
+   Measured the same day: BioCLIP 2.5 with no head (its own text vectors,
+   nothing learned from these photos) named the fish on 2,706 test photos
+   uploaded from March 2026 better than the shipped check (83.5% vs 77.3%;
+   guide species 84.7% vs 81.4%), so a check without them is in reach.
 1. **Geofabrik `robots.txt`** disallows `*.osm.pbf`, while the site offers the
    files for free download and states "You may use the data for any purpose".
    Read as a crawler rule; confirm.

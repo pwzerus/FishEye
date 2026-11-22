@@ -15,6 +15,7 @@ import type {
   Jurisdiction,
   LakeMatch,
   PinDetail,
+  PlaceSuggestion,
   RecommendationRequest,
   Shop,
   SpeciesGuide,
@@ -167,6 +168,31 @@ export function listStates(): Promise<StateCoverage[]> {
 export function geocodePlace(query: string): Promise<GeocodeResult> {
   const qs = new URLSearchParams({ q: query });
   return apiFetch<GeocodeResult>(`/api/geocode?${qs.toString()}`, { cache: "no-store" });
+}
+
+/** Places whose names start with what's been typed (FishEye's own list, not a
+ * geocoder, so it may be asked on every keystroke): `state` keeps one state's,
+ * `prefer` lifts the map's state, `near` the places close to where it looks. */
+export function suggestPlaceNames(
+  query: string,
+  opts: {
+    state?: string | null;
+    prefer?: string | null;
+    near?: { latitude: number; longitude: number } | null;
+    limit?: number;
+  } = {},
+): Promise<PlaceSuggestion[]> {
+  const qs = new URLSearchParams({ q: query });
+  if (opts.state) qs.set("state", opts.state);
+  if (opts.prefer) qs.set("prefer", opts.prefer);
+  if (opts.near) {
+    // Two decimals (about a kilometre) is plenty for "nearer first", and lets
+    // the browser reuse an answer while the map moves a little.
+    qs.set("lat", opts.near.latitude.toFixed(2));
+    qs.set("lon", opts.near.longitude.toFixed(2));
+  }
+  if (opts.limit) qs.set("limit", String(opts.limit));
+  return apiFetch<PlaceSuggestion[]>(`/api/places/suggest?${qs.toString()}`);
 }
 
 /** Lakes FishEye has whose names match: those in `stateCode` first, then

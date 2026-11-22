@@ -102,6 +102,11 @@ SEARCH = Budget("search", per_client=[RateLimiter(30, MINUTE)])
 # everyone else's search wait.
 GEOCODE = Budget("geocode", per_client=[RateLimiter(20, MINUTE)])
 
+# Place suggestions as you type: an in-memory list (services/place_suggest.py),
+# nothing outside asked, so a request per keystroke is fine. Here so one
+# client can't keep the server busy.
+SUGGEST = Budget("suggest", per_client=[RateLimiter(240, MINUTE)])
+
 # Weather and spot recommendations: both may call the National Weather
 # Service (cached per place for 15 minutes, so a flood of new places is what
 # reaches it).
@@ -112,7 +117,7 @@ WEATHER = Budget("weather", per_client=[RateLimiter(60, MINUTE)])
 # can't keep the database busy for everyone.
 MAP = Budget("map", per_client=[RateLimiter(300, MINUTE)])
 
-ALL = (LLM, SEARCH, GEOCODE, WEATHER, MAP)
+ALL = (LLM, SEARCH, GEOCODE, SUGGEST, WEATHER, MAP)
 
 
 def reset_all() -> None:

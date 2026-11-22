@@ -215,7 +215,7 @@ const zht: Messages = {
       nas: "外來魚種的報告地點",
       gbif: "湖泊裡的魚類記錄（僅 CC0 和 CC BY）",
       nws: "天氣預報",
-      census: "漁獲所在的州和縣",
+      census: "漁獲所在的州和縣，以及搜尋時提示的地名",
       bioclip: "拍照識魚",
       gearcam: "拍照識漁具",
     },

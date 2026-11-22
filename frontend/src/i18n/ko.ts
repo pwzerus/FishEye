@@ -216,7 +216,7 @@ const ko: Messages = {
       nas: "외래 어종이 보고된 곳",
       gbif: "호수의 어류 기록(CC0, CC BY만)",
       nws: "일기 예보",
-      census: "잡은 곳의 주와 카운티",
+      census: "잡은 곳의 주와 카운티, 검색할 때 추천하는 지명",
       bioclip: "물고기 사진 확인",
       gearcam: "장비 카메라",
     },

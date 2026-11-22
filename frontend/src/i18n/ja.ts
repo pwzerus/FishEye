@@ -215,7 +215,7 @@ const ja: Messages = {
       nas: "外来魚が報告された場所",
       gbif: "湖の魚の記録（CC0とCC BYのみ）",
       nws: "天気予報",
-      census: "釣果の場所の州と郡",
+      census: "釣果の場所の州と郡、検索の候補に出る地名",
       bioclip: "魚の写真チェック",
       gearcam: "道具カメラ",
     },
