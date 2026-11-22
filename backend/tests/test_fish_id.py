@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import dataclasses
 import io
+import logging
 from pathlib import Path
 
+import numpy as np
 import pytest
 from PIL import Image
 
@@ -297,6 +299,34 @@ def test_the_form_hears_when_the_check_is_off(make_client):
     }
 
 
+# ------------------------------------------------- reading a photo (docs/adr/0067)
+
+
+def test_the_middle_square_cuts_the_long_side_evenly():
+    # A wide photo, red at both ends and blue in its middle third.
+    photo = Image.new("RGB", (600, 200), "red")
+    photo.paste(Image.new("RGB", (200, 200), "blue"), (200, 0))
+    square = fish_id.middle_square(photo, 224)
+    assert square.size == (224, 224)
+    assert square.getpixel((5, 112)) == square.getpixel((218, 112)) == (0, 0, 255)
+
+
+def test_a_gate_fitted_on_another_reading_is_used_with_a_warning(tmp_path, caplog):
+    def gate(name: str, **names: str) -> Path:
+        path = tmp_path / name
+        np.savez(path, w=np.ones(4, np.float32), b=np.float32(-1), **{k: np.array(v) for k, v in names.items()})
+        return path
+
+    with caplog.at_level(logging.WARNING, logger="app.services.fish_id"):
+        assert fish_id.load_gate(gate("this.npz", encoder="enc", reading="middle"), "enc", "middle")[1] == -1.0
+        assert not caplog.records
+        # Written before gates named their reading: two views. Looser on middle squares, still better than none.
+        assert fish_id.load_gate(gate("two_views.npz", encoder="enc"), "enc", "middle") is not None
+        assert "middle+whole" in caplog.text
+        assert fish_id.load_gate(gate("other.npz", encoder="another", reading="middle"), "enc", "middle") is None
+        assert "another encoder" in caplog.text
+
+
 # ------------------------------------------------------- the real model
 
 MODEL = Path("models/fish-id")
@@ -319,6 +349,21 @@ def test_a_photo_checked_twice_is_read_once():
     first = recognizer.identify(jpeg("green"))
     again = recognizer.identify(jpeg("green"))
     assert len(reads) == 1 and first.candidates == again.candidates
+
+
+@pytest.mark.skipif(not (MODEL / "SOURCE.json").exists(), reason="fish-id model not built (app/cli/build_fish_id_model.py)")
+def test_a_photo_is_read_as_its_middle_square_in_one_run():
+    recognizer = fish_id.FishRecognizer(MODEL)
+    session, batches = recognizer._session, []
+
+    class Watched:
+        def run(self, names, feed):
+            batches.append(feed["pixels"].shape)
+            return session.run(names, feed)
+
+    recognizer._session = Watched()
+    recognizer.identify(jpeg("green"))
+    assert batches == [(1, 3, recognizer._size, recognizer._size)]
 
 
 def test_a_white_bass_that_reads_as_a_white_perch_is_accepted_as_its_group():

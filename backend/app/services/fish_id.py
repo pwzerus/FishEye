@@ -8,18 +8,19 @@ photos (docs/adr/0066): its own text vectors name the fish, and only the gate
 below and one number, the logit scale, were fitted, on Open Images and
 Wikimedia Commons photos. Built into models/fish-id/ by tools/fish_id_b25/ and
 run here with onnxruntime alone: 640 MB on disk, about 670 MB of memory,
-about twice BioCLIP 2's time a photo (1.0 s against 0.5 s on two laptop
-cores), read once however often it is checked.
+0.8 s a photo on two laptop cores (docs/adr/0067), read once however often
+it is checked.
 (BioCLIP 2 with a classifier head, app/cli/build_fish_id_model.py and
 fish_id_train.py, still loads the same way.)
 
 How a photo is read:
-1. Two views of it, the middle square (what CLIP-style models are trained
-   on) and the whole photo padded to a square (a long fish held across the
-   frame loses its head and tail to the middle square). Their mean is the
-   photo's vector. Mirrored copies of both were measured too: no more
-   accurate (82.4% of honest claims accepted against 82.1%, the same false
-   ones), at twice the time.
+1. Its middle square (what CLIP-style models are trained on), in one run.
+   Until 2026-11-22 the whole photo padded to a square was read beside it
+   and the two averaged: hardly more accurate (84.5% top-1 on 2,706 test
+   photos against 83.9%) at twice the time (docs/adr/0067). A fish held out
+   at the edges of a wide photo loses its head and tail to the square.
+   Mirrored copies were measured too (docs/adr/0037): no more accurate, at
+   twice the time.
 2. Its similarity to every class of fish_id_classes.py (guide species, fish
    with no guide, things that aren't fish) becomes a probability. A second,
    separate look (models/fish-id/gate.npz) says whether the photo shows a fish
@@ -222,13 +223,43 @@ def check_claim(ident: Identification, claimed: str | None, policy: Policy = POL
                    f"We couldn't confirm this is {_a(label)} from this photo. Try one that shows the whole fish, side-on, in good light.")
 
 
+def middle_square(img: Image.Image, size: int) -> Image.Image:
+    """The photo's middle square, `size` pixels a side: the short side scaled
+    to `size`, the long one cut evenly at both ends."""
+    img = img.convert("RGB")
+    w, h = img.size
+    scale = size / min(w, h)
+    img = img.resize((max(size, round(w * scale)), max(size, round(h * scale))), Image.Resampling.BICUBIC)
+    left, top = (img.width - size) // 2, (img.height - size) // 2
+    return img.crop((left, top, left + size, top + size))
+
+
+def load_gate(path: Path, encoder: str, reading: str) -> tuple[np.ndarray, float] | None:
+    """The gate in `path`, if it was fitted on this encoder's vectors.
+
+    One fitted on photos read another way is used all the same, with a
+    warning: it is looser (two views' gate on middle squares lets 27 of 431
+    unrelated photos through, against 16, docs/adr/0067), and no gate at all
+    would pass screenshots as fish."""
+    fitted = np.load(path)
+    if str(fitted["encoder"]) != encoder:
+        logger.warning("%s was fitted for another encoder; not used", path)
+        return None
+    # Gates written before 2026-11-22 name no reading: they read two views.
+    fitted_reading = str(fitted["reading"]) if "reading" in fitted.files else "middle+whole"
+    if fitted_reading != reading:
+        logger.warning("%s was fitted on photos read as %s, not %s; refit it (tools/fish_id_b25/refit_gate.py)",
+                       path, fitted_reading, reading)
+    return fitted["w"], float(fitted["b"])
+
+
 class FishRecognizer:
     """The image encoder, then either the zero-shot weights (the classes'
     text vectors) or, when models/fish-id/head.npz is there, the classifier
     head fitted on labelled photos (app/cli/fish_id_train.py)."""
 
-    # How photos are read (`views`); cached photo vectors are kept per reading.
-    READING = "middle+whole"
+    # How photos are read (`embed`); photo vectors and the gate are kept per reading.
+    READING = "middle"
 
     def __init__(self, model_dir: Path, use_head: bool = True) -> None:
         import onnxruntime as ort
@@ -280,12 +311,9 @@ class FishRecognizer:
         self._gate: tuple[np.ndarray, float] | None = None
         gate = model_dir / "gate.npz"
         if use_head and gate.exists():
-            fitted = np.load(gate)
-            if str(fitted["encoder"]) == self.encoder:
-                self._gate = (fitted["w"], float(fitted["b"]))
+            self._gate = load_gate(gate, self.encoder, self.READING)
+            if self._gate is not None:
                 self.name = f"{self.name}+gate"
-            else:
-                logger.warning("%s was fitted for another encoder; not used", gate)
 
     def zero_shot_weights(self) -> np.ndarray:
         return (self._scale * self._text).astype(np.float32)
@@ -296,29 +324,15 @@ class FishRecognizer:
         arr = np.asarray(img.convert("RGB"), dtype=np.float32).transpose(2, 0, 1) / 255.0
         return (arr - self._mean) / self._std
 
-    def views(self, img: Image.Image) -> list[Image.Image]:
-        img = img.convert("RGB")
-        s = self._size
-        w, h = img.size
-        scale = s / min(w, h)
-        middle = img.resize((max(s, round(w * scale)), max(s, round(h * scale))), Image.Resampling.BICUBIC)
-        left, top = (middle.width - s) // 2, (middle.height - s) // 2
-        middle = middle.crop((left, top, left + s, top + s))
-        scale = s / max(w, h)
-        small = img.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.Resampling.BICUBIC)
-        fill = tuple(int(255 * m) for m in self._mean.ravel())
-        whole = Image.new("RGB", (s, s), fill)
-        whole.paste(small, ((s - small.width) // 2, (s - small.height) // 2))
-        return [middle, whole]
-
     def embed(self, img: Image.Image) -> np.ndarray:
-        batch = np.stack([self._pixels(v) for v in self.views(img)])
-        # One photo at a time: a run already uses every core, and two at
-        # once on the server's two would just slow both and the rest of the API.
+        pixels = self._pixels(middle_square(img, self._size))[None]
+        # One photo a run. A run already uses every core, so two at once on
+        # the server's two would slow both and the rest of the API. And the
+        # int8 encoder quantizes each run as a whole: a photo read beside
+        # others gets a slightly different vector (docs/adr/0067).
         with self._running:
-            vecs = self._session.run(None, {"pixels": batch})[0]
-        mean = vecs.mean(axis=0)
-        return mean / np.linalg.norm(mean)
+            vec = self._session.run(None, {"pixels": pixels})[0][0]
+        return vec / np.linalg.norm(vec)
 
     def identify_vector(self, vec: np.ndarray) -> Identification:
         logits = self._w @ vec + self._b

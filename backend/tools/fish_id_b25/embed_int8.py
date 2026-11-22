@@ -1,12 +1,18 @@
-"""Photo vectors from a model folder's int8 encoder on the CPU, in batches, into
-the cache fish_id_eval.vectors() reads (named by the recognizer's encoder), so
-fish_id_train.py and fish_id_eval.py use them as they are.
+"""Photo vectors from a model folder's int8 encoder on the CPU, read as the app
+reads them (FishRecognizer.embed, one photo a run), into the cache
+fish_id_eval.vectors() reads (named by the recognizer's encoder and reading),
+so fish_id_eval.py and refit_gate.py use them as they are (fit_gate.py reads
+the "middle+whole" caches it was fitted on, docs/adr/0066).
 
-    .venv/Scripts/python tools/fish_id_b25/embed_int8.py models/fish-id-b25 fishid_cache            (the test photos; also fishid_cache/commons)
-    .venv/Scripts/python tools/fish_id_b25/embed_int8.py models/fish-id-b25 --gate            (the gate's photos)
-    .venv/Scripts/python tools/fish_id_b25/embed_int8.py models/fish-id-b25 --oi              (Open Images fish)
-    .venv/Scripts/python tools/fish_id_b25/embed_int8.py models/fish-id-b25 --commons-train   (Commons training photos)
-    .venv/Scripts/python tools/fish_id_b25/embed_int8.py models/fish-id-b25 --t3              (Commons aquatic animals)
+One photo a run because the int8 encoder quantizes a run as a whole: read 8 to
+a run, as the "middle+whole" caches were until 2026-11-22, a photo gets a
+slightly different vector than in the app (docs/adr/0067).
+
+    .venv/Scripts/python tools/fish_id_b25/embed_int8.py models/fish-id fishid_cache            (the test photos; also fishid_cache/commons)
+    .venv/Scripts/python tools/fish_id_b25/embed_int8.py models/fish-id --gate            (the gate's photos)
+    .venv/Scripts/python tools/fish_id_b25/embed_int8.py models/fish-id --oi              (Open Images fish)
+    .venv/Scripts/python tools/fish_id_b25/embed_int8.py models/fish-id --commons-train   (Commons training photos)
+    .venv/Scripts/python tools/fish_id_b25/embed_int8.py models/fish-id --t3              (Commons aquatic animals)
 """
 import json
 import sys
@@ -24,33 +30,20 @@ rec = FishRecognizer(model, use_head=False)
 G = Path("F:/tmp/fish_gate")
 
 
-def run(items: list[tuple[str, Path]], out: Path, batch: int = 8) -> None:
+def run(items: list[tuple[str, Path]], out: Path) -> None:
     have = dict(np.load(out)) if out.exists() else {}
     todo = [(k, p) for k, p in items if k not in have]
     print(f"{len(items)} photos, {len(todo)} to embed -> {out}", flush=True)
     t0 = time.time()
-    for i in range(0, len(todo), batch):
-        chunk = todo[i:i + batch]
-        pix, keys = [], []
-        for k, p in chunk:
-            try:
-                with Image.open(p) as im:
-                    pix += [rec._pixels(v) for v in rec.views(im)]
-                keys.append(k)
-            except Exception as exc:  # noqa: BLE001
-                print("  bad", p, exc, flush=True)
-        if not keys:
-            continue
-        with rec._running:
-            vecs = rec._session.run(None, {"pixels": np.stack(pix)})[0]
-        vecs = vecs.reshape(len(keys), 2, -1).mean(1)
-        vecs /= np.linalg.norm(vecs, axis=1, keepdims=True)
-        for k, v in zip(keys, vecs):
-            have[k] = v.astype(np.float32)
-        done = i + len(chunk)
-        if done % 800 < batch or done == len(todo):
+    for i, (k, p) in enumerate(todo, 1):
+        try:
+            with Image.open(p) as im:
+                have[k] = rec.embed(im).astype(np.float32)
+        except Exception as exc:  # noqa: BLE001
+            print("  bad", p, exc, flush=True)
+        if i % 400 == 0 or i == len(todo):
             np.savez(out, **have)
-            print(f"  {done}/{len(todo)}, {(time.time() - t0) / done:.2f} s a photo", flush=True)
+            print(f"  {i}/{len(todo)}, {(time.time() - t0) / i:.2f} s a photo", flush=True)
     np.savez(out, **have)
 
 
