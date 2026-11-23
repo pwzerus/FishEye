@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
 

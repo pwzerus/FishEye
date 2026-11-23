@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 

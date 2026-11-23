@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { ActionIcon } from "@/components/ui/ActionIcon";
 import { FeedbackButton } from "@/components/feedback/FeedbackDialog";
 import { FishArt } from "@/components/fish/FishArt";

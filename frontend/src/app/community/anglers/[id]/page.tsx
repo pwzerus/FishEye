@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { getT } from "@/i18n/server";
+import { getT, pageAlternates } from "@/i18n/server";
 import { notFound } from "next/navigation";
 
 import { AnglerView } from "@/components/community/AnglerView";
@@ -11,7 +11,7 @@ export async function generateMetadata(props: PageProps<"/community/anglers/[id]
   const id = Number((await props.params).id);
   return {
     title: `${t.nav.catches} · FishEye`,
-    ...(Number.isInteger(id) && id > 0 ? { alternates: { canonical: `/community/anglers/${id}` } } : {}),
+    ...(Number.isInteger(id) && id > 0 ? { alternates: await pageAlternates(`/community/anglers/${id}`) } : {}),
   };
 }
 

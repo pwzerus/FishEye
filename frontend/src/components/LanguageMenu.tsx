@@ -3,14 +3,36 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
-import { LOCALES, LOCALE_COOKIE, LOCALE_NAMES, LOCALE_SHORT, LOCALE_TAGS, preferredLocale, type Locale } from "@/i18n/config";
+import {
+  LOCALES,
+  LOCALE_COOKIE,
+  LOCALE_NAMES,
+  LOCALE_SHORT,
+  LOCALE_TAGS,
+  localePath,
+  preferredLocale,
+  splitLocalePath,
+  type Locale,
+} from "@/i18n/config";
 import { saveLocale, useLocale, useT } from "@/i18n/client";
 import { MESSAGES } from "@/i18n/messages";
+import { loadPage } from "@/lib/navigate";
 
+/** Saves the choice and shows the page in it: at that language's address
+ * ("/rules" becomes "/zh/rules", "/zh/rules" becomes "/rules" in English),
+ * loaded afresh so the header and the page change together; where the
+ * address stays the same, the page's server parts are fetched again. */
 function useSwitch() {
   const router = useRouter();
   return (locale: Locale) => {
     saveLocale(locale);
+    const { pathname, search, hash } = window.location;
+    const here = pathname + search + hash;
+    const there = localePath(locale, splitLocalePath(pathname).path + search + hash);
+    if (there !== here) {
+      loadPage(there);
+      return;
+    }
     document.documentElement.lang = LOCALE_TAGS[locale];
     router.refresh();
   };

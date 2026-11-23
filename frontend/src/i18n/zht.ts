@@ -5,6 +5,7 @@ import type { Messages } from "./messages";
 /** 簡體中文。魚名、規定等關鍵詞在中文後保留英文，方便對照美國的標牌和漁具店。 */
 const zht: Messages = {
   meta: {
+    homeTitle: "FishEye 釣魚：找水域、選魚餌和裝備、查各州釣魚規定",
     description: "跟 FishEye 學釣魚：去哪裡釣，用什麼、為什麼這樣用，你所在的州有什麼規定。",
   },
   common: {

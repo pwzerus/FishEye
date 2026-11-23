@@ -5,6 +5,7 @@
  */
 const en = {
   meta: {
+    homeTitle: "FishEye: where to fish, what to use, and your state's fishing rules",
     description: "Learn to fish with FishEye: where to go, what to use and why it works, and your state's rules.",
   },
   common: {

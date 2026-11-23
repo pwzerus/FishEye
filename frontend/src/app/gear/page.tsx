@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 
 import { GearPhoto } from "@/components/gear/GearPhoto";
 import { IdentifyGear } from "@/components/gear/IdentifyGear";
 import { PageTransition } from "@/components/motion/Transition";
 import { LinkedText } from "@/components/terms/TermText";
 import { localGearCategory, localGearName } from "@/i18n/names";
-import { getLocale, getT } from "@/i18n/server";
+import { getLocale, getT, pageAlternates } from "@/i18n/server";
 import type { Locale } from "@/i18n/config";
 import { listGear } from "@/lib/api/client";
 import type { Gear, GearItem } from "@/lib/api/types";
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = (await getT()).gearPage;
-  return { title: `${t.title} · FishEye`, description: t.lede, alternates: { canonical: "/gear" } };
+  return { title: `${t.title} · FishEye`, description: t.lede, alternates: await pageAlternates("/gear") };
 }
 
 function Card({ item, locale, t, publicDomain }: {

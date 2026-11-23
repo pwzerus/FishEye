@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { getLocale, getT } from "@/i18n/server";
+import { getLocale, getT, pageAlternates } from "@/i18n/server";
 import { MESSAGES } from "@/i18n/messages";
 import { localFishName, localGearName } from "@/i18n/names";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { notFound } from "next/navigation";
 
 
@@ -45,7 +45,7 @@ export async function generateMetadata(props: PageProps<"/fish/[slug]">): Promis
     return {
       title: `${name} · FishEye`,
       description: MESSAGES[locale].pages.fishGuideDescription(name, g.scientific_name),
-      alternates: { canonical: `/fish/${g.slug}` },
+      alternates: await pageAlternates(`/fish/${g.slug}`),
     };
   } catch {
     return { title: `${(await getT()).pages.fish} · FishEye` };

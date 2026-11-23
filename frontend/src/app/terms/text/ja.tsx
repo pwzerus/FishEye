@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 
 import { LEGAL, legalDate } from "@/lib/legal";
 

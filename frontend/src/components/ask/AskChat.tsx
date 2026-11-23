@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "@/components/LocaleLink";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { BaitChips } from "@/components/baits/BaitTip";
@@ -12,7 +11,8 @@ import { FishArt } from "@/components/fish/FishArt";
 import { GearIdAnswer } from "@/components/gear/IdentifyGear";
 import { FishIdAnswer, likelyFish, MIN_FISH, SURE } from "@/components/identify/IdentifyFish";
 import { useLocale, useT } from "@/i18n/client";
-import type { Locale } from "@/i18n/config";
+import { usePagePath } from "@/i18n/pagePath";
+import { localePath, type Locale } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages";
 import { localFishName, localGearName, localStateName, localTopicTitle } from "@/i18n/names";
 import { ApiError, listGear, postAsk } from "@/lib/api/client";
@@ -372,8 +372,8 @@ export function AskChat({
   // carries it). Null until the first reply.
   const [ai, setAi] = useState<AiAllowance | null>(null);
   const state = useSelectedState();
-  const pathname = usePathname();
-  const loginHref = `/login?next=${encodeURIComponent(pathname ?? "/ask")}`;
+  const pagePath = usePagePath();
+  const loginHref = `/login?next=${encodeURIComponent(localePath(locale, pagePath))}`;
   const nextId = useRef(1);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { getT } from "@/i18n/server";
+import { getT, pageAlternates } from "@/i18n/server";
 import { Suspense } from "react";
 
 import { LoginForm } from "@/components/auth/LoginForm";
@@ -8,7 +8,7 @@ import { PageTransition } from "@/components/motion/Transition";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: `${t.pages.login} · FishEye`, description: t.pages.loginDescription, alternates: { canonical: "/login" } };
+  return { title: `${t.pages.login} · FishEye`, description: t.pages.loginDescription, alternates: await pageAlternates("/login") };
 }
 
 export default function LoginPage() {

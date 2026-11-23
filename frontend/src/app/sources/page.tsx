@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 
 import { PageTransition } from "@/components/motion/Transition";
 import { RevealFromHash } from "@/components/sources/RevealFromHash";
 import { localCategory, localFishName, localStateName, localTopicTitle } from "@/i18n/names";
 import type { Locale } from "@/i18n/config";
-import { getLocale, getT } from "@/i18n/server";
+import { getLocale, getT, pageAlternates } from "@/i18n/server";
 import type { Messages } from "@/i18n/messages";
 import { listHandbook, listJurisdictions, listQuestionSources, listSpeciesGuides, listSpeciesPhotos } from "@/lib/api/client";
 import type { GuideSource, HandbookTopic, Jurisdiction, SpeciesGuide, SpeciesPhotos } from "@/lib/api/types";
@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: `${t.sourcesPage.title} · FishEye`, description: t.sourcesPage.lede, alternates: { canonical: "/sources" } };
+  return { title: `${t.sourcesPage.title} · FishEye`, description: t.sourcesPage.lede, alternates: await pageAlternates("/sources") };
 }
 
 function Links({ sources, guideSite, locale, limits }: { sources: GuideSource[]; guideSite: string; locale: Locale; limits: string }) {

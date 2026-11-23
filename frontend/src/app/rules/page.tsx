@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 
 import { PageTransition } from "@/components/motion/Transition";
 import { LOCALE_TAGS } from "@/i18n/config";
 import { localStateName } from "@/i18n/names";
-import { getLocale, getT } from "@/i18n/server";
+import { getLocale, getT, pageAlternates } from "@/i18n/server";
 import { listJurisdictions } from "@/lib/api/client";
 import type { Jurisdiction } from "@/lib/api/types";
 import { stateSlug } from "@/lib/stateSlug";
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = (await getT()).rulesPage;
-  return { title: `${t.indexTitle} · FishEye`, description: t.indexLede, alternates: { canonical: "/rules" } };
+  return { title: `${t.indexTitle} · FishEye`, description: t.indexLede, alternates: await pageAlternates("/rules") };
 }
 
 /** Every state, each linking to its own rules page (app/rules/[state]). */

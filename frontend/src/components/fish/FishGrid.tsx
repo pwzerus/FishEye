@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { useDeferredValue, useMemo, useState } from "react";
 
 import { VT } from "@/components/motion/Transition";

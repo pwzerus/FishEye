@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { useLocale, useT } from "@/i18n/client";
 import { localStateName } from "@/i18n/names";
 import { StatePicker } from "@/components/ui/StatePicker";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { stateSlug } from "@/lib/stateSlug";
 import type { Jurisdiction } from "@/lib/api/types";
 import { useJurisdictions, useSelectedJurisdiction, useSelectedState } from "@/lib/jurisdiction";

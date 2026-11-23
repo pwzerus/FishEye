@@ -70,7 +70,8 @@ describe("fishing terms", () => {
     fireEvent.click(screen.getByRole("button", { name: "帕洛马结" }));
     const card = screen.getByRole("dialog", { name: "帕洛马结" });
     expect(card).toHaveTextContent(MESSAGES.zh.terms.items.palomar.def);
-    expect(card.querySelector("a")?.getAttribute("href")).toBe("/handbook#knot-palomar");
+    // A Chinese page links to the Chinese address (docs/adr/0068).
+    expect(card.querySelector("a")?.getAttribute("href")).toBe("/zh/handbook#knot-palomar");
     // The Palomar topic has a drawing, and the link says so.
     expect(card.querySelector("a")?.textContent).toBe(MESSAGES.zh.terms.moreDrawing(HANDBOOK_TITLES.zh["knot-palomar"]));
     fireEvent.keyDown(document, { key: "Escape" });

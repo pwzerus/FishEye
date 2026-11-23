@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import { getLocale, getT } from "@/i18n/server";
-import Link from "next/link";
+import { getLocale, getT, pageAlternates } from "@/i18n/server";
+import Link from "@/components/LocaleLink";
 
 import { FishGrid } from "@/components/fish/FishGrid";
 import { HandbookRedirect } from "@/components/fish/HandbookRedirect";
@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: `${t.pages.fish} · FishEye`, description: t.pages.fishDescription, alternates: { canonical: "/fish" } };
+  return { title: `${t.pages.fish} · FishEye`, description: t.pages.fishDescription, alternates: await pageAlternates("/fish") };
 }
 
 function CameraIcon() {

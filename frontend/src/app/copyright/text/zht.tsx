@@ -1,6 +1,6 @@
 // 由 zh.tsx 自動產生（frontend/scripts/zh_hant.py，OpenCC s2twp）。
 // Generated from zh.tsx by scripts/zh_hant.py: edit zh.tsx and run it again, not this file.
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 
 import { LEGAL, type LegalText } from "@/lib/legal";
 

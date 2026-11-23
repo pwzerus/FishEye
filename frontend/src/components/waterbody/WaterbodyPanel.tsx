@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { ContentSkeleton } from "@/components/ui/ContentSkeleton";
 
 import { useLocaleTag, useT } from "@/i18n/client";

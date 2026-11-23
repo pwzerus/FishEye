@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { getT } from "@/i18n/server";
+import { getT, pageAlternates } from "@/i18n/server";
 
 import { PageTransition } from "@/components/motion/Transition";
 import { FirstTrip } from "@/components/start/FirstTrip";
@@ -9,7 +9,7 @@ import type { GearPhoto } from "@/lib/api/types";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: `${t.pages.start} · FishEye`, description: t.pages.startDescription, alternates: { canonical: "/start" } };
+  return { title: `${t.pages.start} · FishEye`, description: t.pages.startDescription, alternates: await pageAlternates("/start") };
 }
 
 export default async function StartPage() {

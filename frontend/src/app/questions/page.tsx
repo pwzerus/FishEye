@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 
 import { PageTransition } from "@/components/motion/Transition";
 import { QuestionLibrary } from "@/components/questions/QuestionLibrary";
 import { RevealFromHash } from "@/components/sources/RevealFromHash";
-import { getLocale, getT } from "@/i18n/server";
+import { getLocale, getT, pageAlternates } from "@/i18n/server";
 import { listQuestions } from "@/lib/api/client";
 import type { LibraryQuestion } from "@/lib/api/types";
 
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = (await getT()).questionsPage;
-  return { title: `${t.title} · FishEye`, description: t.lede, alternates: { canonical: "/questions" } };
+  return { title: `${t.title} · FishEye`, description: t.lede, alternates: await pageAlternates("/questions") };
 }
 
 /** The question library (backend app/knowledge/angling_qa.py, docs/adr/0051).

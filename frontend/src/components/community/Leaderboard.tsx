@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { useEffect, useState, type CSSProperties } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";

@@ -6,6 +6,7 @@ import type { Messages } from "./messages";
  * 바뀌는 조사(을/를, 이/가, 은/는, 와/과, 으로/로)를 쓰지 않아요. */
 const ko: Messages = {
   meta: {
+    homeTitle: "FishEye: 낚시할 곳, 미끼와 장비, 주별 낚시 규정",
     description: "FishEye로 낚시를 배워 보세요: 어디로 갈지, 무엇을 쓸지와 그 이유, 그리고 우리 주의 규정까지.",
   },
   common: {

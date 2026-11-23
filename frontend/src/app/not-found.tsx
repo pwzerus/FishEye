@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 
 import { FishArt } from "@/components/fish/FishArt";
 import { getT } from "@/i18n/server";

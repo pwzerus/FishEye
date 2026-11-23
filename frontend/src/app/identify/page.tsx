@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 
-import { getT } from "@/i18n/server";
+import { getT, pageAlternates } from "@/i18n/server";
 
 import { IdentifyFish } from "@/components/identify/IdentifyFish";
 import { PageTransition } from "@/components/motion/Transition";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: `${t.pages.identify} · FishEye`, description: t.pages.identifyDescription, alternates: { canonical: "/identify" } };
+  return { title: `${t.pages.identify} · FishEye`, description: t.pages.identifyDescription, alternates: await pageAlternates("/identify") };
 }
 
 export default async function IdentifyPage() {

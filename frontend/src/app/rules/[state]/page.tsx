@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { PageTransition } from "@/components/motion/Transition";
 import { RulesStatePicker } from "@/components/rules/RulesStatePicker";
 import { localStateName, localTopicTitle } from "@/i18n/names";
 import type { Locale } from "@/i18n/config";
-import { getLocale, getT } from "@/i18n/server";
+import { getLocale, getT, pageAlternates } from "@/i18n/server";
 import { listHandbook, listJurisdictions } from "@/lib/api/client";
 import type { GuideSource, HandbookTopic, Jurisdiction } from "@/lib/api/types";
 import { sourceLabel } from "@/lib/sourceLabel";
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: PageProps<"/rules/[state]">):
   const { state } = await find((await params).state, locale);
   if (!state) return { title: `${t.indexTitle} · FishEye` };
   const name = localStateName(state.code, state.name, locale);
-  return { title: `${t.title(name)} · FishEye`, description: t.lede(name), alternates: { canonical: `/rules/${stateSlug(state.name)}` } };
+  return { title: `${t.title(name)} · FishEye`, description: t.lede(name), alternates: await pageAlternates(`/rules/${stateSlug(state.name)}`) };
 }
 
 function Sources({ sources, locale, limits }: { sources: GuideSource[]; locale: Locale; limits: string }) {

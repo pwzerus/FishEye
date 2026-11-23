@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { HREFLANG, LOCALES, localePath } from "@/i18n/config";
 import { listJurisdictions, listSpeciesGuides } from "@/lib/api/client";
 import { stateSlug } from "@/lib/stateSlug";
 import { siteOrigin } from "@/lib/siteOrigin";
@@ -8,17 +9,21 @@ import { siteOrigin } from "@/lib/siteOrigin";
 // app/fish/page.tsx), so the list is made when a search engine asks.
 export const dynamic = "force-dynamic";
 
-/** Every public page a search engine should know about. One URL per page:
- * the language is a cookie, not a path (i18n/config.ts), so there are no
- * per-language variants to list. */
+type Frequency = "daily" | "weekly" | "monthly" | "yearly";
+interface Page {
+  path: string;
+  priority: number;
+  changeFrequency: Frequency;
+}
+
+/** Every public page a search engine should know about, at each language's
+ * address ("/rules/texas", "/zh/rules/texas", ...), every entry naming the
+ * others (hreflang), so each language can turn up in its own searches
+ * (docs/adr/0068). */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const origin = await siteOrigin();
-  const page = (path: string, priority: number, changeFrequency: "daily" | "weekly" | "monthly" | "yearly") => ({
-    url: `${origin}${path}`,
-    changeFrequency,
-    priority,
-  });
-  const pages: MetadataRoute.Sitemap = [
+  const page = (path: string, priority: number, changeFrequency: Frequency): Page => ({ path, priority, changeFrequency });
+  const pages: Page[] = [
     page("/", 1, "weekly"),
     page("/map", 0.9, "daily"),
     page("/fish", 0.9, "weekly"),
@@ -46,5 +51,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch {
     // As above.
   }
-  return pages;
+  return pages.flatMap(({ path, priority, changeFrequency }) => {
+    const languages: Record<string, string> = {};
+    for (const l of LOCALES) languages[HREFLANG[l]] = `${origin}${localePath(l, path)}`;
+    languages["x-default"] = `${origin}${path}`;
+    return LOCALES.map((l) => ({ url: `${origin}${localePath(l, path)}`, changeFrequency, priority, alternates: { languages } }));
+  });
 }

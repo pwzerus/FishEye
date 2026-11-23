@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 
 import { FishArt } from "@/components/fish/FishArt";
 import { useLocale, useLocaleTag, useT } from "@/i18n/client";

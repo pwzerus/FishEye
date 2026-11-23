@@ -1,12 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import Link from "@/components/LocaleLink";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { FeedbackDialog } from "@/components/feedback/FeedbackDialog";
 import { useToast } from "@/components/ui/Toast";
-import { useT } from "@/i18n/client";
+import { useLocale, useT } from "@/i18n/client";
+import { usePagePath } from "@/i18n/pagePath";
+import { localePath } from "@/i18n/config";
 import { useAuth } from "./AuthProvider";
 
 /** "Angler Amy" -> "AA"; words that don't start with a letter or digit
@@ -25,7 +27,8 @@ export function AccountMenu() {
   const [open, setOpen] = useState(false);
   const [feedback, setFeedback] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const pathname = usePathname() ?? "/";
+  const pathname = usePagePath();
+  const locale = useLocale();
   const router = useRouter();
   const toast = useToast();
   const t = useT();
@@ -53,7 +56,7 @@ export function AccountMenu() {
 
   if (loading) return <span className="avatar-btn avatar-skeleton" aria-hidden="true" />;
   if (!user) {
-    const next = pathname.startsWith("/login") ? "/" : pathname;
+    const next = localePath(locale, pathname.startsWith("/login") ? "/" : pathname);
     return (
       <Link href={`/login?next=${encodeURIComponent(next)}`} className="btn btn-primary btn-sm signin-btn">
         {t.common.signIn}
@@ -116,7 +119,7 @@ export function AccountMenu() {
               setOpen(false);
               await signOut();
               toast(t.account.signedOut, "info");
-              if (pathname.startsWith("/account") || pathname.startsWith("/admin")) router.push("/");
+              if (pathname.startsWith("/account") || pathname.startsWith("/admin")) router.push(localePath(locale, "/"));
             }}
           >
             {t.account.signOut}

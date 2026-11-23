@@ -5,6 +5,7 @@ import type { Messages } from "./messages";
  * 使われる英語名を併記します。 */
 const ja: Messages = {
   meta: {
+    homeTitle: "FishEye：釣り場、エサと道具、州ごとの釣りの規則",
     description: "FishEyeで釣りを学ぼう：どこへ行くか、何を使うか、なぜ釣れるのか、そして州の規則まで。",
   },
   common: {

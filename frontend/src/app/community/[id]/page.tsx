@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { getT } from "@/i18n/server";
+import { getT, pageAlternates } from "@/i18n/server";
 import { notFound } from "next/navigation";
 
 import { PinDetailView } from "@/components/community/PinDetailView";
@@ -16,7 +16,7 @@ export async function generateMetadata(props: PageProps<"/community/[id]">): Pro
     try {
       const pin = await getPublicPin(pinId);
       const water = pin.water?.name ?? pin.lake?.name;
-      return { title: [pin.title, water, "FishEye"].filter(Boolean).join(" · "), alternates: { canonical: `/community/${pinId}` } };
+      return { title: [pin.title, water, "FishEye"].filter(Boolean).join(" · "), alternates: await pageAlternates(`/community/${pinId}`) };
     } catch {
       // Not public, or not there: the plain title.
     }

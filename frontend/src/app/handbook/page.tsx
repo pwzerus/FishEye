@@ -4,7 +4,7 @@ import { Handbook } from "@/components/fish/Handbook";
 import { PageTransition } from "@/components/motion/Transition";
 import { BaitRules } from "@/components/rules/RegionGate";
 import { StatePicker } from "@/components/ui/StatePicker";
-import { getLocale, getT } from "@/i18n/server";
+import { getLocale, getT, pageAlternates } from "@/i18n/server";
 import { listGear, listHandbook, listSpeciesGuides } from "@/lib/api/client";
 import type { GearItem, HandbookTopic, SpeciesGuide } from "@/lib/api/types";
 
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = (await getT()).fish;
-  return { title: `${t.handbook} · FishEye`, description: t.handbookLede, alternates: { canonical: "/handbook" } };
+  return { title: `${t.handbook} · FishEye`, description: t.handbookLede, alternates: await pageAlternates("/handbook") };
 }
 
 /** The handbook on its own page: Ask's citations and every "read more" link

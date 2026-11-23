@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const refresh = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
+const loadPage = vi.fn();
+vi.mock("@/lib/navigate", () => ({ loadPage: (url: string) => loadPage(url) }));
 
 import { LanguageMenu, LanguageSuggestion } from "@/components/LanguageMenu";
 import { WaterLine } from "@/components/community/PinForm";
@@ -27,6 +29,7 @@ function leaves(node: unknown, path = ""): [string, string][] {
 afterEach(() => {
   document.cookie = "fisheye.lang=; max-age=0; path=/";
   refresh.mockReset();
+  loadPage.mockReset();
   vi.restoreAllMocks();
 });
 
@@ -131,11 +134,26 @@ describe("choosing a language", () => {
     expect(preferredLocale(["fr-FR"])).toBeNull();
   });
 
-  it("switches from the header menu, keeping the choice in a cookie", () => {
+  it("switches from the header menu to that language's address, keeping the choice in a cookie", () => {
     render(<LanguageMenu />);
     fireEvent.click(screen.getByRole("button", { name: "Language: English" }));
     fireEvent.click(screen.getByRole("menuitemradio", { name: "Español" }));
     expect(document.cookie).toContain("fisheye.lang=es");
+    // jsdom's page is "/", so Spanish is at "/es"
+    expect(loadPage).toHaveBeenCalledWith("/es");
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("back to English at a plain address only refreshes the page", () => {
+    render(
+      <I18nProvider locale="zh">
+        <LanguageMenu />
+      </I18nProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /简体中文/ }));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "English" }));
+    expect(document.cookie).toContain("fisheye.lang=en");
+    expect(loadPage).not.toHaveBeenCalled();
     expect(refresh).toHaveBeenCalledTimes(1);
   });
 
@@ -144,7 +162,7 @@ describe("choosing a language", () => {
     render(<LanguageSuggestion />);
     fireEvent.click(screen.getByRole("button", { name: "使用简体中文" }));
     expect(document.cookie).toContain("fisheye.lang=zh");
-    expect(refresh).toHaveBeenCalled();
+    expect(loadPage).toHaveBeenCalledWith("/zh");
   });
 
   it("offers Traditional Chinese to a browser in Taiwan or Hong Kong", () => {

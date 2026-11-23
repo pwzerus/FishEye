@@ -13,9 +13,9 @@ interface I18n {
 // Without a provider (tests, a component rendered on its own): English.
 const I18nContext = createContext<I18n>({ locale: "en", t: MESSAGES.en });
 
-/** Gives every client component below it the chosen language. The root
- * layout reads the cookie and passes the locale; changing it refreshes the
- * page's server components, which re-render this with the new one. */
+/** Gives every client component below it the page's language. The root
+ * layout passes it (the address's language, else the cookie); changing it
+ * loads the page again in the new one. */
 export function I18nProvider({ locale, children }: { locale: Locale; children: ReactNode }) {
   const value = useMemo(() => ({ locale, t: MESSAGES[locale] }), [locale]);
   return <I18nContext value={value}>{children}</I18nContext>;

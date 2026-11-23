@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { getT } from "@/i18n/server";
+import { getT, pageAlternates } from "@/i18n/server";
 import { Suspense } from "react";
 
 import { MapView } from "@/components/map/MapView";
@@ -22,12 +22,12 @@ export async function generateMetadata({ searchParams }: PageProps<"/map">): Pro
   if (Number.isInteger(lakeId) && lakeId > 0) {
     try {
       const lake = await getWaterbody(lakeId);
-      return { title: `${lake.name} · FishEye`, description: t.pages.mapDescription, alternates: { canonical: `/map?lake=${lakeId}` } };
+      return { title: `${lake.name} · FishEye`, description: t.pages.mapDescription, alternates: await pageAlternates(`/map?lake=${lakeId}`) };
     } catch {
       // No such lake: the map's own title.
     }
   }
-  return { title: `${t.pages.map} · FishEye`, description: t.pages.mapDescription, alternates: { canonical: "/map" } };
+  return { title: `${t.pages.map} · FishEye`, description: t.pages.mapDescription, alternates: await pageAlternates("/map") };
 }
 
 export default async function MapPage() {

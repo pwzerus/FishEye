@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "@/components/LocaleLink";
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
@@ -9,6 +8,7 @@ import { LanguageMenu } from "@/components/LanguageMenu";
 import { AccountMenu } from "@/components/auth/AccountMenu";
 import { useToast } from "@/components/ui/Toast";
 import { useT } from "@/i18n/client";
+import { usePagePath } from "@/i18n/pagePath";
 import type { Messages } from "@/i18n/messages";
 import { CATCHES_AVAILABLE } from "@/lib/features";
 
@@ -136,7 +136,7 @@ function NavIcon({ name }: { name: (typeof NAV)[number]["icon"] }) {
 export function SiteHeader() {
   const t = useT();
   const mobile = useSyncExternalStore(watchMobile, mobileSnapshot, serverSnapshot);
-  const pathname = usePathname() ?? "/";
+  const pathname = usePagePath();
   const current = sectionIndex(pathname);
   const onRoot = pathname === "/";
 

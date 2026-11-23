@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 
 import { PageTransition } from "@/components/motion/Transition";
 import { useLocaleTag, useT } from "@/i18n/client";

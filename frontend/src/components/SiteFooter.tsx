@@ -1,8 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-
 import { LegalLinks } from "@/components/legal/LegalPage";
+import { usePagePath } from "@/i18n/pagePath";
 
 /**
  * The small print at the bottom of a page: privacy, terms, copyright and the
@@ -17,7 +16,7 @@ import { LegalLinks } from "@/components/legal/LegalPage";
 const NO_FOOTER = [/^\/$/, /^\/map(\/|$)/, /^\/ask(\/|$)/, /^\/(privacy|terms|copyright)$/, /^\/login$/, /^\/admin(\/|$)/];
 
 export function SiteFooter() {
-  const path = usePathname() ?? "/";
+  const path = usePagePath();
   if (NO_FOOTER.some((r) => r.test(path))) return null;
   return (
     <footer className="site-footer">

@@ -4,6 +4,7 @@ import type { Messages } from "./messages";
  * también el nombre en inglés: es el que aparece en letreros y tiendas. */
 const es: Messages = {
   meta: {
+    homeTitle: "FishEye: dónde pescar, qué usar y las reglas de pesca de tu estado",
     description: "Aprende a pescar con FishEye: adónde ir, qué usar y por qué funciona, y las reglas de tu estado.",
   },
   common: {

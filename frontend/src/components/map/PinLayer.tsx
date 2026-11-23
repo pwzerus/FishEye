@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Marker, Popup, Tooltip, useMapEvents } from "react-leaflet";
 import L, { type Marker as LeafletMarker } from "leaflet";

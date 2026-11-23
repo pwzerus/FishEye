@@ -1,8 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
+import { usePagePath } from "@/i18n/pagePath";
 import { API_BASE_URL } from "@/lib/api/session";
 
 /**
@@ -15,7 +15,9 @@ import { API_BASE_URL } from "@/lib/api/session";
  * script (navigator.webdriver) isn't counted.
  */
 export function VisitCounter() {
-  const pathname = usePathname();
+  // The page, whatever language's address it was read at: "/zh/rules/x"
+  // counts as "/rules/…" like the plain one.
+  const pathname = usePagePath();
   const last = useRef<string | null>(null);
   // Only the first page of a visit came from somewhere else.
   const first = useRef(true);

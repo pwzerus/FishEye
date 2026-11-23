@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { useEffect } from "react";
 import { MapContainer, Marker, Popup, useMap } from "react-leaflet";
 

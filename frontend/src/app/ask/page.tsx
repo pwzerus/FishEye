@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 
-import { getT } from "@/i18n/server";
+import { getT, pageAlternates } from "@/i18n/server";
 
 import { AskChat } from "@/components/ask/AskChat";
 import { PageTransition } from "@/components/motion/Transition";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: `${t.pages.ask} · FishEye`, description: t.pages.askDescription, alternates: { canonical: "/ask" } };
+  return { title: `${t.pages.ask} · FishEye`, description: t.pages.askDescription, alternates: await pageAlternates("/ask") };
 }
 
 export default async function AskPage(props: PageProps<"/ask">) {

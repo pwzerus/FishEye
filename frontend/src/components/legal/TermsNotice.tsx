@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "@/components/LocaleLink";
 import { useState, useSyncExternalStore } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useLocaleTag, useT } from "@/i18n/client";
+import { usePagePath } from "@/i18n/pagePath";
 import { LEGAL } from "@/lib/legal";
 
 /**
@@ -40,7 +40,7 @@ export function TermsNotice() {
   const { user } = useAuth();
   const t = useT().legal;
   const tag = useLocaleTag();
-  const path = usePathname();
+  const path = usePagePath();
   const shown = useSyncExternalStore(noSubscription, stillShown, () => false);
   const [hidden, setHidden] = useState(false);
 
