@@ -13,7 +13,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: "FishEye",
     short_name: "FishEye",
-    description: "Find water to fish, learn the fish, and share your catch.",
+    description: "Find places to fish, learn the fish, and share your catch.",
     start_url: "/",
     scope: "/",
     display: "standalone",

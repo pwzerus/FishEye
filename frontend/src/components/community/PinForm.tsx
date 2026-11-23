@@ -396,7 +396,7 @@ export function PinForm({
   onCancel: () => void;
   // Moves the pin (MapView's draft), e.g. to where the photo was taken.
   onMove?: (latitude: number, longitude: number) => void;
-  // "Water not on the map? Tell us": a missing-lake report at the pin.
+  // "Add a lake or river": a missing-lake report at the pin.
   onMissingWater?: () => void;
 }) {
   const all = useT();

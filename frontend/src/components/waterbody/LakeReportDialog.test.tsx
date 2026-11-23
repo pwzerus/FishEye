@@ -23,7 +23,7 @@ describe("LakeReportDialog", () => {
     const onSent = vi.fn();
     const onClose = vi.fn();
     render(<LakeReportDialog target={{ kind: "problem", lakeId: 9, lakeName: "Lake Fork" }} open onClose={onClose} onSent={onSent} />);
-    expect(screen.getByRole("dialog", { name: "Something wrong with Lake Fork?" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Report a problem: Lake Fork" })).toBeInTheDocument();
     const send = screen.getByRole("button", { name: "Send" });
     expect(send).toBeDisabled();
     fireEvent.click(await screen.findByRole("radio", { name: "Something else" }));

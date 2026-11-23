@@ -199,7 +199,7 @@ describe("PinForm", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Choose Other: Walleye" }));
     expect(screen.getByLabelText("Fish")).toHaveValue("__other");
-    expect(screen.getByLabelText("Which fish?")).toHaveValue("Walleye");
+    expect(screen.getByLabelText("Species")).toHaveValue("Walleye");
     expect(await screen.findByText("Photo check: this looks like a black bass.")).toBeInTheDocument();
   });
 
@@ -244,7 +244,7 @@ describe("PinForm", () => {
     vi.mocked(session.createPin).mockResolvedValue(created);
     renderApp(<PinForm point={{ latitude: 32.8, longitude: -95.6 }} onCreated={vi.fn()} onCancel={vi.fn()} />);
     await screen.findByRole("option", { name: "Bluegill" });
-    expect(screen.getByRole("checkbox", { name: /Show other anglers the exact spot/ })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /Share the exact spot/ })).not.toBeChecked();
     // The promise stands beside the choice, public or private.
     expect(screen.getByText(/never sells your spots/)).toBeInTheDocument();
     // A private catch has no one to share the spot with.
@@ -253,7 +253,7 @@ describe("PinForm", () => {
     expect(screen.getByText(/never sells your spots/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("radio", { name: /Public/ }));
-    fireEvent.click(screen.getByRole("checkbox", { name: /Show other anglers the exact spot/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Share the exact spot/ }));
     fireEvent.change(screen.getByPlaceholderText("e.g. Rocks by the boat ramp"), { target: { value: "Creek mouth" } });
     fireEvent.click(screen.getByRole("button", { name: "Share catch" }));
     await waitFor(() =>

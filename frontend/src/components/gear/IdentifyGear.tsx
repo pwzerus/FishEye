@@ -22,7 +22,7 @@ const percent = (p: number) => `${Math.round(p * 100)}%`;
 // or above it with nothing offered, it is gear too unclear to name.
 const MIN_GEAR = 0.5;
 
-/** "What is this?" for a piece of gear, from one photo (backend
+/** "Identify gear from a photo": a piece of gear, from one photo (backend
  * /api/gear/identify, ADR 0048): the likeliest items of this page, each with
  * its photo to compare and a link down to its card. The photo is read on
  * FishEye's server and not kept. */

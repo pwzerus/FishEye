@@ -149,7 +149,7 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   // Where the overview map was last looking, so "← All lakes" returns there
   // instead of resetting to the whole country.
   const [lastView, setLastView] = useState<{ center: [number, number]; zoom: number } | null>(null);
-  // "Missing a lake?": where the map's middle was when it was asked.
+  // "Add a missing lake": where the map's middle was when it was asked.
   const [missingAt, setMissingAt] = useState<[number, number] | null>(null);
   // Pans can overlap: only the newest request's answer is shown.
   const latestRequest = useRef(0);

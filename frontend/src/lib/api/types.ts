@@ -1247,7 +1247,7 @@ export interface Jurisdiction {
   first_trip_topic?: string | null;
 }
 
-/** What to buy (backend app/knowledge/gear.py, GET /api/gear). */
+/** The gear guide (backend app/knowledge/gear.py, GET /api/gear). */
 export interface GearPhoto {
   url: string;
   width: number;

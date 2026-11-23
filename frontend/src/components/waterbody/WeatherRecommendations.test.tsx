@@ -46,7 +46,7 @@ describe("lake time helpers", () => {
 describe("PlanCard", () => {
   it("lets people reveal the full plan without losing the selected fish", () => {
     render(<PlanCard plan={plan} onSpeciesChange={() => {}} />);
-    const more = screen.getByRole("button", { name: /Why this plan/ });
+    const more = screen.getByRole("button", { name: /Plan details/ });
     expect(more).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(more);
     expect(screen.getByRole("button", { name: /Less detail/ })).toHaveAttribute("aria-expanded", "true");

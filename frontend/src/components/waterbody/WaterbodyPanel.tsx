@@ -186,7 +186,7 @@ export function WaterbodyPanel({
 }: {
   waterbodyId: number | null;
   onExplore?: (point: { latitude: number; longitude: number; label: string }) => void;
-  // "Missing a lake?": tell FishEye about one that isn't on the map.
+  // "Add a missing lake": tell FishEye about one that isn't on the map.
   onMissingLake?: () => void;
   // "Share a catch here": place a catch on this lake.
   onShareHere?: (lake: WaterbodyDetail) => void;

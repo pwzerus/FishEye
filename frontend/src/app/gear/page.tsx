@@ -45,7 +45,7 @@ function Card({ item, locale, t, publicDomain }: {
 }
 
 /**
- * What to buy: every piece of gear the guides mention, with a real photo,
+ * Gear guide: every piece of gear the guides mention, with a real photo,
  * what it's for, and a short first-trip list on top
  * (backend app/knowledge/gear.py). FishEye sells nothing and names no brands.
  */

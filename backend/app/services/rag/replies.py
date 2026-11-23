@@ -111,7 +111,7 @@ def coverage(lang: str) -> str:
         return (
             f"FishEyeには、淡水魚{fish}種のガイド（多くは全米にいる魚で、何を食べ、どこにいるか、効くエサとその理由、"
             "竿とリールの組み合わせ、さばき方と料理）と、エサ、ルアー、道具、結び方、投げ方、天気と水、安全、"
-            f"釣った魚の扱いについてのハンドブックがあります。{rules}を掲載していて、"
+            f"釣った魚の扱いについての手引きがあります。{rules}を掲載していて、"
             "魚の生息場所の例にはテキサス州のものが多くあります。どちらも州によって違います。"
         )
     if lang == "zh":
@@ -204,7 +204,7 @@ _SITE_HELP = {
         "en": "I'm FishEye's Ask search. I answer fishing questions from FishEye's fish guides and handbook: what bait to use, how to tie a hook on, when to go, whether you need a license, what to do with your catch. Every answer comes from those pages, and they're linked under it.",
         "es": "Soy la búsqueda de FishEye. Respondo preguntas de pesca con las guías de peces y el manual de FishEye: qué carnada usar, cómo atar un anzuelo, cuándo ir, si necesitas licencia, qué hacer con tu captura. Cada respuesta sale de esas páginas, y están enlazadas debajo.",
         "ko": "저는 FishEye의 질문 검색이에요. FishEye의 어종 가이드와 핸드북으로 낚시 질문에 답해요. 어떤 미끼를 쓸지, 바늘을 어떻게 묶는지, 언제 가면 좋은지, 면허가 필요한지, 잡은 물고기를 어떻게 하는지 물어보세요. 답은 모두 그 자료에서 나오고 아래에 출처가 있어요.",
-        "ja": "FishEyeの質問検索です。FishEyeの魚ガイドとハンドブックをもとに、エサ、針の結び方、いつ行くか、ライセンスが必要か、釣った魚の扱いなど、釣りの質問に答えます。答えはすべてそれらのページからで、下に出典があります。",
+        "ja": "FishEyeの質問検索です。FishEyeの魚ガイドと釣りの手引きをもとに、エサ、針の結び方、いつ行くか、ライセンスが必要か、釣った魚の扱いなど、釣りの質問に答えます。答えはすべてそれらのページからで、下に出典があります。",
     },
     "account": {
         "zh": "点击右上角即可登录或创建账户，也可以使用 Google 登录。如果忘记密码，请在登录页点击“忘记密码？”。登录后，可以在账户页修改名称和密码，或删除账户。",
@@ -252,7 +252,7 @@ _SITE_HELP = {
         "en": "FishEye is free to use: the map, the fish guides, the handbook and Ask, and an account costs nothing.",
         "es": "FishEye es gratis: el mapa, las guías de peces, el manual y las preguntas, y crear una cuenta tampoco cuesta nada.",
         "ko": "FishEye는 무료예요. 지도, 어종 가이드, 핸드북, 질문하기 모두 무료이고 계정 만들기도 무료예요.",
-        "ja": "FishEyeは無料です。地図、魚ガイド、ハンドブック、質問はすべて無料で、アカウント作成も無料です。",
+        "ja": "FishEyeは無料です。地図、魚ガイド、釣りの手引き、質問はすべて無料で、アカウント作成も無料です。",
     },
     "missing_water": {
         "zh": "如果地图上找不到你常去的水域，可以在地图上点选该位置，再点击“地图上缺少这片水域？告诉我们”提交，我们核对后会添加。也可以先搜索城市名，放大地图确认它是否使用了其他名称。",

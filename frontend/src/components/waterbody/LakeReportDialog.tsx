@@ -12,7 +12,7 @@ export type LakeReportTarget =
   // A lake that isn't on the map: placed where the middle of the map is.
   | { kind: "missing"; point: { latitude: number; longitude: number }; atPin?: boolean };
 
-/** "Something wrong here?" on a lake, and "Missing a lake?" on the map
+/** "Report a problem" on a lake, and "Add a missing lake" on the map
  * (backend ADR 0039). Goes to the admins' queue; anyone can send one. */
 export function LakeReportDialog({
   target,

@@ -15,7 +15,7 @@ const { SiteHeader } = await import("./SiteHeader");
 describe("SiteHeader", () => {
   it.each([
     ["/", "Home"],
-    ["/map", "Find water"],
+    ["/map", "Where to fish"],
     ["/fish", "Fish guide"],
     ["/fish/bluegill", "Fish guide"],
     ["/ask", "Ask"],

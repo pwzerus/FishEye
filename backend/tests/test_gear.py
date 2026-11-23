@@ -1,4 +1,4 @@
-"""What to buy (app/knowledge/gear.py, GET /api/gear)."""
+"""The gear guide (app/knowledge/gear.py, GET /api/gear)."""
 import re
 from pathlib import Path
 

@@ -181,7 +181,7 @@ describe("where the catch being placed is (backend ADR 0040)", () => {
       </I18nProvider>,
     );
     expect(screen.getByRole("alert")).toHaveTextContent("请将标记拖到地图上已命名的湖泊");
-    fireEvent.click(screen.getByRole("button", { name: "地图上缺少这片水域？告诉我们" }));
+    fireEvent.click(screen.getByRole("button", { name: "新增水域" }));
     expect(missing).toHaveBeenCalled();
   });
 });
