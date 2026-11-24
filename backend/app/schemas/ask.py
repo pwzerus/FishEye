@@ -129,7 +129,10 @@ class AskLakesOut(BaseModel):
     kind: str  # "lake": one named lake | "list": where to go
     lakes: list[AskLakeOut]
     same_name: list[AskLakeOut] = []  # other lakes called the same
-    place: str | None = None  # "near <place>", as asked
+    place: str | None = None  # "near <place>", as asked, or "02467 (Boston, MA)"
+    # Where the place is, for a link to the map there (/map?at=).
+    place_latitude: float | None = None
+    place_longitude: float | None = None
     state: str | None = None
     fish: list[str] = []
     fish_slugs: list[str] = []

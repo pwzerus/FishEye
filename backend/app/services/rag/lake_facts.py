@@ -12,13 +12,16 @@ question get an answer here, shown beside whatever the guides say:
 "No record" is never "not there": most lakes have never been surveyed, so an
 answer says what FishEye has and no more. Closed lakes aren't suggested.
 
-Only the place named after "near" leaves the server (services/geocoding.py,
-as the map's search does). Nothing here reaches the AI summary, which answers
+A ZIP code or a town given with its state ("Austin, TX") is found in
+FishEye's own list of places (services/place_suggest.py); only a place named
+after "near" leaves the server (services/geocoding.py, as the map's search
+does). An answer near a place carries its point, for a link to the map there. Nothing here reaches the AI summary, which answers
 from guide passages alone (docs/adr/0023).
 """
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -28,7 +31,7 @@ from app.knowledge import jurisdictions
 from app.knowledge.species_guides import get_guide
 from app.models.waterbody import Species, Waterbody, WaterbodySpecies
 from app.schemas.ask import AskAskedFishOut, AskLakeFishOut, AskLakeOut, AskLakesOut
-from app.services import counties, geocoding, lake_search
+from app.services import counties, geocoding, lake_search, place_suggest
 from app.services.geo import haversine_km
 from app.services.reported_species import reported_species
 
@@ -106,13 +109,14 @@ def _bare_names(question: str) -> list[str]:
     return [m.group(1).strip() for m in _BARE_NAME.finditer(question)]
 
 
-def _find_lake(db: Session, question: str, state: str | None) -> list[Waterbody]:
+def _find_lake(db: Session, question: str, state: str | None, town: str | None = None) -> list[Waterbody]:
     for name in _named_lakes(question):
         found = lake_search.same_name(db, name, state)
         if found:
             return found
     for name in _bare_names(question):
-        if jurisdictions.normalize(name):
+        # "in Austin, TX" names the town, not Lake Austin; "Lake Austin" still finds the lake.
+        if jurisdictions.normalize(name) or (town and name.lower() == town.lower()):
             continue
         found = [w for w in lake_search.same_name(db, name, state) if w.data_tier == "verified"]
         if found:
@@ -199,6 +203,69 @@ def _species_ids(db: Session, slugs: tuple[str, ...]) -> list[int]:
     ]
 
 
+# A ZIP code anywhere in a question, in any language ("02467 去哪里找鱼"), not
+# part of a longer number.
+_ZIP = re.compile(r"(?<!\d)(\d{5})(?!\d)")
+# "Newton, MA", "Austin, Texas": up to four words, a comma, then a state.
+_CITY_STATE = re.compile(r"((?:[A-Za-z][A-Za-z.'’-]*\s+){0,3}[A-Za-z][A-Za-z.'’-]*)\s*,\s*([A-Za-z][A-Za-z ]{1,30})")
+
+
+@dataclass(frozen=True)
+class _Local:
+    """A place found in FishEye's own list (services/place_suggest.py), with
+    nothing sent anywhere: a ZIP code or a town given with its state."""
+
+    label: str  # "02467 (Boston, MA)", "Austin, TX"
+    latitude: float
+    longitude: float
+    matched: str  # the words in the question, to see what else was asked
+    town: str | None = None  # "Austin" for "Austin, TX"; a ZIP code has none
+
+
+def _state_code(text: str) -> str | None:
+    """"MA", "Texas", "New York where …" -> the state's code."""
+    words = text.split()
+    if words and len(words[0]) == 2 and words[0].isupper() and (code := jurisdictions.normalize(words[0])):
+        return code
+    for n in (2, 1):
+        if len(words) >= n and (code := jurisdictions.state_in_question(" ".join(words[:n]))):
+            return code
+    return None
+
+
+def _local_place(question: str) -> _Local | None:
+    zip_code = _ZIP.search(question)
+    if zip_code:
+        for p in place_suggest.suggest(zip_code.group(1), limit=3):
+            if p.kind == "zip" and p.name == zip_code.group(1):
+                return _Local(p.label, p.latitude, p.longitude, zip_code.group(0))
+    for m in _CITY_STATE.finditer(question):
+        code = _state_code(m.group(2))
+        if not code:
+            continue
+        words = m.group(1).split()
+        # The longest run of words before the comma that is a place there:
+        # "where to fish in Austin, TX" tries "to fish in Austin" ... "Austin".
+        for start in range(len(words)):
+            name = " ".join(words[start:])
+            if words[start].lower() in _NOT_A_PLACE:
+                continue
+            want = place_suggest.plain(name)
+            for p in place_suggest.suggest(name, state=code, limit=10):
+                if p.kind != "zip" and want in (place_suggest.plain(p.name), place_suggest.shortened(place_suggest.plain(p.name))):
+                    return _Local(p.label, p.latitude, p.longitude, f"{name}, {m.group(2)}", town=name)
+    return None
+
+
+def _just_the_place(question: str, matched: str) -> bool:
+    """A question that is little more than a place ("02467", "02467 bass",
+    "Austin, TX fishing"): where to go there is what it asks."""
+    rest = question.replace(matched, " ")
+    latin = re.findall(r"[A-Za-z]+", rest)
+    other = re.findall(r"[^\sA-Za-z0-9\W]", rest)  # CJK and other scripts, a character each
+    return len(latin) <= 3 and len(other) <= 6
+
+
 def _place(question: str, state: str | None) -> tuple[str, geocoding.GeocodeResult] | None:
     m = _NEAR.search(question)
     if not m:
@@ -229,7 +296,7 @@ def _lakes_for(
     db: Session,
     slugs: tuple[str, ...],
     state: str | None,
-    near: geocoding.GeocodeResult | None,
+    near: tuple[float, float] | None,
 ) -> list[Waterbody]:
     stmt = select(Waterbody).join(Waterbody.state).where(Waterbody.public_access_status != "closed")
     if slugs:
@@ -242,12 +309,12 @@ def _lakes_for(
     else:
         stmt = stmt.where(Waterbody.species_links.any())
     if near is not None:
-        stmt = stmt.where(radius_filter(db, near.latitude, near.longitude, NEAR_RADIUS_KM))
+        stmt = stmt.where(radius_filter(db, near[0], near[1], NEAR_RADIUS_KM))
     elif state:
         stmt = stmt.where(Waterbody.state.has(code=state))
     rows = db.scalars(stmt.options(selectinload(Waterbody.state)).order_by((Waterbody.extent_km2 + 0).desc()).limit(400)).unique().all()
     if near is not None:
-        rows = [w for w in rows if haversine_km(near.latitude, near.longitude, w.latitude, w.longitude) <= NEAR_RADIUS_KM]
+        rows = [w for w in rows if haversine_km(near[0], near[1], w.latitude, w.longitude) <= NEAR_RADIUS_KM]
     # Verified lakes first, then the biggest: the water most people can reach.
     rows = sorted(rows, key=lambda w: (w.data_tier != "verified", -w.extent_km2))
     return _load(db, [w.id for w in rows[:MAX_LAKES]])
@@ -278,7 +345,8 @@ def missing_lake(question: str, routed: tuple[str, ...]) -> str | None:
 def answer(db: Session, question: str, picked_state: str | None, routed: tuple[str, ...]) -> AskLakesOut | None:
     """What the lake data says to this question, if it says anything."""
     state = jurisdictions.state_in_question(question) or jurisdictions.normalize(picked_state)
-    found = _find_lake(db, question, state)
+    local = _local_place(question)
+    found = _find_lake(db, question, state, town=local.town if local else None)
     if found:
         lake, *same = found
         full = _load(db, [lake.id])
@@ -294,18 +362,27 @@ def answer(db: Session, question: str, picked_state: str | None, routed: tuple[s
             ],
             answers_it=not routed and bool(_ASKS_WHATS_THERE.search(question)),
         )
-    if not _ASKS_WHERE.search(question):
+    if not _ASKS_WHERE.search(question) and not (local and _just_the_place(question, local.matched)):
         return None
-    place = _place(question, state)
+    place: tuple[str, float, float] | None = None
+    if local:
+        place = (local.label, local.latitude, local.longitude)
+    elif named := _place(question, state):
+        place = (named[0], named[1].latitude, named[1].longitude)
     if place is None and not (routed and state):
         return None
-    near = place[1] if place else None
-    lakes = _lakes_for(db, routed, state, near)
+    lakes = _lakes_for(db, routed, state, (place[1], place[2]) if place else None)
     return AskLakesOut(
         kind="list",
         place=place[0] if place else None,
+        place_latitude=place[1] if place else None,
+        place_longitude=place[2] if place else None,
         state=None if place else state,
         fish=[g.common_name for g in (get_guide(s) for s in routed) if g],
         fish_slugs=list(routed),
         lakes=[_lake_out(db, w, routed) for w in lakes],
+        # Lakes near a place, no fish asked about: the card and its map are
+        # the answer; guide passages found for "where" would be in the way
+        # (2026-11-24: "02467 去哪里找鱼" got a gizzard shad passage).
+        answers_it=place is not None and not routed,
     )

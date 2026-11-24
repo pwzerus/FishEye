@@ -1268,6 +1268,8 @@ const ja: Messages = {
     listTitle: (fish: string, where: string) => `${where}で${fish}の記録がある湖：`,
     listTitleNoFish: (where: string) => `${where}で記録がある湖：`,
     listNone: (fish: string, where: string) => `FishEye には${where}の${fish}の湖の記録がまだありません。`,
+    listNoneNoFish: (where: string) => `FishEye には${where}の湖の魚の記録がまだありません。`,
+    openMapNear: (place: string) => `${place}周辺の水域を地図で見る →`,
   },
   // The state rules pages (app/rules).
   gearPage: {

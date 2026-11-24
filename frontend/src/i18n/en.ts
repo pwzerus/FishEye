@@ -1289,6 +1289,8 @@ const en = {
     listTitle: (fish: string, where: string) => `Lakes on record for ${fish} ${where}:`,
     listTitleNoFish: (where: string) => `Lakes on record ${where}:`,
     listNone: (fish: string, where: string) => `FishEye has no lake on record for ${fish} ${where} yet.`,
+    listNoneNoFish: (where: string) => `FishEye has no lake with fish on record ${where} yet.`,
+    openMapNear: (place: string) => `See lakes near ${place} on the map →`,
   },
   // The state rules pages (app/rules).
   gearPage: {

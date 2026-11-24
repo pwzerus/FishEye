@@ -149,8 +149,10 @@ def search_guides(
     ai_can_answer = result.answer_source == rag_ask.ANSWER_PASSAGES or result.trace.outcome in _AI_CAN_ADD_TO
     routed = tuple(result.trace.routed_species or ())
     lakes = lake_facts.answer(db, payload.question, state, routed)
-    if lakes is not None and lakes.lakes and (lakes.answers_it or not result.citations):
-        # The lake data answers it; a miss for the guides isn't one for Ask.
+    found_lakes = lakes is not None and (bool(lakes.lakes) or lakes.place_latitude is not None)
+    if lakes is not None and found_lakes and (lakes.answers_it or not result.citations):
+        # The lake data answers it, or the map near the place asked about
+        # does; a miss for the guides isn't one for Ask.
         result = replace(result, answer="", answer_source=rag_ask.ANSWER_LAKES, citations=[])
         result.trace.outcome = rag_ask.OUTCOME_LAKE
         ai_can_answer = False

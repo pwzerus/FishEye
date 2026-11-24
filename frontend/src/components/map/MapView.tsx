@@ -101,13 +101,16 @@ export function MapView({ waterbodies: initialWaterbodies }: { waterbodies: Wate
   const rememberedState = useSelectedState();
 
   // Deep links: ?lake=<id> opens a lake, ?at=<lat>,<lng> centres on a
-  // point, ?addPin=1 starts placing a pin.
+  // point (named by ?place=), ?addPin=1 starts placing a pin.
   const lakeParam = Number(params.get("lake"));
   const [selectedId, setSelectedId] = useState<number | null>(
     Number.isInteger(lakeParam) && lakeParam > 0 ? lakeParam : null,
   );
   const [waterbodies, setWaterbodies] = useState(initialWaterbodies);
-  const [focusPoint, setFocusPoint] = useState<LocatedPoint | null>(() => parseAt(params.get("at"), t.thePin));
+  // ?place= names the point (Ask's link to the map near a ZIP code or town).
+  const [focusPoint, setFocusPoint] = useState<LocatedPoint | null>(() =>
+    parseAt(params.get("at"), params.get("place")?.slice(0, 80) || t.thePin),
+  );
   // Where "Use my location" last placed the person; stays marked after a
   // later search, as it's still where they are.
   const [you, setYou] = useState<{ latitude: number; longitude: number; accuracy: number } | null>(null);

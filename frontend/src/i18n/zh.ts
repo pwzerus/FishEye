@@ -1244,6 +1244,8 @@ const zh: Messages = {
     listTitle: (fish: string, where: string) => `${where}有${fish}记录的湖：`,
     listTitleNoFish: (where: string) => `${where}有记录的湖：`,
     listNone: (fish: string, where: string) => `FishEye 暂时没有${where}${fish}的湖泊记录。`,
+    listNoneNoFish: (where: string) => `FishEye 暂时没有${where}湖泊的鱼种记录。`,
+    openMapNear: (place: string) => `在地图上查看${place}附近的水域 →`,
   },
   // The state rules pages (app/rules).
   gearPage: {

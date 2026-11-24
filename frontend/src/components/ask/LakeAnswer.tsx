@@ -45,8 +45,26 @@ export function LakeAnswer({ lakes }: { lakes: AskLakes }) {
     .map((slug, i) => localFishName(slug, locale) ?? lakes.fish[i])
     .filter(Boolean)
     .join(t.or);
+  // A place asked about (a ZIP code, a town): the map there shows every lake
+  // around it, recorded fish or not (2026-11-24, a friend asked with a ZIP).
+  const mapLink =
+    lakes.place && lakes.place_latitude != null && lakes.place_longitude != null ? (
+      <p className="lake-answer-map">
+        <Link
+          href={`/map?at=${lakes.place_latitude.toFixed(4)},${lakes.place_longitude.toFixed(4)}&place=${encodeURIComponent(lakes.place)}`}
+          className="btn btn-primary btn-sm"
+        >
+          {t.openMapNear(lakes.place)}
+        </Link>
+      </p>
+    ) : null;
   if (lakes.lakes.length === 0) {
-    return <p className="lake-answer muted small">{t.listNone(fish, where)}</p>;
+    return (
+      <div className="lake-answer">
+        <p className="muted small">{fish ? t.listNone(fish, where) : t.listNoneNoFish(where)}</p>
+        {mapLink}
+      </div>
+    );
   }
   return (
     <div className="lake-answer">
@@ -64,6 +82,7 @@ export function LakeAnswer({ lakes }: { lakes: AskLakes }) {
           </li>
         ))}
       </ul>
+      {mapLink}
     </div>
   );
 }

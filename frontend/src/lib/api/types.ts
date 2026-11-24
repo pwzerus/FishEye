@@ -622,6 +622,9 @@ export interface AskLakes {
   lakes: AskLake[];
   same_name: AskLake[];
   place: string | null;
+  // Where that place is, for a link to the map there (/map?at=).
+  place_latitude?: number | null;
+  place_longitude?: number | null;
   state: string | null;
   fish: string[];
   fish_slugs: string[];

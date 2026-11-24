@@ -34,7 +34,9 @@ describe("fishing terms", () => {
     expect(ids("구멍봉돌 아래에 도래를 달고, 목줄을 묶어요.", "ko")).toEqual(["eggSinker", "swivel", "leader"]);
     // Traditional Chinese is generated from the Simplified, its terms too.
     expect(ids("穿心鉛在桶形轉環上方滑動，前導線接在轉環下方。", "zht")).toEqual(["eggSinker", "swivel", "leader"]);
-  });
+    // Each language's term finder is built on first use: about 2 s alone,
+    // past the 5 s default with the whole suite running (2026-11-24).
+  }, 20_000);
 
   it("leaves the everyday meanings alone", () => {
     expect(ids("Drag it slowly along the bottom.")).toEqual([]);

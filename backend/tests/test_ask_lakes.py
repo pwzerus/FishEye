@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from app.models.community import AskMiss
 from app.models.waterbody import Species, State, Waterbody, WaterbodySpecies
-from app.services import geocoding
+from app.services import geocoding, place_suggest
 from app.services.rag import lake_facts
 
 WHEN = datetime(2026, 9, 1, tzinfo=timezone.utc)
@@ -131,6 +131,61 @@ def test_near_the_bottom_is_not_a_place(lakes, monkeypatch):
 
     monkeypatch.setattr(geocoding, "geocode", geocode)
     assert lake_facts.answer(lakes, "where do I catch bass near the bottom", None, ("largemouth-bass",)) is None
+
+
+@pytest.fixture()
+def places(monkeypatch):
+    """FishEye's own place list, cut to a few (services/place_suggest.py);
+    and no geocoder: a ZIP code or a town with its state never needs one."""
+    index = place_suggest.PlaceIndex([
+        place_suggest.Place("zip", "75701", "TX", 32.32, -95.30, 30_000, "Tyler"),
+        place_suggest.Place("place", "Tyler", "TX", 32.35, -95.30, 105_000),
+        place_suggest.Place("zip", "02467", "MA", 42.31, -71.15, 22_000, "Boston"),
+    ])
+    monkeypatch.setattr(place_suggest, "index", lambda: index)
+
+    def geocode(q):
+        raise AssertionError(f"looked up {q!r}")
+
+    monkeypatch.setattr(geocoding, "geocode", geocode)
+
+
+@pytest.mark.parametrize("question", ["75701 去哪里找鱼", "75701", "where can I fish near 75701", "Tyler, TX lakes", "Tyler, Texas fishing"])
+def test_a_zip_code_or_a_town_with_its_state_is_a_place(lakes, places, question):
+    found = lake_facts.answer(lakes, question, None, ())
+    assert found.kind == "list" and found.place in ("75701 (Tyler, TX)", "Tyler, TX")
+    assert found.place_latitude == pytest.approx(32.3, abs=0.1) and found.place_longitude == pytest.approx(-95.3)
+    assert {w.name for w in found.lakes} == {"Lake Travis", "Lake Fork", "Muddy Pond"}  # within 80 km, open
+    assert found.answers_it  # no fish asked about: the lakes and the map are the answer
+
+
+def test_a_town_with_its_state_is_the_town_not_a_lake_of_its_name(lakes, places):
+    tx = lakes.scalars(select(State).where(State.code == "TX")).one()
+    bass = lakes.scalars(select(Species).where(Species.common_name == "Largemouth Bass")).one()
+    _lake(lakes, tx, "Lake Tyler", bass, at=(32.2, -95.2))
+    lakes.commit()
+    near = lake_facts.answer(lakes, "where can I fish in Tyler, TX", None, ())
+    assert near.kind == "list" and near.place == "Tyler, TX"
+    assert "Lake Tyler" in {w.name for w in near.lakes}
+    assert lake_facts.answer(lakes, "what fish are in Lake Tyler, TX", None, ()).kind == "lake"
+
+
+def test_a_place_in_a_question_about_something_else_is_left_alone(lakes, places):
+    assert lake_facts.answer(lakes, "do I need a license in Tyler, TX", None, ()) is None
+
+
+def test_a_fish_asked_about_near_a_zip_code_keeps_the_guide_passages(lakes, places):
+    found = lake_facts.answer(lakes, "where to catch bass near 75701", None, ("largemouth-bass",))
+    assert {w.name for w in found.lakes} == {"Lake Travis", "Lake Fork"}
+    assert not found.answers_it
+
+
+def test_a_zip_code_with_no_lake_on_record_still_answers_with_the_map(client, lakes, places):
+    body = client.post("/api/ask", json={"question": "02467 去哪里找鱼"}).json()
+    assert body["answer_source"] == "lakes" and body["citations"] == []
+    assert body["lakes"]["lakes"] == []
+    assert body["lakes"]["place"] == "02467 (Boston, MA)"
+    assert body["lakes"]["place_latitude"] == pytest.approx(42.31)
 
 
 def test_a_place_that_cannot_be_looked_up_is_no_answer_not_an_error(lakes, monkeypatch):

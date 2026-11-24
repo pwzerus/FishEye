@@ -1268,6 +1268,8 @@ const ko: Messages = {
     listTitle: (fish: string, where: string) => `${where}에서 ${fish} 기록이 있는 호수:`,
     listTitleNoFish: (where: string) => `${where}에서 기록이 있는 호수:`,
     listNone: (fish: string, where: string) => `FishEye에는 아직 ${where}의 ${fish} 호수 기록이 없어요.`,
+    listNoneNoFish: (where: string) => `FishEye에는 아직 ${where}의 호수 어종 기록이 없어요.`,
+    openMapNear: (place: string) => `지도에서 ${place} 근처 수역 보기 →`,
   },
   // The state rules pages (app/rules).
   gearPage: {

@@ -1262,6 +1262,8 @@ const es: Messages = {
     listTitle: (fish: string, where: string) => `Lagos con registro de ${fish} ${where}:`,
     listTitleNoFish: (where: string) => `Lagos con registros ${where}:`,
     listNone: (fish: string, where: string) => `FishEye aún no tiene lagos con registro de ${fish} ${where}.`,
+    listNoneNoFish: (where: string) => `FishEye aún no tiene lagos con peces registrados ${where}.`,
+    openMapNear: (place: string) => `Ver en el mapa los lagos cerca de ${place} →`,
   },
   // The state rules pages (app/rules).
   gearPage: {
