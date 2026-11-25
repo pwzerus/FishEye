@@ -56,7 +56,19 @@ class GearItem:
     topic: str | None  # the handbook topic that explains it (angling_handbook.py)
     fish: tuple[str, ...] = ()  # guide slugs it's a good choice for
     first_kit: bool = False  # on the "first trip" shopping list
+    # The topic with the steps for using it, where that is another card: a
+    # reel is explained beside the other reels but cast in a card of steps.
+    # Without it, "how to use it" goes to `topic`, unless `about_only` says
+    # that topic only tells what the thing is (2026-11-25: the spincast
+    # combo's "how to use it" opened the reels card, which never says how).
+    how_to: str | None = None
+    about_only: bool = False
     photo: GearPhoto | None = field(default=None, compare=False)
+
+    @property
+    def use_topic(self) -> str | None:
+        """The handbook topic that shows how to use it, if one does."""
+        return self.how_to or (None if self.about_only else self.topic)
 
 
 _PAN = ("bluegill", "redear-sunfish", "white-crappie", "black-crappie", "yellow-perch")
@@ -72,42 +84,42 @@ ITEMS: tuple[GearItem, ...] = (
         "into a bird's nest, so it's the easiest outfit to start with, and the usual kids' rod.",
         "Sold as a ready-spooled combo; one with 6 to 10 lb line covers panfish, small bass and "
         "stocked trout.",
-        "tackle-reels", _PAN + ("rainbow-trout", "channel-catfish"), first_kit=True,
+        "tackle-reels", _PAN + ("rainbow-trout", "channel-catfish"), first_kit=True, how_to="cast-spinning",
     ),
     GearItem(
         "rod-spinning", "Spinning rod", "rods-reels",
         "The all-round rod: the reel hangs under it and the guides are large near the handle. "
         "A 6 to 7 ft medium-light or medium rod handles most lake fishing.",
         "Read the label: it gives the line and lure weight the rod is made for.",
-        "tackle-rods", _PAN + _BASS + _TROUT + ("walleye",), first_kit=True,
+        "tackle-rods", _PAN + _BASS + _TROUT + ("walleye",), first_kit=True, how_to="cast-spinning",
     ),
     GearItem(
         "reel-spinning", "Spinning reel", "rods-reels",
         "An open-faced reel with a bail that flips over to release line. Versatile and good with "
         "light line and small lures; the next step up from spincast.",
         "A 2500 or 3000 size suits a medium-light rod; spool it with 6 to 10 lb mono.",
-        "tackle-reels", _PAN + _BASS + _TROUT + ("walleye",), first_kit=True,
+        "tackle-reels", _PAN + _BASS + _TROUT + ("walleye",), first_kit=True, how_to="cast-spinning",
     ),
     GearItem(
         "rod-baitcasting", "Baitcasting rod", "rods-reels",
         "A rod with the reel on top and a trigger under the handle, made for heavier lures and "
         "line: bass with big baits, pike, catfish.",
         "Learn on a spinning rod first; a baitcaster needs a practiced thumb.",
-        "tackle-rods", _BASS + _CAT + ("northern-pike", "striped-bass"),
+        "tackle-rods", _BASS + _CAT + ("northern-pike", "striped-bass"), how_to="cast-baitcast",
     ),
     GearItem(
         "reel-baitcasting", "Baitcasting reel", "rods-reels",
         "A reel whose spool turns as you cast. Accurate and strong, but it backlashes if the "
         "spool outruns the line, so it has brakes to set for each lure.",
         "Set the brake high to start and lower it as your thumb learns.",
-        "cast-baitcast", _BASS + _CAT + ("northern-pike", "striped-bass"),
+        "tackle-reels", _BASS + _CAT + ("northern-pike", "striped-bass"), how_to="cast-baitcast",
     ),
     GearItem(
         "rod-fly", "Fly rod and reel", "rods-reels",
         "A long, light rod that casts the weight of a thick fly line, not of the lure, so it can "
         "throw flies that weigh nothing. Classic for trout, fun for bluegill.",
         "A 9 ft 5-weight is the usual first trout fly rod.",
-        "method-fly", _TROUT + ("bluegill",),
+        "tackle-reels", _TROUT + ("bluegill",), how_to="method-fly",
     ),
     GearItem(
         "rod-ice", "Ice fishing rod", "rods-reels",
@@ -128,14 +140,14 @@ ITEMS: tuple[GearItem, ...] = (
         "Single-strand nylon line: cheap, a little stretchy, easy to tie. The standard line for "
         "a first reel.",
         "6 to 8 lb for panfish and trout, 10 to 14 lb for bass and catfish.",
-        "tackle-line", _PAN + _TROUT + _BASS + ("channel-catfish",), first_kit=True,
+        "tackle-line", _PAN + _TROUT + _BASS + ("channel-catfish",), first_kit=True, how_to="tackle-new-line",
     ),
     GearItem(
         "line-braid", "Braided line", "line",
         "Woven line, much thinner than mono for its strength and with no stretch, so you feel "
         "every bite. Needs a mono or fluorocarbon leader.",
         "Use a palomar knot; braid slips in some knots meant for mono.",
-        "tackle-line", _BASS + ("northern-pike", "blue-catfish"),
+        "tackle-line", _BASS + ("northern-pike", "blue-catfish"), how_to="tackle-new-line",
     ),
     # ----------------------------------------------------------------- terminal
     GearItem(
@@ -143,7 +155,7 @@ ITEMS: tuple[GearItem, ...] = (
         "The plain hook shaped like a J. Sizes run backwards: a No. 8 is small, a No. 1 bigger; "
         "past 1/0 the number grows with the hook.",
         "No. 6 to 8 for bluegill, No. 2 to 4 for crappie and trout, 1/0 and up for catfish.",
-        "tackle-hooks", _PAN + _TROUT + _CAT, first_kit=True,
+        "tackle-hooks", _PAN + _TROUT + _CAT, first_kit=True, how_to="technique-bite",
     ),
     GearItem(
         "hook-circle", "Circle hooks", "terminal",
@@ -179,7 +191,7 @@ ITEMS: tuple[GearItem, ...] = (
         "sinker-bank", "Bank and pyramid sinkers", "terminal",
         "Heavier weights that tie on the end of a line to hold the bottom in current or wind.",
         "Use only enough weight to hold bottom.",
-        "tackle-sinkers", _CAT + ("freshwater-drum",),
+        "tackle-sinkers", _CAT + ("freshwater-drum",), about_only=True,
     ),
     GearItem(
         "bobber", "Bobbers (round floats)", "terminal",
@@ -368,20 +380,20 @@ ITEMS: tuple[GearItem, ...] = (
         "tool-pliers", "Needle-nose pliers", "tools",
         "For taking hooks out quickly and safely, pinching split shot and cutting line.",
         "Keep them on your belt, not in the bottom of the bag.",
-        "start-what-to-buy", (), first_kit=True,
+        "start-what-to-buy", (), first_kit=True, how_to="care-release",
     ),
     GearItem(
         "tool-tackle-box", "Tackle box", "tools",
         "A box with small compartments that keeps hooks, weights and lures sorted and dry.",
         "A small clear box is plenty for a first kit.",
-        "start-what-to-buy", (), first_kit=True,
+        "start-what-to-buy", (), first_kit=True, about_only=True,
     ),
     GearItem(
         "tool-net", "Landing net", "tools",
         "Lifts a fish out of the water without the line breaking. A rubber net is gentler on fish "
         "you release.",
         "Lead the fish head-first into the net; don't chase it.",
-        "care-release", _BASS + _TROUT + _CAT,
+        "care-release", _BASS + _TROUT + _CAT, how_to="technique-landing",
     ),
     GearItem(
         "tool-stringer", "Stringer or cooler", "tools",
@@ -413,7 +425,7 @@ ITEMS: tuple[GearItem, ...] = (
         "Cut the glare off the water so you can see weeds, fish and drop-offs, and protect your "
         "eyes from hooks.",
         "Gray or brown lenses suit most days.",
-        "cond-clarity", (),
+        "safe-clothing", (),
     ),
     GearItem(
         "tool-ice-auger", "Ice auger", "tools",

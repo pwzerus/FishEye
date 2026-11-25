@@ -24,6 +24,9 @@ class GearItemOut(BaseModel):
     # The language of what/tip when it isn't English (asked for and there).
     text_lang: str | None = None
     topic: str | None  # the handbook topic (an anchor on /handbook) that explains it
+    # The topic that shows how to use it: its own card of steps, or `topic`,
+    # or none when that only tells what the thing is.
+    how_to: str | None = None
     fish: list[str]  # guide slugs
     first_kit: bool
     photo: GearPhotoOut | None

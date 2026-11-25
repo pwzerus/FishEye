@@ -16,6 +16,18 @@ describe("RigDiagram", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  // 2026-11-25: beside its picture, a step's words were a few characters wide.
+  it("puts each step's words above its picture", () => {
+    const { container } = render(
+      <I18nProvider locale="zh">
+        <RigDiagram topic="cast-baitcast" />
+      </I18nProvider>,
+    );
+    const steps = [...container.querySelectorAll("figure.rig-steps li")];
+    expect(steps).toHaveLength(STEP_DRAWINGS.castBaitcast.length);
+    for (const li of steps) expect([...li.children].map((c) => c.tagName.toLowerCase())).toEqual(["p", "svg"]);
+  });
+
   it("links the sliding sinker rig to the swivel, the knot, hook sizes and circle hooks", () => {
     for (const ids of Object.values(RELATED)) for (const id of ids ?? []) expect(RIG_DIAGRAMS[id], id).toBeTruthy();
     const { container } = render(

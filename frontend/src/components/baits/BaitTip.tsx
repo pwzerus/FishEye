@@ -1,5 +1,6 @@
 "use client";
 
+import { HandbookLink } from "@/components/HandbookLink";
 import Link from "@/components/LocaleLink";
 import { useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -113,7 +114,7 @@ export function BaitTip({ card, fish, children }: { card: BaitCard; fish?: strin
           )}
           <span className="bait-tip-links">
             <Link href="/map">{t.shopsOnMap}</Link>
-            <Link href={`/handbook#${card.topic}`}>{t.readMore}</Link>
+            <HandbookLink topic={card.topic}>{t.readMore}</HandbookLink>
             <Link href={`/ask?q=${encodeURIComponent(t.askQuestion(title))}`}>{t.askMore}</Link>
           </span>
         </span>

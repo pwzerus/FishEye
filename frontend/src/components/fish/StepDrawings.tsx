@@ -9,6 +9,7 @@ import {
   Hook,
   Knife,
   KnotHook,
+  LipHook,
   No,
   Person,
   Rod,
@@ -455,16 +456,29 @@ const setHook: Step[] = [
       <path className="rig-line rig-slack rig-ghost" d="M60 18 C90 70 110 30 120 60" />
       <path className="rig-line" d="M60 18 L120 58" />
       <Bobber x={120} y={60} />
+      {/* Under the bobber, the hook and its bait (2026-11-25). */}
+      <path className="rig-line" d="M120 67 V90" />
+      <g transform="translate(120 90) scale(0.6)">
+        <Hook kind="j" L={12} R={6} P={8} eye={2.5} />
+      </g>
+      <path className="rig-worm" d="M122 96 q-5 4 0 8 q5 4 0 8" />
       <Arrow motion d="M40 46 C34 54 26 54 22 46" at={[22, 46]} deg={-150} />
     </>
   ),
+  // The bobber goes under because a fish has the bait: under the bobber the
+  // line, the hook with its worm, and the fish's mouth on it (2026-11-25:
+  // the line used to end at the fish, with no hook and no bait).
   () => (
     <>
-      <Water y={50} h={70} />
-      <path className="rig-line" d="M30 10 L90 64" />
-      <Bobber x={92} y={70} under />
-      <path className="rig-line" d="M92 77 V96" />
-      <FishShape x={84} y={102} len={44} flip />
+      <Water y={44} h={76} />
+      <path className="rig-line" d="M30 6 L90 56" />
+      <Bobber x={92} y={62} under />
+      <path className="rig-line" d="M92 69 V86" />
+      <g transform="translate(92 86) scale(0.6)">
+        <Hook kind="j" L={12} R={6} P={8} eye={2.5} />
+      </g>
+      <path className="rig-worm" d="M94 92 q-5 4 0 8 q5 4 0 8" />
+      <FishShape x={98} y={96} len={42} />
     </>
   ),
   () => (
@@ -494,6 +508,9 @@ const setHook: Step[] = [
 
 // ------------------------------------------------- playing and landing
 
+// A hooked fish has the hook in its mouth, the line tied to the hook
+// (LipHook). One pulling away faces away, the line running behind it to its
+// mouth; one being brought in faces the angler (2026-11-25).
 const landing: Step[] = [
   () => (
     <>
@@ -502,6 +519,7 @@ const landing: Step[] = [
       <path className="rig-handle" d="M16 100 l10 -22" />
       <path className="rig-line" d="M112 34 L128 98" />
       <FishShape x={128} y={98} len={30} flip />
+      <LipHook x={128} y={98} flip />
       <Yes x={60} y={18} />
     </>
   ),
@@ -511,7 +529,8 @@ const landing: Step[] = [
       <Rod from={[14, 90]} to={[90, 30]} />
       <SpinningReel x={34} y={74} />
       <path className="rig-line" d="M90 30 L122 98" />
-      <FishShape x={122} y={98} len={28} />
+      <FishShape x={122} y={98} len={28} flip />
+      <LipHook x={122} y={98} flip />
       <Arrow motion d="M126 112 H156" at={[156, 112]} deg={0} />
       <No x={56} y={104} />
     </>
@@ -523,19 +542,25 @@ const landing: Step[] = [
         <Rod from={[14, 96]} to={[120, 52]} />
       </g>
       <Rod from={[14, 96]} to={[86, 8]} />
-      <path className="rig-line" d="M86 8 L146 92" />
+      <path className="rig-line" d="M86 8 L126 94" />
+      <FishShape x={126} y={94} len={28} />
+      <LipHook x={126} y={94} />
       <Arrow motion d="M118 44 C112 26 102 14 92 10" at={[92, 10]} deg={-150} />
       <Arrow motion d="M60 30 C80 40 96 52 104 62" at={[104, 62]} deg={50} />
     </>
   ),
+  // The net is held near the bank and the line brings the fish to it: the
+  // fish comes toward the angler, head first into the net.
   () => (
     <>
       <Water y={52} h={68} />
-      <path className="rig-net" d="M86 70 C86 104 140 104 140 70 Z" />
-      <path className="rig-handle" d="M140 70 L156 30" />
-      <FishShape x={56} y={78} len={40} flip />
-      <path className="rig-line" d="M56 78 L20 10" />
-      <Arrow motion d="M60 96 H92" at={[92, 96]} deg={0} />
+      <path className="rig-rod" d="M30 2 L90 10" />
+      <path className="rig-line" d="M90 10 L102 76" />
+      <FishShape x={102} y={76} len={34} />
+      <LipHook x={102} y={76} />
+      <path className="rig-net" d="M34 66 C34 100 94 100 94 66 Z" />
+      <path className="rig-handle" d="M34 66 L16 30" />
+      <Arrow motion d="M148 104 H112" at={[112, 104]} deg={180} />
     </>
   ),
 ];
@@ -620,8 +645,9 @@ const snag: Step[] = [
     <>
       <Water y={30} h={90} />
       <path className="rig-divider" d="M80 36 V116" />
-      <path className="rig-line" d="M22 0 L30 70" />
+      <path className="rig-line" d="M22 0 L30 74" />
       <FishShape x={30} y={74} len={38} />
+      <LipHook x={30} y={74} />
       <Arrow motion d="M60 100 H16" at={[16, 100]} deg={180} />
       <path className="rig-rock" d="M96 120 C96 100 116 90 142 96 L158 120 Z" />
       <path className="rig-line" d="M112 0 L124 96" />
@@ -1427,8 +1453,9 @@ const iceFish: Step[] = [
       <Ice />
       <path className="rig-metal" d="M64 30 L96 30 M80 30 V6" />
       <path className="rig-flag" d="M80 6 L100 12 L80 18 Z" />
-      <path className="rig-line" d="M80 30 V96" />
-      <FishShape x={72} y={102} len={40} />
+      <path className="rig-line" d="M80 30 V100" />
+      <FishShape x={80} y={100} len={40} />
+      <LipHook x={80} y={100} />
       <Arrow motion d="M112 24 V8" at={[112, 8]} deg={-90} />
     </>
   ),

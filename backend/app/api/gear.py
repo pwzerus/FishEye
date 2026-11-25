@@ -34,7 +34,7 @@ def item_out(i: gear.GearItem, lang: str = "en") -> GearItemOut:
     what, tip = words.text("what", i.what), words.text("tip", i.tip)
     return GearItemOut(
         id=i.id, name=i.name, category=i.category, what=what, tip=tip, text_lang=words.language, topic=i.topic,
-        fish=list(i.fish), first_kit=i.first_kit,
+        how_to=i.use_topic, fish=list(i.fish), first_kit=i.first_kit,
         photo=GearPhotoOut(
             url=p.url, width=p.width, height=p.height, author=p.author, license=p.licence,
             license_url=p.licence_url, file_page=p.page, title=p.title,

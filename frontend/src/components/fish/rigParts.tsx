@@ -253,6 +253,22 @@ export function Person({ x, y, arm, arm2 }: { x: number; y: number; arm: [number
   );
 }
 
+/**
+ * The hook in a hooked fish's mouth: the line comes to (x, y), the fish's
+ * nose, and the hook's bend sits under the jaw with its point up into it.
+ * `flip` for a fish facing right. Added 2026-11-25: the owner saw lines that
+ * simply ended at a fish's mouth, with no hook, and asked for the real thing.
+ */
+export function LipHook({ x, y, flip = false }: { x: number; y: number; flip?: boolean }) {
+  return (
+    <g className="rig-metal rig-lip-hook" transform={`translate(${x} ${y}) scale(${flip ? -1 : 1} 1)`}>
+      <circle cx={0} cy={0} r={1.6} />
+      <path d="M0 1.6 C0 5 1 8 4 8.4 C6.8 8.8 8.2 6.6 7.6 3.6" />
+      <path d="M7.6 3.6 l-2.6 2" />
+    </g>
+  );
+}
+
 /** A cross for "don't" and a tick for "do", at (x, y). */
 export function No({ x, y }: { x: number; y: number }) {
   return <path className="rig-no" d={`M${x - 6} ${y - 6} l12 12 M${x + 6} ${y - 6} l-12 12`} />;

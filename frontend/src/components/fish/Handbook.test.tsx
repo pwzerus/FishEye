@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { HandbookTopic, Jurisdiction } from "@/lib/api/types";
+import type { GearItem, HandbookTopic, Jurisdiction } from "@/lib/api/types";
 import { rememberState } from "@/lib/jurisdiction";
 import { Handbook, cardKind } from "./Handbook";
 
@@ -148,6 +148,43 @@ describe("Handbook", () => {
       await waitFor(() => expect(container.querySelector("article#start-first-trip")).not.toBeNull());
       expect(screen.queryByRole("note")).not.toBeInTheDocument();
     });
+  });
+
+  // 2026-11-25: the reels card showed two of its four reels, because a reel
+  // whose steps are in another card hung only on that card.
+  it("shows the gear a card explains and the gear whose use it shows", () => {
+    const photo = { url: "/gear-photos/x.jpg", width: 400, height: 300, author: "A", license: "CC0", license_url: null, file_page: "https://commons.wikimedia.org" };
+    const item = (id: string, topic: string | null, how_to: string | null): GearItem => ({
+      id, name: id, category: "tools", what: "", tip: "", topic, how_to, fish: [], first_kit: false, photo,
+    });
+    const gear = [
+      item("tool-net", "care-release", "technique-landing"),
+      item("tool-pliers", "start-what-to-buy", "care-release"),
+      item("tool-measure", "technique-measure", "technique-measure"),
+    ];
+    const { container } = render(<Handbook topics={topics} gear={gear} />);
+    const shown = [...container.querySelectorAll("#care-release .handbook-gear a")].map((a) => a.getAttribute("href"));
+    expect(shown).toEqual(["/gear#tool-net", "/gear#tool-pliers"]);
+  });
+
+  // 2026-11-25, the owner's prototype: a line, moving pictures and points,
+  // the topic's own text folded under them, its "(see …)" a link.
+  it("puts a quick take first and folds the topic's own text under it", () => {
+    const landing: HandbookTopic = {
+      ...topic("technique-landing", "technique", "Casting, playing and landing", "Playing a fish"),
+      body: ["Keep the line tight (see Setting the drag).", "Lead it into the net head first."],
+    };
+    const drag = topic("technique-drag", "technique", "Casting, playing and landing", "Setting the drag");
+    const { container } = render(<Handbook topics={[landing, drag]} />);
+    const card = container.querySelector("#technique-landing") as HTMLElement;
+    expect(card.querySelector(".qt")).not.toBeNull();
+    const fold = card.querySelector("details.hb-more") as HTMLElement;
+    expect(fold).not.toHaveAttribute("open");
+    expect(fold.querySelectorAll("p")).toHaveLength(2);
+    expect(within(fold).getByRole("link", { name: "Setting the drag" })).toHaveAttribute("href", "/handbook#technique-drag");
+    // A topic without one stays as it was.
+    expect(container.querySelector("#technique-drag .qt")).toBeNull();
+    expect(container.querySelector("#technique-drag details")).toBeNull();
   });
 
   it("knows one state's card from another's of the same kind", () => {

@@ -1017,6 +1017,8 @@ const en = {
     got: (item: string) => `Got: ${item}`,
     showAtShop: "Show it at the shop",
     downloadList: "Download the list",
+    // Shown instead of the two buttons once every item is ticked as got.
+    allGot: "You have everything on the list.",
     shoppingList: "Shopping list",
     spotIntro: "Start at an official lake that's open to the public.",
     noSpots: "No official lakes within 25 miles yet.",
@@ -1301,6 +1303,8 @@ const en = {
     sections: "Gear sections",
     tip: "Tip:",
     learnMore: "Learn how to use it →",
+    // Where the handbook only says what it is (a tackle box, a bank sinker).
+    moreAbout: "More about it →",
     noPhoto: "No open-license photo yet",
     loadError: "Couldn't load the gear list. Try again in a moment.",
     credits: "Photos: Wikimedia Commons and Flickr, public domain, CC0 or CC BY, credited under each one.",
@@ -1664,7 +1668,8 @@ const en = {
         "Sweep the rod tip back over your shoulder",
         "Bring it forward quickly toward the target, and let go of the line as the rod passes your shoulder",
       ],
-      note: "On a spincast reel, press and hold the button instead, and let go of it as the rod comes forward. Close the bail by hand, then reel.",
+      // The bail is the spinning reel's: a spincast reel has none (2026-11-25).
+      note: "After the cast, close the bail by hand, then reel. A spincast reel has no bail. Hold its button down, let go as the rod comes forward, then turn the handle to reel.",
     },
     castBaitcast: {
       title: "Casting a baitcaster",
@@ -1925,6 +1930,32 @@ const en = {
         "The barb is buried, or it's near an eye: don't pull it. Cover it with a paper cup and go to a clinic or hospital",
       ],
       note: "Wash the wound and see a doctor about a tetanus shot. In an emergency, call 911.",
+    },
+  },
+  // A topic at a glance (components/fish/QuickTake.tsx): a line, moving
+  // pictures of a few words each, and the points to remember; the topic's
+  // own text folds under them (2026-11-25, the owner's prototype).
+  quick: {
+    full: "Full explanation",
+    remember: "Remember",
+    takes: {
+      landing: {
+        lead: "Keep the line tight, bring the fish in slowly, and net it head first.",
+        steps: [
+          "Line tight, rod tip up",
+          "When it runs, stop reeling",
+          "Lift, then reel as you lower",
+          "Head first into the net, then lift",
+          "No net: hold the lower lip (bass, crappie)",
+          "Pike, walleye: grip behind the head",
+        ],
+        points: [
+          "Slack line loses fish.",
+          "Don't tighten the drag in the middle of the fight.",
+          "Fish often lunge once more near you. With a big fish, ease the drag a little.",
+          "In water of 70°F or more, land trout fast.",
+        ],
+      },
     },
   },
 };

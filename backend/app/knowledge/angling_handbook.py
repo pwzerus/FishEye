@@ -346,7 +346,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "A circle hook sets itself: once the fish has the bait in its mouth, a steady, slow "
             "pull turns the hook into the corner of the jaw.",
             "Don't jerk or sweep the rod. Reel down on the fish.",
-            "It takes practice to trust one. Big-river catfish anglers mostly use 6/0–8/0 circle "
+            "Getting used to one takes practice. Big-river catfish anglers mostly use 6/0–8/0 circle "
             "hooks.",
         ),
         source_ids=("agfc-hooks", "odwc-catfish", "mdc-bigcat"),
@@ -843,7 +843,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "life jacket if you'll be on or near deep water.",
             "That outfit catches bluegill, crappie and stocked trout from the bank. Lures, a "
             "landing net and a second rod can wait until you know what you like to fish for.",
-            "FishEye's What to buy page shows a photo of each of these, and the license comes "
+            "FishEye's Gear guide shows a photo of each of these, and the license comes "
             "first: check your state's rules before you go.",
         ),
         source_ids=("tpwd-beginners", "tmf-weights", "tpwd-lifejacket"),

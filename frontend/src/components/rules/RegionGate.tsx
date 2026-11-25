@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { useLocale, useT } from "@/i18n/client";
 import { localStateName } from "@/i18n/names";
 import { StatePicker } from "@/components/ui/StatePicker";
+import { HandbookLink } from "@/components/HandbookLink";
 import Link from "@/components/LocaleLink";
 import { stateSlug } from "@/lib/stateSlug";
 import type { Jurisdiction } from "@/lib/api/types";
@@ -195,7 +196,7 @@ export function LiveBaitWarning() {
   return (
     <p className="bait-warning" role="note">
       {t.liveBaitWarning(name)}
-      <a href={`/handbook#${baitRulesAnchor(j.code)}`}>{t.bait}</a>
+      <HandbookLink topic={baitRulesAnchor(j.code)}>{t.bait}</HandbookLink>
       {t.liveBaitWarningTail(name)}
     </p>
   );

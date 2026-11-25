@@ -378,6 +378,8 @@ figure.rig figcaption { margin-top: 8px; font-size: 15px; line-height: 1.45; col
 .rig-hidden { stroke: var(--surface); opacity: 0.85; }
 .rig-metal { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .rig-metal-thin { fill: none; stroke: var(--ink); stroke-width: 1.2; }
+/* A hook in a fish's mouth (rigParts LipHook): thinner than a hook drawn big. */
+.rig-lip-hook { stroke-width: 1.5; }
 .rig-swivel-body { fill: var(--surface); stroke: var(--ink); stroke-width: 2; }
 .rig-knot { fill: var(--ink); }
 .rig-wraps { fill: none; stroke: var(--ink-2); stroke-width: 2.2; stroke-linecap: round; }
@@ -417,14 +419,17 @@ figure.rig figcaption { margin-top: 8px; font-size: 15px; line-height: 1.45; col
   .rig-draw { animation: none; stroke-dashoffset: 0; }
   .rig-mark { animation: none; }
 }
-/* A drawing a step at a time (components/fish/StepDrawings.tsx): each step
-   a picture with its words under it, two to a row on a phone. */
+/* A drawing a step at a time (components/fish/StepDrawings.tsx): each step's
+   words, then its picture under them (the owner, 2026-11-25: a picture beside
+   its words left the words a few characters wide). One step to a row; two
+   only where the figure itself is wide, whatever the window: on a computer
+   a handbook card is half the page, so the window's width said nothing. */
+figure.rig-steps { container-type: inline-size; }
 figure.rig-steps ol { grid-template-columns: 1fr; gap: 10px; margin-top: 8px; }
-@media (min-width: 900px) { figure.rig-steps ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-figure.rig-steps ol li { display: grid; grid-template-columns: minmax(0, 48%) minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 10px 8px 6px; border-radius: 12px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--line) 70%, transparent); animation: rig-fade 420ms var(--ease) calc(var(--i, 0) * 90ms + 80ms) both; }
-figure.rig-steps ol li svg { width: 100%; max-width: none; }
-/* On a phone the picture would be a thumbnail beside its words: put it above them, big. */
-@media (max-width: 560px) { figure.rig-steps ol li { grid-template-columns: 1fr; gap: 6px; padding: 8px 10px 10px; } figure.rig-steps ol li svg { max-width: 260px; margin: 0 auto; } }
+@container (min-width: 560px) { figure.rig-steps ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+figure.rig-steps ol li { display: flex; flex-direction: column; gap: 10px; padding: 10px 12px 12px; border-radius: 12px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--line) 70%, transparent); animation: rig-fade 420ms var(--ease) calc(var(--i, 0) * 90ms + 80ms) both; }
+/* Pictures in a row line up at the bottom, however long the words above. */
+figure.rig-steps ol li svg { width: 100%; max-width: 260px; margin: auto auto 0; }
 figure.rig-steps ol li p { margin: 0; display: grid; grid-template-columns: 22px 1fr; gap: 7px; align-items: start; font-size: 15px; line-height: 1.45; color: var(--ink); }
 figure.rig-steps ol li p > b { display: grid; place-items: center; width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; background: var(--brand); color: var(--surface); font-size: 13px; font-weight: 700; }
 .rig-steps-title { margin: 0; font-weight: 650; font-size: 16.5px; color: var(--ink); }
@@ -700,3 +705,32 @@ html { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-ins
   .home-refined .field-lede { margin-inline:auto; }
   .home-refined .field-hero .hero-actions { justify-content:center; }
 }
+
+/* A topic at a glance (components/fish/QuickTake.tsx, 2026-11-25): one
+   line, the steps as moving pictures with a few words each, the points to
+   remember; the topic's own text folds under it. Two pictures to a row
+   once the card itself has the room. At the end of the file: it overrides
+   the card's own paragraph styles. */
+.qt { container-type: inline-size; margin: 2px 0 6px; }
+.hb-articles .handbook-card p.qt-lead { margin: 0 0 12px; font-size: 17px; font-weight: 650; line-height: 1.55; color: var(--ink); }
+.qt-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 10px; }
+@container (min-width: 340px) { .qt-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.qt-steps li { display: flex; flex-direction: column; gap: 8px; padding: 10px 10px 8px; border-radius: 12px; background: var(--surface-2); border: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
+.hb-articles .handbook-card .qt-steps p { margin: 0; display: grid; grid-template-columns: 22px 1fr; gap: 7px; align-items: start; font-size: 15.5px; font-weight: 600; line-height: 1.45; color: var(--ink); }
+.qt-steps p > b { display: grid; place-items: center; width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; background: var(--brand); color: var(--surface); font-size: 13px; font-weight: 700; }
+.qt-steps svg { display: block; width: 100%; max-width: 240px; height: auto; margin: auto auto 0; overflow: visible; }
+.qt-bank-edge { fill: none; stroke: var(--ink-2); stroke-width: 1.3; stroke-linejoin: round; }
+@container (max-width: 339px) { .qt-steps svg { max-width: 210px; } }
+.qt-points { margin: 12px 0 0; padding: 10px 14px 12px; border-radius: 12px; background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent); }
+.hb-articles .handbook-card p.qt-points-title { margin: 0 0 6px; font-size: 15.5px; font-weight: 700; color: var(--ink); }
+.qt-points ul { margin: 0; padding-left: 1.15em; display: grid; gap: 4px; }
+.qt-points li { font-size: 16px; line-height: 1.55; color: var(--ink); }
+details.hb-more { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+details.hb-more > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; font-size: 15.5px; font-weight: 650; color: var(--brand-strong); }
+details.hb-more > summary::-webkit-details-marker { display: none; }
+details.hb-more > summary::before { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .18s var(--ease); }
+details.hb-more[open] > summary::before { transform: rotate(45deg); }
+details.hb-more[open] > summary { margin-bottom: 10px; }
+/* A "(see …)" in a topic's text: a plain link to that topic. */
+.hb-ref { color: var(--brand-strong); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: color-mix(in srgb, var(--brand) 45%, transparent); }
+@media (prefers-reduced-motion: reduce) { details.hb-more > summary::before { transition: none; } }

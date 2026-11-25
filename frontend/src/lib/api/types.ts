@@ -1273,6 +1273,8 @@ export interface GearItem {
   text_lang?: string | null;
   /** The handbook topic that explains it: an anchor on /handbook. */
   topic: string | null;
+  /** The topic that shows how to use it (often a card of steps), if one does. */
+  how_to?: string | null;
   /** Guide slugs it's a good choice for. */
   fish: string[];
   first_kit: boolean;

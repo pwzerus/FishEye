@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Jurisdiction, WaterbodyListItem } from "@/lib/api/types";
 import { I18nProvider } from "@/i18n/client";
-import { FirstTrip, LicenseLine } from "./FirstTrip";
+import { FirstTrip, KIT, kitText, LicenseLine } from "./FirstTrip";
 
 const RULES = { bait_rules: [], bait_rules_sources: [], bait_rules_on_every_bait_question: false };
 const GEORGIA: Jurisdiction = {
@@ -124,6 +124,43 @@ describe("FirstTrip", () => {
     render(<FirstTrip />);
     expect(screen.getAllByRole("checkbox")[0]).toBeChecked();
     expect(screen.getAllByRole("checkbox")[1]).not.toBeChecked();
+    window.localStorage.removeItem("fisheye.kit");
+  });
+
+  // 2026-11-25: a friend's phone called the downloaded list corrupted. It was
+  // a web page named .doc; now it's text, and it lists what isn't ticked yet.
+  it("downloads what is left to buy as a text file any phone opens", () => {
+    const blobs: Blob[] = [];
+    vi.spyOn(URL, "createObjectURL").mockImplementation((b) => {
+      blobs.push(b as Blob);
+      return "blob:list";
+    });
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    const clicked: HTMLAnchorElement[] = [];
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      clicked.push(this);
+    });
+    render(<FirstTrip />);
+    fireEvent.click(screen.getAllByRole("checkbox")[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Download the list" }));
+    expect(blobs).toHaveLength(1);
+    expect(blobs[0].type).toBe("text/plain;charset=utf-8");
+    expect(clicked[0].download).toBe("fisheye-shopping-list.txt");
+    window.localStorage.removeItem("fisheye.kit");
+  });
+
+  it("writes the list English first, the reader's language under each line", () => {
+    const text = kitText(KIT.slice(1, 3), "购物清单", "zh");
+    expect(text).toContain("☐ Small bobbers\r\n   小浮漂");
+    expect(text).not.toContain("Rod and reel");
+    expect(kitText(KIT, "Shopping list", "en")).not.toContain("小浮漂");
+  });
+
+  it("says everything is got instead of offering an empty list", () => {
+    window.localStorage.setItem("fisheye.kit", JSON.stringify(KIT.map((item) => item.topic)));
+    render(<FirstTrip />);
+    expect(screen.queryByRole("button", { name: "Download the list" })).not.toBeInTheDocument();
+    expect(screen.getByText("You have everything on the list.")).toBeInTheDocument();
     window.localStorage.removeItem("fisheye.kit");
   });
 

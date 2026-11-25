@@ -324,7 +324,7 @@ function PartsDrawing({ k, topic }: { k: Exclude<Key, StepKey>; topic: string })
   );
 }
 
-/** A drawing a step at a time: each step its own picture, its words under it. */
+/** A drawing a step at a time: each step its words, then its own picture. */
 function StepsDrawing({ k, topic }: { k: StepKey; topic: string }) {
   const words = useT().rigs[k];
   const steps = STEP_DRAWINGS[k];
@@ -337,15 +337,15 @@ function StepsDrawing({ k, topic }: { k: StepKey; topic: string }) {
       <ol>
         {steps.map((Draw, i) => (
           <li key={i} style={{ "--i": i } as React.CSSProperties}>
-            <svg viewBox="0 0 160 120" aria-hidden="true">
-              <Draw />
-            </svg>
             <p>
               <b aria-hidden="true">{i + 1}</b>
               <span>
                 <LinkedText text={words.parts[i]} skipTopic={topic} earlier={words.parts.slice(0, i)} />
               </span>
             </p>
+            <svg viewBox="0 0 160 120" aria-hidden="true">
+              <Draw />
+            </svg>
           </li>
         ))}
       </ol>

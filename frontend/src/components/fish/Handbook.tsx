@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "@/components/LocaleLink";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
+import { QuickTake } from "@/components/fish/QuickTake";
+import { quickKey } from "@/components/fish/quickTopics";
 import { RigDiagram } from "@/components/fish/RigDiagram";
 import { RegionGate } from "@/components/rules/RegionGate";
 import { LinkedText } from "@/components/terms/TermText";
@@ -176,6 +178,11 @@ export function Handbook({
   const states = useJurisdictions();
   const hash = useSyncExternalStore(subscribeToHash, currentHash, () => "");
   const rail = useRef<HTMLElement>(null);
+  // The titles a card's "(see …)" names, in the reader's language.
+  const titles = useMemo(
+    () => topics.map((t) => ({ id: t.id, title: localTopicTitle(t.id, locale) ?? t.title, region: t.region })),
+    [topics, locale],
+  );
 
   // A link to one state's card ("Your first trip in Texas", from the Texas
   // rules page), read by someone who picked another state: open that state's
@@ -325,19 +332,36 @@ export function Handbook({
                   )}
                   {g.topics.map((t) => {
                     const local = localTopicTitle(t.id, locale);
+                    const quick = quickKey(t.id);
+                    // Each term underlined once per card, and never the card's own.
+                    const body = t.body.map((sentence, i) => (
+                      <p key={sentence} lang={t.body_lang ?? "en"}>
+                        <LinkedText text={sentence} skipTopic={t.id} earlier={t.body.slice(0, i)} baits refs={titles} />
+                      </p>
+                    ));
                     const card = (
                       <article key={t.id} id={t.id} className="handbook-card">
                         {/* No English title under it (2026-11-16): a topic's
                             title isn't what a store or a sign says. */}
                         <h3>{local ?? t.title}</h3>
-                        {/* Each term underlined once per card, and never the card's own. */}
-                        {t.body.map((sentence, i) => (
-                          <p key={sentence} lang={t.body_lang ?? "en"}>
-                            <LinkedText text={sentence} skipTopic={t.id} earlier={t.body.slice(0, i)} baits />
-                          </p>
-                        ))}
-                        <RigDiagram topic={t.id} />
-                        <GearStrip items={gear.filter((i) => i.topic === t.id)} />
+                        {quick ? (
+                          <>
+                            {/* Its steps, moving, are its drawing. */}
+                            <QuickTake k={quick} topic={t.id} />
+                            {/* Every fact the quick take leaves out, a tap away; open while searching. */}
+                            <details className="hb-more" open={words ? true : undefined}>
+                              <summary>{all.quick.full}</summary>
+                              {body}
+                            </details>
+                          </>
+                        ) : (
+                          <>
+                            {body}
+                            <RigDiagram topic={t.id} />
+                          </>
+                        )}
+                        {/* The gear it explains, and the gear whose use it shows. */}
+                        <GearStrip items={gear.filter((i) => i.topic === t.id || i.how_to === t.id)} />
                         {/* A state's rule keeps its official page beside it, to check
                             it against; the rest are on /sources (docs/adr/0043). */}
                         {t.region !== "all" && (

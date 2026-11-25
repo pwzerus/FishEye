@@ -1,16 +1,17 @@
 "use client";
 
-import Link from "@/components/LocaleLink";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { BaitTip } from "@/components/baits/BaitTip";
+import { HandbookLink } from "@/components/HandbookLink";
 import { rigKeys } from "@/components/fish/rigTopics";
 import { useLocale, useLocaleTag, useT } from "@/i18n/client";
 import { localTopicTitle } from "@/i18n/names";
 import type { BaitCard } from "@/lib/api/types";
 import { findBaits, useBaitCards } from "@/lib/baits";
 import { MESSAGES } from "@/i18n/messages";
+import { findSeeRefs, type TopicTitle } from "@/lib/seeRefs";
 import { findTerms, TERM_TOPIC, type TermId } from "@/lib/terms";
 
 const en = MESSAGES.en;
@@ -104,16 +105,20 @@ export function TermTip({ id, children }: { id: TermId; children: ReactNode }) {
             </button>
           </span>
           <span className="term-tip-def">{term.def}</span>
-          <Link className="term-tip-more" href={`/handbook#${topic}`} onClick={() => setOpen(false)}>
+          <HandbookLink className="term-tip-more" topic={topic} onClick={() => setOpen(false)}>
             {rigKeys(topic).length > 0 ? all.terms.moreDrawing(topicTitle ?? term.name) : all.terms.more(topicTitle ?? term.name)}
-          </Link>
+          </HandbookLink>
         </span>
       )}
     </span>
   );
 }
 
-type Found = { start: number; end: number } & ({ kind: "term"; id: TermId } | { kind: "bait"; card: BaitCard });
+type Found = { start: number; end: number } & (
+  | { kind: "term"; id: TermId }
+  | { kind: "bait"; card: BaitCard }
+  | { kind: "ref"; topic: string }
+);
 
 /**
  * `text` with its fishing terms made tappable, and its baits and lures too
@@ -122,6 +127,7 @@ type Found = { start: number; end: number } & ({ kind: "term"; id: TermId } | { 
  * linked again. (Worked out afresh on every render, not kept in a shared
  * set: React renders twice in development, and a set filled by the first
  * pass left the second with nothing to link.)
+ * `refs`, the handbook's titles, links its "(see …)" references to them.
  * Plain text until the bait list has loaded, if baits are wanted.
  */
 export function LinkedText({
@@ -131,6 +137,7 @@ export function LinkedText({
   skipTopic = null,
   earlier = [],
   max = 4,
+  refs = null,
 }: {
   text: string;
   baits?: boolean;
@@ -138,6 +145,7 @@ export function LinkedText({
   skipTopic?: string | null;
   earlier?: string[];
   max?: number;
+  refs?: TopicTitle[] | null;
 }) {
   const all = useT();
   const locale = useLocale();
@@ -148,12 +156,17 @@ export function LinkedText({
     ...m,
     kind: "term" as const,
   }));
+  // A reference wins over a term inside it ("drag" in "Setting the drag").
+  for (const r of refs ? findSeeRefs(text, locale, refs) : []) {
+    for (let i = found.length - 1; i >= 0; i--) if (found[i].start < r.end && r.start < found[i].end) found.splice(i, 1);
+    found.push({ ...r, kind: "ref" });
+  }
   if (baits && cards) {
     for (const b of findBaits(text, cards, locale, { fish, max: 3 }).filter((m) => m.card.topic !== skipTopic)) {
       // A bait named inside a term ("jig" in "jig head") or over it: the longer wins.
       const clash = found.findIndex((f) => b.start < f.end && f.start < b.end);
       if (clash === -1) found.push({ ...b, kind: "bait" });
-      else if (b.end - b.start > found[clash].end - found[clash].start) found[clash] = { ...b, kind: "bait" };
+      else if (found[clash].kind !== "ref" && b.end - b.start > found[clash].end - found[clash].start) found[clash] = { ...b, kind: "bait" };
     }
   }
   if (found.length === 0) return <>{text}</>;
@@ -161,6 +174,17 @@ export function LinkedText({
   const parts: ReactNode[] = [];
   let at = 0;
   for (const m of found) {
+    if (m.kind === "ref") {
+      // A plain link: it wraps like the words around it.
+      parts.push(text.slice(at, m.start));
+      parts.push(
+        <HandbookLink key={`r${m.start}`} className="hb-ref" topic={m.topic}>
+          {text.slice(m.start, m.end)}
+        </HandbookLink>,
+      );
+      at = m.end;
+      continue;
+    }
     // A term is a button, and a line may break on either side of it: the
     // 。 after 帕洛马结 opened the next line, a “ before 德州钓组 ended one
     // (2026-11-17). Punctuation touching the term goes with it.

@@ -27,6 +27,10 @@ function Card({ item, locale, t, publicDomain }: {
   publicDomain: string;
 }) {
   const local = localGearName(item.id, locale);
+  // "How to use it" opens the card that shows how (a reel's casting steps,
+  // not the card listing the reels); a thing whose card only says what it
+  // is gets "more about it" instead (2026-11-25).
+  const linked = item.how_to ?? item.topic ?? null;
   return (
     <article id={item.id} className="gear-card">
       {item.photo ? <GearPhoto photo={item.photo} alt={local ?? item.name} publicDomain={publicDomain} /> : <div className="gear-photo gear-no-photo">{t.noPhoto}</div>}
@@ -35,10 +39,10 @@ function Card({ item, locale, t, publicDomain }: {
           {local ?? item.name}
           {local && <span className="name-en" lang="en">{item.name}</span>}
         </h3>
-        {/* Terms underlined (components/terms/TermText.tsx), not the card's own topic: it has its link below. */}
-        <p lang={item.text_lang ?? "en"}><LinkedText text={item.what} skipTopic={item.topic ?? null} /></p>
-        <p className="gear-tip" lang={item.text_lang ?? "en"}><strong>{t.tip}</strong> <LinkedText text={item.tip} skipTopic={item.topic ?? null} earlier={[item.what]} /></p>
-        {item.topic && <Link className="gear-more" href={`/handbook#${item.topic}`}>{t.learnMore}</Link>}
+        {/* Terms underlined (components/terms/TermText.tsx), not the topic the card links below. */}
+        <p lang={item.text_lang ?? "en"}><LinkedText text={item.what} skipTopic={linked} /></p>
+        <p className="gear-tip" lang={item.text_lang ?? "en"}><strong>{t.tip}</strong> <LinkedText text={item.tip} skipTopic={linked} earlier={[item.what]} /></p>
+        {linked && <Link className="gear-more" href={`/handbook#${linked}`}>{item.how_to ? t.learnMore : t.moreAbout}</Link>}
       </div>
     </article>
   );

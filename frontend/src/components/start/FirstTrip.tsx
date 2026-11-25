@@ -85,19 +85,38 @@ export function LicenseLine({ state }: { state: Jurisdiction | null }) {
   );
 }
 
-const escapeHtml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+type KitItem = (typeof KIT)[number];
 
-/** The list as a file Word opens (an HTML document named .doc), English
- * first for the clerk. Built here: there is nothing to ask the server. */
-function downloadKit(title: string, locale: Locale) {
-  const rows = KIT.map((item) => `<li>${escapeHtml(item.en)}${locale === "en" ? "" : ` (${escapeHtml(item[locale])})`}</li>`);
-  const html = `<html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title></head><body><h1>${escapeHtml(title)}</h1><ul>${rows.join("")}</ul></body></html>`;
-  const url = URL.createObjectURL(new Blob(["\ufeff", html], { type: "application/msword" }));
+/** The shopping list as text, English first for the clerk and the reader's
+ * language under each line. */
+export function kitText(items: readonly KitItem[], title: string, locale: Locale): string {
+  const lines = [locale === "en" ? `FishEye \u00b7 ${title}` : `FishEye \u00b7 ${title} / Shopping list`, ""];
+  for (const item of items) {
+    lines.push(`\u2610 ${item.en}`);
+    if (locale !== "en") lines.push(`   ${item[locale]}`);
+  }
+  lines.push("", "fisheyefishing.com");
+  return lines.join("\r\n") + "\r\n";
+}
+
+/**
+ * The list as a plain text file, which every phone and computer opens. Until
+ * 2026-11-25 it was a web page named .doc: Word opens that, but a phone's
+ * preview (and WeChat's) called it corrupted or of an unknown format. Built
+ * here: there is nothing to ask the server.
+ */
+function downloadKit(items: readonly KitItem[], title: string, locale: Locale) {
+  // The byte-order mark tells Notepad and older phone viewers it's UTF-8.
+  const blob = new Blob(["\ufeff", kitText(items, title, locale)], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "fisheye-shopping-list.doc";
+  a.download = "fisheye-shopping-list.txt";
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  a.remove();
+  // Not at once: Safari is still reading the file when click() returns.
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 /** The kit as a checklist with what each thing looks like, and as a card to
@@ -156,6 +175,8 @@ function Kit({ photos }: { photos: Record<string, GearPhoto> }) {
   // Ticked off in the shop; nothing is ticked in the first render, like the server's.
   const raw = useSyncExternalStore(subscribeKit, kitSnapshot, () => NOTHING_TICKED);
   const got = useMemo(() => parseKit(raw), [raw]);
+  // A tick means "got it": what's left to buy is what isn't ticked.
+  const need = KIT.filter((item) => !got.has(item.topic));
   const toggle = (topic: string) => {
     const next = new Set(got);
     if (!next.delete(topic)) next.add(topic);
@@ -182,18 +203,25 @@ function Kit({ photos }: { photos: Record<string, GearPhoto> }) {
           </li>
         ))}
       </ul>
-      <p className="trip-links">
-        <button type="button" className="link-btn" onClick={() => setShopping(true)}>
-          {t.showAtShop}
-        </button>
-        <button type="button" className="link-btn" onClick={() => downloadKit(t.shoppingList, locale)}>
-          {t.downloadList}
-        </button>
-      </p>
-      <Modal open={shopping} onClose={() => setShopping(false)} title={t.shoppingList}>
+      {need.length === 0 ? (
+        // Everything ticked: no list to show or download, and it says why.
+        <p className="trip-links muted" role="status">
+          {t.allGot}
+        </p>
+      ) : (
+        <p className="trip-links">
+          <button type="button" className="link-btn" onClick={() => setShopping(true)}>
+            {t.showAtShop}
+          </button>
+          <button type="button" className="link-btn" onClick={() => downloadKit(need, t.shoppingList, locale)}>
+            {t.downloadList}
+          </button>
+        </p>
+      )}
+      <Modal open={shopping && need.length > 0} onClose={() => setShopping(false)} title={t.shoppingList}>
         {/* English first and large: it's for the clerk to read. */}
         <ul className="shop-list" lang="en">
-          {KIT.map((item) => (
+          {need.map((item) => (
             <li key={item.topic}>
               {item.en}
               {locale !== "en" && <span lang={tag}>{item[locale]}</span>}
