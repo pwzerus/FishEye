@@ -11,22 +11,25 @@ WORKDIR /app
 COPY requirements.txt requirements-semantic.txt ./
 RUN pip install -r requirements.txt -r requirements-semantic.txt
 
+# Run as an unprivileged user. /app/media holds uploaded photos and is a
+# volume in docker-compose.yml, so it must exist and be writable by it.
+RUN useradd --create-home --uid 10001 fisheye \
+    && mkdir -p /app/media \
+    && chown fisheye /app/media
+
 # Ask's semantic model (docs/adr/0025, 0029), fetched at build time at the
 # commit that was reviewed, then compressed to int8. The uncompressed copy
 # is deleted: the app uses the int8 file, and it saves 470 MB of image.
 # Only its script is copied in first, so editing app code doesn't redo this:
 # compressing takes about 1.4 GB of memory, and the server has 4.
+# The app user owns the folder, since the app caches passage vectors there.
+# The chown is in this same step: in a step of its own it copied every
+# model file into another layer, 130 MB more image.
 COPY app/__init__.py ./app/
 COPY app/cli/__init__.py app/cli/fetch_embedding_model.py ./app/cli/
 ARG E5_REVISION=614241f622f53c4eeff9890bdc4f31cfecc418b3
 RUN python -m app.cli.fetch_embedding_model --revision "$E5_REVISION" \
-    && rm -rf models/multilingual-e5-small/onnx/model.onnx models/multilingual-e5-small/.cache
-
-# Run as an unprivileged user. /app/media holds uploaded photos and is a
-# volume in docker-compose.yml, so it must exist and be writable by it.
-RUN useradd --create-home --uid 10001 fisheye \
-    && mkdir -p /app/media \
-    && chown fisheye /app/media \
+    && rm -rf models/multilingual-e5-small/onnx/model.onnx models/multilingual-e5-small/.cache \
     && chown -R fisheye /app/models
 
 COPY app ./app

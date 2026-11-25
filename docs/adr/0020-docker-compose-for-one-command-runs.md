@@ -24,7 +24,7 @@ deployment uses (ADR 0018).
   uvicorn. Uploaded photos go to a second named volume. Compose overrides
   `DATABASE_URL` and `MEDIA_ROOT`, so a `.env` written for running the
   backend directly (SQLite, `./media`) still works.
-- **frontend**: Next.js `output: "standalone"`, built in three stages so the
+- **frontend**: Next.js `output: "standalone"`, built in stages so the
   runtime image has no build toolchain; non-root user.
 
 Nothing needs a key: the LLM is the mock provider, weather is NWS, and the

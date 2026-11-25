@@ -1,16 +1,15 @@
 # FishEye frontend (Next.js). Built by docker-compose.yml at the repo root.
 #
-# Three stages so the final image carries only the standalone server, not
-# node_modules or the build toolchain.
-
-FROM node:22-alpine AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+# Two stages so the final image carries only the standalone server, not
+# node_modules or the build toolchain. Dependencies are installed in the
+# build stage itself: a stage of their own meant copying node_modules
+# (600 MB) into the build stage, a second copy kept on every build.
 
 FROM node:22-alpine AS build
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Dependencies first, so editing app code doesn't reinstall them.
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
 # NEXT_PUBLIC_* values are inlined into the browser bundle at build time,
 # so they are build args, not runtime env. All optional: without the map
