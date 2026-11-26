@@ -29,7 +29,17 @@ def _bait_rules() -> dict[str, str]:
     return {f"{j.code}#{i}": s for j in JURISDICTIONS.values() for i, s in enumerate(j.bait_rules)}
 
 
-TABLES = [("handbook", _handbook), ("gear", _gear), ("bait_rules", _bait_rules)]
+def _quick() -> dict[str, str]:
+    from app.knowledge.handbook_quick import QUICK
+
+    out = {}
+    for topic, take in QUICK.items():
+        out[f"{topic}.lead"] = take.lead
+        out.update({f"{topic}.points#{i}": p for i, p in enumerate(take.points)})
+    return out
+
+
+TABLES = [("handbook", _handbook), ("gear", _gear), ("bait_rules", _bait_rules), ("quick", _quick)]
 
 
 @pytest.mark.parametrize("name, english", TABLES)

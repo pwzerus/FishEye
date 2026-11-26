@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { Arrow, FishShape, Hand, LipHook, No, Rod, SpinningReel, Yes } from "./rigParts";
-import type { QuickKey } from "./quickTopics";
+import type { MovingKey } from "./quickTopics";
 import { STEP_DRAWINGS } from "./StepDrawings";
 
 /**
@@ -241,6 +241,6 @@ const behindHead: Panel = (m) => {
   );
 };
 
-export const QUICK_DRAWINGS: Record<QuickKey, Panel[]> = {
+export const QUICK_DRAWINGS: Record<MovingKey, Panel[]> = {
   landing: [tight, run, pump, net, lip, behindHead],
 };

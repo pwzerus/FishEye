@@ -38,12 +38,16 @@ const SEPARATOR: Record<Locale, RegExp> = {
   ja: /^(?:、|と)/,
 };
 
-/** A title and its first part, before a colon, a comma or a bracket, or
- * up to its question mark ("Is it a bite?"). */
+/** A title and its first part: before its colon, before its bracket and
+ * before its first comma, each ("Clean, drain and dry: stop invasive
+ * species" is also "Clean, drain and dry" and "Clean"), or up to its
+ * question mark ("Is it a bite?"). */
 function names(title: string): string[] {
   const out = new Set([title]);
-  const cut = title.search(/[:：,，、(（]/);
-  if (cut > 0) out.add(title.slice(0, cut).trim());
+  for (const mark of [/[:：]/, /[(（]/, /[,，、]/]) {
+    const cut = title.search(mark);
+    if (cut > 0) out.add(title.slice(0, cut).trim());
+  }
   const ask = title.search(/[?？]/);
   if (ask > 0) out.add(title.slice(0, ask + 1));
   return [...out];

@@ -1938,24 +1938,15 @@ const en = {
   quick: {
     full: "Full explanation",
     remember: "Remember",
-    takes: {
-      landing: {
-        lead: "Keep the line tight, bring the fish in slowly, and net it head first.",
-        steps: [
-          "Line tight, rod tip up",
-          "When it runs, stop reeling",
-          "Lift, then reel as you lower",
-          "Head first into the net, then lift",
-          "No net: hold the lower lip (bass, crappie)",
-          "Pike, walleye: grip behind the head",
-        ],
-        points: [
-          "Slack line loses fish.",
-          "Don't tighten the drag in the middle of the fight.",
-          "Fish often lunge once more near you. With a big fish, ease the drag a little.",
-          "In water of 70°F or more, land trout fast.",
-        ],
-      },
+    steps: {
+      landing: [
+        "Line tight, rod tip up",
+        "When it runs, stop reeling",
+        "Lift, then reel as you lower",
+        "Head first into the net, then lift",
+        "No net: hold the lower lip (bass, crappie)",
+        "Pike, walleye: grip behind the head",
+      ],
     },
   },
 };

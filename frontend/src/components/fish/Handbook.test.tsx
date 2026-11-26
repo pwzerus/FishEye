@@ -173,11 +173,12 @@ describe("Handbook", () => {
     const landing: HandbookTopic = {
       ...topic("technique-landing", "technique", "Casting, playing and landing", "Playing a fish"),
       body: ["Keep the line tight (see Setting the drag).", "Lead it into the net head first."],
+      quick: { lead: "Keep the line tight.", points: ["Slack line loses fish."] },
     };
     const drag = topic("technique-drag", "technique", "Casting, playing and landing", "Setting the drag");
     const { container } = render(<Handbook topics={[landing, drag]} />);
     const card = container.querySelector("#technique-landing") as HTMLElement;
-    expect(card.querySelector(".qt")).not.toBeNull();
+    expect(card.querySelector(".qt .qt-steps")).not.toBeNull();
     const fold = card.querySelector("details.hb-more") as HTMLElement;
     expect(fold).not.toHaveAttribute("open");
     expect(fold.querySelectorAll("p")).toHaveLength(2);
@@ -185,6 +186,27 @@ describe("Handbook", () => {
     // A topic without one stays as it was.
     expect(container.querySelector("#technique-drag .qt")).toBeNull();
     expect(container.querySelector("#technique-drag details")).toBeNull();
+  });
+
+  // 2026-11-25: every long card got one. Its picture sits between the line
+  // and the points: the card's drawing, or else its gear photos.
+  it("moves a card's drawing, or else its gear photos, into its quick take", () => {
+    const photo = { url: "/gear-photos/x.jpg", width: 400, height: 300, author: "A", license: "CC0", license_url: null, file_page: "https://commons.wikimedia.org" };
+    const net: GearItem = { id: "bait-nightcrawlers", name: "Worms", category: "bait", what: "", tip: "", topic: "bait-worms", how_to: null, fish: [], first_kit: false, photo };
+    const quick = { lead: "One line.", points: ["A point."] };
+    const worms: HandbookTopic = { ...topic("bait-worms", "baits", "Live and natural bait", "Worms"), quick };
+    const corn: HandbookTopic = { ...topic("bait-corn", "baits", "Live and natural bait", "Corn"), quick };
+    const minnow = { ...net, id: "bait-corn-can", topic: "bait-corn" };
+    const { container } = render(<Handbook topics={[worms, corn]} gear={[net, minnow]} />);
+    // Worms has a drawing: it comes up, and the photos stay below the fold.
+    const drawn = container.querySelector("#bait-worms") as HTMLElement;
+    expect(drawn.querySelector(".qt > figure")).not.toBeNull();
+    expect(drawn.querySelector(".qt .handbook-gear")).toBeNull();
+    expect(drawn.querySelector("details.hb-more ~ .handbook-gear")).not.toBeNull();
+    // Corn has none: its photos are the picture, shown once.
+    const plain = container.querySelector("#bait-corn") as HTMLElement;
+    expect(plain.querySelector(".qt > .handbook-gear")).not.toBeNull();
+    expect(plain.querySelectorAll(".handbook-gear")).toHaveLength(1);
   });
 
   it("knows one state's card from another's of the same kind", () => {

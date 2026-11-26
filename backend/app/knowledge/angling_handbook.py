@@ -1657,7 +1657,7 @@ TOPICS: tuple[HandbookTopic, ...] = (
             "Salmon and steelhead feed in a big lake (or the ocean), then swim up rivers to spawn. "
             "The run is when river anglers catch them.",
             "Fall: Chinook, coho and pink salmon, and brown and brook trout, run from about "
-            "September until the rivers freeze (on Minnesota's North Shore). They die after spawning.",
+            "September until the rivers freeze (on Minnesota's North Shore). The salmon die after spawning.",
             "Steelhead come in two waves on many Great Lakes rivers. Some enter in fall (in New York "
             "from mid-September; late October and November is often the best time, when they feed "
             "hard) and spend the winter in deep pools. They spawn in spring, from about March to "

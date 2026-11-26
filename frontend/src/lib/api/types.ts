@@ -1207,6 +1207,17 @@ export interface HandbookTopic {
   /** A state code for a topic stating that state's rules, else "all". */
   region: string;
   sources: GuideSource[];
+  /** The topic at a glance; only the long topics have one. */
+  quick?: QuickTakeText | null;
+}
+
+/** A handbook topic at a glance (backend app/knowledge/handbook_quick.py):
+ * one line and the points to remember, from the topic's own facts. */
+export interface QuickTakeText {
+  lead: string;
+  points: string[];
+  /** Their language when it isn't English (the API was asked for it and has it). */
+  lang?: string | null;
 }
 
 /** One answer of the question library (backend app/knowledge/angling_qa.py),

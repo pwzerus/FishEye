@@ -3,9 +3,10 @@
 import Link from "@/components/LocaleLink";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
-import { QuickTake } from "@/components/fish/QuickTake";
-import { quickKey } from "@/components/fish/quickTopics";
+import { MovingSteps, QuickTake } from "@/components/fish/QuickTake";
+import { movingKey } from "@/components/fish/quickTopics";
 import { RigDiagram } from "@/components/fish/RigDiagram";
+import { rigKeys } from "@/components/fish/rigTopics";
 import { RegionGate } from "@/components/rules/RegionGate";
 import { LinkedText } from "@/components/terms/TermText";
 import { useLocale, useT } from "@/i18n/client";
@@ -332,7 +333,11 @@ export function Handbook({
                   )}
                   {g.topics.map((t) => {
                     const local = localTopicTitle(t.id, locale);
-                    const quick = quickKey(t.id);
+                    // The gear it explains, and the gear whose use it shows.
+                    const photos = <GearStrip items={gear.filter((i) => i.topic === t.id || i.how_to === t.id)} />;
+                    // A quick take's picture: its steps moving, else its drawing,
+                    // else its gear photos, which then don't show again below.
+                    const picture = movingKey(t.id) ? <MovingSteps topic={t.id} /> : rigKeys(t.id).length > 0 ? <RigDiagram topic={t.id} /> : photos;
                     // Each term underlined once per card, and never the card's own.
                     const body = t.body.map((sentence, i) => (
                       <p key={sentence} lang={t.body_lang ?? "en"}>
@@ -344,24 +349,25 @@ export function Handbook({
                         {/* No English title under it (2026-11-16): a topic's
                             title isn't what a store or a sign says. */}
                         <h3>{local ?? t.title}</h3>
-                        {quick ? (
+                        {t.quick ? (
                           <>
-                            {/* Its steps, moving, are its drawing. */}
-                            <QuickTake k={quick} topic={t.id} />
+                            <QuickTake topic={t.id} quick={t.quick} refs={titles}>
+                              {picture}
+                            </QuickTake>
                             {/* Every fact the quick take leaves out, a tap away; open while searching. */}
                             <details className="hb-more" open={words ? true : undefined}>
                               <summary>{all.quick.full}</summary>
                               {body}
                             </details>
+                            {picture !== photos && photos}
                           </>
                         ) : (
                           <>
                             {body}
                             <RigDiagram topic={t.id} />
+                            {photos}
                           </>
                         )}
-                        {/* The gear it explains, and the gear whose use it shows. */}
-                        <GearStrip items={gear.filter((i) => i.topic === t.id || i.how_to === t.id)} />
                         {/* A state's rule keeps its official page beside it, to check
                             it against; the rest are on /sources (docs/adr/0043). */}
                         {t.region !== "all" && (

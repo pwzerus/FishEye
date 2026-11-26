@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException
 from app.knowledge import angling_qa
 from app.knowledge.translations import OTHER_LANGUAGES, Translator, table
 from app.knowledge.angling_handbook import CATEGORIES, TOPICS
+from app.knowledge.handbook_quick import QUICK
 from app.knowledge.species_guides import (
     GENERAL_SUMMARIES,
     GUIDES,
@@ -23,6 +24,7 @@ from app.schemas.species_guide import (
     GuideSourceOut,
     HandbookTopicOut,
     QuestionOut,
+    QuickTakeOut,
     SpeciesGuideOut,
     SpeciesPhotoOut,
     TackleSetupOut,
@@ -126,9 +128,22 @@ def list_handbook(lang: str = "en") -> list[HandbookTopicOut]:
             body_lang=words.language,
             region=topic.region,
             sources=_sources(topic.source_ids),
+            quick=_quick(topic.id, lang),
         )
 
     return [out(t) for _, t in ranked]
+
+
+def _quick(topic: str, lang: str) -> QuickTakeOut | None:
+    take = QUICK.get(topic)
+    if take is None:
+        return None
+    words = Translator("quick", lang, f"{topic}.")
+    return QuickTakeOut(
+        lead=words.text("lead", take.lead),
+        points=words.many("points", take.points),
+        lang=words.language,
+    )
 
 
 @router.get("/questions", response_model=list[QuestionOut])

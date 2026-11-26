@@ -56,6 +56,16 @@ class SpeciesGuideOut(BaseModel):
     text_lang: str | None = None
 
 
+class QuickTakeOut(BaseModel):
+    """A topic at a glance (app/knowledge/handbook_quick.py): one line and the
+    points to remember, shown above the topic's own text."""
+
+    lead: str
+    points: list[str]
+    # Their language when it isn't English (asked for and all there).
+    lang: str | None = None
+
+
 class HandbookTopicOut(BaseModel):
     """One topic of the angler's handbook (app/knowledge/angling_handbook.py).
     `id` is the anchor on the handbook page that answers cite."""
@@ -69,6 +79,8 @@ class HandbookTopicOut(BaseModel):
     body_lang: str | None = None
     region: str  # a state code for a topic stating that state's rules, else "all"
     sources: list[GuideSourceOut]
+    # Only the long topics have one.
+    quick: QuickTakeOut | None = None
 
 
 class QuestionOut(BaseModel):

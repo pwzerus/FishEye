@@ -159,7 +159,8 @@ export function findTerms(
   english: Messages["terms"]["items"],
   { skipTopic = null, max = 4, seen = new Set<string>() }: { skipTopic?: string | null; max?: number; seen?: Set<string> } = {},
 ): TermMatch[] {
-  if (!text) return [];
+  // max 0: none (a quick take's line links only its references).
+  if (!text || max <= 0) return [];
   const { re, byName } = matcher(locale, items, english);
   const out: TermMatch[] = [];
   for (const m of text.matchAll(re)) {

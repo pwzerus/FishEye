@@ -7,6 +7,7 @@ limit stated as a number would all be real defects."""
 import re
 
 from app.knowledge.angling_handbook import CATEGORIES, TOPICS
+from app.knowledge.handbook_quick import QUICK
 from app.knowledge.species_guides import GUIDES, SOURCES
 from app.services.rag.chunking import SHARED_SLUG, build_passages
 
@@ -84,6 +85,34 @@ def test_handbook_endpoint_groups_topics_in_page_order_with_sources(client):
     first = body[0]
     assert first["category_label"] == CATEGORIES[first["category"]]
     assert first["sources"] and first["sources"][0]["url"].startswith("https://")
+
+
+NUMBER = re.compile(r"\d+(?:[./]\d+)?")
+
+
+def test_every_quick_take_is_short_and_adds_no_number():
+    """A topic at a glance (handbook_quick.py) is the topic's own facts, fewer
+    of them: a number the topic doesn't state would be a new claim."""
+    topics = {t.id: t for t in TOPICS}
+    for topic, take in QUICK.items():
+        assert topic in topics, topic
+        body = " ".join(topics[topic].body)
+        assert 2 <= len(take.points) <= 5, topic
+        for line in (take.lead, *take.points):
+            assert line.strip() == line and line[-1] in ".?!", (topic, line)
+            assert set(NUMBER.findall(line)) <= set(NUMBER.findall(body)), (topic, line)
+        assert len(take.lead) <= 120, topic
+        assert all(len(p) <= 110 for p in take.points), topic
+
+
+def test_handbook_endpoint_sends_a_quick_take_with_its_language(client):
+    zh = {t["id"]: t for t in client.get("/api/species/handbook?lang=zh").json()}
+    landing = zh["technique-landing"]["quick"]
+    assert landing["lang"] == "zh" and len(landing["points"]) == len(QUICK["technique-landing"].points)
+    assert all(t["quick"] is None for i, t in zh.items() if i not in QUICK)
+    en = {t["id"]: t for t in client.get("/api/species/handbook").json()}
+    assert en["technique-landing"]["quick"]["lead"] == QUICK["technique-landing"].lead
+    assert en["technique-landing"]["quick"]["lang"] is None
 
 
 def test_guide_endpoint_returns_the_new_sections(client):

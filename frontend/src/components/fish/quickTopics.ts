@@ -1,17 +1,17 @@
 import type { Messages } from "@/i18n/messages";
 
-export type QuickKey = keyof Messages["quick"]["takes"];
+export type MovingKey = keyof Messages["quick"]["steps"];
 
 /**
- * Handbook topics with a quick take (QuickTake.tsx): a line, a few moving
- * pictures of a few words each and the points to remember, with the topic's
- * own text folded under them. Started 2026-11-25 with one topic, for the
- * owner to judge before the other long topics get the same.
+ * Quick takes (QuickTake.tsx) whose steps are moving pictures of their own
+ * (QuickDrawings.tsx), each with a few words, in place of the topic's
+ * drawing. The words of every quick take come from the API (backend
+ * handbook_quick.py); only these captions live here, beside their pictures.
  */
-export const QUICK_TAKES: Record<string, QuickKey> = {
+export const MOVING_STEPS: Record<string, MovingKey> = {
   "technique-landing": "landing",
 };
 
-export function quickKey(topic: string): QuickKey | null {
-  return QUICK_TAKES[topic] ?? null;
+export function movingKey(topic: string): MovingKey | null {
+  return MOVING_STEPS[topic] ?? null;
 }

@@ -38,6 +38,10 @@ describe("fishing terms", () => {
     // past the 5 s default with the whole suite running (2026-11-24).
   }, 20_000);
 
+  it("finds none when asked for none", () => {
+    expect(findTerms("Set the drag with a Palomar knot.", "en", en, en, { max: 0 })).toEqual([]);
+  });
+
   it("leaves the everyday meanings alone", () => {
     expect(ids("Drag it slowly along the bottom.")).toEqual([]);
     expect(ids("Spool up the line.")).toEqual([]);

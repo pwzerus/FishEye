@@ -1901,24 +1901,15 @@ const es: Messages = {
   quick: {
     full: "Explicación completa",
     remember: "Recuerda",
-    takes: {
-      landing: {
-        lead: "Mantén la línea tensa, acerca el pez despacio y mételo en la red de cabeza.",
-        steps: [
-          "Línea tensa, punta de la caña arriba",
-          "Si saca línea, deja de recoger",
-          "Levanta la caña y recoge al bajarla",
-          "De cabeza a la red, y luego levanta",
-          "Sin red: agárralo del labio inferior (lobina, crappie)",
-          "Lucio, walleye: sujétalo tras la cabeza",
-        ],
-        points: [
-          "Con la línea floja, el pez se suelta.",
-          "No aprietes el freno a media pelea.",
-          "Cerca de ti, el pez suele dar un último tirón. Con uno grande, afloja un poco el freno.",
-          "Con el agua a 70°F o más, saca rápido las truchas.",
-        ],
-      },
+    steps: {
+      landing: [
+        "Línea tensa, punta de la caña arriba",
+        "Si saca línea, deja de recoger",
+        "Levanta la caña y recoge al bajarla",
+        "De cabeza a la red, y luego levanta",
+        "Sin red: agárralo del labio inferior (lobina, crappie)",
+        "Lucio, walleye: sujétalo tras la cabeza",
+      ],
     },
   },
 };

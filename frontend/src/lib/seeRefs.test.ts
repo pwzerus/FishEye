@@ -36,6 +36,24 @@ describe("findSeeRefs", () => {
     ]);
   });
 
+  // 2026-11-25, found by the Korean and Spanish translators: a title with a
+  // comma before its colon linked only its first word.
+  it("links a whole first part that has a comma in it", () => {
+    const cdd = (all: string, texas: string): TopicTitle[] => [
+      { id: "rule-clean-drain-dry-us", title: all, region: "all" },
+      { id: "rule-clean-drain-dry", title: texas, region: "TX" },
+    ];
+    expect(linked("(see Clean, drain and dry)", "en", cdd("Clean, drain and dry: stop invasive species", "Clean, drain and dry (Texas)"))).toEqual([
+      ["Clean, drain and dry", "rule-clean-drain-dry-us"],
+    ]);
+    expect(linked("(consulta Limpiar, vaciar y secar)", "es", cdd("Limpiar, vaciar y secar: frenar especies invasoras", "Limpiar, vaciar y secar (Texas)"))).toEqual([
+      ["Limpiar, vaciar y secar", "rule-clean-drain-dry-us"],
+    ]);
+    expect(linked("(세척, 배수, 건조 참고)", "ko", cdd("세척, 배수, 건조: 침입종 막기", "세척, 배수, 건조(텍사스주)"))).toEqual([
+      ["세척, 배수, 건조", "rule-clean-drain-dry-us"],
+    ]);
+  });
+
   it("reads each language's way of writing it", () => {
     const drag = (title: string): TopicTitle[] => [{ id: "technique-drag", title }];
     expect(linked("搏鱼中途不要拧紧卸力（见“调卸力”）。", "zh", drag("调卸力"))).toEqual([["调卸力", "technique-drag"]]);
