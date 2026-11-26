@@ -121,7 +121,7 @@ jobs:
           fish=$(curl --fail --silent --show-error http://localhost:3000/fish)
           echo "$fish" | grep -q "Black Crappie"
           guide=$(curl --fail --silent --show-error http://localhost:3000/fish/blue-catfish)
-          echo "$guide" | grep -q "How to recognise it"
+          echo "$guide" | grep -q "How to recognize it"
           map=$(curl --fail --silent --show-error http://localhost:3000/map)
           if echo "$map" | grep -q "Could not reach the backend"; then
             echo "The map page could not reach the API" >&2
